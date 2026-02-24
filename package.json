@@ -1,0 +1,87 @@
+{
+  "name": "mobileappmapmodule",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Модуль карт для ООО «Парк Животных»",
+  "author": "",
+  "type": "module",
+  "main": "electron/main.mjs",
+  "scripts": {
+    "dev": "vite --port 5173 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "concurrently -k \"cross-env BROWSER=none vite --port 5173 --strictPort\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "dist": "electron-builder -p never",
+    "build:win": "npm run build && electron-builder --config electron-builder.yml -w --x64 --publish never",
+    "build:mac": "npm run build && electron-builder --config electron-builder.yml -m --publish never",
+    "build:linux": "npm run build && electron-builder --config electron-builder.yml -l --publish never",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "cap:build:android": "npm run build && npx cap sync && cd android && ./gradlew assembleRelease",
+    "cap:build:ios": "npm run build && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/preferences": "^8.0.0",
+    "leaflet": "^1.9.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.30.3"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@types/leaflet": "^1.9.8",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.2.0",
+    "cross-env": "^10.0.0",
+    "electron": "^37.3.1",
+    "electron-builder": "^26.8.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "wait-on": "^8.0.4"
+  },
+  "build": {
+    "appId": "by.animalpark.mapmodule",
+    "productName": "MapModule",
+    "files": ["dist/**", "electron/**", "package.json"],
+    "asar": true,
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
+    },
+    "extraMetadata": {
+      "main": "electron/main.mjs"
+    },
+    "win": {
+      "target": [{"target": "nsis", "arch": ["x64"]}],
+      "artifactName": "MapModule-${version}-win-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "shortcutName": "MapModule"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.productivity",
+      "artifactName": "MapModule-${version}-mac.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Utility",
+      "artifactName": "MapModule-${version}-linux.${ext}"
+    }
+  }
+}
