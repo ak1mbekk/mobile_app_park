@@ -1,0 +1,4 @@
+CAPACITOR_DEBUG = true
+
+// Отключаем кэш компиляции Clang (устраняет ошибку spawn clang-stat-cache)
+CLANG_ENABLE_COMPILE_CACHE = NO

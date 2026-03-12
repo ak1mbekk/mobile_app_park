@@ -1,0 +1,788 @@
+[
+  {
+    "id": "site-antilopa-garna",
+    "name": "Антилопа Гарна",
+    "url": "https://animal-park.by/galereya/galereya/antilopa-garna.html",
+    "slug": "antilopa-garna"
+  },
+  {
+    "id": "site-yaponskij-makak",
+    "name": "Японский Макак",
+    "url": "https://animal-park.by/galereya/galereya/yaponskij-makak.html",
+    "slug": "yaponskij-makak"
+  },
+  {
+    "id": "site-edipov-tamarin",
+    "name": "Эдипов Тамарин",
+    "url": "https://animal-park.by/galereya/galereya/edipov-tamarin.html",
+    "slug": "edipov-tamarin"
+  },
+  {
+    "id": "site-guanako",
+    "name": "Гуанако",
+    "url": "https://animal-park.by/galereya/galereya/guanako.html",
+    "slug": "guanako"
+  },
+  {
+    "id": "site-kapibara",
+    "name": "Капибара",
+    "url": "https://animal-park.by/galereya/galereya/kapibara.html",
+    "slug": "kapibara"
+  },
+  {
+    "id": "site-tarpanovidnaya-loshad",
+    "name": "Тарпановидная лошадь",
+    "url": "https://animal-park.by/galereya/galereya/tarpanovidnaya-loshad.html",
+    "slug": "tarpanovidnaya-loshad"
+  },
+  {
+    "id": "site-antilopa-nilgau",
+    "name": "Антилопа Нильгау",
+    "url": "https://animal-park.by/galereya/galereya/antilopa-nilgau.html",
+    "slug": "antilopa-nilgau"
+  },
+  {
+    "id": "site-grivistyij-baran",
+    "name": "Гривистый Баран",
+    "url": "https://animal-park.by/galereya/galereya/grivistyij-baran.html",
+    "slug": "grivistyij-baran"
+  },
+  {
+    "id": "site-byik-xeka",
+    "name": "Бык Хека",
+    "url": "https://animal-park.by/galereya/galereya/byik-xeka.html",
+    "slug": "byik-xeka"
+  },
+  {
+    "id": "site-shviczkaya-korova",
+    "name": "Швицкая Корова",
+    "url": "https://animal-park.by/galereya/galereya/shviczkaya-korova.html",
+    "slug": "shviczkaya-korova"
+  },
+  {
+    "id": "site-makak-lapunder",
+    "name": "Макак Лапундер",
+    "url": "https://animal-park.by/galereya/galereya/makak-lapunder.html",
+    "slug": "makak-lapunder"
+  },
+  {
+    "id": "site-koza-gergentana",
+    "name": "Коза Гиргентана",
+    "url": "https://animal-park.by/galereya/galereya/koza-gergentana.html",
+    "slug": "koza-gergentana"
+  },
+  {
+    "id": "site-chernyij-lebed",
+    "name": "Черный Лебедь",
+    "url": "https://animal-park.by/galereya/galereya/chernyij-lebed.html",
+    "slug": "chernyij-lebed"
+  },
+  {
+    "id": "site-vengerskij-stepnoj-skot",
+    "name": "Венгерский Степной Скот",
+    "url": "https://animal-park.by/galereya/galereya/vengerskij-stepnoj-skot.html",
+    "slug": "vengerskij-stepnoj-skot"
+  },
+  {
+    "id": "site-vodyanoj-bujvol-(aziatskij)",
+    "name": "Водяной Буйвол (Азиатский)",
+    "url": "https://animal-park.by/galereya/galereya/vodyanoj-bujvol-(aziatskij).html",
+    "slug": "vodyanoj-bujvol-(aziatskij)"
+  },
+  {
+    "id": "site-moral",
+    "name": "Марал",
+    "url": "https://animal-park.by/galereya/galereya/moral.html",
+    "slug": "moral"
+  },
+  {
+    "id": "site-karlikovaya-domashnyaya-svinya-(minipig)",
+    "name": "Карликовая домашняя свинья (минипиг)",
+    "url": "https://animal-park.by/galereya/galereya/karlikovaya-domashnyaya-svinya-(minipig).html",
+    "slug": "karlikovaya-domashnyaya-svinya-(minipig)"
+  },
+  {
+    "id": "site-burunduk",
+    "name": "Бурундук Сибирский (Азиатский)",
+    "url": "https://animal-park.by/galereya/galereya/burunduk.html",
+    "slug": "burunduk"
+  },
+  {
+    "id": "site-saxarskij-oriks",
+    "name": "Сахарский орикс",
+    "url": "https://animal-park.by/galereya/galereya/saxarskij-oriks.html",
+    "slug": "saxarskij-oriks"
+  },
+  {
+    "id": "site-belyij-amur",
+    "name": "Белый амур",
+    "url": "https://animal-park.by/galereya/galereya/belyij-amur.html",
+    "slug": "belyij-amur"
+  },
+  {
+    "id": "site-belyij-tolstolobik",
+    "name": "Белый толстолобик",
+    "url": "https://animal-park.by/galereya/galereya/belyij-tolstolobik.html",
+    "slug": "belyij-tolstolobik"
+  },
+  {
+    "id": "site-karp-obyiknovennyij-(sazan)",
+    "name": "Карп обыкновенный (Сазан)",
+    "url": "https://animal-park.by/galereya/galereya/karp-obyiknovennyij-(sazan).html",
+    "slug": "karp-obyiknovennyij-(sazan)"
+  },
+  {
+    "id": "site-serebryanyij-karas",
+    "name": "Серебряный карась",
+    "url": "https://animal-park.by/galereya/galereya/serebryanyij-karas.html",
+    "slug": "serebryanyij-karas"
+  },
+  {
+    "id": "site-shhuka-obyiknovennaya",
+    "name": "Щука обыкновенная",
+    "url": "https://animal-park.by/galereya/galereya/shhuka-obyiknovennaya.html",
+    "slug": "shhuka-obyiknovennaya"
+  },
+  {
+    "id": "site-sterlyad",
+    "name": "Стерлядь",
+    "url": "https://animal-park.by/galereya/galereya/sterlyad.html",
+    "slug": "sterlyad"
+  },
+  {
+    "id": "site-krasnouxaya-presnovodnaya-cherepaxa",
+    "name": "Красноухая пресноводная черепаха",
+    "url": "https://animal-park.by/galereya/galereya/krasnouxaya-presnovodnaya-cherepaxa.html",
+    "slug": "krasnouxaya-presnovodnaya-cherepaxa"
+  },
+  {
+    "id": "site-sredneaziatskaya-cherepaxa",
+    "name": "Среднеазиатская черепаха",
+    "url": "https://animal-park.by/galereya/galereya/sredneaziatskaya-cherepaxa.html",
+    "slug": "sredneaziatskaya-cherepaxa"
+  },
+  {
+    "id": "site-lin",
+    "name": "Линь",
+    "url": "https://animal-park.by/galereya/galereya/lin.html",
+    "slug": "lin"
+  },
+  {
+    "id": "site-forel-raduzhnaya",
+    "name": "Форель радужная",
+    "url": "https://animal-park.by/galereya/galereya/forel-raduzhnaya.html",
+    "slug": "forel-raduzhnaya"
+  },
+  {
+    "id": "site-serval",
+    "name": "Сервал",
+    "url": "https://animal-park.by/galereya/galereya/serval.html",
+    "slug": "serval"
+  },
+  {
+    "id": "site-burskaya-koza",
+    "name": "Бурская Коза",
+    "url": "https://animal-park.by/galereya/galereya/burskaya-koza.html",
+    "slug": "burskaya-koza"
+  },
+  {
+    "id": "site-valijskaya-koza",
+    "name": "Валийская Коза",
+    "url": "https://animal-park.by/galereya/galereya/valijskaya-koza.html",
+    "slug": "valijskaya-koza"
+  },
+  {
+    "id": "site-zebu",
+    "name": "Зебу",
+    "url": "https://animal-park.by/galereya/galereya/zebu.html",
+    "slug": "zebu"
+  },
+  {
+    "id": "site-vatusi",
+    "name": "Ватусси",
+    "url": "https://animal-park.by/galereya/galereya/vatusi.html",
+    "slug": "vatusi"
+  },
+  {
+    "id": "site-zubr",
+    "name": "Зубр Европейский",
+    "url": "https://animal-park.by/galereya/galereya/zubr.html",
+    "slug": "zubr"
+  },
+  {
+    "id": "site-kosulya",
+    "name": "Косуля европейская",
+    "url": "https://animal-park.by/galereya/galereya/kosulya.html",
+    "slug": "kosulya"
+  },
+  {
+    "id": "site-lama",
+    "name": "Лама",
+    "url": "https://animal-park.by/galereya/galereya/lama.html",
+    "slug": "lama"
+  },
+  {
+    "id": "site-evropeyskaya-lan",
+    "name": "Европейская лань",
+    "url": "https://animal-park.by/galereya/galereya/evropeyskaya-lan.html",
+    "slug": "evropeyskaya-lan"
+  },
+  {
+    "id": "site-los",
+    "name": "Лось",
+    "url": "https://animal-park.by/galereya/galereya/los.html",
+    "slug": "los"
+  },
+  {
+    "id": "site-loshadi",
+    "name": "Лошади",
+    "url": "https://animal-park.by/galereya/galereya/loshadi.html",
+    "slug": "loshadi"
+  },
+  {
+    "id": "site-muflon",
+    "name": "Муфлон",
+    "url": "https://animal-park.by/galereya/galereya/muflon.html",
+    "slug": "muflon"
+  },
+  {
+    "id": "site-ovcza-kamerunskaya",
+    "name": "Овца Камерунская",
+    "url": "https://animal-park.by/galereya/galereya/ovcza-kamerunskaya.html",
+    "slug": "ovcza-kamerunskaya"
+  },
+  {
+    "id": "site-ovcza-svyatogo-yakova",
+    "name": "Овца Святого Якова",
+    "url": "https://animal-park.by/galereya/galereya/ovcza-svyatogo-yakova.html",
+    "slug": "ovcza-svyatogo-yakova"
+  },
+  {
+    "id": "site-odnogorbyij-verblyud",
+    "name": "Одногорбый Верблюд",
+    "url": "https://animal-park.by/galereya/galereya/odnogorbyij-verblyud.html",
+    "slug": "odnogorbyij-verblyud"
+  },
+  {
+    "id": "site-olen-blagorodnyij",
+    "name": "Олень Благородный",
+    "url": "https://animal-park.by/galereya/galereya/olen-blagorodnyij.html",
+    "slug": "olen-blagorodnyij"
+  },
+  {
+    "id": "site-olen-pyatnistyij",
+    "name": "Олень Пятнистый",
+    "url": "https://animal-park.by/galereya/galereya/olen-pyatnistyij.html",
+    "slug": "olen-pyatnistyij"
+  },
+  {
+    "id": "site-oslyi",
+    "name": "Ослы домашние",
+    "url": "https://animal-park.by/galereya/galereya/oslyi.html",
+    "slug": "oslyi"
+  },
+  {
+    "id": "site-oshejnikovyij-pekari",
+    "name": "Ошейниковый Пекари",
+    "url": "https://animal-park.by/galereya/galereya/oshejnikovyij-pekari.html",
+    "slug": "oshejnikovyij-pekari"
+  },
+  {
+    "id": "site-poni-appaluza",
+    "name": "Пони Аппалуза",
+    "url": "https://animal-park.by/galereya/galereya/poni-appaluza.html",
+    "slug": "poni-appaluza"
+  },
+  {
+    "id": "site-poni",
+    "name": "Пони",
+    "url": "https://animal-park.by/galereya/galereya/poni.html",
+    "slug": "poni"
+  },
+  {
+    "id": "site-yak",
+    "name": "Як",
+    "url": "https://animal-park.by/galereya/galereya/yak.html",
+    "slug": "yak"
+  },
+  {
+    "id": "site-alpaka",
+    "name": "Альпака",
+    "url": "https://animal-park.by/galereya/galereya/alpaka.html",
+    "slug": "alpaka"
+  },
+  {
+    "id": "site-dzhersejskaya-poroda",
+    "name": "Джерсейская порода",
+    "url": "https://animal-park.by/galereya/galereya/dzhersejskaya-poroda.html",
+    "slug": "dzhersejskaya-poroda"
+  },
+  {
+    "id": "site-hijlend",
+    "name": "Хайленд",
+    "url": "https://animal-park.by/galereya/galereya/hijlend.html",
+    "slug": "hijlend"
+  },
+  {
+    "id": "site-ajshirskaya-poroda",
+    "name": "Айширская порода",
+    "url": "https://animal-park.by/galereya/galereya/ajshirskaya-poroda.html",
+    "slug": "ajshirskaya-poroda"
+  },
+  {
+    "id": "site-belgijskaya-golubaya-poroda",
+    "name": "Бельгийская голубая порода (Блан-Блю-Бельж)",
+    "url": "https://animal-park.by/galereya/galereya/belgijskaya-golubaya-poroda.html",
+    "slug": "belgijskaya-golubaya-poroda"
+  },
+  {
+    "id": "site-belka-evropejskaya",
+    "name": "Белка Европейская",
+    "url": "https://animal-park.by/galereya/galereya/belka-evropejskaya.html",
+    "slug": "belka-evropejskaya"
+  },
+  {
+    "id": "site-dvuxczvetnaya-belka",
+    "name": "Двухцветная белка (двухцветная ратуфа)",
+    "url": "https://animal-park.by/galereya/galereya/dvuxczvetnaya-belka.html",
+    "slug": "dvuxczvetnaya-belka"
+  },
+  {
+    "id": "site-dekorativnyij-krolik",
+    "name": "Декоративный Кролик",
+    "url": "https://animal-park.by/galereya/galereya/dekorativnyij-krolik.html",
+    "slug": "dekorativnyij-krolik"
+  },
+  {
+    "id": "site-enot-poloskun",
+    "name": "Енот-Полоскун",
+    "url": "https://animal-park.by/galereya/galereya/enot-poloskun.html",
+    "slug": "enot-poloskun"
+  },
+  {
+    "id": "site-kenguru-benneta",
+    "name": "Кенгуру Беннета",
+    "url": "https://animal-park.by/galereya/galereya/kenguru-benneta.html",
+    "slug": "kenguru-benneta"
+  },
+  {
+    "id": "site-bolshoj-ryizhij-kenguru",
+    "name": "Большой рыжий кенгуру",
+    "url": "https://animal-park.by/galereya/galereya/bolshoj-ryizhij-kenguru.html",
+    "slug": "bolshoj-ryizhij-kenguru"
+  },
+  {
+    "id": "site-kinkazhu",
+    "name": "Кинкажу",
+    "url": "https://animal-park.by/galereya/galereya/kinkazhu.html",
+    "slug": "kinkazhu"
+  },
+  {
+    "id": "site-vintorogij-kozel",
+    "name": "Винторогий козел",
+    "url": "https://animal-park.by/galereya/galereya/vintorogij-kozel.html",
+    "slug": "vintorogij-kozel"
+  },
+  {
+    "id": "site-sibirskij-gornyij-kozel",
+    "name": "Сибирский горный козел",
+    "url": "https://animal-park.by/galereya/galereya/sibirskij-gornyij-kozel.html",
+    "slug": "sibirskij-gornyij-kozel"
+  },
+  {
+    "id": "site-indijskij-dikobraz",
+    "name": "Индийский дикообраз",
+    "url": "https://animal-park.by/galereya/galereya/indijskij-dikobraz.html",
+    "slug": "indijskij-dikobraz"
+  },
+  {
+    "id": "site-degu",
+    "name": "Дегу",
+    "url": "https://animal-park.by/galereya/galereya/degu.html",
+    "slug": "degu"
+  },
+  {
+    "id": "site-paka",
+    "name": "Пака",
+    "url": "https://animal-park.by/galereya/galereya/paka.html",
+    "slug": "paka"
+  },
+  {
+    "id": "site-karakal",
+    "name": "Каракал",
+    "url": "https://animal-park.by/galereya/galereya/karakal.html",
+    "slug": "karakal"
+  },
+  {
+    "id": "site-xorek-fretka",
+    "name": "Хорек Фретка",
+    "url": "https://animal-park.by/galereya/galereya/xorek-fretka.html",
+    "slug": "xorek-fretka"
+  },
+  {
+    "id": "site-koshachiy-lemur",
+    "name": "Кошачий лемур",
+    "url": "https://animal-park.by/galereya/galereya/koshachiy-lemur.html",
+    "slug": "koshachiy-lemur"
+  },
+  {
+    "id": "site-obyiknovennaya-igrunka",
+    "name": "Обыкновенная игрунка",
+    "url": "https://animal-park.by/galereya/galereya/obyiknovennaya-igrunka.html",
+    "slug": "obyiknovennaya-igrunka"
+  },
+  {
+    "id": "site-letuchaya-sobaka",
+    "name": "Летучая собака",
+    "url": "https://animal-park.by/galereya/galereya/letuchaya-sobaka.html",
+    "slug": "letuchaya-sobaka"
+  },
+  {
+    "id": "site-giganskaya-letuchaya-lisicza",
+    "name": "Гиганская летучая лисица (Калонг)",
+    "url": "https://animal-park.by/galereya/galereya/giganskaya-letuchaya-lisicza.html",
+    "slug": "giganskaya-letuchaya-lisicza"
+  },
+  {
+    "id": "site-malajskaya-palmovaya-czivetta",
+    "name": "Малайская Пальмовая Циветта",
+    "url": "https://animal-park.by/galereya/galereya/malajskaya-palmovaya-czivetta.html",
+    "slug": "malajskaya-palmovaya-czivetta"
+  },
+  {
+    "id": "site-mangust-zhyoltyij",
+    "name": "Мангуст жёлтый",
+    "url": "https://animal-park.by/galereya/galereya/mangust-zhyoltyij.html",
+    "slug": "mangust-zhyoltyij"
+  },
+  {
+    "id": "site-morskaya-svinka",
+    "name": "Морская Свинка",
+    "url": "https://animal-park.by/galereya/galereya/morskaya-svinka.html",
+    "slug": "morskaya-svinka"
+  },
+  {
+    "id": "site-nosuxa",
+    "name": "Носуха",
+    "url": "https://animal-park.by/galereya/galereya/nosuxa.html",
+    "slug": "nosuxa"
+  },
+  {
+    "id": "site-vetnamskaya-veslobryuxaya-svinya",
+    "name": "Вьетнамская веслобрюхая свинья",
+    "url": "https://animal-park.by/galereya/galereya/vetnamskaya-veslobryuxaya-svinya.html",
+    "slug": "vetnamskaya-veslobryuxaya-svinya"
+  },
+  {
+    "id": "site-nutriya",
+    "name": "Нутрия",
+    "url": "https://animal-park.by/galereya/galereya/nutriya.html",
+    "slug": "nutriya"
+  },
+  {
+    "id": "site-patagonskaya-mara",
+    "name": "Патагонская Мара",
+    "url": "https://animal-park.by/galereya/galereya/patagonskaya-mara.html",
+    "slug": "patagonskaya-mara"
+  },
+  {
+    "id": "site-polosatyij-mangust",
+    "name": "Полосатый Мангуст",
+    "url": "https://animal-park.by/galereya/galereya/polosatyij-mangust.html",
+    "slug": "polosatyij-mangust"
+  },
+  {
+    "id": "site-polosatyij-skuns",
+    "name": "Полосатый Скунс",
+    "url": "https://animal-park.by/galereya/galereya/polosatyij-skuns.html",
+    "slug": "polosatyij-skuns"
+  },
+  {
+    "id": "site-dagestanskij-tur",
+    "name": "Дагестанский тур",
+    "url": "https://animal-park.by/galereya/galereya/dagestanskij-tur.html",
+    "slug": "dagestanskij-tur"
+  },
+  {
+    "id": "site-surikatyi",
+    "name": "Сурикаты",
+    "url": "https://animal-park.by/galereya/galereya/surikatyi.html",
+    "slug": "surikatyi"
+  },
+  {
+    "id": "site-shinshilla",
+    "name": "Шиншилла",
+    "url": "https://animal-park.by/galereya/galereya/shinshilla.html",
+    "slug": "shinshilla"
+  },
+  {
+    "id": "site-primatyi",
+    "name": "Бурый Капуцин",
+    "url": "https://animal-park.by/galereya/galereya/primatyi.html",
+    "slug": "primatyi"
+  },
+  {
+    "id": "site-obezyana-makak-yavanskaya",
+    "name": "Обезьяна Макак Яванская",
+    "url": "https://animal-park.by/galereya/galereya/obezyana-makak-yavanskaya.html",
+    "slug": "obezyana-makak-yavanskaya"
+  },
+  {
+    "id": "site-sajmiri-belichij",
+    "name": "Саймири Беличий",
+    "url": "https://animal-park.by/galereya/galereya/sajmiri-belichij.html",
+    "slug": "sajmiri-belichij"
+  },
+  {
+    "id": "site-tamarin-krasnorukij",
+    "name": "Тамарин Краснорукий",
+    "url": "https://animal-park.by/galereya/galereya/tamarin-krasnorukij.html",
+    "slug": "tamarin-krasnorukij"
+  },
+  {
+    "id": "site-polyarnaya-sova",
+    "name": "Полярная Сова",
+    "url": "https://animal-park.by/galereya/galereya/polyarnaya-sova.html",
+    "slug": "polyarnaya-sova"
+  },
+  {
+    "id": "site-ushastaya-sova",
+    "name": "Ушастая сова",
+    "url": "https://animal-park.by/galereya/galereya/ushastaya-sova.html",
+    "slug": "ushastaya-sova"
+  },
+  {
+    "id": "site-belyij-aist",
+    "name": "Белый Аист",
+    "url": "https://animal-park.by/galereya/galereya/belyij-aist.html",
+    "slug": "belyij-aist"
+  },
+  {
+    "id": "site-amerikanskij-bizon",
+    "name": "Американский Бизон",
+    "url": "https://animal-park.by/galereya/galereya/amerikanskij-bizon.html",
+    "slug": "amerikanskij-bizon"
+  },
+  {
+    "id": "site-kanyuk-objiknovenniy",
+    "name": "Канюк обыкновенный",
+    "url": "https://animal-park.by/galereya/galereya/kanyuk-objiknovenniy.html",
+    "slug": "kanyuk-objiknovenniy"
+  },
+  {
+    "id": "site-sipuxa",
+    "name": "Сипуха",
+    "url": "https://animal-park.by/galereya/galereya/sipuxa.html",
+    "slug": "sipuxa"
+  },
+  {
+    "id": "site-filin",
+    "name": "Филин",
+    "url": "https://animal-park.by/galereya/galereya/filin.html",
+    "slug": "filin"
+  },
+  {
+    "id": "site-grifovaya-czesarka",
+    "name": "Грифовая Цесарка",
+    "url": "https://animal-park.by/galereya/galereya/grifovaya-czesarka.html",
+    "slug": "grifovaya-czesarka"
+  },
+  {
+    "id": "site-zolotoj-fazan",
+    "name": "Золотой Фазан",
+    "url": "https://animal-park.by/galereya/galereya/zolotoj-fazan.html",
+    "slug": "zolotoj-fazan"
+  },
+  {
+    "id": "site-sudanskij-kozyol",
+    "name": "Суданский козёл",
+    "url": "https://animal-park.by/galereya/galereya/sudanskij-kozyol.html",
+    "slug": "sudanskij-kozyol"
+  },
+  {
+    "id": "site-pavlin",
+    "name": "Павлин",
+    "url": "https://animal-park.by/galereya/galereya/pavlin.html",
+    "slug": "pavlin"
+  },
+  {
+    "id": "site-popugaj-volnistyij",
+    "name": "Попугай Волнистый",
+    "url": "https://animal-park.by/galereya/galereya/popugaj-volnistyij.html",
+    "slug": "popugaj-volnistyij"
+  },
+  {
+    "id": "site-sine-zheltyij-ara",
+    "name": "Сине-желтый ара",
+    "url": "https://animal-park.by/galereya/galereya/sine-zheltyij-ara.html",
+    "slug": "sine-zheltyij-ara"
+  },
+  {
+    "id": "site-popugaj-korella",
+    "name": "Попугай Корелла",
+    "url": "https://animal-park.by/galereya/galereya/popugaj-korella.html",
+    "slug": "popugaj-korella"
+  },
+  {
+    "id": "site-rozovoshhekie-nerazluchniki",
+    "name": "Розовощекие неразлучники",
+    "url": "https://animal-park.by/galereya/galereya/rozovoshhekie-nerazluchniki.html",
+    "slug": "rozovoshhekie-nerazluchniki"
+  },
+  {
+    "id": "site-popugaj-kramera",
+    "name": "Ожереловый попугай Кра́мера",
+    "url": "https://animal-park.by/galereya/galereya/popugaj-kramera.html",
+    "slug": "popugaj-kramera"
+  },
+  {
+    "id": "site-risovka",
+    "name": "Рисовка",
+    "url": "https://animal-park.by/galereya/galereya/risovka.html",
+    "slug": "risovka"
+  },
+  {
+    "id": "site-serebryannyij-fazan",
+    "name": "Серебряный Фазан",
+    "url": "https://animal-park.by/galereya/galereya/serebryannyij-fazan.html",
+    "slug": "serebryannyij-fazan"
+  },
+  {
+    "id": "site-sinij-ushastyij-fazan",
+    "name": "Синий Ушастый Фазан",
+    "url": "https://animal-park.by/galereya/galereya/sinij-ushastyij-fazan.html",
+    "slug": "sinij-ushastyij-fazan"
+  },
+  {
+    "id": "site-fenek",
+    "name": "Фенек",
+    "url": "https://animal-park.by/galereya/galereya/fenek.html",
+    "slug": "fenek"
+  },
+  {
+    "id": "site-fazan-oxotnichij",
+    "name": "Фазан Румынский",
+    "url": "https://animal-park.by/galereya/galereya/fazan-oxotnichij.html",
+    "slug": "fazan-oxotnichij"
+  },
+  {
+    "id": "site-snegir",
+    "name": "Снегирь",
+    "url": "https://animal-park.by/galereya/galereya/snegir.html",
+    "slug": "snegir"
+  },
+  {
+    "id": "site-dikaya-smeyuschayasya-gorlicza",
+    "name": "Дикая смеющаяся горлица",
+    "url": "https://animal-park.by/galereya/galereya/dikaya-smeyuschayasya-gorlicza.html",
+    "slug": "dikaya-smeyuschayasya-gorlicza"
+  },
+  {
+    "id": "site-kolchataya-gorlicza",
+    "name": "Кольчатая горлица",
+    "url": "https://animal-park.by/galereya/galereya/kolchataya-gorlicza.html",
+    "slug": "kolchataya-gorlicza"
+  },
+  {
+    "id": "site-lentochnyij-gus",
+    "name": "Ленточный гусь",
+    "url": "https://animal-park.by/galereya/galereya/lentochnyij-gus.html",
+    "slug": "lentochnyij-gus"
+  },
+  {
+    "id": "site-gus-gummenik",
+    "name": "Холмогорский гусь",
+    "url": "https://animal-park.by/galereya/galereya/gus-gummenik.html",
+    "slug": "gus-gummenik"
+  },
+  {
+    "id": "site-goluboj-baran",
+    "name": "Голубой баран",
+    "url": "https://animal-park.by/galereya/galereya/goluboj-baran.html",
+    "slug": "goluboj-baran"
+  },
+  {
+    "id": "site-zhuravl-krasavka",
+    "name": "Журавль Красавка",
+    "url": "https://animal-park.by/galereya/galereya/zhuravl-krasavka.html",
+    "slug": "zhuravl-krasavka"
+  },
+  {
+    "id": "site-venczenosnyij-zhuravl",
+    "name": "Венценосный Журавль",
+    "url": "https://animal-park.by/galereya/galereya/venczenosnyij-zhuravl.html",
+    "slug": "venczenosnyij-zhuravl"
+  },
+  {
+    "id": "site-osoed",
+    "name": "Осоед",
+    "url": "https://animal-park.by/galereya/galereya/osoed.html",
+    "slug": "osoed"
+  },
+  {
+    "id": "site-yastreb-teterevyatnik",
+    "name": "Ястреб-тетеревятник",
+    "url": "https://animal-park.by/galereya/galereya/yastreb-teterevyatnik.html",
+    "slug": "yastreb-teterevyatnik"
+  },
+  {
+    "id": "site-obyiknovennaya-pustelga",
+    "name": "Обыкновенная пустельга",
+    "url": "https://animal-park.by/galereya/galereya/obyiknovennaya-pustelga.html",
+    "slug": "obyiknovennaya-pustelga"
+  },
+  {
+    "id": "site-zhuravl-seryij",
+    "name": "Журавль Серый",
+    "url": "https://animal-park.by/galereya/galereya/zhuravl-seryij.html",
+    "slug": "zhuravl-seryij"
+  },
+  {
+    "id": "site-severnyij-olen",
+    "name": "Северный олень",
+    "url": "https://animal-park.by/galereya/galereya/severnyij-olen.html",
+    "slug": "severnyij-olen"
+  },
+  {
+    "id": "site-lebed-shipun",
+    "name": "Лебедь-шипун",
+    "url": "https://animal-park.by/galereya/galereya/lebed-shipun.html",
+    "slug": "lebed-shipun"
+  },
+  {
+    "id": "site-muskusnaya-utka",
+    "name": "Мускусная Утка",
+    "url": "https://animal-park.by/galereya/galereya/muskusnaya-utka.html",
+    "slug": "muskusnaya-utka"
+  },
+  {
+    "id": "site-nandu",
+    "name": "Нанду",
+    "url": "https://animal-park.by/galereya/galereya/nandu.html",
+    "slug": "nandu"
+  },
+  {
+    "id": "site-straus-afrikanskij",
+    "name": "Страус Африканский",
+    "url": "https://animal-park.by/galereya/galereya/straus-afrikanskij.html",
+    "slug": "straus-afrikanskij"
+  },
+  {
+    "id": "site-utka-kryakva",
+    "name": "Утка кряква",
+    "url": "https://animal-park.by/galereya/galereya/utka-kryakva.html",
+    "slug": "utka-kryakva"
+  },
+  {
+    "id": "site-chyornyij-zhuravl",
+    "name": "Чёрный Аист",
+    "url": "https://animal-park.by/galereya/galereya/chyornyij-zhuravl.html",
+    "slug": "chyornyij-zhuravl"
+  },
+  {
+    "id": "site-yaponskij-zhuravl",
+    "name": "Японский Журавль",
+    "url": "https://animal-park.by/galereya/galereya/yaponskij-zhuravl.html",
+    "slug": "yaponskij-zhuravl"
+  }
+]
