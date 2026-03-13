@@ -62,21 +62,20 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-[var(--bg)]">
-      <div className="flex flex-col h-full min-h-0 mx-auto w-full max-w-[480px]">
-        <header className="shrink-0 px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-card)] flex items-center gap-3 safe-area-padding">
-          <Link
-            to="/more"
-            className="p-2 -ml-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] touch-manipulation"
-            aria-label="Назад"
-          >
-            <ChevronDownIcon className="w-5 h-5 rotate-90" />
-          </Link>
-          <h1 className="text-base font-semibold text-[var(--text)]">Настройки</h1>
-        </header>
+    <div className="flex flex-col h-full min-h-0 max-w-[480px] mx-auto">
+      <header className="shrink-0 px-4 py-4 safe-area bg-[var(--header-bg)] rounded-b-2xl shadow-[0_4px_20px_rgba(45,74,26,0.15)] flex items-center gap-3">
+        <Link
+          to="/more"
+          className="p-2 -ml-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 touch-manipulation transition-colors"
+          aria-label="Назад"
+        >
+          <ChevronDownIcon className="w-5 h-5 rotate-90" />
+        </Link>
+        <h1 className="text-xl font-bold text-white tracking-tight">Настройки</h1>
+      </header>
 
-        <main className="flex-1 overflow-auto p-4 space-y-4">
-          <section className="rounded-2xl p-4 card">
+      <main className="flex-1 overflow-auto p-4 py-5 space-y-4 min-h-0">
+          <section className="card p-5">
             <h2 className="text-sm font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
               <SettingsIcon className="w-4 h-4 text-[var(--text-muted)]" />
               API
@@ -93,7 +92,7 @@ export default function SettingsPage() {
                   onChange={setVal('remoteApiUrl')}
                   onBlur={handleSave}
                   placeholder="https://..."
-                  className="w-full rounded-lg input px-3 py-2.5 text-sm text-[var(--text)] min-h-[40px] focus:ring-2 focus:ring-[var(--accent)]/30"
+                  className="w-full input px-4 py-3 text-sm text-[var(--text)] min-h-[48px] rounded-xl"
                 />
               </label>
               <label className="block">
@@ -104,7 +103,7 @@ export default function SettingsPage() {
                   onChange={setVal('apiToken')}
                   onBlur={handleSave}
                   placeholder="X-API-Key"
-                  className="w-full rounded-lg input px-3 py-2.5 text-sm text-[var(--text)] min-h-[40px] focus:ring-2 focus:ring-[var(--accent)]/30"
+                  className="w-full input px-4 py-3 text-sm text-[var(--text)] min-h-[48px] rounded-xl"
                 />
               </label>
             </div>
@@ -139,14 +138,13 @@ export default function SettingsPage() {
             )}
           </section>
 
-          <section className="rounded-2xl p-4 card">
+          <section className="card p-5">
             <h2 className="text-sm font-semibold text-[var(--text)] mb-2">О приложении</h2>
             <p className="text-xs text-[var(--text-muted)]">
               Карта парка. Вольеры и привязка хранятся локально.
             </p>
           </section>
-        </main>
-      </div>
+      </main>
     </div>
   );
 }

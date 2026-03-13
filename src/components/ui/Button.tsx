@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -12,11 +12,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseStyles =
-  'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--bg)] disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[44px] sm:min-h-[2.25rem]';
+  'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--bg)] disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[44px] sm:min-h-[2.25rem]';
 
 const variants: Record<ButtonVariant, string> = {
-  primary: 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] focus:ring-[var(--accent)]/50',
-  secondary: 'bg-[var(--bg-card)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--bg-hover)] focus:ring-[var(--text-muted)]',
+  primary: 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] focus:ring-[var(--accent)]/50 shadow-md',
+  secondary: 'bg-[var(--bg-card)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--bg-hover)] focus:ring-[var(--text-muted)] shadow-sm',
   danger: 'bg-red-500/90 text-white hover:bg-red-500 focus:ring-red-500/30',
   ghost: 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] focus:ring-[var(--text-muted)]',
 };

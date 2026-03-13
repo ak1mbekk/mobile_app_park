@@ -49,6 +49,12 @@ export const ChevronDownIcon = ({ className = iconClass }: { className?: string 
   </svg>
 );
 
+export const ChevronLeftIcon = ({ className = iconClass }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
 export const LayersIcon = ({ className = iconClass }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="12 2 2 7 12 12 22 7 12 2" />
@@ -143,6 +149,27 @@ export const PawIcon = ({ className = iconClass }: { className?: string }) => (
     <circle cx="18" cy="8" r="2" />
     <circle cx="20" cy="16" r="2" />
     <path d="M9 10a5 5 0 0 0-5 5v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3a5 5 0 0 0-5-5Z" />
+  </svg>
+);
+
+export const LocateIcon = ({ className = iconClass }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+export const PlusIcon = ({ className = iconClass }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+export const MinusIcon = ({ className = iconClass }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 

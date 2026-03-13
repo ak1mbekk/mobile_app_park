@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
+import PageLayout from '../components/layout/PageLayout';
 import {
   NewspaperIcon,
   UserIcon,
@@ -8,7 +10,7 @@ import {
   ChevronDownIcon,
 } from '../components/icons';
 
-const MORE_ITEMS = [
+const ITEMS = [
   { path: '/news', label: 'Новости', icon: NewspaperIcon },
   { path: '/profile', label: 'Личный кабинет', icon: UserIcon },
   { path: '/info', label: 'Доп. информация', icon: InfoIcon },
@@ -16,32 +18,34 @@ const MORE_ITEMS = [
 ] as const;
 
 export default function MorePage() {
-  const navigate = useNavigate();
-
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="mx-auto w-full max-w-[480px] flex flex-col h-full">
-        <header className="shrink-0 px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-card)]">
-          <h1 className="text-base font-semibold text-[var(--text)]">Ещё</h1>
-        </header>
-        <div className="flex-1 overflow-auto p-4">
-          <div className="rounded-2xl overflow-hidden card divide-y divide-[var(--border)]">
-            {MORE_ITEMS.map(({ path, label, icon: Icon }) => (
+    <div className="max-w-[480px] mx-auto h-full flex flex-col min-h-0">
+      <PageLayout title="Ещё" subtitle="Меню приложения">
+        <div className="card overflow-hidden divide-y divide-[var(--border)]">
+          {ITEMS.map(({ path, label, icon: Icon }, i) => (
+            <motion.div
+              key={path}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              whileTap={{ scale: 0.99 }}
+            >
               <Link
-                key={path}
                 to={path}
-                className="flex items-center justify-between gap-3 px-4 py-3.5 text-[var(--text)] hover:bg-[var(--bg-hover)] active:bg-[var(--bg-input)] touch-manipulation"
+                className="flex items-center justify-between px-4 py-4 text-[var(--text)] hover:bg-[var(--bg-hover)] active:bg-[var(--bg-input)] touch-manipulation transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5 text-[var(--text-muted)] shrink-0" />
+                  <div className="w-10 h-10 rounded-xl bg-[var(--bg-input)] flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-[var(--text-muted)]" />
+                  </div>
                   <span className="font-medium">{label}</span>
                 </div>
-                <ChevronDownIcon className="w-5 h-5 text-[var(--text-soft)] rotate-[-90deg] shrink-0" />
+                <ChevronDownIcon className="w-5 h-5 text-[var(--text-soft)] -rotate-90 shrink-0" />
               </Link>
-            ))}
-          </div>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      </PageLayout>
     </div>
   );
 }

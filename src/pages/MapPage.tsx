@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useMapImage } from '../hooks/useMapImage';
@@ -11,9 +12,9 @@ import Button from '../components/ui/Button';
 import {
   UploadIcon,
   TrashIcon,
-  PencilDrawIcon,
   DotsVerticalIcon,
   SettingsIcon,
+  ChevronLeftIcon,
 } from '../components/icons';
 import { getPedestrianRoute, getPedestrianRouteMulti, formatDistance, formatDuration } from '../utils/routePedestrian';
 import { getLocalAnimals } from '../utils/remoteApi';
@@ -62,46 +63,12 @@ export default function MapPage() {
     clearAll,
   } = useMapAnnotations();
   const {
-    anchors,
-    setAnchors,
-    clearAnchors,
-    saveAnchorsToApiNow,
     effectiveGeoBounds,
     hasEnoughAnchors,
     homography,
-    geoCorners4,
   } = useMapAnchors();
 
-  const handleSaveAlign = useCallback(
-    (corners: [number, number][]) => {
-      if (!corners || corners.length !== 4) return;
-      const newAnchors = [
-        {
-          image: { x: 0, y: 0 },
-          geo: { lat: corners[0][0], lng: corners[0][1] },
-        },
-        {
-          image: { x: 1, y: 0 },
-          geo: { lat: corners[1][0], lng: corners[1][1] },
-        },
-        {
-          image: { x: 1, y: 1 },
-          geo: { lat: corners[2][0], lng: corners[2][1] },
-        },
-        {
-          image: { x: 0, y: 1 },
-          geo: { lat: corners[3][0], lng: corners[3][1] },
-        },
-      ];
-      setAnchors(newAnchors);
-      saveAnchorsToApiNow(newAnchors).then(() => {
-        // Успех — можно показать toast при наличии
-      });
-    },
-    [setAnchors, saveAnchorsToApiNow]
-  );
-
-  const [layerMode, setLayerMode] = useState<'plan' | 'map' | 'align'>('plan');
+  const [layerMode, setLayerMode] = useState<'plan' | 'map'>('map');
   const [drawMode, setDrawMode] = useState<'enclosure' | null>(null);
   const [moveMarkersMode, setMoveMarkersMode] = useState(false);
   const [draftPolygonPoints, setDraftPolygonPoints] = useState<{ x: number; y: number }[]>([]);
@@ -146,7 +113,7 @@ export default function MapPage() {
         if (effectiveGeoBounds && homography) {
           [lat, lng] = normalizedToGeo(marker.x, marker.y, effectiveGeoBounds, homography);
         } else {
-          setNavError('Для маршрута включите слой «Карта» или настройте привязку.');
+          setNavError('Для маршрута включите слой «Карта».');
           return;
         }
       }
@@ -357,7 +324,7 @@ export default function MapPage() {
   const handleQuickRouteBuild = useCallback(
     async (routeId: string) => {
       if (!effectiveGeoBounds || !homography) {
-        setNavError('Для маршрута нужна привязка карты. Добавьте якоря в режиме «Привязка» или включите слой «Карта».');
+        setNavError('Для маршрута включите слой «Карта».');
         return;
       }
       const route = QUICK_ROUTES.find((r) => r.id === routeId);
@@ -442,25 +409,50 @@ export default function MapPage() {
     [getMarkerGeo, markers]
   );
 
-  return (
-    <div className="flex flex-col h-full min-h-0 bg-[var(--bg)]">
-      <div className="flex flex-col h-full min-h-0 mx-auto w-full max-w-[480px] bg-[var(--bg-card)] shadow-[var(--shadow-lg)] md:border-x border-[var(--border)]">
-      <header className="shrink-0 px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-card)] safe-area-padding">
-        <div className="flex items-center justify-between">
-          <h1 className="text-base font-semibold text-[var(--text)]">Карта</h1>
-          <Link
-            to="/settings"
-            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] touch-manipulation"
-            aria-label="Настройки"
-          >
-            <SettingsIcon className="w-5 h-5" />
-          </Link>
-        </div>
-      </header>
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapHeight, setMapHeight] = useState(600);
 
-      <main className="flex-1 overflow-auto p-4 space-y-4 pb-0 min-h-0">
+  useEffect(() => {
+    const el = mapContainerRef.current;
+    if (!el || !image) return;
+    const ro = new ResizeObserver(() => setMapHeight(el.offsetHeight));
+    ro.observe(el);
+    setMapHeight(el.offsetHeight);
+    return () => ro.disconnect();
+  }, [image]);
+
+  return (
+    <div
+      className={`flex flex-col h-full min-h-0 w-full ${image ? '' : 'max-w-[480px] mx-auto'}`}
+      style={image ? undefined : { background: 'var(--bg)' }}
+    >
+      <main
+        className={`flex-1 min-h-0 flex flex-col relative ${
+          image ? 'overflow-hidden safe-area' : 'overflow-auto px-4 pt-4 pb-5 space-y-4'
+        }`}
+      >
+        {/* Кнопка назад — всегда на странице карты */}
+        <motion.div
+          className="absolute top-0 left-0 z-[2000] safe-area p-3"
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <Link
+            to="/more"
+            className="flex items-center justify-center w-11 h-11 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-white/50 text-[var(--text)] hover:bg-white touch-manipulation"
+          >
+            <ChevronLeftIcon className="w-6 h-6" />
+          </Link>
+        </motion.div>
+
         {!image ? (
-          <div className="rounded-2xl p-6 card">
+          <motion.div
+            className="card p-8 mt-16"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
             <EmptyState
               icon="🗺️"
               title="Нет карты"
@@ -487,244 +479,30 @@ export default function MapPage() {
                     placeholder="Или URL картинки"
                     value={image || ''}
                     onChange={(e) => setImage(e.target.value)}
-                    className="w-full rounded-lg input px-3 py-2 text-sm min-h-[40px] text-[var(--text)] placeholder-[var(--text-soft)] focus:ring-2 focus:ring-[var(--accent)]/30"
+                    className="w-full input px-4 py-3 text-sm min-h-[48px] text-[var(--text)] placeholder-[var(--text-soft)] rounded-xl"
                   />
                 </div>
               }
             />
-          </div>
+          </motion.div>
         ) : (
-          <div className="space-y-3">
-            {/* Режим: План | Карта | Привязка */}
-            <div className="flex gap-1 p-1 rounded-lg bg-[var(--bg-input)]">
-              {(['plan', 'map', 'align'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  disabled={mode === 'map' && !hasEnoughAnchors}
-                  title={mode === 'map' && !hasEnoughAnchors ? 'Нужна привязка' : ''}
-                  onClick={() => {
-                    setLayerMode(mode);
-                    if (mode !== 'plan') setDrawMode(null);
-                    setDraftPolygonPoints([]);
-                  }}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium touch-manipulation transition-all ${
-                    layerMode === mode
-                      ? 'tab-active text-[var(--text)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {mode === 'plan' ? 'План' : mode === 'map' ? 'Карта' : 'Привязка'}
-                </button>
-              ))}
-            </div>
-
-            {/* Рисование вольеров (только в Плане) */}
-            {layerMode === 'plan' && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDrawMode((m) => (m === 'enclosure' ? null : 'enclosure'));
-                    setDraftPolygonPoints([]);
-                  }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm touch-manipulation ${
-                    drawMode === 'enclosure'
-                      ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-                      : 'card text-[var(--text-muted)]'
-                  }`}
-                >
-                  <PencilDrawIcon className="w-4 h-4" />
-                  Вольер
-                </button>
-                {drawMode === 'enclosure' && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={finishEnclosure}
-                      className="px-3 py-2 rounded-lg text-sm card text-[var(--text)] touch-manipulation"
-                    >
-                      ✓
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelDraw}
-                      className="px-3 py-2 rounded-lg text-sm card text-[var(--text-muted)] touch-manipulation"
-                    >
-                      ✕
-                    </button>
-                    {draftPolygonPoints.length > 0 && (
-                      <span className="text-xs text-[var(--text-soft)]">{draftPolygonPoints.length} точек</span>
-                    )}
-                  </>
-                )}
-                <span className="flex-1" />
-                <div className="relative" ref={mapMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setMapMenuOpen((v) => !v)}
-                    className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] touch-manipulation"
-                    aria-expanded={mapMenuOpen}
-                  >
-                    <DotsVerticalIcon className="w-5 h-5" />
-                  </button>
-                  {mapMenuOpen && (
-                    <div className="absolute right-0 top-full mt-1 z-[1000] min-w-[160px] rounded-lg py-1 card-md" >
-                      <button
-                        type="button"
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] text-[var(--text)]"
-                        onClick={() => {
-                          const input = document.createElement('input');
-                          input.type = 'file';
-                          input.accept = 'image/*';
-                          input.onchange = (e) => {
-                            const f = (e.target as HTMLInputElement).files?.[0];
-                            if (f) setFromFile(f);
-                          };
-                          input.click();
-                          setMapMenuOpen(false);
-                        }}
-                      >
-                        <UploadIcon className="w-4 h-4" />
-                        Загрузить карту
-                      </button>
-                      <button
-                        type="button"
-                        disabled={anchors.length < 2}
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] text-[var(--text)] disabled:opacity-50"
-                        onClick={() => {
-                          if (anchors.length >= 2 && window.confirm('Очистить привязку?')) {
-                            clearAnchors();
-                            setMapMenuOpen(false);
-                          }
-                        }}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                        Очистить привязку
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] text-red-600"
-                        onClick={() => {
-                          if (window.confirm('Удалить вольеры?')) {
-                            clearAll();
-                            setMapMenuOpen(false);
-                          }
-                        }}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                        Удалить вольеры
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] text-red-600 rounded-b-xl"
-                        onClick={() => {
-                          if (window.confirm('Удалить карту?')) {
-                            clearImage();
-                            setMapMenuOpen(false);
-                          }
-                        }}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                        Удалить карту
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {layerMode !== 'plan' && (
-              <div className="flex justify-end">
-                <div className="relative" ref={mapMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setMapMenuOpen((v) => !v)}
-                    className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] touch-manipulation"
-                    aria-expanded={mapMenuOpen}
-                  >
-                    <DotsVerticalIcon className="w-5 h-5" />
-                  </button>
-                  {mapMenuOpen && (
-                    <div className="absolute right-0 top-full mt-1 z-[1000] min-w-[160px] rounded-lg py-1 card-md" >
-                      <button
-                        type="button"
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] text-[var(--text)]"
-                        onClick={() => {
-                          const input = document.createElement('input');
-                          input.type = 'file';
-                          input.accept = 'image/*';
-                          input.onchange = (e) => {
-                            const f = (e.target as HTMLInputElement).files?.[0];
-                            if (f) setFromFile(f);
-                          };
-                          input.click();
-                          setMapMenuOpen(false);
-                        }}
-                      >
-                        <UploadIcon className="w-4 h-4" />
-                        Загрузить карту
-                      </button>
-                      <button
-                        type="button"
-                        disabled={anchors.length < 2}
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] text-[var(--text)] disabled:opacity-50"
-                        onClick={() => {
-                          if (anchors.length >= 2 && window.confirm('Очистить привязку?')) {
-                            clearAnchors();
-                            setMapMenuOpen(false);
-                          }
-                        }}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                        Очистить привязку
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] text-red-600 rounded-b-xl"
-                        onClick={() => {
-                          if (window.confirm('Удалить карту?')) {
-                            clearImage();
-                            setMapMenuOpen(false);
-                          }
-                        }}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                        Удалить карту
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Маршруты поверх карты */}
-            <div className="relative rounded-2xl overflow-hidden card">
-              {image && (
-                <div className="absolute top-2 left-2 right-2 z-[100] flex gap-2 overflow-x-auto scrollbar-none pb-1">
-                  {QUICK_ROUTES.map((route) => {
-                    const count = route.indices.filter((i) => markers[i]).length;
-                    if (count === 0) return null;
-                    return (
-                      <button
-                        key={route.id}
-                        type="button"
-                        onClick={() => handleQuickRouteBuild(route.id)}
-                        className="shrink-0 px-3 py-2 rounded-lg text-sm font-medium bg-[var(--bg-card)] text-[var(--text)] shadow touch-manipulation hover:bg-[var(--bg-hover)]"
-                      >
-                        {route.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              <div className="rounded-2xl overflow-hidden">
-              <MapImage
+          <div className="relative h-full w-full">
+            {/* Полноэкранная карта */}
+            <motion.div
+              ref={mapContainerRef}
+              className="absolute inset-0 z-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.25 }}
+            >
+              <div className="h-full w-full overflow-hidden">
+                <MapImage
                 image={image}
                 markers={markers}
                 showLabels
                 zoomable
-                height={600}
+                height={mapHeight}
+                fullBleed
                 enablePicker={
                   !moveMarkersMode &&
                   drawMode === 'enclosure' &&
@@ -742,10 +520,6 @@ export default function MapPage() {
                 layerMode={layerMode}
                 geoBounds={effectiveGeoBounds}
                 homography={homography}
-                anchors={anchors}
-                onSaveAlign={
-                  layerMode === 'align' ? handleSaveAlign : undefined
-                }
                 onNavigateToMarker={
                   (layerMode === 'map' || hasEnoughAnchors)
                     ? handleNavigateToMarker
@@ -754,16 +528,153 @@ export default function MapPage() {
                 imageOverlayOpacity={layerMode === 'map' ? 1 : 0.5}
               />
               </div>
-            </div>
+            </motion.div>
 
+            {/* Меню карты внизу (как нижняя навигация) */}
+            <motion.div
+              className="absolute bottom-0 left-0 right-0 z-[2000] safe-area px-4 pb-4 pt-2"
+              style={{
+                paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+              }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.25 }}
+            >
+              <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/95 backdrop-blur-md shadow-lg border border-white/50 max-w-[440px] mx-auto">
+                <div className="flex gap-1 p-1 rounded-xl bg-[var(--bg-input)]/80 flex-1">
+                  {(['plan', 'map'] as const).map((mode) => (
+                    <motion.button
+                      key={mode}
+                      type="button"
+                      disabled={mode === 'map' && !hasEnoughAnchors}
+                      title={mode === 'map' && !hasEnoughAnchors ? 'Привязка загружается' : ''}
+                      onClick={() => {
+                        setLayerMode(mode);
+                        if (mode !== 'plan') setDrawMode(null);
+                        setDraftPolygonPoints([]);
+                      }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium touch-manipulation transition-colors ${
+                        layerMode === mode
+                          ? 'bg-white text-[var(--text)] shadow-sm'
+                          : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {mode === 'plan' ? 'План' : 'Карта'}
+                    </motion.button>
+                  ))}
+                </div>
+                <div className="relative" ref={mapMenuRef}>
+                  <motion.button
+                    type="button"
+                    onClick={() => setMapMenuOpen((v) => !v)}
+                    className="p-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)] touch-manipulation transition-colors"
+                    aria-expanded={mapMenuOpen}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <DotsVerticalIcon className="w-5 h-5" />
+                  </motion.button>
+                  <AnimatePresence>
+                    {mapMenuOpen && (
+                      <motion.div
+                        key="map-menu"
+                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                        className="absolute right-0 bottom-full mb-2 z-[1000] min-w-[180px] py-1.5 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-md shadow-xl border border-white/50"
+                      >
+                        <button
+                          type="button"
+                          className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] text-[var(--text)] transition-colors"
+                          onClick={() => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/*';
+                            input.onchange = (e) => {
+                              const f = (e.target as HTMLInputElement).files?.[0];
+                              if (f) setFromFile(f);
+                            };
+                            input.click();
+                            setMapMenuOpen(false);
+                          }}
+                        >
+                          <UploadIcon className="w-4 h-4" />
+                          Загрузить карту
+                        </button>
+                        <Link
+                          to="/settings"
+                          className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-[var(--bg-hover)] text-[var(--text)] transition-colors"
+                          onClick={() => setMapMenuOpen(false)}
+                        >
+                          <SettingsIcon className="w-4 h-4" />
+                          Настройки
+                        </Link>
+                        <button
+                          type="button"
+                          className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] text-red-500 transition-colors"
+                          onClick={() => {
+                            if (window.confirm('Удалить карту?')) {
+                              clearImage();
+                              setMapMenuOpen(false);
+                            }
+                          }}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                          Удалить карту
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Плавающие кнопки быстрых маршрутов */}
+            {image && (
+              <motion.div
+                className="absolute left-3 right-3 z-[2000] flex gap-2 overflow-x-auto scrollbar-none"
+                style={{ top: 'calc(env(safe-area-inset-top, 0px) + 4.5rem)' }}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.25 }}
+              >
+                {QUICK_ROUTES.map((route) => {
+                  const count = route.indices.filter((i) => markers[i]).length;
+                  if (count === 0) return null;
+                  return (
+                    <motion.button
+                      key={route.id}
+                      type="button"
+                      onClick={() => handleQuickRouteBuild(route.id)}
+                      className="shrink-0 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/95 backdrop-blur-md shadow-lg border border-white/50 text-[var(--text)] hover:bg-white touch-manipulation transition-colors"
+                      whileTap={{ scale: 0.96 }}
+                    >
+                      {route.label}
+                    </motion.button>
+                  );
+                })}
+              </motion.div>
+            )}
+
+            <AnimatePresence>
             {labelModal && (
-              <div
-                className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/30 p-4"
+              <motion.div
+                key="label-modal"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 p-4"
                 onClick={(e) => e.target === e.currentTarget && cancelEnclosureLabel()}
                 role="dialog"
                 aria-modal="true"
               >
-                <div className="rounded-2xl p-5 w-full max-w-[280px] card-md" onClick={(e) => e.stopPropagation()}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  className="rounded-2xl p-5 w-full max-w-[280px] card-md shadow-xl" onClick={(e) => e.stopPropagation()}
+                >
                   <p className="text-sm font-medium text-[var(--text)] mb-3">№ вольера</p>
                   <input
                     type="text"
@@ -781,18 +692,28 @@ export default function MapPage() {
                     <Button variant="primary" size="sm" onClick={submitEnclosureLabel}>ОК</Button>
                     <Button variant="ghost" size="sm" onClick={cancelEnclosureLabel}>Пропустить</Button>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             )}
 
             {editingEnclosure && (
-              <div
-                className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/30 p-4"
+              <motion.div
+                key="edit-modal"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 p-4"
                 onClick={(e) => e.target === e.currentTarget && cancelEditEnclosure()}
                 role="dialog"
                 aria-modal="true"
               >
-                <div className="rounded-2xl p-5 w-full max-w-[280px] card-md" onClick={(e) => e.stopPropagation()}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  className="rounded-2xl p-5 w-full max-w-[280px] card-md shadow-xl" onClick={(e) => e.stopPropagation()}
+                >
                   <p className="text-sm font-medium text-[var(--text)] mb-3">№ вольера</p>
                   <input
                     type="text"
@@ -810,9 +731,10 @@ export default function MapPage() {
                     <Button variant="primary" size="sm" onClick={submitEditEnclosure}>Сохранить</Button>
                     <Button variant="ghost" size="sm" onClick={cancelEditEnclosure}>Отмена</Button>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
         )}
 
@@ -871,7 +793,7 @@ export default function MapPage() {
                     <Polyline
                       positions={routeGeometry}
                       pathOptions={{
-                        color: '#22d3ee',
+                        color: '#84cc16',
                         weight: 5,
                         opacity: 0.9,
                       }}
@@ -881,7 +803,7 @@ export default function MapPage() {
                         position={[userLocation.lat, userLocation.lng]}
                         icon={L.divIcon({
                           className: 'nav-user-marker',
-                          html: '<div style="width:20px;height:20px;border-radius:50%;background:#22d3ee;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
+                          html: '<div style="width:20px;height:20px;border-radius:50%;background:#84cc16;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
                           iconSize: [20, 20],
                           iconAnchor: [10, 10],
                         })}
@@ -902,8 +824,8 @@ export default function MapPage() {
                   </MapContainer>
                 </div>
                 <div
-                  className="shrink-0 mx-3 mb-3 rounded-xl p-4 card safe-area-padding"
-                  style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+                  className="shrink-0 mx-4 mb-4 p-5 card safe-area rounded-2xl"
+                  style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -919,7 +841,7 @@ export default function MapPage() {
                     <button
                       type="button"
                       onClick={handleStopNavigation}
-                      className="shrink-0 px-4 py-2.5 rounded-lg font-medium text-[var(--text)] bg-[var(--bg-input)] touch-manipulation"
+                      className="shrink-0 px-4 py-2.5 rounded-lg font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)] touch-manipulation"
                     >
                       Готово
                     </button>
@@ -930,7 +852,6 @@ export default function MapPage() {
           </div>
         )}
       </main>
-      </div>
     </div>
   );
 }

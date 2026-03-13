@@ -21,7 +21,6 @@ import { polygonCentroid, polygonMinSize } from '../../utils/mapGeometry';
 import {
   geoToNormalized,
   normalizedToGeo,
-  type MapAnchor,
 } from '../../hooks/useMapAnchors';
 import type { Enclosure } from '../../hooks/useMapAnnotations';
 import 'leaflet/dist/leaflet.css';
@@ -92,6 +91,74 @@ function MapZoomTracker({
     onZoomChange(map.getZoom());
   }, [map, onZoomChange]);
   return null;
+}
+
+function MapZoomLocateControls({
+  zoomable,
+  showLocate,
+}: {
+  zoomable: boolean;
+  showLocate: boolean;
+}) {
+  const map = useMap();
+
+  const handleLocate = useCallback(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        map.setView([pos.coords.latitude, pos.coords.longitude], Math.max(map.getZoom(), 16));
+      },
+      () => {}
+    );
+  }, [map]);
+
+  if (!zoomable) return null;
+
+  const btn =
+    'flex items-center justify-center w-10 h-10 rounded-lg bg-white/95 hover:bg-white shadow border border-[var(--border)] touch-manipulation text-[var(--text)]';
+
+  return (
+    <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-1.5">
+      <button
+        type="button"
+        onClick={() => map.zoomIn()}
+        className={btn}
+        title="Приблизить"
+        aria-label="Приблизить"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={() => map.zoomOut()}
+        className={btn}
+        title="Отдалить"
+        aria-label="Отдалить"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+      {showLocate && (
+        <button
+          type="button"
+          onClick={handleLocate}
+          className={btn}
+          title="Моё местоположение"
+          aria-label="Моё местоположение"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="6" />
+            <circle cx="12" cy="12" r="2" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
 }
 
 const ENCLOSURE_FULL_LABEL_ZOOM = 2;
@@ -425,13 +492,12 @@ export interface MapImageProps {
   draftPolygonPoints?: { x: number; y: number }[];
   onEnclosureDelete?: (id: string) => void;
   onEnclosureEdit?: (enc: Enclosure) => void;
-  layerMode?: 'plan' | 'map' | 'align';
+  layerMode?: 'plan' | 'map';
   geoBounds?: [[number, number], [number, number]] | null;
   homography?: { project: (x: number, y: number) => [number, number]; unproject: (lat: number, lng: number) => { x: number; y: number } } | null;
-  anchors?: MapAnchor[];
-  onSaveAlign?: (corners: [number, number][]) => void | null;
   onNavigateToMarker?: (marker: MapMarker, lat: number, lng: number) => void;
   imageOverlayOpacity?: number;
+  fullBleed?: boolean;
 }
 
 function AnimalMarker({
@@ -542,11 +608,11 @@ export default function MapImage({
   layerMode = 'plan',
   geoBounds = null,
   homography = null,
-  anchors = [],
-  onSaveAlign,
   onNavigateToMarker,
   imageOverlayOpacity = 1,
+  fullBleed = false,
 }: MapImageProps) {
+  const frameClass = fullBleed ? 'rounded-none border-0' : 'rounded-xl border border-[var(--border)]';
   const [imgLoading, setImgLoading] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [imgSize, setImgSize] = useState({ width: 1000, height: 1000 });
@@ -557,32 +623,6 @@ export default function MapImage({
     clientY: number;
     enclosure: Enclosure;
   } | null>(null);
-
-  const defaultAlignCorners: [number, number][] = useMemo(
-    () => [
-      [53.14, 26.0],
-      [53.14, 26.02],
-      [53.12, 26.02],
-      [53.12, 26.0],
-    ],
-    []
-  );
-  const [alignCorners, setAlignCorners] = useState(defaultAlignCorners);
-
-  useEffect(() => {
-    if (layerMode !== 'align') return;
-    if (anchors.length === 4) {
-      setAlignCorners(anchors.map((a) => [a.geo.lat, a.geo.lng]));
-    } else {
-      setAlignCorners(defaultAlignCorners);
-    }
-  }, [layerMode, anchors, defaultAlignCorners]);
-
-  const handleAlignCornerDrag = useCallback((index: number, lat: number, lng: number) => {
-    setAlignCorners((prev) =>
-      prev.map((c, i) => (i === index ? [lat, lng] : c))
-    );
-  }, []);
 
   useEffect(() => {
     if (!image) {
@@ -662,12 +702,11 @@ export default function MapImage({
   }, [layerMode, geoBounds]);
 
   const mapHeightPx = typeof height === 'number' ? height : 600;
-  const defaultMapCenter: [number, number] = [53.13, 26.01];
 
   if (!bounds) {
     return (
       <div
-        className="relative w-full rounded-xl border border-[var(--border)] overflow-hidden select-none glass"
+        className={`relative w-full overflow-hidden select-none glass ${frameClass}`}
         style={{ height }}
       >
         {imgLoading && (
@@ -684,89 +723,6 @@ export default function MapImage({
     );
   }
 
-  if (layerMode === 'align' && image) {
-    return (
-      <div
-        className="relative w-full rounded-xl border border-[var(--border)] overflow-hidden select-none glass"
-        style={{ height: mapHeightPx, minHeight: mapHeightPx }}
-      >
-        <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center justify-between gap-2">
-          <span className="text-xs text-white/80">
-            Тяните углы (1–4) по карте или перетащите план. Порядок: 1 — левый верхний, 2 — правый верхний, 3 — правый нижний, 4 — левый нижний.
-          </span>
-          {onSaveAlign && (
-            <button
-              type="button"
-              onClick={() => onSaveAlign(alignCorners)}
-              className="shrink-0 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-black font-medium text-sm"
-            >
-              Сохранить привязку
-            </button>
-          )}
-        </div>
-        <div
-          className="absolute inset-0 z-0"
-          style={{ height: mapHeightPx }}
-        >
-          <MapContainer
-            center={defaultMapCenter}
-            zoom={13}
-            minZoom={2}
-            maxZoom={19}
-            zoomControl={zoomable}
-            dragging={zoomable}
-            scrollWheelZoom={zoomable}
-            doubleClickZoom={zoomable}
-            style={{ height: '100%', width: '100%', minHeight: mapHeightPx }}
-            className="map-container map-container-geo"
-          >
-            <MapZoomTracker onZoomChange={setZoomLevel} />
-            <GeoMapInvalidateSize heightPx={mapHeightPx} />
-            <TileLayer
-              url={OSM_URL}
-              {...OSM_OPTIONS}
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            />
-            <QuadImageOverlay
-              url={image}
-              corners={alignCorners}
-              opacity={0.5}
-            />
-            <PlanDragHandler
-              corners={alignCorners}
-              setCorners={setAlignCorners}
-            />
-            {alignCorners.map((pos, idx) => (
-              <Marker
-                key={idx}
-                position={[pos[0], pos[1]]}
-                draggable
-                eventHandlers={{
-                  dragend: (e: L.DragEndEvent) => {
-                    const { lat, lng } = e.target.getLatLng();
-                    handleAlignCornerDrag(idx, lat, lng);
-                  },
-                }}
-                icon={L.divIcon({
-                  className: 'anchor-marker',
-                  html: `<div style="width:26px;height:26px;border-radius:50%;background:#f59e0b;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:move;">${idx + 1}</div>`,
-                  iconSize: [26, 26],
-                  iconAnchor: [13, 13],
-                })}
-              />
-            ))}
-          </MapContainer>
-        </div>
-        <style>{`
-          .map-container-geo { height: 100% !important; min-height: ${mapHeightPx}px !important; }
-          .map-container .leaflet-control-zoom { border: none; background: rgba(0,0,0,0.5); }
-          .map-container .leaflet-control-zoom a { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-          .anchor-marker { background: transparent !important; border: none !important; }
-        `}</style>
-      </div>
-    );
-  }
-
   const isMapMode =
     layerMode === 'map' && geoBounds && geoBounds.length === 2;
   if (isMapMode && leafletBounds && geoBounds) {
@@ -778,7 +734,7 @@ export default function MapImage({
 
     return (
       <div
-        className="relative w-full rounded-xl border border-[var(--border)] overflow-hidden select-none glass"
+        className={`relative w-full overflow-hidden select-none glass ${frameClass}`}
         style={{ height: mapHeightPx, minHeight: mapHeightPx }}
       >
         <div
@@ -790,7 +746,7 @@ export default function MapImage({
             zoom={14}
             minZoom={2}
             maxZoom={19}
-            zoomControl={zoomable}
+            zoomControl={false}
             dragging={zoomable}
             scrollWheelZoom={zoomable}
             doubleClickZoom={zoomable}
@@ -798,6 +754,7 @@ export default function MapImage({
             className="map-container map-container-geo"
           >
             <MapZoomTracker onZoomChange={setZoomLevel} />
+            <MapZoomLocateControls zoomable={zoomable} showLocate />
             <GeoMapInvalidateSize heightPx={mapHeightPx} />
             <FitBoundsToPlan bounds={leafletBounds} />
             <TileLayer
@@ -888,7 +845,7 @@ export default function MapImage({
 
   return (
     <div
-      className="relative w-full rounded-xl border border-[var(--border)] overflow-hidden select-none glass"
+      className={`relative w-full overflow-hidden select-none glass ${frameClass}`}
       style={{ height }}
     >
       <MapContainer
@@ -897,7 +854,9 @@ export default function MapImage({
         minZoom={-2}
         maxZoom={8}
         crs={L.CRS.Simple}
-        zoomControl={zoomable}
+        maxBounds={bounds ? L.latLngBounds(bounds[0] as L.LatLngExpression, bounds[1] as L.LatLngExpression) : undefined}
+        maxBoundsViscosity={1}
+        zoomControl={false}
         dragging={zoomable}
         scrollWheelZoom={zoomable}
         doubleClickZoom={zoomable}
@@ -913,6 +872,7 @@ export default function MapImage({
         className="map-container"
       >
         <MapZoomTracker onZoomChange={setZoomLevel} />
+        <MapZoomLocateControls zoomable={zoomable} showLocate={false} />
         <ImageOverlay url={image} bounds={bounds} opacity={1} />
         {markers
           .filter((m) => typeof m.x === 'number' && typeof m.y === 'number')

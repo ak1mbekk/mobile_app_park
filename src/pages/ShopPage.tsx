@@ -1,24 +1,20 @@
 import React from 'react';
+import PageLayout from '../components/layout/PageLayout';
 import EmptyState from '../components/ui/EmptyState';
 import { ShoppingBagIcon } from '../components/icons';
 
 export default function ShopPage() {
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="mx-auto w-full max-w-[480px] flex flex-col h-full">
-        <header className="shrink-0 px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-card)]">
-          <h1 className="text-base font-semibold text-[var(--text)]">Покупка билетов и сувениров</h1>
-        </header>
-        <div className="flex-1 overflow-auto p-4">
-          <div className="rounded-2xl p-6 card">
-            <EmptyState
-              icon={<ShoppingBagIcon className="w-12 h-12 text-[var(--text-soft)] mx-auto" />}
-              title="В разработке"
-              description="Билеты и сувениры — в следующей версии."
-            />
-          </div>
+    <div className="max-w-[480px] mx-auto h-full flex flex-col min-h-0">
+      <PageLayout title="Магазин" subtitle="Билеты и сувениры">
+        <div className="card p-8">
+          <EmptyState
+            icon={<ShoppingBagIcon className="w-14 h-14 text-[var(--accent)]/60 mx-auto" />}
+            title="В разработке"
+            description="Билеты и сувениры — в следующей версии"
+          />
         </div>
-      </div>
+      </PageLayout>
     </div>
   );
 }

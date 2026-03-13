@@ -1,48 +1,30 @@
 import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
-import {
-  MapPinIcon,
-  PawIcon,
-  CalendarIcon,
-  ShoppingBagIcon,
-  MenuIcon,
-} from '../icons';
-
-const NAV_ITEMS = [
-  { path: '/', label: 'Карта', icon: MapPinIcon },
-  { path: '/animals', label: 'Животные', icon: PawIcon },
-  { path: '/calendar', label: 'Календарь', icon: CalendarIcon },
-  { path: '/shop', label: 'Магазин', icon: ShoppingBagIcon },
-  { path: '/more', label: 'Ещё', icon: MenuIcon },
-] as const;
+import { Outlet, useLocation } from 'react-router-dom';
+import LiquidNav from './LiquidNav';
+import PullToRefresh from '../ui/PullToRefresh';
 
 export default function AppLayout() {
+  const location = useLocation();
+  const isMapPage = location.pathname === '/' || location.pathname === '/map';
+
   return (
-    <div className="flex flex-col h-full min-h-0 bg-[var(--bg)]">
-      <main className="flex-1 overflow-auto min-h-0">
-        <Outlet />
+    <div className="relative h-full w-full overflow-hidden">
+      <main className="absolute inset-0 overflow-hidden">
+        {isMapPage ? (
+          <Outlet />
+        ) : (
+          <PullToRefresh>
+            <Outlet />
+          </PullToRefresh>
+        )}
       </main>
-      <nav
-        className="shrink-0 flex justify-around items-center border-t border-[var(--border)] bg-[var(--bg-card)] safe-area-padding"
-        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
-      >
-        {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
-          <NavLink
-            key={path}
-            to={path}
-            end={path !== '/'}
-            isActive={path === '/' ? (_, loc) => loc.pathname === '/' || loc.pathname === '/map' : undefined}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center py-2 px-3 min-w-[56px] touch-manipulation ${
-                isActive ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
-              }`
-            }
-          >
-            <Icon className="w-6 h-6 shrink-0" />
-            <span className="text-[10px] mt-0.5">{label}</span>
-          </NavLink>
-        ))}
-      </nav>
+      {!isMapPage && (
+        <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
+          <div className="pointer-events-auto">
+            <LiquidNav />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

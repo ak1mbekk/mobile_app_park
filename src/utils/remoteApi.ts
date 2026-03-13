@@ -275,9 +275,37 @@ export async function syncFromRemote(configOverride?: ApiConfig): Promise<{ ok: 
       }
     }
 
-    localStorage.setItem(LS_ANNOTATIONS, JSON.stringify({ enclosures }));
-    localStorage.setItem(LS_ANCHORS, JSON.stringify(anchors));
-    localStorage.setItem(LS_ANIMALS, JSON.stringify(animals));
+    const setOrThrow = (key: string, value: string): void => {
+      try {
+        localStorage.setItem(key, value);
+      } catch (err) {
+        if (err instanceof DOMException && (err.name === 'QuotaExceededError' || (err as { code?: number }).code === 22)) {
+          throw new Error('Недостаточно места. Очистите данные приложения.');
+        }
+        throw err;
+      }
+    };
+
+    setOrThrow(LS_ANNOTATIONS, JSON.stringify({ enclosures }));
+    setOrThrow(LS_ANCHORS, JSON.stringify(anchors));
+
+    const trySetAnimals = (list: StoredAnimal[]): boolean => {
+      try {
+        setOrThrow(LS_ANIMALS, JSON.stringify(list));
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    if (!trySetAnimals(animals)) {
+      const noPhotos = animals.map(({ id, name, coords }) => ({ id, name, coords }));
+      if (!trySetAnimals(noPhotos)) {
+        if (!trySetAnimals(noPhotos.slice(0, 80))) {
+          trySetAnimals([]);
+        }
+      }
+    }
     return { ok: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
