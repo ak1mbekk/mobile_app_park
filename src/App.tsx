@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
+import HomePage from './pages/HomePage';
 import MapPage from './pages/MapPage';
 import AnimalsPage from './pages/AnimalsPage';
 import CalendarPage from './pages/CalendarPage';
@@ -16,7 +17,7 @@ function App() {
     <div className="h-full flex flex-col">
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<MapPage />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/animals" element={<AnimalsPage />} />
           <Route path="/calendar" element={<CalendarPage />} />

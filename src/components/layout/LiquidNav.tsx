@@ -2,18 +2,18 @@ import React, { useRef, useLayoutEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
-  MapPinIcon,
+  HomeIcon,
   PawIcon,
   CalendarIcon,
-  ShoppingBagIcon,
+  MapPinIcon,
   MenuIcon,
 } from '../icons';
 
 const NAV_ITEMS = [
-  { path: '/', icon: MapPinIcon },
   { path: '/animals', icon: PawIcon },
   { path: '/calendar', icon: CalendarIcon },
-  { path: '/shop', icon: ShoppingBagIcon },
+  { path: '/', icon: HomeIcon },
+  { path: '/map', icon: MapPinIcon },
   { path: '/more', icon: MenuIcon },
 ] as const;
 
@@ -22,17 +22,17 @@ const INDICATOR_HALF = INDICATOR_WIDTH / 2;
 const SPRING = { duration: 0.6, ease: [0.34, 1.56, 0.64, 1] as const };
 
 function isActive(path: string, pathname: string): boolean {
-  if (path === '/') return pathname === '/' || pathname === '/map';
+  if (path === '/') return pathname === '/';
   return pathname === path || pathname.startsWith(path + '/');
 }
 
 function getActiveIndex(pathname: string): number {
-  if (pathname === '/' || pathname === '/map') return 0;
-  if (pathname.startsWith('/animals')) return 1;
-  if (pathname.startsWith('/calendar')) return 2;
-  if (pathname.startsWith('/shop')) return 3;
+  if (pathname.startsWith('/animals')) return 0;
+  if (pathname.startsWith('/calendar')) return 1;
+  if (pathname === '/') return 2;
+  if (pathname.startsWith('/map')) return 3;
   if (pathname.startsWith('/more')) return 4;
-  return 0;
+  return 2;
 }
 
 export default function LiquidNav() {

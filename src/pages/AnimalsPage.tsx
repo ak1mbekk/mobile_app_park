@@ -79,7 +79,7 @@ export default function AnimalsPage() {
                 </div>
                 {a.source === 'api' && a.hasCoords ? (
                   <Link
-                    to="/"
+                    to="/map"
                     className="p-2.5 rounded-xl text-[var(--accent)] hover:bg-[var(--bg-hover)] shrink-0 transition-colors"
                     title="На карту"
                   >
