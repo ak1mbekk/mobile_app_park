@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[node name="Отражённый свет" type="OmniLight3D"]
+light_color = Color(1, 0.913, 0.818, 1)
+light_energy = 0.63
+light_specular = 0.35
+light_size = 0.13
+shadow_enabled = false
+omni_range = 4.0
+omni_attenuation = 1.5

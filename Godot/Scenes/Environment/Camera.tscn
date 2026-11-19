@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[node name="Игровая камера" type="Camera3D"]
+keep_aspect = 1
+current = true
+fov = 37.5
+near = 0.18
+far = 8.0

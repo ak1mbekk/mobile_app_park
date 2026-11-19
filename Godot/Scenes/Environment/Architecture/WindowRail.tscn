@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://Materials/OiledWood.tres" id="1"]
+
+[sub_resource type="BoxMesh" id="Timber"]
+material = ExtResource("1")
+size = Vector3(1.254, 0.079, 0.198)
+
+[sub_resource type="BoxShape3D" id="TimberCollision"]
+margin = 0.002
+size = Vector3(1.254, 0.079, 0.198)
+
+[node name="Горизонтальный брус" type="MeshInstance3D"]
+mesh = SubResource("Timber")
+
+[node name="TimberBody" type="StaticBody3D" parent="."]
+collision_layer = 2
+collision_mask = 4
+
+[node name="Shape" type="CollisionShape3D" parent="TimberBody"]
+shape = SubResource("TimberCollision")

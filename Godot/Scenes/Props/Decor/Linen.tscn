@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://Art/Meshes/Runner.res" id="1"]
+
+[node name="Полотенце" type="MeshInstance3D"]
+mesh = ExtResource("1")

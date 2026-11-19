@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://Art/Meshes/BenchFrame.res" id="1"]
+[ext_resource type="Material" path="res://Materials/OiledWood.tres" id="Wood"]
+
+[node name="Скамья" type="MeshInstance3D"]
+mesh = ExtResource("1")
+material_override = ExtResource("Wood")

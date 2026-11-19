@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="M"]
+albedo_color = Color(0.27, 0.183, 0.114, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="Board"]
+material = SubResource("M")
+size = Vector3(1, 1, 1)
+
+[node name="Основа" type="MeshInstance3D"]
+mesh = SubResource("Board")

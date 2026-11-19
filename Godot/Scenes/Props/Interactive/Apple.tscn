@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://Art/Meshes/apple.res" id="1"]
+[ext_resource type="Script" path="res://Scenes/Props/Interactive/AppleDrag.gd" id="Drag"]
+
+[ext_resource type="Texture2D" path="res://Art/Textures/FloorContact.png" id="Contact"]
+
+[ext_resource type="ArrayMesh" path="res://Art/Meshes/AppleBite1.res" id="Bite1"]
+[ext_resource type="ArrayMesh" path="res://Art/Meshes/AppleBite2.res" id="Bite2"]
+
+[node name="Яблоко" type="MeshInstance3D"]
+mesh = ExtResource("1")
+script = ExtResource("Drag")
+first_bite = ExtResource("Bite1")
+second_bite = ExtResource("Bite2")
+
+[node name="Контакт с полом" type="Decal" parent="."]
+position = Vector3(0, 0.003, 0)
+size = Vector3(0.079, 0.052, 0.075)
+texture_albedo = ExtResource("Contact")
+cull_mask = 2
+lower_fade = 0.65
+upper_fade = 0.3

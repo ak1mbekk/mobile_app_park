@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://Art/Textures/Limewash.jpg" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="M"]
+albedo_texture = ExtResource("1")
+roughness = 1.0
+uv1_scale = Vector3(6, 2, 1)
+
+[sub_resource type="QuadMesh" id="Wall"]
+material = SubResource("M")
+size = Vector2(5, 3)
+
+[node name="Правая стена" type="MeshInstance3D"]
+mesh = SubResource("Wall")

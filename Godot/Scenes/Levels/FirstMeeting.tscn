@@ -1,0 +1,240 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Characters/Richi.tscn" id="Richi"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Interactive/Apple.tscn" id="Apple"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Decor/Rug.tscn" id="Rug"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Decor/Basket.tscn" id="Basket"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Furniture/Bench.tscn" id="Bench"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Decor/Linen.tscn" id="Linen"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Decor/Jug.tscn" id="Jug"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Decor/MeadowFlowers.tscn" id="Flowers"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Decor/Heather.tscn" id="Heather"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Decor/DriedFlowers.tscn" id="Dry"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Decor/Sage.tscn" id="Sage"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/WindowFrame.tscn" id="Window"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/WindowRail.tscn" id="Rail"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/WindowView.tscn" id="Birches"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/Wallboard.tscn" id="Wallboard"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/Floorboard.tscn" id="Floorboard"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/Plaster.tscn" id="Plaster"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/Backing.tscn" id="Backing"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Camera.tscn" id="Camera"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Lighting/RoomEnvironment.tscn" id="Ambience"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Lighting/MorningSun.tscn" id="Sun"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Lighting/ReflectedLight.tscn" id="Bounce"]
+
+[ext_resource type="PackedScene" path="res://Scenes/Props/Decor/WindowCurtain.tscn" id="Curtain"]
+
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/WindowMullion.tscn" id="WindowMullion"]
+
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/WindowCrossbar.tscn" id="WindowCrossbar"]
+
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/WindowLintel.tscn" id="WindowLintel"]
+
+[ext_resource type="PackedScene" path="res://Scenes/FirstMeeting/Welcome.tscn" id="Welcome"]
+
+[node name="Первая встреча" type="Node3D"]
+
+[node name="Аки" parent="." groups=["Персонажи"] instance=ExtResource("Richi")]
+position = Vector3(0.19, 0.008, 0.35)
+rotation = Vector3(0, -0.58, 0)
+scale = Vector3(1.045, 1.02, 1.045)
+
+[node name="Яблоко" parent="." node_paths=PackedStringArray("raccoon") groups=["Интерактивные предметы"] instance=ExtResource("Apple")]
+position = Vector3(-0.239, 0.0001, 1.399)
+rotation = Vector3(0, -0.12, 0)
+scale = Vector3(1.58, 1.58, 1.58)
+raccoon = NodePath("../Аки")
+
+[node name="Коврик" parent="." groups=["Текстиль"] instance=ExtResource("Rug")]
+position = Vector3(0.517, 0.007, 0.645)
+rotation = Vector3(0, -0.6632, 0)
+
+[node name="Скамья у окна" parent="." groups=["Мебель"] instance=ExtResource("Bench")]
+position = Vector3(-0.284, 0, 0.061)
+scale = Vector3(0.37, 0.716, 1.03)
+
+[node name="Вышитое полотенце" parent="." groups=["Текстиль"] instance=ExtResource("Linen")]
+position = Vector3(-0.337, 0.478, 0.04)
+scale = Vector3(0.34, 0.37, 1.08)
+
+[node name="Корзина под скамьёй" parent="." groups=["Утварь"] instance=ExtResource("Basket")]
+position = Vector3(-0.428, -0.0058, 0.15)
+rotation = Vector3(0, 0.91, 0)
+scale = Vector3(0.68, 0.68, 0.68)
+
+[node name="Глиняный кувшин" parent="." groups=["Утварь"] instance=ExtResource("Jug")]
+position = Vector3(-0.126, 0.470, -0.025)
+rotation = Vector3(0, 3.05, 0)
+scale = Vector3(0.68, 0.68, 0.68)
+
+[node name="Полевые ромашки" parent="." groups=["Растения"] instance=ExtResource("Flowers")]
+position = Vector3(-0.126, 0.635, -0.025)
+rotation = Vector3(0, 0.28, 0)
+scale = Vector3(0.81, 0.67, 0.71)
+
+[node name="Лиловые веточки" parent="." groups=["Растения"] instance=ExtResource("Heather")]
+position = Vector3(-0.14, 0.638, -0.047)
+rotation = Vector3(0.06, 1.59, 0.14)
+scale = Vector3(0.54, 0.78, 0.62)
+
+[node name="Золотистые сухоцветы" parent="." groups=["Растения"] instance=ExtResource("Dry")]
+position = Vector3(0.29, 0.898, -0.29)
+rotation = Vector3(0, -0.4, -0.1)
+scale = Vector3(0.51, 0.71, 0.34)
+
+[node name="Пучок шалфея" parent="." groups=["Растения"] instance=ExtResource("Sage")]
+position = Vector3(0.447, 0.762, -0.297)
+rotation = Vector3(0.05, 1.14, 0.10)
+scale = Vector3(0.52, 0.84, 0.37)
+
+[node name="Правая скамья" parent="." groups=["Мебель"] instance=ExtResource("Bench")]
+position = Vector3(0.79, 0, -0.105)
+scale = Vector3(0.36, 0.68, 0.61)
+
+[node name="Льняная занавеска" parent="." groups=["Текстиль"] instance=ExtResource("Curtain")]
+position = Vector3(-0.550, 1.51, -0.165)
+
+[node name="Правая стойка окна" parent="." groups=["Окно"] instance=ExtResource("Window")]
+position = Vector3(-0.012, 1.047, -0.324)
+
+[node name="Средник окна" parent="." groups=["Окно"] instance=ExtResource("WindowMullion")]
+position = Vector3(-0.548, 1.06, -0.377)
+
+[node name="Подоконник" parent="." groups=["Окно"] instance=ExtResource("Rail")]
+position = Vector3(-0.53, 0.564, -0.289)
+
+[node name="Перекладина окна" parent="." groups=["Окно"] instance=ExtResource("WindowCrossbar")]
+position = Vector3(-0.563, 1.032, -0.374)
+rotation = Vector3(0, 0.033, -0.055)
+
+[node name="Притолока" parent="." groups=["Окно"] instance=ExtResource("WindowLintel")]
+position = Vector3(-0.503, 1.519, -0.339)
+
+[node name="Берёзовая тропа" parent="." groups=["Окно"] instance=ExtResource("Birches")]
+position = Vector3(-0.391, 1.032, -0.453)
+scale = Vector3(0.803, 0.938, 1)
+
+[node name="Правая оштукатуренная стена" parent="." groups=["Стены"] instance=ExtResource("Plaster")]
+position = Vector3(0.55, 1.49, 1.81)
+rotation = Vector3(0, -1.570796, 0)
+
+[node name="Основа под половицами" parent="." groups=["Пол"] instance=ExtResource("Backing")]
+position = Vector3(0, -0.04, 0.7)
+scale = Vector3(6, 0.04, 5)
+
+[node name="Основа под окном" parent="." groups=["Стены"] instance=ExtResource("Backing")]
+position = Vector3(-0.33, 0.2575, -0.462)
+scale = Vector3(2.5, 0.515, 0.04)
+
+[node name="Основа справа от окна" parent="." groups=["Стены"] instance=ExtResource("Backing")]
+position = Vector3(0.548, 1.191, -0.462)
+scale = Vector3(1.01, 1.35, 0.04)
+
+[node name="Венец 01" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(-0.18, 0.078, -0.414)
+scale = Vector3(2.3, 1, 1)
+[node name="Венец 02" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(-0.39, 0.242, -0.412)
+scale = Vector3(2.8, 1, 1)
+[node name="Венец 03" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(-0.22, 0.406, -0.411)
+scale = Vector3(2.4, 1, 1)
+[node name="Венец 04" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(0.544, 0.57, -0.412)
+[node name="Венец 05" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(0.623, 0.734, -0.415)
+scale = Vector3(1.16, 1, 1)
+[node name="Венец 06" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(0.568, 0.898, -0.413)
+scale = Vector3(1.05, 1, 1)
+[node name="Венец 07" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(0.63, 1.062, -0.415)
+scale = Vector3(1.17, 1, 1)
+[node name="Венец 08" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(0.548, 1.226, -0.412)
+scale = Vector3(1.01, 1, 1)
+[node name="Венец 09" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(0.62, 1.39, -0.414)
+scale = Vector3(1.15, 1, 1)
+[node name="Венец 10" parent="." groups=["Стены"] instance=ExtResource("Wallboard")]
+position = Vector3(-0.12, 1.554, -0.414)
+scale = Vector3(2.2, 1, 1)
+
+[node name="Половица 01" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(-0.2829, 0, -1.0378)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 02" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(-0.6232, 0, -0.5822)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 03" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(-0.2766, 0, -0.5559)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 04" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(-0.5151, 0, -0.1639)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 05" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(0.0265, 0, -0.2595)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 06" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(-0.0678, 0, 0.0424)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 07" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(0.3721, 0, 0.0104)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 08" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(0.0318, 0, 0.4660)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 09" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(0.3784, 0, 0.4923)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 10" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(0.1398, 0, 0.8843)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 11" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(0.6815, 0, 0.7887)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 12" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(0.5871, 0, 1.0906)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 13" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(1.0270, 0, 1.0586)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 14" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(0.6867, 0, 1.5142)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 15" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(1.0333, 0, 1.5405)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 16" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(0.7948, 0, 1.9325)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 17" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(1.3365, 0, 1.8369)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 18" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(1.2421, 0, 2.1388)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 19" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(1.6820, 0, 2.1068)
+rotation = Vector3(0, 0.5585, 0)
+[node name="Половица 20" parent="." groups=["Пол"] instance=ExtResource("Floorboard")]
+position = Vector3(1.3417, 0, 2.5624)
+rotation = Vector3(0, 0.5585, 0)
+
+[node name="Игровая камера" parent="." groups=["Камера и свет"] instance=ExtResource("Camera")]
+position = Vector3(0, 0.8, 3.1)
+rotation = Vector3(-0.20944, 0, 0)
+
+[node name="Утреннее солнце" parent="." groups=["Камера и свет"] instance=ExtResource("Sun")]
+position = Vector3(-1.25, 1.9, -1.25)
+rotation = Vector3(-0.56, -2.76, 0)
+
+[node name="Отражённый свет" parent="." groups=["Камера и свет"] instance=ExtResource("Bounce")]
+position = Vector3(-0.76, 1.22, 1.41)
+
+[node name="Свет комнаты" parent="." groups=["Камера и свет"] instance=ExtResource("Ambience")]
+
+[node name="Знакомство" parent="." node_paths=PackedStringArray("aki", "apple") instance=ExtResource("Welcome")]
+aki = NodePath("../Аки")
+apple = NodePath("../Яблоко")

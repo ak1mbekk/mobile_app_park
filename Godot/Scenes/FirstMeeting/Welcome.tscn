@@ -1,0 +1,132 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scenes/FirstMeeting/Welcome.gd" id="UI"]
+
+[sub_resource type="StyleBoxFlat" id="HintBox"]
+bg_color = Color(0.145, 0.119, 0.088, 0.93)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_left = 24
+corner_radius_bottom_right = 24
+content_margin_left = 18
+content_margin_right = 18
+content_margin_top = 9
+content_margin_bottom = 10
+
+[sub_resource type="StyleBoxFlat" id="Paper"]
+bg_color = Color(0.98, 0.947, 0.867, 1)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_left = 22
+corner_radius_bottom_right = 22
+content_margin_left = 22
+content_margin_right = 22
+content_margin_top = 16
+content_margin_bottom = 20
+shadow_color = Color(0.11, 0.08, 0.04, 0.32)
+shadow_size = 7
+
+[sub_resource type="StyleBoxFlat" id="FieldBox"]
+bg_color = Color(1, 0.989, 0.957, 1)
+border_color = Color(0.54, 0.49, 0.39, 1)
+border_width_left = 1
+border_width_right = 1
+border_width_top = 1
+border_width_bottom = 1
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+content_margin_left = 14
+content_margin_right = 14
+
+[sub_resource type="StyleBoxFlat" id="Leaf"]
+bg_color = Color(0.22, 0.315, 0.225, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+content_margin_left = 18
+content_margin_right = 18
+
+[sub_resource type="StyleBoxFlat" id="Focus"]
+draw_center = false
+border_color = Color(0.62, 0.37, 0.14, 1)
+border_width_left = 3
+border_width_right = 3
+border_width_top = 3
+border_width_bottom = 3
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+
+[node name="Знакомство" type="CanvasLayer"]
+script = ExtResource("UI")
+
+[node name="Hint" type="Label" parent="."]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+offset_bottom = -20
+offset_top = -65
+mouse_filter = 2
+horizontal_alignment = 1
+theme_override_styles/normal = SubResource("HintBox")
+theme_override_font_sizes/font_size = 19
+text = "Перетащи яблоко к лапам"
+
+[node name="NamePanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20
+offset_right = -20
+offset_top = -178
+offset_bottom = -20
+theme_override_styles/panel = SubResource("Paper")
+
+[node name="Content" type="VBoxContainer" parent="NamePanel"]
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="NamePanel/Content"]
+text = "Как назовём енота?"
+theme_override_colors/font_color = Color(0.17, 0.15, 0.12, 1)
+theme_override_font_sizes/font_size = 27
+
+[node name="Row" type="HBoxContainer" parent="NamePanel/Content"]
+theme_override_constants/separation = 10
+
+[node name="PetName" type="LineEdit" parent="NamePanel/Content/Row"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(65, 60)
+theme_override_styles/normal = SubResource("FieldBox")
+theme_override_styles/focus = SubResource("Focus")
+theme_override_colors/font_color = Color(0.17, 0.15, 0.12, 1)
+theme_override_colors/caret_color = Color(0.18, 0.26, 0.18, 1)
+theme_override_font_sizes/font_size = 24
+max_length = 24
+text = "Аки"
+accessibility_name = "Имя енота"
+select_all_on_focus = true
+
+[node name="Confirm" type="Button" parent="NamePanel/Content/Row"]
+unique_name_in_owner = true
+text = "Готово"
+theme_override_styles/normal = SubResource("Leaf")
+theme_override_styles/hover = SubResource("Leaf")
+theme_override_styles/focus = SubResource("Focus")
+theme_override_styles/pressed = SubResource("Leaf")
+theme_override_font_sizes/font_size = 22
+
+[node name="Notice" type="Label" parent="NamePanel/Content"]
+visible = false
+unique_name_in_owner = true
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.46, 0.15, 0.08, 1)

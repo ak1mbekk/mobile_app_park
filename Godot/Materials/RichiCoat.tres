@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://Art/Textures/Models/Richi/bandit-Color.jpg" id="Color"]
+[ext_resource type="Texture2D" path="res://Art/Textures/Models/Richi/bandit-Normal.png" id="Normal"]
+
+[resource]
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("Color")
+roughness = 0.83
+metallic_specular = 0.24
+normal_enabled = true
+normal_scale = 0.44
+normal_texture = ExtResource("Normal")

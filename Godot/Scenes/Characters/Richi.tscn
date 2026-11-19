@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Art/Characters/Richi.glb" id="Rig"]
+[ext_resource type="Script" path="res://Scenes/Characters/Richi.gd" id="Behaviour"]
+
+[node name="Аки" type="Node3D"]
+script = ExtResource("Behaviour")
+
+[node name="Модель" parent="." instance=ExtResource("Rig")]
+scale = Vector3(0.36, 0.36, 0.36)

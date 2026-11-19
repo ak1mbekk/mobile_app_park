@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://Art/Meshes/WindowLinen.res" id="Mesh"]
+[ext_resource type="Texture2D" path="res://Art/Textures/WindowLinen.png" id="Flax"]
+[ext_resource type="Script" path="res://Scenes/Props/Decor/CurtainBreeze.gd" id="Breeze"]
+[ext_resource type="Material" path="res://Materials/OiledWood.tres" id="Oak"]
+
+[sub_resource type="StandardMaterial3D" id="Linen"]
+albedo_texture = ExtResource("Flax")
+roughness = 0.95
+metallic_specular = 0.17
+cull_mode = 2
+texture_filter = 5
+
+[sub_resource type="CylinderMesh" id="Rod"]
+material = ExtResource("Oak")
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.26
+radial_segments = 16
+rings = 0
+
+[node name="Льняная занавеска" type="Node3D"]
+
+[node name="Карниз" type="MeshInstance3D" parent="."]
+rotation = Vector3(0, 0, 1.570796)
+mesh = SubResource("Rod")
+
+[node name="Полотно" type="SoftBody3D" parent="."]
+mesh = ExtResource("Mesh")
+material_override = SubResource("Linen")
+cast_shadow = 2
+collision_layer = 4
+collision_mask = 2
+simulation_precision = 8
+total_mass = 0.16
+linear_stiffness = 0.83
+damping_coefficient = 0.22
+drag_coefficient = 0.08
+pinned_points = PackedInt32Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+script = ExtResource("Breeze")

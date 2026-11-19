@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://Art/Textures/FramePost.jpg" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="Grain"]
+albedo_texture = ExtResource("1")
+roughness = 0.81
+
+[sub_resource type="BoxMesh" id="Timber"]
+material = SubResource("Grain")
+size = Vector3(0.169, 1.05, 0.162)
+
+[sub_resource type="BoxShape3D" id="TimberCollision"]
+margin = 0.002
+size = Vector3(0.169, 1.05, 0.162)
+
+[node name="Оконная стойка" type="MeshInstance3D"]
+mesh = SubResource("Timber")
+
+[node name="TimberBody" type="StaticBody3D" parent="."]
+collision_layer = 2
+collision_mask = 4
+
+[node name="Shape" type="CollisionShape3D" parent="TimberBody"]
+shape = SubResource("TimberCollision")
