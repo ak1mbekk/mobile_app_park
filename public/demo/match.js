@@ -6,6 +6,28 @@
   let cells=[], selected=-1, moves=12, berries=0, resolving=false, finished=false, pointer=null;
   const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   const randomPiece=()=>Math.floor(Math.random()*names.length);
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  function awaitBoard(){
+    const visible=()=>!document.hidden&&document.getElementById('match').classList.contains('current');
+    if(visible())return Promise.resolve();
+    return new Promise(resolve=>{
+      function resume(){
+        if(!visible())return;
+        document.removeEventListener('visibilitychange',resume);document.removeEventListener('conceptscreen',resume);
+        resolve();
+      }
+      document.addEventListener('visibilitychange',resume);document.addEventListener('conceptscreen',resume);
+    });
+  }
+  async function animateSwap(from,to){
+    if(reduced.matches)return;
+    const a=board.children[from],b=board.children[to];
+    const dx=b.offsetLeft-a.offsetLeft,dy=b.offsetTop-a.offsetTop;
+    await Promise.all([a,b].map((tile,i)=>tile.animate(
+      [{transform:'none'},{transform:'translate('+(i?-dx:dx)+'px,'+(i?-dy:dy)+'px)'}],
+      {duration:130,easing:'ease-in-out'}
+    ).finished));
+  }
   function matches(){
     const out=new Set();
     for(let i=0;i<cells.length;i++){
@@ -59,19 +81,38 @@
     if(selected===i){selected=-1;paint();return;}
     const distance=selected<0?0:Math.abs(i%width-selected%width)+Math.abs(Math.floor(i/width)-Math.floor(selected/width));
     if(distance!==1){selected=i;paint();return;}
-    const previous=selected;selected=-1;swap(previous,i);
+    const previous=selected;selected=-1;resolving=true;
+    await animateSwap(previous,i);await awaitBoard();
+    swap(previous,i);
     let found=matches();
-    if(!found.size){swap(previous,i);hint.textContent='Нужна линия хотя бы из трёх плодов.';paint();return;}
+    if(!found.size){
+      paint();await animateSwap(previous,i);await awaitBoard();swap(previous,i);
+      hint.textContent='Нужна линия хотя бы из трёх плодов.';resolving=false;paint();return;
+    }
     resolving=true;moves--;hint.textContent='Плоды собраны!';paint();
     while(found.size){
       for(const idx of found){if(cells[idx]===0)berries++;board.children[idx].classList.add('pop');}
-      await delay(210);
+      await delay(reduced.matches?0:210);await awaitBoard();
+      const falls=[];
       for(let x=0;x<width;x++){
         const kept=[];
-        for(let y=width-1;y>=0;y--){const k=y*width+x;if(!found.has(k))kept.push(cells[k]);}
-        for(let y=width-1;y>=0;y--)cells[y*width+x]=kept[width-1-y]??randomPiece();
+        for(let y=width-1;y>=0;y--){const k=y*width+x;if(!found.has(k))kept.push({piece:cells[k],row:y});}
+        const added=width-kept.length;
+        for(let y=width-1;y>=0;y--){
+          const old=kept[width-1-y],index=y*width+x;
+          cells[index]=old?.piece??randomPiece();
+          const distance=old?y-old.row:added;
+          if(distance>0)falls.push({index,distance});
+        }
       }
-      paint();found=matches();
+      paint();
+      if(!reduced.matches){
+        await Promise.all(falls.map(({index,distance})=>board.children[index].animate(
+          [{transform:'translateY(-'+distance*100+'%)',opacity:.65},{transform:'none',opacity:1}],
+          {duration:Math.min(360,140+distance*46),easing:'cubic-bezier(.32,.04,.55,1)'}
+        ).finished));
+      }
+      await awaitBoard();found=matches();
     }
     finished=berries>=target||moves===0;
     if(berries>=target){window.petDemo.gameReward();hint.textContent='Корзинка полна! +10 опыта и 5 листьев.';}

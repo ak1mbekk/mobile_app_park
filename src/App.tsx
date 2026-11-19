@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import HomePage from './pages/HomePage';
 import MapPage from './pages/MapPage';
@@ -13,10 +13,12 @@ import InfoPage from './pages/InfoPage';
 import SettingsPage from './pages/SettingsPage';
 
 function App() {
+  const [query] = useSearchParams();
+  const meeting = query.get('view') === '3d' ? '?view=3d' : '';
   return (
     <div className="h-full flex flex-col">
       <Routes>
-        <Route path="/" element={<iframe title="Домик у тропы и парк животных" className="w-full h-full border-0" src="./demo/index.html" />} />
+        <Route path="/" element={<iframe title="Домик у тропы и парк животных" className="w-full h-full border-0" src={'./demo/index.html'+meeting} />} />
         <Route element={<AppLayout />}>
           <Route path="/guide" element={<HomePage />} />
           <Route path="/map" element={<MapPage />} />

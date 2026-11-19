@@ -35,9 +35,25 @@
     },
     stats(){advanceNeeds();return {...saved,level:1+Math.floor(saved.xp/30)};},
     wash(){care('clean',55);},gameReward,
-    useCoupon(){if(saved.xp<270||saved.couponUsed)return false;saved.couponUsed=true;save();return true;}
+    confirmDemoOrder(children,adults){
+      if(![children,adults].every(n=>Number.isInteger(n)&&n>=0&&n<=3)||children+adults===0)return null;
+      if(saved.demoOrder)return saved.demoOrder;
+      const discount=children>0&&saved.xp>=270&&!saved.couponUsed?1:0;
+      saved.demoOrder={children,adults,discount,total:children*10+adults*15-discount};
+      if(discount)saved.couponUsed=true;
+      save();
+      return saved.demoOrder;
+    },
+    newDemoOrder(){saved.demoOrder=null;save();}
   };
   function refreshHome() {
+    const stage=saved.xp>=270?'adult':saved.xp>=90?'young':'kit';
+    $('home').dataset.age=stage;
+    const actor=$('pet-actor');
+    const asset='assets/pet-'+stage+'.webp';
+    if(actor.getAttribute('src')!==asset)actor.src=asset;
+    $('rope-ball').hidden=!saved.ball||saved.night;
+    $('ball-price').textContent=saved.ball?'В твоём домике':'5 листьев · в кошельке '+saved.leaves;
     $('aki-display').textContent = saved.name;
     $('aki-balance').textContent = String(saved.leaves);
     $('aki-level').textContent = 'Уровень '+(1 + Math.floor(saved.xp/30));
@@ -56,7 +72,35 @@
     const icon=$('aki-heart');icon.classList.remove('show');void icon.offsetWidth;icon.classList.add('show');
     clearTimeout(heartTimer);heartTimer=setTimeout(()=>icon.classList.remove('show'),900);
   }
-  $('aki-pet').onclick=()=>{heart();feedback(saved.night?'Тихо, '+saved.name+' спит':saved.name+' довольно урчит');};
+  function petMotion(name){
+    const actor=$('pet-actor');
+    actor.classList.remove('nuzzle','reach','bring');
+    void actor.offsetWidth;
+    actor.classList.add(name);
+  }
+  $('aki-pet').onclick=()=>{heart();petMotion('nuzzle');feedback(saved.night?'Тихо, '+saved.name+' спит':saved.name+' довольно урчит');};
+  $('buy-ball').onclick=()=>{
+    if(!saved.ball && saved.leaves<5){$('toy-notice').textContent='Выиграй один раунд, чтобы купить мяч.';return;}
+    if(!saved.ball){saved.leaves-=5;saved.ball=true;save();refreshHome();}
+    route('home');
+  };
+  let rolling=false;
+  $('rope-ball').onclick=async()=>{
+    if(rolling||saved.night)return;
+    rolling=true;
+    const ball=$('rope-ball'),age=$('home').dataset.age;
+    const start=ball.getBoundingClientRect(),pet=$('aki-pet').getBoundingClientRect();
+    const dx=pet.x+pet.width*.4-start.x,dy=pet.y+pet.height*.8-start.y;
+    const near='translate('+dx+'px,'+dy+'px) rotate(280deg) scale(.73)';
+    const slow=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const frames=age==='kit'?['none',near,near]:['none',near,near,'none'];
+    petMotion(age==='adult'?'bring':'reach');
+    try { await ball.animate(frames,{duration:slow?150:age==='kit'?900:1550,easing:'ease-in-out'}).finished; }
+    finally { rolling=false; }
+    if(active==='home'&&!saved.night){
+      heart();feedback(saved.name+(age==='kit'?' поймал мяч!':age==='young'?' вернул тебе мяч':' принёс любимый мяч'));
+    }
+  };
   $('aki-feed').onclick=()=>{if(saved.night) {feedback('Сначала разбуди енота');return;} $('aki-pantry').hidden=false;};
   $('close-pantry').onclick=()=>{$('aki-pantry').hidden=true;$('aki-feed').focus();};
   const snack=$('snack-piece');
@@ -67,7 +111,7 @@
   }
   function eatSnack(){
     if(!serving || saved.leaves<serving.cost)return;
-    saved.leaves-=serving.cost;care('food',32);heart();feedback(saved.name+' лакомится '+serving.name);
+    saved.leaves-=serving.cost;care('food',32);petMotion('reach');heart();feedback(saved.name+' лакомится '+serving.name);
     serving=null;snack.hidden=true;returnSnack();
   }
   document.querySelectorAll('[data-snack]').forEach(b=>b.onclick=()=>{
@@ -202,6 +246,7 @@
     if(id==='game'){if(!cards.length||(paired.size===3&&winShown))newGame();else resumeGame();}
     if(id==='win'&&paired.size===3){winShown=true;storeRound();}
     if(id==='home')refreshHome();
+    if(id==='chest'){$('toy-notice').textContent='';refreshHome();}
   }
   document.addEventListener('conceptscreen',e=>enter(e.detail));
   document.addEventListener('visibilitychange',()=>{

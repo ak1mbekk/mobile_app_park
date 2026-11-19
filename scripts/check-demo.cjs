@@ -33,12 +33,20 @@ async function check(page, url, output) {
   await tab('park'); await visible('park');
   assert.match(await el('#park .priority').getAttribute('href'),/^https:\/\/animal-park.by\/tickets\//);
   await snap('park-before');
-  await click('#duringVisit'); await go('park','feed'); await go('feed','map'); await go('map','animal');
+  await click('#duringVisit'); await go('park','feed');
+  const download=page.waitForEvent('download');await click('#add-reminder');
+  const invitation=fs.readFileSync(await (await download).path(),'utf8');
+  assert.match(invitation,/TRIGGER:-PT30M/);assert.match(invitation,/DTSTART:\d{8}T125000Z/);
+  await go('feed','map'); await go('map','animal');
   await click('#animal .p-back'); await visible('map'); await click('#map .p-back'); await visible('feed');
   await tab('park'); await go('park','overview'); await go('overview','zone2'); await click('#zone2 [data-zoom=in]');
   assert.equal(await el('#zone2 .map-canvas img').evaluate(img=>img.style.width),'175%');
   await tab('park'); await go('park','animals'); await el('#animalSearch').fill('капибара');
   assert.equal(await page.locator('#animals .animalcard:visible').count(),1);
+  await el('#animalSearch').fill('Пака');await page.locator('#animals .animalcard').filter({has:page.getByText('Пака',{exact:true})}).click();await visible('species');
+  assert.match(await el('#species-name').textContent(),/Пака/);
+  await click('#species .p-back');await visible('animals');await el('#animalSearch').fill('');
+  assert.equal(await page.locator('#animals .animalcard').count(),116);
   await tab('home'); await visible('intro'); await drag('#apple-hotspot','#intro',.48,.58);
   await visible('name'); await page.goto(url); await visible('name');
   assert.equal(await el('#aki-name-input').inputValue(),'Ричи');
@@ -94,15 +102,41 @@ async function check(page, url, output) {
   }
   await page.mouse.up();assert.match(await el('#catchTitle').textContent(),/Полная корзинка/);
   assert.equal((await stats()).leaves,beforeWin.leaves+10);
+  await go('catch','chest');await click('#buy-ball');await visible('home');
+  assert.equal((await stats()).leaves,beforeWin.leaves+5);await click('#rope-ball');
+  await page.reload();assert.equal((await stats()).ball,true);
   await tab('park'); await go('park','pass'); await el('#ticketCount').selectOption('0');
   assert.ok(await el('#testBuy').isDisabled());await el('#ticketCount').selectOption('2');
   await click('#testBuy');assert.match(await el('#ticketTotal').textContent(),/Тестовый заказ/);
+  await page.reload();await visible('pass');assert.ok(await el('#testBuy').isDisabled());
+  await click('#newOrder');await el('#ticketCount').selectOption('0');await el('#adultCount').selectOption('1');
+  assert.match(await el('#ticketTotal').textContent(),/15 BYN/);
   for(const width of [320,390,430]){
     await page.setViewportSize({width,height:width===320?640:844});
     for(const id of ['park','feed','animals','overview','match','chest','wash','home']){
       await page.evaluate(id=>window.conceptGo(id),id);await visible(id);
       const fits=await el('#'+id).evaluate(e=>e.scrollWidth<=e.clientWidth+1);
       assert.ok(fits,id+' overflows at '+width);
+    }
+  }
+  assert.deepEqual(errors,[]);
+  // Exercise the level boundary with an isolated browser fixture, never a real wallet.
+  for(const [xp,age] of [[89,'kit'],[90,'young'],[269,'young'],[270,'adult']]){
+    await page.evaluate(xp=>{
+      const pet=JSON.parse(localStorage.getItem('aki-concept-demo'));
+      Object.assign(pet,{xp,couponUsed:false,demoOrder:null});
+      localStorage.setItem('aki-concept-demo',JSON.stringify(pet));
+    },xp);
+    await page.goto(url);await visible('home');
+    assert.equal(await el('#home').getAttribute('data-age'),age);
+    if(xp===90||xp===270) await snap(age);
+    await tab('park');await go('park','pass');await el('#ticketCount').selectOption('2');
+    await el('#adultCount').selectOption('1');
+    assert.match(await el('#ticketTotal').textContent(),xp>=270?/34 BYN/:/35 BYN/);
+    if(xp===270){
+      await click('#testBuy');await page.reload();await visible('pass');assert.ok(await el('#testBuy').isDisabled());
+      await click('#newOrder');await el('#ticketCount').selectOption('2');await el('#adultCount').selectOption('1');
+      assert.match(await el('#ticketTotal').textContent(),/35 BYN/);
     }
   }
   assert.deepEqual(errors,[]);

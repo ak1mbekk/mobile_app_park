@@ -1,45 +1,26 @@
-/**
- * Парсит коллекцию животных с https://animal-park.by/galereya/
- * Запуск: node scripts/parse-animals.js
- * Выводит JSON в stdout.
- */
+/** Read the published gallery. Use --html PATH to process an archived response. */
+import { readFile } from 'node:fs/promises';
 
-const url = 'https://animal-park.by/galereya/';
-
-async function main() {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AnimalParkParser/1.0)' },
-  });
-  const html = await res.text();
-
-  const re = /<a[^>]+href="(galereya\/[^"]+\.html)"[^>]*>([^<]+)<\/a>/gi;
-  const seen = new Set();
-  const animals = [];
-  const baseUrl = 'https://animal-park.by/galereya/';
-
-  let m;
-  while ((m = re.exec(html)) !== null) {
-    const [, href, text] = m;
-    let name = text.replace(/\s+Подробнее\s*$/i, '').trim();
-    if (/^(Парнокопытн|Млекопитающ|Приматы|Хищные птицы|Экзотические птицы|Другие птицы|Рыбы|Пресмыкающиеся)/i.test(name)) {
-      name = name.replace(/^(Парнокопытн(?:ые?|ое)|Млекопитающ(?:ие|ее)|Приматы|Хищные птицы|Экзотические птицы|Другие птицы|Рыбы|Пресмыкающиеся)\s*/i, '');
-    }
-    if (!name || name.length < 2) continue;
-    const slug = href.replace(/^.*\/([^/]+)\.html$/, '$1');
-    if (seen.has(slug)) continue;
-    seen.add(slug);
-    animals.push({
-      id: `site-${slug}`,
-      name,
-      url: href.startsWith('http') ? href : baseUrl + href,
-      slug,
-    });
-  }
-
-  console.log(JSON.stringify(animals, null, 2));
-}
-
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
+const site = 'https://animal-park.by/';
+const gallery = new URL('galereya/', site);
+const decode = text => text.replace(/&nbsp;/gi, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+const archival = process.argv[2] === '--html';
+const html = archival ? await readFile(process.argv[3], 'utf8') : await fetch(gallery).then(response => {
+  if (!response.ok) throw Error('Gallery responded ' + response.status);
+  return response.text();
 });
+
+const entries = new Map();
+for (const card of html.split(/class=["']category_[^"']*gallery-masonry__item["']/i).slice(1)) {
+  const href = card.match(/href="(galereya\/[^"]+\.html)"/i)?.[1];
+  const photo = card.match(/<img[^>]+src="([^"]+)"/i)?.[1];
+  const spans = [...card.matchAll(/<span\b[^>]*>([^<>]+)<\/span>/gi)].map(m => decode(m[1]));
+  if (!href || !photo || !spans[0] || !spans[1]) throw Error('Incomplete published card');
+  const url = new URL(href, site);
+  const image = new URL(photo, site);
+  if (url.origin !== gallery.origin || image.origin !== gallery.origin) throw Error('Unexpected asset host');
+  const slug = url.pathname.split('/').pop().replace(/\.html$/, '');
+  entries.set(slug, {id:'site-'+slug, name:spans[1], category:spans[0], url:url.href, slug, photo:image.href});
+}
+if (!entries.size) throw Error('No animal cards found');
+console.log(JSON.stringify([...entries.values()], null, 2));

@@ -1,9 +1,9 @@
 /**
  * Коллекция животных, спарсенная с https://animal-park.by/galereya/
- * Обновить: node scripts/parse-animals.js > src/data/animalsFromSite.json
+ * Та же проверенная подборка, которую использует мобильный путеводитель.
  */
 
-import data from './animalsFromSite.json';
+import data from '../../public/demo/catalogue.json';
 
 export interface SiteAnimal {
   id: string;

@@ -30,3 +30,31 @@
 #loading3d{position:absolute;left:12px;right:12px;bottom:15px;background:#382d22ed;color:#fff8e7;border-radius:14px;text-align:center;padding:12px}
 #snack-piece{position:absolute;z-index:5;left:22%;top:77%;width:64px;height:64px;transform:translate(-50%,-50%);border-radius:50%;padding:0;touch-action:none;overflow:hidden;background:#6f472f;box-shadow:0 4px 12px #24190c66}
 #snack-piece img{width:100%;height:100%;pointer-events:none}
+#home{--scene:url("assets/room-floor.webp")}
+#home.night{--scene:url("assets/sleep.webp")}
+#pet-actor{position:absolute;left:31%;bottom:27%;width:57%;height:auto;transform-origin:center bottom;pointer-events:none;filter:drop-shadow(2px 5px 3px #452c2450);animation:pet-breathe 3s ease-in-out infinite}
+#home[data-age=young] #pet-actor{left:36%;width:53%}
+#home[data-age=adult] #pet-actor{left:21%;width:75%}
+#home.night #pet-actor{display:none}
+#pet-actor.nuzzle{animation:nuzzle .65s ease-in-out,pet-breathe 3s .65s ease-in-out infinite}
+#pet-actor.reach{animation:reach .72s ease-in-out,pet-breathe 3s .72s ease-in-out infinite}
+#pet-actor.bring{animation:bring 1.55s ease-in-out,pet-breathe 3s 1.55s ease-in-out infinite}
+@keyframes pet-breathe{50%{transform:scale(1.006,1.017)}}
+@keyframes nuzzle{40%{transform:rotate(-3deg) scale(1.04,.98)}75%{transform:rotate(1deg)}}
+@keyframes reach{50%{transform:translate(-3%,2%) rotate(-4deg) scale(1.025,.975)}}
+@keyframes bring{40%{transform:translate(-8%,2%) rotate(-3deg)}75%{transform:translate(-3%,-1%)}}
+#rope-ball{position:absolute;left:12%;top:81%;width:51px;height:51px;z-index:3;background:transparent;border-radius:50%;padding:0;touch-action:manipulation}
+#rope-ball img,.ball-shop img{width:100%;height:100%;object-fit:contain;pointer-events:none;filter:drop-shadow(1px 3px 2px #422c2370)}
+.ball-shop{display:flex;gap:12px;align-items:center;text-align:left;margin-top:20px;border:1px solid #b89a6f;border-radius:14px;padding:8px 12px;color:#fff4db;background:#604b36;font:600 17px system-ui}
+.ball-shop img{width:42px;height:42px}.ball-shop small{display:block;margin-top:3px;font-size:13px;font-weight:400}
+#toy-notice{margin:8px 0;color:#ffe9bb;font:14px system-ui}
+@media(prefers-reduced-motion:reduce){#home #pet-actor{animation:none}}
+
+#species .p-animal-photo img{width:100%;height:100%;object-fit:cover}
+#species-latin{font-style:italic;color:var(--green);margin:12px 0}
+.object:hover:not(:focus-visible){outline:0;background:transparent}
+.visit-date{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0;color:#344b34;font:600 15px system-ui}.visit-date input{font:inherit;min-width:0;min-height:44px;border:1px solid #c7cbbb;border-radius:10px;background:#fffaf0;padding:5px 8px;color:#344b34}#add-reminder{min-height:44px;text-align:left}#calendar-hint{display:block;color:#49573c}
+.animalgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.animalcard{min-width:0;overflow-wrap:anywhere}
+.animalcard img{width:100%;min-width:0;object-fit:cover}
+.animalcard b,.animalcard small{max-width:100%}

@@ -2,6 +2,7 @@ const byId=id=>document.getElementById(id);
 const domestic=new Set(['intro','name','home','game','win','wash','chest','match','catch']);
 let lastHome='intro', currentScreen='', previousScreens={};
 function present(id){
+  if(id.startsWith('species/'))id='species';
   if(!byId(id)?.matches('.screen')) id='park';
   currentScreen=id;
   for(const el of document.querySelectorAll('.screen')) el.classList.toggle('current',el.id===id);

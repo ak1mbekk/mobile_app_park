@@ -1,0 +1,1073 @@
+[
+  {
+    "id": "site-vintorogij-kozel",
+    "name": "Винторогий козел",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/vintorogij-kozel.html",
+    "slug": "vintorogij-kozel",
+    "photo": "https://animal-park.by/gallery/kosel2-compressed.webp",
+    "thumbnail": "assets/species/vintorogij-kozel.webp"
+  },
+  {
+    "id": "site-sibirskij-gornyij-kozel",
+    "name": "Сибирский горный козел",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/sibirskij-gornyij-kozel.html",
+    "slug": "sibirskij-gornyij-kozel",
+    "photo": "https://animal-park.by/gallery/kosel3-compressed.webp",
+    "thumbnail": "assets/species/sibirskij-gornyij-kozel.webp"
+  },
+  {
+    "id": "site-indijskij-dikobraz",
+    "name": "Индийский дикообраз",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/indijskij-dikobraz.html",
+    "slug": "indijskij-dikobraz",
+    "photo": "https://animal-park.by/gallery/dikobraz2-compressed.webp",
+    "thumbnail": "assets/species/indijskij-dikobraz.webp"
+  },
+  {
+    "id": "site-paka",
+    "name": "Пака",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/paka.html",
+    "slug": "paka",
+    "photo": "https://animal-park.by/gallery/paka-compressed.webp",
+    "thumbnail": "assets/species/paka.webp"
+  },
+  {
+    "id": "site-karakal",
+    "name": "Каракал",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/karakal.html",
+    "slug": "karakal",
+    "photo": "https://animal-park.by/gallery/karakal-compressed.webp",
+    "thumbnail": "assets/caracal.webp"
+  },
+  {
+    "id": "site-xorek-fretka",
+    "name": "Хорек Фретка",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/xorek-fretka.html",
+    "slug": "xorek-fretka",
+    "photo": "https://animal-park.by/gallery/fretka-compressed.webp",
+    "thumbnail": "assets/species/xorek-fretka.webp"
+  },
+  {
+    "id": "site-dagestanskij-tur",
+    "name": "Дагестанский тур",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/dagestanskij-tur.html",
+    "slug": "dagestanskij-tur",
+    "photo": "https://animal-park.by/gallery/tur-compressed.webp",
+    "thumbnail": "assets/species/dagestanskij-tur.webp"
+  },
+  {
+    "id": "site-amerikanskij-bizon",
+    "name": "Американский Бизон",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/amerikanskij-bizon.html",
+    "slug": "amerikanskij-bizon",
+    "photo": "https://animal-park.by/gallery/bison2-cleaned.webp",
+    "thumbnail": "assets/species/amerikanskij-bizon.webp"
+  },
+  {
+    "id": "site-sudanskij-kozyol",
+    "name": "Суданский козёл",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/sudanskij-kozyol.html",
+    "slug": "sudanskij-kozyol",
+    "photo": "https://animal-park.by/gallery/kosel-compressed.webp",
+    "thumbnail": "assets/species/sudanskij-kozyol.webp"
+  },
+  {
+    "id": "site-goluboj-baran",
+    "name": "Голубой баран",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/goluboj-baran.html",
+    "slug": "goluboj-baran",
+    "photo": "https://animal-park.by/gallery/baran.webp",
+    "thumbnail": "assets/species/goluboj-baran.webp"
+  },
+  {
+    "id": "site-severnyij-olen",
+    "name": "Северный олень",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/severnyij-olen.html",
+    "slug": "severnyij-olen",
+    "photo": "https://animal-park.by/gallery/olen.webp",
+    "thumbnail": "assets/species/severnyij-olen.webp"
+  },
+  {
+    "id": "site-obyiknovennaya-pustelga",
+    "name": "Обыкновенная пустельга",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/obyiknovennaya-pustelga.html",
+    "slug": "obyiknovennaya-pustelga",
+    "photo": "https://animal-park.by/pustelga.webp",
+    "thumbnail": "assets/species/obyiknovennaya-pustelga.webp"
+  },
+  {
+    "id": "site-lentochnyij-gus",
+    "name": "Ленточный гусь",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/lentochnyij-gus.html",
+    "slug": "lentochnyij-gus",
+    "photo": "https://animal-park.by/gallery/guslent.webp",
+    "thumbnail": "assets/species/lentochnyij-gus.webp"
+  },
+  {
+    "id": "site-gus-gummenik",
+    "name": "Холмогорский гусь",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/gus-gummenik.html",
+    "slug": "gus-gummenik",
+    "photo": "https://animal-park.by/gallery/kholmogory-goose.webp",
+    "thumbnail": "assets/species/gus-gummenik.webp"
+  },
+  {
+    "id": "site-karlikovaya-domashnyaya-svinya-(minipig)",
+    "name": "Карликовая домашняя свинья (минипиг)",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/karlikovaya-domashnyaya-svinya-(minipig).html",
+    "slug": "karlikovaya-domashnyaya-svinya-(minipig)",
+    "photo": "https://animal-park.by/minipig.webp",
+    "thumbnail": "assets/species/karlikovaya-domashnyaya-svinya--minipig.webp",
+    "scientific": "Sus domesticus"
+  },
+  {
+    "id": "site-fenek",
+    "name": "Фенек",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/fenek.html",
+    "slug": "fenek",
+    "photo": "https://animal-park.by/gallery/fenek.webp",
+    "thumbnail": "assets/species/fenek.webp"
+  },
+  {
+    "id": "site-saxarskij-oriks",
+    "name": "Сахарский орикс",
+    "category": "Парнокопытное",
+    "url": "https://animal-park.by/galereya/saxarskij-oriks.html",
+    "slug": "saxarskij-oriks",
+    "photo": "https://animal-park.by/gallery/saxarskij-oriks.png",
+    "thumbnail": "assets/species/saxarskij-oriks.webp"
+  },
+  {
+    "id": "site-oshejnikovyij-pekari",
+    "name": "Ошейниковый Пекари",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/oshejnikovyij-pekari.html",
+    "slug": "oshejnikovyij-pekari",
+    "photo": "https://animal-park.by/gallery/oshejnikovyij-pekari.jpg",
+    "thumbnail": "assets/species/oshejnikovyij-pekari.webp"
+  },
+  {
+    "id": "site-nandu",
+    "name": "Нанду",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/nandu.html",
+    "slug": "nandu",
+    "photo": "https://animal-park.by/gallery/nandu.webp",
+    "thumbnail": "assets/species/nandu.webp"
+  },
+  {
+    "id": "site-straus-afrikanskij",
+    "name": "Страус Африканский",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/straus-afrikanskij.html",
+    "slug": "straus-afrikanskij",
+    "photo": "https://animal-park.by/gallery/straus-afrikanskij.jpg",
+    "thumbnail": "assets/species/straus-afrikanskij.webp"
+  },
+  {
+    "id": "site-vodyanoj-bujvol-(aziatskij)",
+    "name": "Водяной Буйвол (Азиатский)",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/vodyanoj-bujvol-(aziatskij).html",
+    "slug": "vodyanoj-bujvol-(aziatskij)",
+    "photo": "https://animal-park.by/gallery/aziaczkij-bujvol.jpg",
+    "thumbnail": "assets/species/vodyanoj-bujvol--aziatskij.webp",
+    "scientific": "Bubalus bubalis"
+  },
+  {
+    "id": "site-vengerskij-stepnoj-skot",
+    "name": "Венгерский Степной Скот",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/vengerskij-stepnoj-skot.html",
+    "slug": "vengerskij-stepnoj-skot",
+    "photo": "https://animal-park.by/gallery/vengerskij-stepnoj-skot.jpg",
+    "thumbnail": "assets/species/vengerskij-stepnoj-skot.webp",
+    "scientific": "Bos taurus"
+  },
+  {
+    "id": "site-chernyij-lebed",
+    "name": "Черный Лебедь",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/chernyij-lebed.html",
+    "slug": "chernyij-lebed",
+    "photo": "https://animal-park.by/gallery/chyornyij-lebed.jpg",
+    "thumbnail": "assets/species/chernyij-lebed.webp",
+    "scientific": "Cygnus atratus"
+  },
+  {
+    "id": "site-makak-lapunder",
+    "name": "Макак Лапундер",
+    "category": "Приматы",
+    "url": "https://animal-park.by/galereya/makak-lapunder.html",
+    "slug": "makak-lapunder",
+    "photo": "https://animal-park.by/gallery/yaponskij-makak.webp",
+    "thumbnail": "assets/species/makak-lapunder.webp",
+    "scientific": "Macaca nemestrina"
+  },
+  {
+    "id": "site-moral",
+    "name": "Марал",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/moral.html",
+    "slug": "moral",
+    "photo": "https://animal-park.by/gallery/moral.jpg",
+    "thumbnail": "assets/species/moral.webp",
+    "scientific": "Cervus elaphus maral"
+  },
+  {
+    "id": "site-koza-gergentana",
+    "name": "Коза Гиргентана",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/koza-gergentana.html",
+    "slug": "koza-gergentana",
+    "photo": "https://animal-park.by/gallery/koza-gergentana.jpg",
+    "thumbnail": "assets/species/koza-gergentana.webp",
+    "scientific": "Capra aegagrus hircus"
+  },
+  {
+    "id": "site-shviczkaya-korova",
+    "name": "Швицкая Корова",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/shviczkaya-korova.html",
+    "slug": "shviczkaya-korova",
+    "photo": "https://animal-park.by/gallery/shviczkaya-korova.jpg",
+    "thumbnail": "assets/species/shviczkaya-korova.webp",
+    "scientific": "Bos taurus"
+  },
+  {
+    "id": "site-byik-xeka",
+    "name": "Бык Хека",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/byik-xeka.html",
+    "slug": "byik-xeka",
+    "photo": "https://animal-park.by/gallery/byik-xeka.jpg",
+    "thumbnail": "assets/species/byik-xeka.webp",
+    "scientific": "Bos primigenius taurus"
+  },
+  {
+    "id": "site-grivistyij-baran",
+    "name": "Гривистый Баран",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/grivistyij-baran.html",
+    "slug": "grivistyij-baran",
+    "photo": "https://animal-park.by/gallery/barbary-sheep-tennoji.jpg",
+    "thumbnail": "assets/species/grivistyij-baran.webp",
+    "scientific": "Ammotragus lervia"
+  },
+  {
+    "id": "site-antilopa-nilgau",
+    "name": "Антилопа Нильгау",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/antilopa-nilgau.html",
+    "slug": "antilopa-nilgau",
+    "photo": "https://animal-park.by/gallery/antilopa-nilgao.webp",
+    "thumbnail": "assets/species/antilopa-nilgau.webp",
+    "scientific": "Boselaphus tragocamelus"
+  },
+  {
+    "id": "site-tarpanovidnaya-loshad",
+    "name": "Тарпановидная лошадь",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/tarpanovidnaya-loshad.html",
+    "slug": "tarpanovidnaya-loshad",
+    "photo": "https://animal-park.by/gallery/tarpanovidnaya-loshad.jpg",
+    "thumbnail": "assets/species/tarpanovidnaya-loshad.webp",
+    "scientific": "Equus ferus ferus"
+  },
+  {
+    "id": "site-kapibara",
+    "name": "Капибара",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/kapibara.html",
+    "slug": "kapibara",
+    "photo": "https://animal-park.by/gallery/kapibara.jpg",
+    "thumbnail": "assets/capybara.webp",
+    "scientific": "Hydrochoerus hydrochaeris"
+  },
+  {
+    "id": "site-serval",
+    "name": "Сервал",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/serval.html",
+    "slug": "serval",
+    "photo": "https://animal-park.by/gallery/serval-compressed.webp",
+    "thumbnail": "assets/species/serval.webp",
+    "scientific": "Leptailurus serval"
+  },
+  {
+    "id": "site-guanako",
+    "name": "Гуанако",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/guanako.html",
+    "slug": "guanako",
+    "photo": "https://animal-park.by/gallery/guanaka.jpg",
+    "thumbnail": "assets/species/guanako.webp",
+    "scientific": "Lama guanicoe"
+  },
+  {
+    "id": "site-edipov-tamarin",
+    "name": "Эдипов Тамарин",
+    "category": "Приматы",
+    "url": "https://animal-park.by/galereya/edipov-tamarin.html",
+    "slug": "edipov-tamarin",
+    "photo": "https://animal-park.by/gallery/cotton-top-tamarin.jpg",
+    "thumbnail": "assets/tamarin.webp",
+    "scientific": "Saguinus oedipus"
+  },
+  {
+    "id": "site-yaponskij-makak",
+    "name": "Японский Макак",
+    "category": "Приматы",
+    "url": "https://animal-park.by/galereya/yaponskij-makak.html",
+    "slug": "yaponskij-makak",
+    "photo": "https://animal-park.by/gallery/yaponskij-makaka.jpg",
+    "thumbnail": "assets/species/yaponskij-makak.webp",
+    "scientific": "Macaca fuscata"
+  },
+  {
+    "id": "site-belyij-amur",
+    "name": "Белый амур",
+    "category": "Рыбы",
+    "url": "https://animal-park.by/galereya/belyij-amur.html",
+    "slug": "belyij-amur",
+    "photo": "https://animal-park.by/gallery/amur.png",
+    "thumbnail": "assets/species/belyij-amur.webp"
+  },
+  {
+    "id": "site-belyij-tolstolobik",
+    "name": "Белый толстолобик",
+    "category": "Рыбы",
+    "url": "https://animal-park.by/galereya/belyij-tolstolobik.html",
+    "slug": "belyij-tolstolobik",
+    "photo": "https://animal-park.by/gallery/tolstolobik.jpg",
+    "thumbnail": "assets/species/belyij-tolstolobik.webp",
+    "scientific": "Hypophthalmichthys molitrix"
+  },
+  {
+    "id": "site-karp-obyiknovennyij-(sazan)",
+    "name": "Карп обыкновенный (Сазан)",
+    "category": "Рыбы",
+    "url": "https://animal-park.by/galereya/karp-obyiknovennyij-(sazan).html",
+    "slug": "karp-obyiknovennyij-(sazan)",
+    "photo": "https://animal-park.by/gallery/karp-2.png",
+    "thumbnail": "assets/species/karp-obyiknovennyij--sazan.webp",
+    "scientific": "Cyprinus carpio"
+  },
+  {
+    "id": "site-serebryanyij-karas",
+    "name": "Серебряный карась",
+    "category": "Рыбы",
+    "url": "https://animal-park.by/galereya/serebryanyij-karas.html",
+    "slug": "serebryanyij-karas",
+    "photo": "https://animal-park.by/gallery/karas-cleaned.webp",
+    "thumbnail": "assets/species/serebryanyij-karas.webp",
+    "scientific": "Carassius gibelio"
+  },
+  {
+    "id": "site-shhuka-obyiknovennaya",
+    "name": "Щука обыкновенная",
+    "category": "Рыбы",
+    "url": "https://animal-park.by/galereya/shhuka-obyiknovennaya.html",
+    "slug": "shhuka-obyiknovennaya",
+    "photo": "https://animal-park.by/gallery/schuka.png",
+    "thumbnail": "assets/species/shhuka-obyiknovennaya.webp",
+    "scientific": "Esox lucius"
+  },
+  {
+    "id": "site-sterlyad",
+    "name": "Стерлядь",
+    "category": "Рыбы",
+    "url": "https://animal-park.by/galereya/sterlyad.html",
+    "slug": "sterlyad",
+    "photo": "https://animal-park.by/gallery/sterlet.webp",
+    "thumbnail": "assets/species/sterlyad.webp",
+    "scientific": "Esox lucius"
+  },
+  {
+    "id": "site-lin",
+    "name": "Линь",
+    "category": "Рыбы",
+    "url": "https://animal-park.by/galereya/lin.html",
+    "slug": "lin",
+    "photo": "https://animal-park.by/gallery/lin.png",
+    "thumbnail": "assets/species/lin.webp"
+  },
+  {
+    "id": "site-forel-raduzhnaya",
+    "name": "Форель радужная",
+    "category": "Рыбы",
+    "url": "https://animal-park.by/galereya/forel-raduzhnaya.html",
+    "slug": "forel-raduzhnaya",
+    "photo": "https://animal-park.by/gallery/forel.webp",
+    "thumbnail": "assets/species/forel-raduzhnaya.webp"
+  },
+  {
+    "id": "site-antilopa-garna",
+    "name": "Антилопа Гарна",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/antilopa-garna.html",
+    "slug": "antilopa-garna",
+    "photo": "https://animal-park.by/gallery/antilopa-garna.jpg",
+    "thumbnail": "assets/species/antilopa-garna.webp",
+    "scientific": "Antilope cervicapra"
+  },
+  {
+    "id": "site-yaponskij-zhuravl",
+    "name": "Японский Журавль",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/yaponskij-zhuravl.html",
+    "slug": "yaponskij-zhuravl",
+    "photo": "https://animal-park.by/gallery/yaponskij-zhuravl.jpg",
+    "thumbnail": "assets/species/yaponskij-zhuravl.webp"
+  },
+  {
+    "id": "site-chyornyij-zhuravl",
+    "name": "Чёрный Аист",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/chyornyij-zhuravl.html",
+    "slug": "chyornyij-zhuravl",
+    "photo": "https://animal-park.by/gallery/chyornyij-zhuravl.jpg",
+    "thumbnail": "assets/species/chyornyij-zhuravl.webp"
+  },
+  {
+    "id": "site-utka-kryakva",
+    "name": "Утка кряква",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/utka-kryakva.html",
+    "slug": "utka-kryakva",
+    "photo": "https://animal-park.by/gallery/utka-kryakva.jpg",
+    "thumbnail": "assets/species/utka-kryakva.webp"
+  },
+  {
+    "id": "site-muskusnaya-utka",
+    "name": "Мускусная Утка",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/muskusnaya-utka.html",
+    "slug": "muskusnaya-utka",
+    "photo": "https://animal-park.by/gallery/muskusnaya-utka1-.jpg",
+    "thumbnail": "assets/species/muskusnaya-utka.webp"
+  },
+  {
+    "id": "site-lebed-shipun",
+    "name": "Лебедь-шипун",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/lebed-shipun.html",
+    "slug": "lebed-shipun",
+    "photo": "https://animal-park.by/gallery/lebed-shipun.jpg",
+    "thumbnail": "assets/species/lebed-shipun.webp"
+  },
+  {
+    "id": "site-zhuravl-krasavka",
+    "name": "Журавль Красавка",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/zhuravl-krasavka.html",
+    "slug": "zhuravl-krasavka",
+    "photo": "https://animal-park.by/gallery/zhuravl-krasavka.jpg",
+    "thumbnail": "assets/species/zhuravl-krasavka.webp"
+  },
+  {
+    "id": "site-dikaya-smeyuschayasya-gorlicza",
+    "name": "Дикая смеющаяся горлица",
+    "category": "Другие птицы",
+    "url": "https://animal-park.by/galereya/dikaya-smeyuschayasya-gorlicza.html",
+    "slug": "dikaya-smeyuschayasya-gorlicza",
+    "photo": "https://animal-park.by/gallery/gorlica.webp",
+    "thumbnail": "assets/species/dikaya-smeyuschayasya-gorlicza.webp"
+  },
+  {
+    "id": "site-sinij-ushastyij-fazan",
+    "name": "Синий Ушастый Фазан",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/sinij-ushastyij-fazan.html",
+    "slug": "sinij-ushastyij-fazan",
+    "photo": "https://animal-park.by/gallery/sinij-ushastyij-fazan.jpg",
+    "thumbnail": "assets/species/sinij-ushastyij-fazan.webp"
+  },
+  {
+    "id": "site-serebryannyij-fazan",
+    "name": "Серебряный Фазан",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/serebryannyij-fazan.html",
+    "slug": "serebryannyij-fazan",
+    "photo": "https://animal-park.by/gallery/serebryannyij-fazan.jpg",
+    "thumbnail": "assets/species/serebryannyij-fazan.webp"
+  },
+  {
+    "id": "site-rozovoshhekie-nerazluchniki",
+    "name": "Розовощекие неразлучники",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/rozovoshhekie-nerazluchniki.html",
+    "slug": "rozovoshhekie-nerazluchniki",
+    "photo": "https://animal-park.by/gallery/nerazluchniki-2.png",
+    "thumbnail": "assets/species/rozovoshhekie-nerazluchniki.webp"
+  },
+  {
+    "id": "site-popugaj-kramera",
+    "name": "Ожереловый попугай Кра́мера",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/popugaj-kramera.html",
+    "slug": "popugaj-kramera",
+    "photo": "https://animal-park.by/gallery/popugaj-kramera.jpg",
+    "thumbnail": "assets/species/popugaj-kramera.webp"
+  },
+  {
+    "id": "site-sine-zheltyij-ara",
+    "name": "Сине-желтый ара",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/sine-zheltyij-ara.html",
+    "slug": "sine-zheltyij-ara",
+    "photo": "https://animal-park.by/gallery/ara-2.png",
+    "thumbnail": "assets/species/sine-zheltyij-ara.webp"
+  },
+  {
+    "id": "site-popugaj-korella",
+    "name": "Попугай Корелла",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/popugaj-korella.html",
+    "slug": "popugaj-korella",
+    "photo": "https://animal-park.by/gallery/popugaj-korella.jpg",
+    "thumbnail": "assets/species/popugaj-korella.webp"
+  },
+  {
+    "id": "site-popugaj-volnistyij",
+    "name": "Попугай Волнистый",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/popugaj-volnistyij.html",
+    "slug": "popugaj-volnistyij",
+    "photo": "https://animal-park.by/gallery/popugaj-volnistyij.jpg",
+    "thumbnail": "assets/species/popugaj-volnistyij.webp"
+  },
+  {
+    "id": "site-pavlin",
+    "name": "Павлин",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/pavlin.html",
+    "slug": "pavlin",
+    "photo": "https://animal-park.by/gallery/pavlin.jpg",
+    "thumbnail": "assets/species/pavlin.webp"
+  },
+  {
+    "id": "site-zolotoj-fazan",
+    "name": "Золотой Фазан",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/zolotoj-fazan.html",
+    "slug": "zolotoj-fazan",
+    "photo": "https://animal-park.by/gallery/zolotoj-fazan.jpeg",
+    "thumbnail": "assets/species/zolotoj-fazan.webp"
+  },
+  {
+    "id": "site-grifovaya-czesarka",
+    "name": "Грифовая Цесарка",
+    "category": "Экзотические птицы",
+    "url": "https://animal-park.by/galereya/grifovaya-czesarka.html",
+    "slug": "grifovaya-czesarka",
+    "photo": "https://animal-park.by/gallery/cesarka-compressed.webp",
+    "thumbnail": "assets/species/grifovaya-czesarka.webp",
+    "scientific": "Acryllium vulturinum"
+  },
+  {
+    "id": "site-filin",
+    "name": "Филин",
+    "category": "Хищные птицы",
+    "url": "https://animal-park.by/galereya/filin.html",
+    "slug": "filin",
+    "photo": "https://animal-park.by/gallery/223.jpg",
+    "thumbnail": "assets/species/filin.webp"
+  },
+  {
+    "id": "site-sipuxa",
+    "name": "Сипуха",
+    "category": "Хищные птицы",
+    "url": "https://animal-park.by/galereya/sipuxa.html",
+    "slug": "sipuxa",
+    "photo": "https://animal-park.by/gallery/sipuxa.jpg",
+    "thumbnail": "assets/species/sipuxa.webp"
+  },
+  {
+    "id": "site-belyij-aist",
+    "name": "Белый Аист",
+    "category": "Хищные птицы",
+    "url": "https://animal-park.by/galereya/belyij-aist.html",
+    "slug": "belyij-aist",
+    "photo": "https://animal-park.by/gallery/belyij-aist.jpg",
+    "thumbnail": "assets/species/belyij-aist.webp"
+  },
+  {
+    "id": "site-polyarnaya-sova",
+    "name": "Полярная Сова",
+    "category": "Хищные птицы",
+    "url": "https://animal-park.by/galereya/polyarnaya-sova.html",
+    "slug": "polyarnaya-sova",
+    "photo": "https://animal-park.by/gallery/belaya-sova.jpg",
+    "thumbnail": "assets/species/polyarnaya-sova.webp"
+  },
+  {
+    "id": "site-sajmiri-belichij",
+    "name": "Саймири Беличий",
+    "category": "Приматы",
+    "url": "https://animal-park.by/galereya/sajmiri-belichij.html",
+    "slug": "sajmiri-belichij",
+    "photo": "https://animal-park.by/gallery/sajmiri-belichij.jpg",
+    "thumbnail": "assets/species/sajmiri-belichij.webp"
+  },
+  {
+    "id": "site-makak-yavanskiy",
+    "name": "Макак Яванский",
+    "category": "Приматы",
+    "url": "https://animal-park.by/galereya/makak-yavanskiy.html",
+    "slug": "makak-yavanskiy",
+    "photo": "https://animal-park.by/gallery/obezyana-makak-yavanskaya.jpg",
+    "thumbnail": "assets/species/makak-yavanskiy.webp"
+  },
+  {
+    "id": "site-primatyi",
+    "name": "Бурый Капуцин",
+    "category": "Приматы",
+    "url": "https://animal-park.by/galereya/primatyi.html",
+    "slug": "primatyi",
+    "photo": "https://animal-park.by/gallery/buryij-kapuczin.jpg",
+    "thumbnail": "assets/species/primatyi.webp"
+  },
+  {
+    "id": "site-shinshilla",
+    "name": "Шиншилла",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/shinshilla.html",
+    "slug": "shinshilla",
+    "photo": "https://animal-park.by/gallery/shinshilla.jpg",
+    "thumbnail": "assets/species/shinshilla.webp"
+  },
+  {
+    "id": "site-surikatyi",
+    "name": "Сурикаты",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/surikatyi.html",
+    "slug": "surikatyi",
+    "photo": "https://animal-park.by/gallery/surikatyi.jpg",
+    "thumbnail": "assets/species/surikatyi.webp"
+  },
+  {
+    "id": "site-polosatyij-skuns",
+    "name": "Полосатый Скунс",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/polosatyij-skuns.html",
+    "slug": "polosatyij-skuns",
+    "photo": "https://animal-park.by/gallery/polosatyij-skuns.jpg",
+    "thumbnail": "assets/species/polosatyij-skuns.webp"
+  },
+  {
+    "id": "site-polosatyij-mangust",
+    "name": "Полосатый Мангуст",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/polosatyij-mangust.html",
+    "slug": "polosatyij-mangust",
+    "photo": "https://animal-park.by/gallery/polosatyij-mangust.jpg",
+    "thumbnail": "assets/species/polosatyij-mangust.webp"
+  },
+  {
+    "id": "site-patagonskaya-mara",
+    "name": "Патагонская Мара",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/patagonskaya-mara.html",
+    "slug": "patagonskaya-mara",
+    "photo": "https://animal-park.by/gallery/patagonskaya-mara.jpg",
+    "thumbnail": "assets/species/patagonskaya-mara.webp"
+  },
+  {
+    "id": "site-nutriya",
+    "name": "Нутрия",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/nutriya.html",
+    "slug": "nutriya",
+    "photo": "https://animal-park.by/gallery/nutriya.jpg",
+    "thumbnail": "assets/species/nutriya.webp"
+  },
+  {
+    "id": "site-nosuxa",
+    "name": "Носуха",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/nosuxa.html",
+    "slug": "nosuxa",
+    "photo": "https://animal-park.by/gallery/nosuxa.jpg",
+    "thumbnail": "assets/species/nosuxa.webp"
+  },
+  {
+    "id": "site-vetnamskaya-veslobryuxaya-svinya",
+    "name": "Вьетнамская веслобрюхая свинья",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/vetnamskaya-veslobryuxaya-svinya.html",
+    "slug": "vetnamskaya-veslobryuxaya-svinya",
+    "photo": "https://animal-park.by/gallery/svinya-compressed.webp",
+    "thumbnail": "assets/species/vetnamskaya-veslobryuxaya-svinya.webp",
+    "scientific": "Sus domesticus"
+  },
+  {
+    "id": "site-mangust-zhyoltyij",
+    "name": "Мангуст жёлтый",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/mangust-zhyoltyij.html",
+    "slug": "mangust-zhyoltyij",
+    "photo": "https://animal-park.by/gallery/mangust-zhyoltyij.jpg",
+    "thumbnail": "assets/species/mangust-zhyoltyij.webp"
+  },
+  {
+    "id": "site-morskaya-svinka",
+    "name": "Морская Свинка",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/morskaya-svinka.html",
+    "slug": "morskaya-svinka",
+    "photo": "https://animal-park.by/gallery/morskaya-svinka.jpg",
+    "thumbnail": "assets/species/morskaya-svinka.webp"
+  },
+  {
+    "id": "site-czivetta",
+    "name": "Циветта",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/czivetta.html",
+    "slug": "czivetta",
+    "photo": "https://animal-park.by/gallery/civetta.webp",
+    "thumbnail": "assets/species/czivetta.webp"
+  },
+  {
+    "id": "site-letuchaya-sobaka",
+    "name": "Летучая собака",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/letuchaya-sobaka.html",
+    "slug": "letuchaya-sobaka",
+    "photo": "https://animal-park.by/gallery/letuchaya-sobaka.jpg",
+    "thumbnail": "assets/species/letuchaya-sobaka.webp"
+  },
+  {
+    "id": "site-giganskaya-letuchaya-lisicza",
+    "name": "Гиганская летучая лисица (Калонг)",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/giganskaya-letuchaya-lisicza.html",
+    "slug": "giganskaya-letuchaya-lisicza",
+    "photo": "https://animal-park.by/gallery/foxfly.webp",
+    "thumbnail": "assets/species/giganskaya-letuchaya-lisicza.webp"
+  },
+  {
+    "id": "site-koshachiy-lemur",
+    "name": "Кошачий лемур",
+    "category": "Приматы",
+    "url": "https://animal-park.by/galereya/koshachiy-lemur.html",
+    "slug": "koshachiy-lemur",
+    "photo": "https://animal-park.by/gallery/lemuryi.jpg",
+    "thumbnail": "assets/lemur.webp"
+  },
+  {
+    "id": "site-obyiknovennaya-igrunka",
+    "name": "Обыкновенная игрунка",
+    "category": "Приматы",
+    "url": "https://animal-park.by/galereya/obyiknovennaya-igrunka.html",
+    "slug": "obyiknovennaya-igrunka",
+    "photo": "https://animal-park.by/gallery/igrunka.webp",
+    "thumbnail": "assets/species/obyiknovennaya-igrunka.webp"
+  },
+  {
+    "id": "site-kinkazhu",
+    "name": "Кинкажу",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/kinkazhu.html",
+    "slug": "kinkazhu",
+    "photo": "https://animal-park.by/gallery/kinkazhu.jpg",
+    "thumbnail": "assets/species/kinkazhu.webp"
+  },
+  {
+    "id": "site-kenguru-benneta",
+    "name": "Кенгуру Беннета",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/kenguru-benneta.html",
+    "slug": "kenguru-benneta",
+    "photo": "https://animal-park.by/gallery/kenguru-benneta.jpg",
+    "thumbnail": "assets/species/kenguru-benneta.webp"
+  },
+  {
+    "id": "site-bolshoj-ryizhij-kenguru",
+    "name": "Большой рыжий кенгуру",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/bolshoj-ryizhij-kenguru.html",
+    "slug": "bolshoj-ryizhij-kenguru",
+    "photo": "https://animal-park.by/gallery/kenguru.webp",
+    "thumbnail": "assets/species/bolshoj-ryizhij-kenguru.webp"
+  },
+  {
+    "id": "site-enot-poloskun",
+    "name": "Енот-Полоскун",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/enot-poloskun.html",
+    "slug": "enot-poloskun",
+    "photo": "https://animal-park.by/gallery/enot-poloskun.jpg",
+    "thumbnail": "assets/raccoon.webp"
+  },
+  {
+    "id": "site-dekorativnyij-krolik",
+    "name": "Декоративный Кролик",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/dekorativnyij-krolik.html",
+    "slug": "dekorativnyij-krolik",
+    "photo": "https://animal-park.by/gallery/dekorativnyij-krolik.jpg",
+    "thumbnail": "assets/species/dekorativnyij-krolik.webp",
+    "scientific": "Oryctolagus cuniculus domesticus"
+  },
+  {
+    "id": "site-belka-evropejskaya",
+    "name": "Белка Европейская",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/belka-evropejskaya.html",
+    "slug": "belka-evropejskaya",
+    "photo": "https://animal-park.by/gallery/belka-evropejskaya.jpg",
+    "thumbnail": "assets/species/belka-evropejskaya.webp"
+  },
+  {
+    "id": "site-dvuxczvetnaya-belka",
+    "name": "Двухцветная белка (двухцветная ратуфа)",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/dvuxczvetnaya-belka.html",
+    "slug": "dvuxczvetnaya-belka",
+    "photo": "https://animal-park.by/gallery/belka-cleaned.webp",
+    "thumbnail": "assets/species/dvuxczvetnaya-belka.webp"
+  },
+  {
+    "id": "site-alpaka",
+    "name": "Альпака",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/alpaka.html",
+    "slug": "alpaka",
+    "photo": "https://animal-park.by/gallery/alpaka.jpg",
+    "thumbnail": "assets/species/alpaka.webp"
+  },
+  {
+    "id": "site-dzhersejskaya-poroda",
+    "name": "Джерсейская порода",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/dzhersejskaya-poroda.html",
+    "slug": "dzhersejskaya-poroda",
+    "photo": "https://animal-park.by/gallery/poroda.webp",
+    "thumbnail": "assets/species/dzhersejskaya-poroda.webp"
+  },
+  {
+    "id": "site-hijlend",
+    "name": "Хайленд",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/hijlend.html",
+    "slug": "hijlend",
+    "photo": "https://animal-park.by/gallery/hilend.webp",
+    "thumbnail": "assets/species/hijlend.webp",
+    "scientific": "Bos taurus"
+  },
+  {
+    "id": "site-ajshirskaya-poroda",
+    "name": "Айширская порода",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/ajshirskaya-poroda.html",
+    "slug": "ajshirskaya-poroda",
+    "photo": "https://animal-park.by/gallery/ayrshire.webp",
+    "thumbnail": "assets/species/ajshirskaya-poroda.webp"
+  },
+  {
+    "id": "site-belgijskaya-golubaya-poroda",
+    "name": "Бельгийская голубая порода (Блан-Блю-Бельж)",
+    "category": "Млекопитающие",
+    "url": "https://animal-park.by/galereya/belgijskaya-golubaya-poroda.html",
+    "slug": "belgijskaya-golubaya-poroda",
+    "photo": "https://animal-park.by/gallery/byk-cleaned.webp",
+    "thumbnail": "assets/species/belgijskaya-golubaya-poroda.webp"
+  },
+  {
+    "id": "site-yak",
+    "name": "Як",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/yak.html",
+    "slug": "yak",
+    "photo": "https://animal-park.by/gallery/yak.webp",
+    "thumbnail": "assets/species/yak.webp"
+  },
+  {
+    "id": "site-poni",
+    "name": "Пони",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/poni.html",
+    "slug": "poni",
+    "photo": "https://animal-park.by/gallery/poni.jpg",
+    "thumbnail": "assets/species/poni.webp"
+  },
+  {
+    "id": "site-poni-appaluza",
+    "name": "Пони Аппалуза",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/poni-appaluza.html",
+    "slug": "poni-appaluza",
+    "photo": "https://animal-park.by/gallery/poni-appaluza.jpg",
+    "thumbnail": "assets/species/poni-appaluza.webp"
+  },
+  {
+    "id": "site-oslyi",
+    "name": "Ослы домашние",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/oslyi.html",
+    "slug": "oslyi",
+    "photo": "https://animal-park.by/gallery/oslyi.jpg",
+    "thumbnail": "assets/species/oslyi.webp"
+  },
+  {
+    "id": "site-olen-pyatnistyij",
+    "name": "Олень Пятнистый",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/olen-pyatnistyij.html",
+    "slug": "olen-pyatnistyij",
+    "photo": "https://animal-park.by/gallery/olen-pyatnistyij.jpg",
+    "thumbnail": "assets/species/olen-pyatnistyij.webp"
+  },
+  {
+    "id": "site-olen-blagorodnyij",
+    "name": "Олень Благородный",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/olen-blagorodnyij.html",
+    "slug": "olen-blagorodnyij",
+    "photo": "https://animal-park.by/gallery/olen-blagorodnyij.jpg",
+    "thumbnail": "assets/species/olen-blagorodnyij.webp"
+  },
+  {
+    "id": "site-odnogorbyij-verblyud",
+    "name": "Одногорбый Верблюд",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/odnogorbyij-verblyud.html",
+    "slug": "odnogorbyij-verblyud",
+    "photo": "https://animal-park.by/gallery/odnogorbyij-verblyud.jpg",
+    "thumbnail": "assets/species/odnogorbyij-verblyud.webp"
+  },
+  {
+    "id": "site-ovcza-kamerunskaya",
+    "name": "Овца Камерунская",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/ovcza-kamerunskaya.html",
+    "slug": "ovcza-kamerunskaya",
+    "photo": "https://animal-park.by/gallery/ovcza-kamerunskaya.jpg",
+    "thumbnail": "assets/species/ovcza-kamerunskaya.webp"
+  },
+  {
+    "id": "site-ovcza-svyatogo-yakova",
+    "name": "Овца Святого Якова",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/ovcza-svyatogo-yakova.html",
+    "slug": "ovcza-svyatogo-yakova",
+    "photo": "https://animal-park.by/gallery/ovcza-yakova.jpg",
+    "thumbnail": "assets/species/ovcza-svyatogo-yakova.webp"
+  },
+  {
+    "id": "site-muflon",
+    "name": "Муфлон",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/muflon.html",
+    "slug": "muflon",
+    "photo": "https://animal-park.by/gallery/muflon.jpg",
+    "thumbnail": "assets/species/muflon.webp"
+  },
+  {
+    "id": "site-loshadi",
+    "name": "Лошади",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/loshadi.html",
+    "slug": "loshadi",
+    "photo": "https://animal-park.by/gallery/loshadi.jpg",
+    "thumbnail": "assets/species/loshadi.webp"
+  },
+  {
+    "id": "site-los",
+    "name": "Лось",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/los.html",
+    "slug": "los",
+    "photo": "https://animal-park.by/gallery/los.jpg",
+    "thumbnail": "assets/species/los.webp"
+  },
+  {
+    "id": "site-evropeyskaya-lan",
+    "name": "Европейская лань",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/evropeyskaya-lan.html",
+    "slug": "evropeyskaya-lan",
+    "photo": "https://animal-park.by/gallery/lan-new.png",
+    "thumbnail": "assets/species/evropeyskaya-lan.webp"
+  },
+  {
+    "id": "site-lama",
+    "name": "Лама",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/lama.html",
+    "slug": "lama",
+    "photo": "https://animal-park.by/gallery/lama.jpg",
+    "thumbnail": "assets/species/lama.webp"
+  },
+  {
+    "id": "site-kosulya",
+    "name": "Косуля европейская",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/kosulya.html",
+    "slug": "kosulya",
+    "photo": "https://animal-park.by/gallery/kosulya.jpg",
+    "thumbnail": "assets/species/kosulya.webp"
+  },
+  {
+    "id": "site-zubr",
+    "name": "Зубр Европейский",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/zubr.html",
+    "slug": "zubr",
+    "photo": "https://animal-park.by/gallery/zubr.jpg",
+    "thumbnail": "assets/bison.webp"
+  },
+  {
+    "id": "site-vatusi",
+    "name": "Ватусси",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/vatusi.html",
+    "slug": "vatusi",
+    "photo": "https://animal-park.by/gallery/vatussi.webp",
+    "thumbnail": "assets/species/vatusi.webp"
+  },
+  {
+    "id": "site-zebu",
+    "name": "Зебу",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/zebu.html",
+    "slug": "zebu",
+    "photo": "https://animal-park.by/gallery/zeby-new.jpg",
+    "thumbnail": "assets/species/zebu.webp"
+  },
+  {
+    "id": "site-valijskaya-koza",
+    "name": "Валийская Коза",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/valijskaya-koza.html",
+    "slug": "valijskaya-koza",
+    "photo": "https://animal-park.by/gallery/valiyskaya.webp",
+    "thumbnail": "assets/species/valijskaya-koza.webp"
+  },
+  {
+    "id": "site-burskaya-koza",
+    "name": "Бурская Коза",
+    "category": "Парнокопытные",
+    "url": "https://animal-park.by/galereya/burskaya-koza.html",
+    "slug": "burskaya-koza",
+    "photo": "https://animal-park.by/gallery/burskaya-koza.jpg",
+    "thumbnail": "assets/species/burskaya-koza.webp"
+  }
+]

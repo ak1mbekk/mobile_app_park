@@ -23,6 +23,33 @@
   }
   let inside=false;try{inside=localStorage.getItem('park-visit-mode')==='inside';}catch{}
   mode(inside);id('beforeVisit').onclick=()=>mode(false);id('duringVisit').onclick=()=>mode(true);
+  const visitDate=id('visit-date');
+  const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Minsk',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  visitDate.min=today;
+  let chosen;
+  try{chosen=localStorage.getItem('park-visit-date');}catch{}
+  visitDate.value=chosen>=today?chosen:today;
+  visitDate.onchange=()=>{
+    id('add-reminder').disabled=!visitDate.value||!visitDate.validity.valid;
+    id('calendar-hint').textContent='';
+    if(visitDate.validity.valid)try{localStorage.setItem('park-visit-date',visitDate.value);}catch{}
+  };
+  id('add-reminder').onclick=()=>{
+    if(!visitDate.value||!visitDate.reportValidity())return;
+    const compact=date=>date.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+    const start=new Date(visitDate.value+'T15:50:00+03:00');
+    const end=new Date(visitDate.value+'T16:00:00+03:00');
+    const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Animal Park//Visitor//RU',
+      'BEGIN:VEVENT','UID:kapibara-'+visitDate.value+'@animal-park.by','DTSTAMP:'+compact(new Date()),
+      'DTSTART:'+compact(start),'DTEND:'+compact(end),'SUMMARY:Кормление капибар',
+      'LOCATION:Казачны мір · Вольер 36','BEGIN:VALARM','TRIGGER:-PT30M','ACTION:DISPLAY',
+      'DESCRIPTION:Кормление через 30 минут','END:VALARM','END:VEVENT','END:VCALENDAR'];
+    const link=document.createElement('a');
+    const url=URL.createObjectURL(new Blob([lines.join('\r\n')+'\r\n'],{type:'text/calendar;charset=utf-8'}));
+    link.href=url;link.download='kapibara-'+visitDate.value+'.ics';document.body.append(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    id('calendar-hint').textContent='Откройте файл в календаре телефона и сохраните событие.';
+  };
   const soap=id('soap-area'),foam=soap.querySelector('.foam');
   let clean=0,washed=false,stroke=null;
   function scrub(amount){
@@ -49,20 +76,25 @@
     washed=false;clean=0;stroke=null;id('rinse').hidden=true;id('bathDone').hidden=true;
     id('wash').classList.remove('clean');id('scrub').hidden=false;id('scrub').value=0;id('washHint').textContent='Потри шерсть губкой';
   }
-  let receipt='';
+  const children=id('ticketCount');
+  const adults=id('adultCount');
   function ticketView(){
-    const pet=window.petDemo.stats(),count=Number(id('ticketCount').value);
+    const pet=window.petDemo.stats(),order=pet.demoOrder;
     const eligible=pet.level>=10&&!pet.couponUsed;
     id('couponStatus').textContent=pet.couponUsed?'Купон использован':eligible?'Купон доступен':'Откроется на уровне 10 · сейчас '+pet.level;
-    id('ticketTotal').textContent=receipt||('Тестовая сумма: '+(count*10-(eligible&&count>0?1:0))+' BYN');
-    id('testBuy').disabled=count===0||Boolean(receipt);
+    if(order){children.value=String(order.children);adults.value=String(order.adults);}
+    const subtotal=Number(children.value)*10+Number(adults.value)*15;
+    const total=order?order.total:subtotal-(eligible&&Number(children.value)>0?1:0);
+    id('ticketTotal').textContent=order?'Тестовый заказ подтверждён · '+total+' BYN'+(order.discount?' · скидка 1 BYN':''):'Тестовая сумма: '+total+' BYN';
+    children.disabled=adults.disabled=Boolean(order);
+    id('newOrder').hidden=!order;
+    id('testBuy').disabled=subtotal===0||Boolean(order);
   }
   id('testBuy').onclick=()=>{
-    if(receipt||Number(id('ticketCount').value)===0)return;
-    const total=id('ticketTotal').textContent;const used=window.petDemo.useCoupon();
-    receipt=total+' · Тестовый заказ подтверждён'+(used?' со скидкой.':'.');ticketView();
+    window.petDemo.confirmDemoOrder(Number(children.value),Number(adults.value));ticketView();
   };
-  id('ticketCount').onchange=()=>{receipt='';ticketView();};
+  id('newOrder').onclick=()=>{window.petDemo.newDemoOrder();children.value='1';adults.value='0';ticketView();};
+  children.onchange=adults.onchange=ticketView;
   const field=id('catchField'),fruit=id('fallFruit'),basket=id('basket');
   let running=false,attempt=0,caught=0,position=.5,fall=0,spot=.5,frame=0,last=0,active='';
   function moveBasket(x){position=Math.max(.09,Math.min(.91,x));basket.style.left=position*100+'%';}
@@ -105,6 +137,6 @@
   document.addEventListener('conceptscreen',e=>{
     active=e.detail;resume();
     if(active==='wash'&&washed)resetBath();
-    if(active==='pass'){receipt='';ticketView();}
+    if(active==='pass')ticketView();
   });
 })();
