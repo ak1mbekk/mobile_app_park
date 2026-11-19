@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cuyv4xwko07xf"
 path.s3tc="res://.godot/imported/BirchTrail.jpg-d1ca1125992d2b622ef6632d26bada03.s3tc.ctex"
+path.etc2="res://.godot/imported/BirchTrail.jpg-d1ca1125992d2b622ef6632d26bada03.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/BirchTrail.jpg"
-dest_files=["res://.godot/imported/BirchTrail.jpg-d1ca1125992d2b622ef6632d26bada03.s3tc.ctex"]
+dest_files=["res://.godot/imported/BirchTrail.jpg-d1ca1125992d2b622ef6632d26bada03.s3tc.ctex", "res://.godot/imported/BirchTrail.jpg-d1ca1125992d2b622ef6632d26bada03.etc2.ctex"]
 
 [params]
 

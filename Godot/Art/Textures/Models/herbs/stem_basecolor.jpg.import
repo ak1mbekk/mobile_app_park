@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://oo4wfqxhjpyf"
 path.s3tc="res://.godot/imported/stem_basecolor.jpg-8fb242b8b0c4e9ccbaaacdb27fc17ad4.s3tc.ctex"
+path.etc2="res://.godot/imported/stem_basecolor.jpg-8fb242b8b0c4e9ccbaaacdb27fc17ad4.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/herbs/stem_basecolor.jpg"
-dest_files=["res://.godot/imported/stem_basecolor.jpg-8fb242b8b0c4e9ccbaaacdb27fc17ad4.s3tc.ctex"]
+dest_files=["res://.godot/imported/stem_basecolor.jpg-8fb242b8b0c4e9ccbaaacdb27fc17ad4.s3tc.ctex", "res://.godot/imported/stem_basecolor.jpg-8fb242b8b0c4e9ccbaaacdb27fc17ad4.etc2.ctex"]
 
 [params]
 

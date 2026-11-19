@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://c7h5bhgg8uu8r"
 path.s3tc="res://.godot/imported/Orchard leaf blade_basecolor.jpg-effc259908cb910d8bf53b7839be5242.s3tc.ctex"
+path.etc2="res://.godot/imported/Orchard leaf blade_basecolor.jpg-effc259908cb910d8bf53b7839be5242.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/apple/Orchard leaf blade_basecolor.jpg"
-dest_files=["res://.godot/imported/Orchard leaf blade_basecolor.jpg-effc259908cb910d8bf53b7839be5242.s3tc.ctex"]
+dest_files=["res://.godot/imported/Orchard leaf blade_basecolor.jpg-effc259908cb910d8bf53b7839be5242.s3tc.ctex", "res://.godot/imported/Orchard leaf blade_basecolor.jpg-effc259908cb910d8bf53b7839be5242.etc2.ctex"]
 
 [params]
 

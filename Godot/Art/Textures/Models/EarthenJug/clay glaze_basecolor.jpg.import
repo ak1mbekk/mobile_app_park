@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://koihced0tcbr"
 path.s3tc="res://.godot/imported/clay glaze_basecolor.jpg-dd0cb1c6d285d8b5351fd4332b605aab.s3tc.ctex"
+path.etc2="res://.godot/imported/clay glaze_basecolor.jpg-dd0cb1c6d285d8b5351fd4332b605aab.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/EarthenJug/clay glaze_basecolor.jpg"
-dest_files=["res://.godot/imported/clay glaze_basecolor.jpg-dd0cb1c6d285d8b5351fd4332b605aab.s3tc.ctex"]
+dest_files=["res://.godot/imported/clay glaze_basecolor.jpg-dd0cb1c6d285d8b5351fd4332b605aab.s3tc.ctex", "res://.godot/imported/clay glaze_basecolor.jpg-dd0cb1c6d285d8b5351fd4332b605aab.etc2.ctex"]
 
 [params]
 

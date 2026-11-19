@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import PageLayout from '../components/layout/PageLayout';
-import EmptyState from '../components/ui/EmptyState';
-import { CalendarIcon } from '../components/icons';
 
 const MONTHS = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -19,11 +17,9 @@ export default function CalendarPage() {
           <p className="text-sm font-medium text-[var(--text-muted)] mb-4">
             {MONTHS[month]} {year}
           </p>
-          <EmptyState
-            icon={<CalendarIcon className="w-14 h-14 text-[var(--accent)]/60 mx-auto" />}
-            title="Нет событий"
-            description="Подключитесь к интернету"
-          />
+          <h2 className="text-lg font-semibold">Показательные кормления</h2>
+          <p className="mt-2 mb-4 text-sm">Время кормлений и номера вольеров из программы парка.</p>
+          <a className="underline" href="./demo/index.html#feed">Открыть программу и схему</a>
         </div>
       </PageLayout>
     </div>

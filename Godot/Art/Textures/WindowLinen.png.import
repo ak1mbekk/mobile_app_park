@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://duto7deimflqe"
 path.s3tc="res://.godot/imported/WindowLinen.png-17b93af4628e93c6a3492da5e7db39d9.s3tc.ctex"
+path.etc2="res://.godot/imported/WindowLinen.png-17b93af4628e93c6a3492da5e7db39d9.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/WindowLinen.png"
-dest_files=["res://.godot/imported/WindowLinen.png-17b93af4628e93c6a3492da5e7db39d9.s3tc.ctex"]
+dest_files=["res://.godot/imported/WindowLinen.png-17b93af4628e93c6a3492da5e7db39d9.s3tc.ctex", "res://.godot/imported/WindowLinen.png-17b93af4628e93c6a3492da5e7db39d9.etc2.ctex"]
 
 [params]
 

@@ -16,8 +16,9 @@ function App() {
   return (
     <div className="h-full flex flex-col">
       <Routes>
+        <Route path="/" element={<iframe title="Домик у тропы и парк животных" className="w-full h-full border-0" src="./demo/index.html" />} />
         <Route element={<AppLayout />}>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/guide" element={<HomePage />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/animals" element={<AnimalsPage />} />
           <Route path="/calendar" element={<CalendarPage />} />

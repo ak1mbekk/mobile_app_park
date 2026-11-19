@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bwgm6c0cinrgc"
 path.s3tc="res://.godot/imported/Dark oak_basecolor.jpg-98eadf9d4e101c7b4cd0419438400b57.s3tc.ctex"
+path.etc2="res://.godot/imported/Dark oak_basecolor.jpg-98eadf9d4e101c7b4cd0419438400b57.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/apple/Dark oak_basecolor.jpg"
-dest_files=["res://.godot/imported/Dark oak_basecolor.jpg-98eadf9d4e101c7b4cd0419438400b57.s3tc.ctex"]
+dest_files=["res://.godot/imported/Dark oak_basecolor.jpg-98eadf9d4e101c7b4cd0419438400b57.s3tc.ctex", "res://.godot/imported/Dark oak_basecolor.jpg-98eadf9d4e101c7b4cd0419438400b57.etc2.ctex"]
 
 [params]
 

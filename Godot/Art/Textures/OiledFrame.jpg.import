@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnkp5555gwbwo"
 path.s3tc="res://.godot/imported/OiledFrame.jpg-e696bd11492777bb85d0453d6ce76676.s3tc.ctex"
+path.etc2="res://.godot/imported/OiledFrame.jpg-e696bd11492777bb85d0453d6ce76676.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/OiledFrame.jpg"
-dest_files=["res://.godot/imported/OiledFrame.jpg-e696bd11492777bb85d0453d6ce76676.s3tc.ctex"]
+dest_files=["res://.godot/imported/OiledFrame.jpg-e696bd11492777bb85d0453d6ce76676.s3tc.ctex", "res://.godot/imported/OiledFrame.jpg-e696bd11492777bb85d0453d6ce76676.etc2.ctex"]
 
 [params]
 

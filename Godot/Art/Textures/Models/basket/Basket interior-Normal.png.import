@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cr785sc5pfi8t"
 path.s3tc="res://.godot/imported/Basket interior-Normal.png-a3ec766e0732a86dd47e4be682a2f27b.s3tc.ctex"
+path.etc2="res://.godot/imported/Basket interior-Normal.png-a3ec766e0732a86dd47e4be682a2f27b.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/basket/Basket interior-Normal.png"
-dest_files=["res://.godot/imported/Basket interior-Normal.png-a3ec766e0732a86dd47e4be682a2f27b.s3tc.ctex"]
+dest_files=["res://.godot/imported/Basket interior-Normal.png-a3ec766e0732a86dd47e4be682a2f27b.s3tc.ctex", "res://.godot/imported/Basket interior-Normal.png-a3ec766e0732a86dd47e4be682a2f27b.etc2.ctex"]
 
 [params]
 

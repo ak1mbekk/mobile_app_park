@@ -1,7 +1,7 @@
 extends CanvasLayer
 
 var save_path := "user://first_meeting.cfg"
-const DEFAULT_NAME := "Аки"
+const DEFAULT_NAME := "Ричи"
 
 @export var aki: Node3D
 @export var apple: MeshInstance3D
@@ -24,6 +24,9 @@ func _ready() -> void:
     confirm.pressed.connect(func(): _confirm_name(field.text))
     get_viewport().size_changed.connect(_layout)
     _layout()
+    if _has_web_host():
+        _notify_host("scene-ready")
+        return
     var save := ConfigFile.new()
     if save.load(save_path) == OK:
         var stage = save.get_value("meeting", "stage", "")
@@ -48,8 +51,18 @@ func _save(stage: String) -> Error:
     return error
 
 func _after_meal() -> void:
+    if _has_web_host():
+        _notify_host("meal-finished")
+        return
     _save("name")
     _open_name_panel()
+
+func _has_web_host() -> bool:
+    return OS.has_feature("web") and JavaScriptBridge.eval("window.parent !== window")
+
+func _notify_host(event_name: String) -> void:
+    var browser := JavaScriptBridge.get_interface("window")
+    browser.parent.postMessage("animal-park:" + event_name, str(browser.location.origin))
 
 func _open_name_panel() -> void:
     hint.hide()

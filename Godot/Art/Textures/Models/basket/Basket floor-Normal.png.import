@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dxu5js4k8or3f"
 path.s3tc="res://.godot/imported/Basket floor-Normal.png-674c8065f89b2c0b236ae854aaa90220.s3tc.ctex"
+path.etc2="res://.godot/imported/Basket floor-Normal.png-674c8065f89b2c0b236ae854aaa90220.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/basket/Basket floor-Normal.png"
-dest_files=["res://.godot/imported/Basket floor-Normal.png-674c8065f89b2c0b236ae854aaa90220.s3tc.ctex"]
+dest_files=["res://.godot/imported/Basket floor-Normal.png-674c8065f89b2c0b236ae854aaa90220.s3tc.ctex", "res://.godot/imported/Basket floor-Normal.png-674c8065f89b2c0b236ae854aaa90220.etc2.ctex"]
 
 [params]
 

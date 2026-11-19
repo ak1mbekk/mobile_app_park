@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://ck2iebelk77sn"
 path.s3tc="res://.godot/imported/petal_basecolor.jpg-57f7e4b16f04d0c0b5ee454c89137fad.s3tc.ctex"
+path.etc2="res://.godot/imported/petal_basecolor.jpg-57f7e4b16f04d0c0b5ee454c89137fad.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/Wildflowers/petal_basecolor.jpg"
-dest_files=["res://.godot/imported/petal_basecolor.jpg-57f7e4b16f04d0c0b5ee454c89137fad.s3tc.ctex"]
+dest_files=["res://.godot/imported/petal_basecolor.jpg-57f7e4b16f04d0c0b5ee454c89137fad.s3tc.ctex", "res://.godot/imported/petal_basecolor.jpg-57f7e4b16f04d0c0b5ee454c89137fad.etc2.ctex"]
 
 [params]
 

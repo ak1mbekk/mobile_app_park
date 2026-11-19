@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dkvbuu08i605v"
 path.s3tc="res://.godot/imported/Basket floor-Color.jpg-1ea266973324dd57b32b82240b930dd1.s3tc.ctex"
+path.etc2="res://.godot/imported/Basket floor-Color.jpg-1ea266973324dd57b32b82240b930dd1.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/basket/Basket floor-Color.jpg"
-dest_files=["res://.godot/imported/Basket floor-Color.jpg-1ea266973324dd57b32b82240b930dd1.s3tc.ctex"]
+dest_files=["res://.godot/imported/Basket floor-Color.jpg-1ea266973324dd57b32b82240b930dd1.s3tc.ctex", "res://.godot/imported/Basket floor-Color.jpg-1ea266973324dd57b32b82240b930dd1.etc2.ctex"]
 
 [params]
 

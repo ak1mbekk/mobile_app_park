@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dfems3io52m3c"
 path.s3tc="res://.godot/imported/lavender_basecolor.jpg-e25c46d6bcb2d0e8a03fb17c88657cf7.s3tc.ctex"
+path.etc2="res://.godot/imported/lavender_basecolor.jpg-e25c46d6bcb2d0e8a03fb17c88657cf7.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/herbs/lavender_basecolor.jpg"
-dest_files=["res://.godot/imported/lavender_basecolor.jpg-e25c46d6bcb2d0e8a03fb17c88657cf7.s3tc.ctex"]
+dest_files=["res://.godot/imported/lavender_basecolor.jpg-e25c46d6bcb2d0e8a03fb17c88657cf7.s3tc.ctex", "res://.godot/imported/lavender_basecolor.jpg-e25c46d6bcb2d0e8a03fb17c88657cf7.etc2.ctex"]
 
 [params]
 

@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dfhvkp0g2l6q4"
 path.s3tc="res://.godot/imported/Honey oak_basecolor.jpg-9b4567cbe530b89df62431e57c963482.s3tc.ctex"
+path.etc2="res://.godot/imported/Honey oak_basecolor.jpg-9b4567cbe530b89df62431e57c963482.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/Bench/Honey oak_basecolor.jpg"
-dest_files=["res://.godot/imported/Honey oak_basecolor.jpg-9b4567cbe530b89df62431e57c963482.s3tc.ctex"]
+dest_files=["res://.godot/imported/Honey oak_basecolor.jpg-9b4567cbe530b89df62431e57c963482.s3tc.ctex", "res://.godot/imported/Honey oak_basecolor.jpg-9b4567cbe530b89df62431e57c963482.etc2.ctex"]
 
 [params]
 

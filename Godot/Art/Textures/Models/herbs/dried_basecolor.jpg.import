@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bvcu1qkcaqxil"
 path.s3tc="res://.godot/imported/dried_basecolor.jpg-c1e65fd0cdc00a40573b06e08438b19a.s3tc.ctex"
+path.etc2="res://.godot/imported/dried_basecolor.jpg-c1e65fd0cdc00a40573b06e08438b19a.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Art/Textures/Models/herbs/dried_basecolor.jpg"
-dest_files=["res://.godot/imported/dried_basecolor.jpg-c1e65fd0cdc00a40573b06e08438b19a.s3tc.ctex"]
+dest_files=["res://.godot/imported/dried_basecolor.jpg-c1e65fd0cdc00a40573b06e08438b19a.s3tc.ctex", "res://.godot/imported/dried_basecolor.jpg-c1e65fd0cdc00a40573b06e08438b19a.etc2.ctex"]
 
 [params]
 
