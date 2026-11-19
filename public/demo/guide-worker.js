@@ -1,12 +1,13 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '1';
+const version = prefix + '2';
 const base = new URL(self.registration.scope);
 const shell = [
   'index.html','base.css','show.css','visitor.css','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
   'places.js','routing.js','catalog.js','park-map.js','park-schedule.js','feedings.js',
   'guide-offline.js','meeting.js','home.js','show.js','match.js',
-  'assets/plan-1.webp','assets/plan-2.webp','assets/park-header.webp','assets/park-zone.webp'
+  'assets/plan-1.webp','assets/plan-2.webp','assets/technical-1.webp','assets/technical-2.webp',
+  'assets/park-header.webp','assets/park-zone.webp'
 ];
 self.addEventListener('install', event => {
   event.waitUntil((async () => {

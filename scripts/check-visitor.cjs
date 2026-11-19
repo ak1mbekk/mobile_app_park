@@ -16,11 +16,18 @@ async function appearance(browser){
     assert.equal(await page.locator('#park').evaluate(el=>getComputedStyle(el).backgroundColor),colorScheme==='dark'?'rgb(28, 24, 20)':'rgb(246, 240, 230)');
     for(const width of [320,390,430]){
       await page.setViewportSize({width,height:844});
-      for(const route of ['park','feed/raccoons','animals','zone1/54','zone2/11','species/enot-poloskun','visitor','overview','tours','pass']){
+      for(const route of ['park','directions','feed/raccoons','animals','zone1/54','zone2/11/plan','species/enot-poloskun','visitor','overview','tours','pass']){
         await page.evaluate(route=>window.conceptGo(route),route);
         const view=page.locator('#'+route.split('/')[0]+'.current');await view.waitFor();
         assert.ok(await view.evaluate(el=>el.scrollWidth<=el.clientWidth+1),route+' '+width);
-        if(output&&width===390&&['park','animals','feed/raccoons','zone1/54'].includes(route)){
+        if(route==='zone2/11/plan'){
+          assert.ok(await view.evaluate(el=>{
+            const frame=el.querySelector('.park-surface').getBoundingClientRect();
+            const pin=el.querySelector('.picked').getBoundingClientRect();
+            return Math.abs(pin.left+pin.width/2-frame.left-frame.width/2)<3;
+          }),'Selected enclosure must stay centered after revisiting the map at '+width);
+        }
+        if(output&&width===390&&['park','directions','animals','feed/raccoons','zone1/54','zone2/11/plan'].includes(route)){
           await page.waitForLoadState('networkidle');await page.screenshot({path:path.join(output,'visitor-'+colorScheme+'-'+route.split('/')[0]+'.png')});
         }
       }
@@ -30,6 +37,31 @@ async function appearance(browser){
     assert.equal(await page.locator('#visitor-theme').getAttribute('aria-pressed'),String(colorScheme==='light'));
     await context.close();
   }
+}
+async function cartography(browser){
+  const p=await browser.newPage();
+  try {
+    await p.goto(root+'#park');await p.locator('#beforeVisit').click();
+    await p.locator('#park [data-go="directions"]').click();
+    const destinations=p.locator('#directions .direction-card');
+    assert.deepEqual(await destinations.evaluateAll(links=>links.map(link=>new URL(link.href).pathname.split('/').at(-2))),['11025733579','55770037829']);
+    for(const [zone,name,count] of [[1,'Капибара',2],[2,'Домашние козы',5]]){
+      const view=p.locator('#zone'+zone);
+      await p.evaluate(z=>window.conceptGo('zone'+z+'/36'),zone);
+      await view.locator('.map-layer-switch').click();
+      await view.locator('.leaflet-image-layer').evaluate(img=>img.decode());
+      assert.equal(new URL(p.url()).hash,'#zone'+zone+'/36/plan');
+      assert.equal(await view.locator('.place-info h2').innerText(),name);
+      assert.equal(await view.locator('select option').count(),count+1);
+      await p.reload();
+      assert.equal(await view.locator('select').inputValue(),'36');
+      await view.locator('.map-layer-switch').click();
+      assert.equal(await view.locator('select').inputValue(),'36');
+    }
+    await p.evaluate(()=>window.conceptGo('zone1/54/plan'));
+    await p.waitForURL('**/#zone1/54');
+    assert.equal(await p.locator('#zone1 .place-info h2').innerText(),'Енот-полоскун');
+  } finally {await p.close();}
 }
 async function availability(browser){
   const context=await browser.newContext();
@@ -60,6 +92,8 @@ async function offline(browser){
   await p.locator('#overview.current [data-go="zone2"]').click();
   await p.locator('#zone2 .leaflet-image-layer').evaluate(img=>img.decode());
   await p.locator('#zone2 select').selectOption('11');
+  await p.locator('#zone2 .map-layer-switch').click();
+  await p.locator('#zone2 .leaflet-image-layer').evaluate(img=>img.decode());
   await p.locator('#zone2 [data-go="species/zubr"]').click();
   await p.locator('#species-photo img').evaluate(img=>img.decode());
   await p.evaluate(()=>window.conceptGo('feed/raccoons'));
@@ -70,6 +104,6 @@ async function offline(browser){
 (async()=>{
   if(output)fs.mkdirSync(output,{recursive:true});
   const b=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
-  try{await appearance(b);await availability(b);await offline(b);console.log('PASS visitor themes, 3 widths, programme retries, cancellation, empty day, restored offline guide');}
+  try{await appearance(b);await cartography(b);await availability(b);await offline(b);console.log('PASS visitor themes, 3 widths, zone destinations, matched map layers, programme retries, cancellation, empty day, restored offline guide');}
   finally{await b.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

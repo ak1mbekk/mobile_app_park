@@ -10,14 +10,18 @@
   }
   const feed=parkAction('Кормления','Время и вольеры','feed');
   const tours=parkAction('Экскурсии','Предварительная запись','tours');
-  const directions=tickets.cloneNode(true);
+  const directions=parkAction('Как доехать','Две зоны в Яндекс Картах','directions');
   feed.querySelector('.p-row-art svg').innerHTML='<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>';
   directions.querySelector('.p-row-art svg').innerHTML='<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/>';
   tours.querySelector('.p-row-art svg').innerHTML='<path d="M5 21V4c5-4 9 4 14 0v9c-5 4-9-4-14 0"/>';
-  // The destination is the map point published by the park on its contacts page.
-  directions.href='https://yandex.by/maps/?rtext=~53.093566,26.015863&rtt=auto';
-  directions.querySelector('strong').textContent='Как доехать';
-  directions.querySelector('small').textContent='Маршрут в Яндекс Картах';
+  for(const [number,zone] of Object.entries(window.parkGuide.zones)){
+    const link=document.createElement('a');link.className='zone-card direction-card';
+    link.href=zone.yandex;link.target='_blank';link.rel='noopener noreferrer';
+    const label=document.createElement('span'),numberLabel=document.createElement('small'),name=document.createElement('strong');
+    numberLabel.textContent='Зона '+number;name.textContent=zone.name;label.append(numberLabel,name);
+    const arrow=document.createElement('span');arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');
+    link.append(label,arrow);id('zone-directions').append(link);
+  }
   function mode(during){
     tickets.classList.toggle('priority',!during);map.classList.toggle('priority',during);
     parkMenu.replaceChildren(...(during?[map,feed,animals,visitor,tickets]:[tickets,directions,tours,map,animals,visitor]));

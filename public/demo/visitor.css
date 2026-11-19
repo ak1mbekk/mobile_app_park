@@ -83,6 +83,12 @@ html.dark #visitor-theme .sun-icon {display:block}
 .visitor-screen .zone-card,.visitor-screen :is(.pass,.coupon) {background:var(--surface)!important;color:var(--ink);border:1px solid var(--line)!important;border-radius:16px;}
 .visitor-info details {padding:0 14px;margin:8px 0}
 .visitor-info details>div {padding-bottom:10px}
+.visitor-screen .direction-card {display:flex;align-items:center;justify-content:space-between;min-height:76px;padding:14px 16px;text-decoration:none}
+.visitor-screen .direction-card>span {position:static;background:none;padding:0;color:var(--ink)}
+.visitor-screen .direction-card small {color:var(--muted)}
+.visitor-screen .direction-card>span:last-child {flex:0 0 auto;color:var(--green)}
+.visitor-screen .map-filters[hidden] {display:none}
+.visitor-screen .map-layer-switch:disabled {color:var(--muted);text-decoration:none;cursor:default;font-weight:400}
 .feeding-row.selected {border-color:var(--green)}
 .visitor-screen .map-filters {gap:8px}
 .map-filters button {background:var(--surface);border:1px solid var(--line);border-radius:9999px;color:var(--ink);min-height:44px; }

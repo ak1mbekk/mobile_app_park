@@ -12,7 +12,11 @@
     const surface=host.querySelector('.park-surface');
     const select=host.querySelector('select'),info=host.querySelector('.place-info');
     const local=places.filter(p=>p.zone===zoneNumber);
-    const bounds=[[0,0],[zone.height,zone.width]];
+    let drawing=zone,bounds=[[0,0],[zone.height,zone.width]];
+    const switchPlan=document.createElement('button');
+    switchPlan.type='button';switchPlan.className='p-link map-layer-switch';
+    switchPlan.textContent='План вольеров';switchPlan.setAttribute('aria-pressed','false');
+    host.querySelector('.place-picker').before(switchPlan);
     const map=L.map(surface,{crs:L.CRS.Simple,attributionControl:false,zoomControl:false,minZoom:-3,maxZoom:3,zoomSnap:.125,zoomDelta:.5,scrollWheelZoom:false,maxBoundsViscosity:1});
     const mapStatus=document.createElement('p');
     mapStatus.className='map-status';mapStatus.setAttribute('role','status');
@@ -21,14 +25,15 @@
     host.append(mapStatus,retry);
     let failed=false;
     function updateStatus(){
+      const caption=drawing===zone?'Схема парка от 12.11.2025.':'План нумерации вольеров. Отмечены совпадающие номера на двух схемах.';
       mapStatus.textContent=failed?'Изображение схемы недоступно. Место можно выбрать из списка.':
-        navigator.onLine?'Схема парка от 12.11.2025.':'Без связи · схема парка от 12.11.2025.';
+        (navigator.onLine?'':'Без связи · ')+caption;
       retry.hidden=!failed;
     }
     const overlay=L.imageOverlay(zone.image,bounds,{alt:'Посетительская схема зоны '+zoneNumber});
     overlay.on('error',()=>{failed=true;updateStatus();});
     overlay.on('load',()=>{failed=false;updateStatus();});
-    retry.onclick=()=>overlay.setUrl(zone.image);
+    retry.onclick=()=>overlay.setUrl(drawing.image);
     window.addEventListener('online',updateStatus);
     window.addEventListener('offline',updateStatus);
     updateStatus();overlay.addTo(map);
@@ -36,7 +41,10 @@
     L.control.zoom({position:'bottomright',zoomInTitle:'Увеличить',zoomOutTitle:'Уменьшить'}).addTo(map);
     let kind='all',selected=null;
     const markers=new Map(),layer=L.layerGroup().addTo(map);
-    const coordinates=p=>[zone.height-p.y,p.x];
+    function coordinates(point){
+      const [x,y]=drawing===zone?[point.x,point.y]:point.plan;
+      return [drawing.height-y,x];
+    }
     function choose(point,focus=true){
       selected=point||null;select.value=selected?.id||'';
       markers.forEach((marker,id)=>{
@@ -61,14 +69,13 @@
         feed.textContent=event.start+' · '+event.name;feed.dataset.go='feed/'+event.id;info.append(feed);
       }
       if(focus){
-        map.setView(coordinates(point),Math.max(map.getBoundsZoom(bounds)+1.5,map.getZoom()),{animate:false});
-        map.panInsideBounds(bounds,{animate:false});
+        map.setView(coordinates(point),Math.max(map.getBoundsZoom(bounds)+1.5,map.getZoom()),{animate:false,reset:true});
       }
     }
     function filter(next){
       kind=next;layer.clearLayers();markers.clear();select.replaceChildren(new Option('Выберите место',''));
       host.querySelectorAll('[data-kind]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.kind===kind)));
-      const visible=local.filter(p=>kind==='all'||(kind==='service')===Boolean(p.service));
+      const visible=local.filter(p=>(drawing===zone||p.plan) && (kind==='all'||(kind==='service')===Boolean(p.service)));
       for(const p of visible){
         const iconNode=document.createElement('span');iconNode.textContent=p.badge;
         const icon=L.divIcon({className:'place-marker'+(p.service?' service':''),html:iconNode,iconSize:[36,36],iconAnchor:[18,18]});
@@ -79,10 +86,12 @@
       }
       choose(visible.includes(selected)?selected:null,false);
     }
-    function pick(id){
+    function pick(id,plan=drawing===zone.technical){
       // A new selection replaces the current map view in browser history.
-      window.conceptReplace(id?screen+'/'+id:(screen==='map'?'map/all':screen));
+      const target=id||((plan||screen==='map')?'all':'');
+      window.conceptReplace(screen+(target?'/'+target:'')+(plan?'/plan':''));
     }
+    switchPlan.onclick=()=>pick(selected?.id,drawing===zone);
     for(const b of host.querySelectorAll('[data-kind]'))b.onclick=()=>{
       filter(b.dataset.kind);
       if(!selected && location.hash.includes('/'))pick('');
@@ -93,18 +102,37 @@
       if(selected && host.closest('.screen').classList.contains('current'))choose(selected,false);
     });
     return {
-      show(id){
+      show(id,plan){
+        // Resizing a previously hidden map can start Leaflet's animated bounds
+        // correction. Lay out the new view before restoring the drag boundary.
+        map.setMaxBounds(null);
         map.invalidateSize({pan:false});
-        if(!id||id==='all'){choose(null,false);return;}
-        const p=local.find(p=>p.id===id);
-        if(p){if(!markers.has(p.id))filter('all');choose(p);}
-      },
-      hide(){map.stop();}
+        map.stop();
+        const point=local.find(p=>p.id===id);
+        if(plan && point && !point.plan){pick(id,false);return;}
+        const next=plan?zone.technical:zone;
+        if(drawing!==next){
+          drawing=next;bounds=[[0,0],[drawing.height,drawing.width]];
+          overlay.setBounds(bounds).setUrl(drawing.image);
+          overlay.getElement().alt=(plan?'План вольеров зоны ':'Посетительская схема зоны ')+zoneNumber;
+          map.fitBounds(bounds,{animate:false});
+          filter(kind==='service'&&plan?'all':kind);
+          failed=false;updateStatus();
+        }
+        host.querySelector('.map-filters').hidden=plan;
+        switchPlan.setAttribute('aria-pressed',String(plan));
+        switchPlan.textContent=plan?'К схеме для прогулки':'План вольеров';
+        switchPlan.disabled=Boolean(point && !point.plan);
+        if(switchPlan.disabled)switchPlan.textContent='Место отмечено только на схеме для прогулки';
+        if(point && !markers.has(point.id))filter('all');
+        choose(point);
+        map.panInsideBounds(bounds,{animate:false});
+        map.setMaxBounds(bounds);
+      }
     };
   }
   document.addEventListener('conceptscreen',e=>{
     const screen=e.detail;
-    mounted.forEach(entry=>entry.hide());
     if(!['map','zone1','zone2'].includes(screen))return;
     if(schedule.state==='idle')schedule.load();
     const route=location.hash.slice(1).split('/');
@@ -112,6 +140,6 @@
     const key=screen+':'+zone;
     // Zone-specific deep links use the zone screens, so each element owns a single map.
     if(!mounted.has(key))mounted.set(key,mount(screen,zone));
-    mounted.get(key).show(route[1] || (screen==='map'?'36':null));
+    mounted.get(key).show(route[1] || (screen==='map'?'36':null),route[2]==='plan');
   });
 })();
