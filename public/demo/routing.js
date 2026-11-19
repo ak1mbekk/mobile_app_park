@@ -16,6 +16,10 @@ function present(id){
   currentRoute=id;
   id=id.split('/')[0];
   if(!byId(id)?.matches('.screen')) id='park';
+  // Each browser history entry keeps its return links, including the selected
+  // zone, enclosure and date, when the visitor reloads or uses browser Back.
+  if(history.state?.parkOrigins)previousScreens={...history.state.parkOrigins};
+  else history.replaceState({...history.state,parkOrigins:{...previousScreens}},'');
   currentScreen=id;
   for(const el of document.querySelectorAll('.screen')) el.classList.toggle('current',el.id===id);
   if(domestic.has(id)) lastHome=id;

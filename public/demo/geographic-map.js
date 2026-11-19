@@ -110,6 +110,7 @@
   }
   async function refresh(showCurrent=true){
     if(!screen.classList.contains('current'))return;
+    el('geo-services').dataset.go='zone'+route().zone+'/all/service';
     const request=++sequence;
     if(showCurrent)render();
     try{

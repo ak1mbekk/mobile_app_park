@@ -94,6 +94,10 @@ html.dark #visitor-theme .sun-icon {display:block}
 .map-filters button {background:var(--surface);border:1px solid var(--line);border-radius:9999px;color:var(--ink);min-height:44px; }
 .map-filters button[aria-pressed=true] { background:rgb(var(--zk-leaf) / .14);border-color:var(--green);color:var(--green); }
 .park-surface {border-color:var(--line);background:var(--inset)}
+.p-content.visitor-map {--map-gutter:clamp(14px,5vw,20px);padding-inline:var(--map-gutter)}
+.visitor-map .park-surface {margin-inline:calc(0px - var(--map-gutter));width:auto;border:0;border-radius:0}
+.service-picker {display:flex;align-items:center;gap:12px;margin:8px 0 12px;color:var(--muted);font-size:14px}
+.service-picker select {flex:1;min-width:0;min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
 .park-surface .leaflet-control-zoom {overflow:hidden;border:1px solid var(--line);border-radius:16px;box-shadow:var(--zk-shadow-control)}
 .park-surface .leaflet-control-zoom a {background:var(--surface);color:var(--ink);border-color:var(--line);width:44px;height:44px;line-height:44px}
 .visitor-screen .animalcard {position:relative;padding:8px;gap:0}

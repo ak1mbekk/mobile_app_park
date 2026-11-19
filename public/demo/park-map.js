@@ -2,6 +2,7 @@
   const {zones,places}=window.parkGuide;
   const schedule=window.parkSchedule;
   const mounted=new Map();
+  const services={cafe:'Кафе',rest:'Места отдыха',feed:'Корм для животных',wc:'Туалеты',wash:'Где вымыть руки',parking:'Парковка'};
   const titleFor = p => p.service || p.detail ? p.name : p.name+' · № '+p.badge;
   function mount(screen,zoneNumber) {
     const zone=zones[zoneNumber];
@@ -11,6 +12,14 @@
     const surface=host.querySelector('.park-surface');
     const select=host.querySelector('select'),info=host.querySelector('.place-info');
     const local=places.filter(p=>p.zone===zoneNumber);
+    const serviceField=document.createElement('label');
+    serviceField.className='service-picker';
+    serviceField.append('Показать');
+    const serviceSelect=document.createElement('select');serviceField.append(serviceSelect);
+    serviceSelect.add(new Option('Всю инфраструктуру',''));
+    for(const [value,label] of Object.entries(services)){
+      if(local.some(p=>p.service===label))serviceSelect.add(new Option(label,value));
+    }
     let drawing=zone,bounds=[[0,0],[zone.height,zone.width]];
     const switchPlan=document.createElement('button');
     switchPlan.type='button';switchPlan.className='p-link map-layer-switch';
@@ -38,7 +47,7 @@
     updateStatus();overlay.addTo(map);
     map.setMaxBounds(bounds);
     L.control.zoom({position:'bottomright',zoomInTitle:'Увеличить',zoomOutTitle:'Уменьшить'}).addTo(map);
-    let kind='all',selected=null;
+    let kind='all',category='',selected=null;
     const markers=new Map(),layer=L.layerGroup().addTo(map);
     function coordinates(point){
       const [x,y]=drawing===zone?[point.x,point.y]:point.plan;
@@ -55,7 +64,7 @@
       info.hidden=false;
       const heading=document.createElement('h2'),detail=document.createElement('p');
       heading.textContent=point.name;
-      detail.textContent=point.detail||(point.service?'Инфраструктура · '+zone.name:'Вольер № '+point.badge+' · '+zone.name);
+      detail.textContent=point.detail||(point.service?point.service+' · '+zone.name:'Вольер № '+point.badge+' · '+zone.name);
       info.append(heading,detail);
       if(point.plan){
         const geo=document.createElement('button');geo.className='p-link';
@@ -78,29 +87,45 @@
         map.setView(coordinates(point),Math.max(map.getBoundsZoom(bounds)+1.5,map.getZoom()),{animate:false,reset:true});
       }
     }
-    function filter(next){
-      kind=next;layer.clearLayers();markers.clear();select.replaceChildren(new Option('Выберите место',''));
+    function filter(next,nextCategory=''){
+      kind=next;category=nextCategory;layer.clearLayers();markers.clear();select.replaceChildren(new Option('Выберите место',''));
+      if(kind==='service'){
+        surface.before(serviceField);
+        serviceSelect.value=category;
+      }else serviceField.remove();
       host.querySelectorAll('[data-kind]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.kind===kind)));
-      const visible=local.filter(p=>(drawing===zone||p.plan) && (kind==='all'||(kind==='service')===Boolean(p.service)));
+      const visible=local.filter(p=>(drawing===zone||p.plan) && (kind==='all'||(kind==='service')===Boolean(p.service))
+        && (!category||p.service===services[category]));
+      const groups=new Map();
       for(const p of visible){
         const iconNode=document.createElement('span');iconNode.textContent=p.badge;
         const icon=L.divIcon({className:'place-marker'+(p.service?' service':''),html:iconNode,iconSize:[44,44],iconAnchor:[22,22]});
         const marker=L.marker(coordinates(p),{icon,title:titleFor(p),alt:titleFor(p),keyboard:true}).addTo(layer);
         marker.getElement().setAttribute('aria-label',titleFor(p));
         marker.on('click',()=>pick(p.id));markers.set(p.id,marker);
-        select.add(new Option(titleFor(p),p.id));
+        if(p.service && !groups.has(p.service)){
+          const group=document.createElement('optgroup');
+          group.label=p.service;groups.set(p.service,group);select.append(group);
+        }
+        (groups.get(p.service)||select).append(new Option(titleFor(p),p.id));
       }
       choose(visible.includes(selected)?selected:null,false);
     }
-    function pick(id,plan=drawing===zone.technical){
+    function pick(id,plan=drawing===zone.technical,nextKind=kind,nextCategory=category){
       // A new selection replaces the current map view in browser history.
-      const target=id||((plan||screen==='map')?'all':'');
-      window.conceptReplace(screen+(target?'/'+target:'')+(plan?'/plan':''));
+      const mode=plan?'plan':nextKind==='all'?'':nextKind;
+      const target=id||((mode||screen==='map')?'all':'');
+      window.conceptReplace(screen+(target?'/'+target:'')+(mode?'/'+mode:'')+(mode==='service'&&nextCategory?'/'+nextCategory:''));
     }
     switchPlan.onclick=()=>pick(selected?.id,drawing===zone);
     for(const b of host.querySelectorAll('[data-kind]'))b.onclick=()=>{
-      filter(b.dataset.kind);
-      if(!selected && location.hash.includes('/'))pick('');
+      const next=b.dataset.kind;
+      const keep=selected && (next==='all'||(next==='service')===Boolean(selected.service));
+      pick(keep?selected.id:'',false,next,'');
+    };
+    serviceSelect.onchange=()=>{
+      const value=serviceSelect.value;
+      pick(!value||selected?.service===services[value]?selected?.id:'',false,'service',value);
     };
     select.onchange=()=>pick(select.value);
     map.fitBounds(bounds,{animate:false});filter('all');
@@ -110,13 +135,18 @@
     document.addEventListener('parkprogrammechange',refreshSelection);
     document.addEventListener('parkcatalogready',refreshSelection);
     return {
-      show(id,plan){
+      show(id,mode,requestedCategory){
+        const plan=mode==='plan';
+        const requestedKind=['service','animals'].includes(mode)?mode:'all';
         // Resizing a previously hidden map can start Leaflet's animated bounds
         // correction. Lay out the new view before restoring the drag boundary.
         map.setMaxBounds(null);
         map.invalidateSize({pan:false});
         map.stop();
         const point=local.find(p=>p.id===id);
+        const nextCategory=requestedKind==='service' && Object.hasOwn(services,requestedCategory)
+          && local.some(p=>p.service===services[requestedCategory]) && (!point||point.service===services[requestedCategory])
+          ?requestedCategory:'';
         if(plan && point && !point.plan){pick(id,false);return;}
         const next=plan?zone.technical:zone;
         if(drawing!==next){
@@ -124,9 +154,10 @@
           overlay.setBounds(bounds).setUrl(drawing.image);
           overlay.getElement().alt=(plan?'План вольеров зоны ':'Посетительская схема зоны ')+zoneNumber;
           map.fitBounds(bounds,{animate:false});
-          filter(kind==='service'&&plan?'all':kind);
+          filter(requestedKind,nextCategory);
           failed=false;updateStatus();
         }
+        if(kind!==requestedKind||category!==nextCategory)filter(requestedKind,nextCategory);
         host.querySelector('.map-filters').hidden=plan;
         switchPlan.setAttribute('aria-pressed',String(plan));
         switchPlan.textContent=plan?'К схеме для прогулки':'План вольеров';
@@ -134,6 +165,9 @@
         if(switchPlan.disabled)switchPlan.textContent='Место отмечено только на схеме для прогулки';
         if(point && !markers.has(point.id))filter('all');
         choose(point);
+        if(!point && kind==='service' && markers.size){
+          map.fitBounds([...markers.values()].map(marker=>marker.getLatLng()),{padding:[24,24],animate:false});
+        }
         map.panInsideBounds(bounds,{animate:false});
         map.setMaxBounds(bounds);
       }
@@ -148,6 +182,6 @@
     const key=screen+':'+zone;
     // Zone-specific deep links use the zone screens, so each element owns a single map.
     if(!mounted.has(key))mounted.set(key,mount(screen,zone));
-    mounted.get(key).show(route[1] || (screen==='map'?'36':null),route[2]==='plan');
+    mounted.get(key).show(route[1] || (screen==='map'?'36':null),route[2],route[3]);
   });
 })();

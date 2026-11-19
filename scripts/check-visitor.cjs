@@ -85,6 +85,34 @@ async function cartography(browser){
     await p.evaluate(()=>window.conceptGo('zone1/54/plan'));
     await p.waitForURL('**/#zone1/54');
     assert.equal(await p.locator('#zone1 .place-info h2').innerText(),'Енот-полоскун');
+    for(const [zone,location,categories] of [
+      [1,'Корм для животных у входа',['Где вымыть руки','Кафе','Корм для животных','Туалеты']],
+      [2,'Корм рядом с вольером № 4',['Где вымыть руки','Кафе','Корм для животных','Места отдыха','Парковка','Туалеты']],
+    ]){
+      const origin='geo/'+zone+'/36';
+      await p.evaluate(route=>window.conceptGo(route),origin);
+      await p.locator('#geo-services').click();
+      const view=p.locator('#zone'+zone);
+      const places=view.locator('.place-picker select');
+      const service=view.locator('.service-picker select');
+      await p.waitForURL('**/#zone'+zone+'/all/service');
+      await view.locator('[data-kind="service"][aria-pressed="true"]').waitFor();
+      assert.equal(await view.locator('[data-kind="service"]').getAttribute('aria-pressed'),'true');
+      assert.deepEqual((await places.locator('optgroup').evaluateAll(items=>items.map(item=>item.label))).sort(),categories.sort());
+      assert.equal(await view.locator('.place-marker:not(.service)').count(),0);
+      await service.selectOption('feed');
+      assert.equal(await places.locator('optgroup').count(),1);
+      assert.equal(await view.locator('.place-marker').count(),zone===1?5:2);
+      await places.selectOption('food-entry');
+      await p.reload();await view.locator('.place-marker.picked.service').waitFor();
+      assert.equal(await places.inputValue(),'food-entry');
+      assert.equal(await service.inputValue(),'feed');
+      assert.equal(await view.locator('.place-info h2').innerText(),location);
+      assert.equal(await view.locator('.place-info [data-go^="geo/"]').count(),0);
+      assert.ok(await view.locator('.map-layer-switch').isDisabled());
+      await view.locator('.p-back').click();await p.waitForURL('**/#'+origin);
+      await p.waitForFunction(()=>document.querySelector('#geo-select').value==='36');
+    }
   } finally {await p.close();}
 }
 async function availability(browser){
@@ -115,6 +143,12 @@ async function offline(browser){
   await context.setOffline(true);await p.reload();
   await p.locator('#overview.current [data-go="zone2"]').click();
   await p.locator('#zone2 .leaflet-image-layer').evaluate(img=>img.decode());
+  await p.locator('#zone2 [data-kind="service"]').click();
+  await p.locator('#zone2 .service-picker select').selectOption('rest');
+  await p.locator('#zone2 .place-picker select').selectOption('rest-lake');
+  await p.reload();await p.locator('#zone2 .place-marker.picked.service').waitFor();
+  assert.equal(await p.locator('#zone2 .place-info h2').innerText(),'Место отдыха у большого пруда');
+  await p.locator('#zone2 [data-kind="all"]').click();
   await p.locator('#zone2 select').selectOption('11');
   await p.locator('#zone2 .map-layer-switch').click();
   await p.locator('#zone2 .leaflet-image-layer').evaluate(img=>img.decode());
