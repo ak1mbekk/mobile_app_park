@@ -88,7 +88,6 @@ html.dark #visitor-theme .sun-icon {display:block}
 .visitor-screen .direction-card small {color:var(--muted)}
 .visitor-screen .direction-card>span:last-child {flex:0 0 auto;color:var(--green)}
 .visitor-screen .map-filters[hidden] {display:none}
-.visitor-screen .map-layer-switch:disabled {color:var(--muted);text-decoration:none;cursor:default;font-weight:400}
 .feeding-row.selected {border-color:var(--green)}
 .visitor-screen .map-filters {gap:8px}
 .map-filters button {background:var(--surface);border:1px solid var(--line);border-radius:9999px;color:var(--ink);min-height:44px; }
@@ -144,3 +143,58 @@ html.dark #visitor-theme .sun-icon {display:block}
   #parkMenu .p-row:active,.geo-filters button:active {transform:scale(.98)}
   @keyframes geo-arrive{from{transform:translateY(8px);opacity:.4}to{transform:none;opacity:1}}
 }
+
+.visitor-screen :is(.p-back,.cat-back)[data-go]{width:44px;height:44px;min-width:44px;display:inline-grid;place-items:center;padding:0;color:var(--ink);background:transparent;border:0}
+#geo .geo-head{display:grid;grid-template-columns:44px 1fr auto;gap:4px 8px;border:0;padding:4px 10px 8px}
+#geo-zone{display:grid;grid-template-columns:1fr 1.24fr;grid-column:1/-1;grid-row:2;gap:3px;background:var(--inset);padding:3px;border-radius:14px}
+#geo-zone button{min-height:44px;padding:4px;color:var(--muted);background:transparent;border-radius:11px;font:600 15px/1.2 var(--zk-font)}
+#geo-zone button[aria-pressed=true]{background:var(--surface);color:var(--green);box-shadow:var(--zk-shadow-control)}
+#geo-layer{grid-column:3;grid-row:1}
+.place-marker span,.place-marker.picked span{width:30px;height:30px;min-width:0;box-sizing:border-box;padding:0;overflow:hidden;border:3px solid #34543d;border-radius:100%;color:white;background:#34543d;box-shadow:0 1px 4px #26382277}
+.place-marker.service span{width:30px;height:30px;border:1px solid #72462a;background:#fff7e8;color:#683619;border-radius:9px}
+.place-marker.picked span{outline:3px solid white;outline-offset:1px}
+.place-marker span:has(img){position:relative}
+.leaflet-container .place-marker span>img{position:absolute;inset:0;width:100%;height:100%;min-width:0;display:block;object-fit:cover}
+.place-marker svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+.zone-choices{display:grid;gap:6px;margin-block:20px 32px}
+.zone-choices button{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px;padding:12px 14px;text-align:start;background:var(--surface);color:var(--ink);border-radius:12px;font:inherit}
+.zone-choices small{color:var(--muted);font-size:13px}.zone-choices strong{font-size:21px;grid-column:1}
+.zone-choices svg{grid-column:2;grid-row:1/3;transform:rotate(180deg);color:var(--green)}
+.place-marker:not(.service) span:has(img){width:36px;height:36px}
+.place-marker.picked:not(.service) span:has(img){width:40px;height:40px}
+
+/* MAP-02–04: visitor illustrated map is a map-first, one-hand screen. */
+.p-content.visitor-map{position:relative;max-width:none;min-height:100%;padding:4px 0 24px}
+.visitor-map>.p-back{position:absolute;z-index:500;top:6px;left:max(8px,env(safe-area-inset-left));margin:0!important;border:1px solid var(--line)!important;border-radius:50%;background:var(--surface)!important;box-shadow:var(--zk-shadow-control)}
+.visitor-map .map-mount{display:flex;flex-direction:column;min-height:100%}
+.visitor-map-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 8px;padding:4px max(12px,env(safe-area-inset-right)) 7px max(58px,calc(env(safe-area-inset-left) + 58px))}
+.visitor-map-head .p-title{font-size:20px!important;letter-spacing:-.02em!important;white-space:nowrap}
+.visitor-map-head .map-terrain{min-height:44px;padding:0 5px;text-decoration:none;font-size:14px}
+.visitor-zone-switch{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.14fr;gap:3px;margin-left:calc(max(58px,calc(env(safe-area-inset-left) + 58px)) * -1 + max(12px,env(safe-area-inset-left)));padding:3px;border-radius:14px;background:var(--inset)}
+.visitor-zone-switch button{min-width:0;min-height:44px;padding:5px 7px;border-radius:11px!important;color:var(--muted)!important;font:600 13px/1.15 var(--zk-font)!important}
+.visitor-zone-switch button[aria-pressed=true]{background:var(--surface)!important;color:var(--green)!important;box-shadow:var(--zk-shadow-control)}
+.visitor-map .map-filters{order:2;display:grid;grid-template-columns:.72fr 1fr 1.35fr;gap:5px;margin:0;padding:7px 10px;background:var(--surface);border-block:1px solid var(--line)}
+.visitor-map .map-filters button{min-width:0;min-height:44px;padding:4px 7px;font-size:13px;white-space:nowrap}
+.visitor-map .service-picker{order:3;margin:0;padding:6px 10px;background:var(--surface);border-bottom:1px solid var(--line)}
+.visitor-map .service-picker select{min-height:44px;border-radius:12px}
+.visitor-map .park-surface{order:4;height:clamp(370px,58dvh,650px);margin:0;width:100%;border:0;border-radius:0}
+.visitor-map .map-mount:has(.place-info:not([hidden])) .park-surface{height:clamp(340px,48dvh,520px)}
+.visitor-map-sheet{order:5;position:relative;z-index:450;margin:-1px 0 0;padding:10px max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -8px 24px rgb(42 33 24 / .12)}
+.visitor-map-sheet .place-picker{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;margin:0;color:var(--muted);font-size:13px}
+.visitor-map-sheet .place-picker select{width:100%;min-width:0;min-height:48px;padding:0 36px 0 12px;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font-size:15px}
+.visitor-map-sheet .place-info{position:relative;margin-top:9px;padding:10px 48px 2px 0;border-top:1px solid var(--line)}
+.visitor-map-sheet .place-info h2{font-size:20px;line-height:1.15}.visitor-map-sheet .place-info p{margin-top:3px;color:var(--muted)}
+.visitor-map-sheet .place-info .p-link{display:inline-flex;align-items:center;margin-right:14px;text-align:left}
+.map-sheet-close{position:absolute;top:8px;right:0;width:44px;height:44px;border-radius:50%!important;background:var(--inset)!important;color:var(--ink)!important;font-size:25px!important}
+.place-marker{transition:filter .14s ease,opacity .14s ease}
+.leaflet-marker-pane:has(.place-marker.picked) .place-marker:not(.picked){filter:saturate(.45);opacity:.56}
+.place-marker.picked span{outline:3px solid var(--ink);outline-offset:3px;box-shadow:0 0 0 7px rgb(var(--zk-card) / .92),0 5px 18px rgb(42 33 24 / .38)!important}
+.place-marker.picked:not(.service) span:has(img),.place-marker.picked.service span{width:46px;height:46px}
+.place-marker.picked{z-index:1000!important}
+html.dark .visitor-map-sheet{box-shadow:0 -8px 24px rgb(0 0 0 / .35)}
+@media(max-width:340px){.visitor-zone-switch button{font-size:12px!important}.visitor-map .map-filters button{font-size:12px}.visitor-map-sheet .place-picker{grid-template-columns:1fr;gap:4px}.visitor-map .park-surface{height:54dvh}}
+@media(prefers-reduced-motion:reduce){.place-marker{transition:none}}
+
+.visitor-map .map-status,.visitor-map .map-status + button{order:6;margin:8px 12px 0;text-align:start}
+.visitor-map .map-status{color:var(--muted);font:400 12px/1.4 var(--zk-font)}

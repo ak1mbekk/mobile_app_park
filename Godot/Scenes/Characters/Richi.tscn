@@ -6,6 +6,10 @@
 [ext_resource type="Shader" path="res://Materials/RichiEyes.gdshader" id="EyeShader"]
 [ext_resource type="Texture2D" path="res://Art/Characters/EyesProjection.png" id="EyeProjection"]
 
+[ext_resource type="PackedScene" path="res://Art/Wardrobe/cap.glb" id="cap"]
+[ext_resource type="PackedScene" path="res://Art/Wardrobe/ranger.glb" id="ranger"]
+[ext_resource type="PackedScene" path="res://Art/Wardrobe/crown.glb" id="crown"]
+
 [sub_resource type="ShaderMaterial" id="EyeMaterial"]
 resource_local_to_scene = true
 shader = ExtResource("EyeShader")
@@ -22,5 +26,23 @@ script = ExtResource("Gaze")
 surface = SubResource("EyeMaterial")
 skeleton = NodePath("..")
 actor_mesh = NodePath("../output_unwrapped")
+
+[node name="Headwear" type="BoneAttachment3D" parent="Модель/SmartRigArmature/Skeleton3D"]
+bone_name = "mixamorig_Head"
+
+[node name="Seat" type="Node3D" parent="Модель/SmartRigArmature/Skeleton3D/Headwear"]
+transform = Transform3D(0.981859, 0.132849, -0.135297, -0.135297, 0.990764, -0.009021, 0.132849, 0.027163, 0.990764, -0.07549, 0.53406, 0.00205)
+
+[node name="cap" parent="Модель/SmartRigArmature/Skeleton3D/Headwear/Seat" instance=ExtResource("cap")]
+scale = Vector3(0.85, 0.88, 0.91)
+visible = false
+
+[node name="ranger" parent="Модель/SmartRigArmature/Skeleton3D/Headwear/Seat" instance=ExtResource("ranger")]
+scale = Vector3(0.85, 0.88, 0.91)
+visible = false
+
+[node name="crown" parent="Модель/SmartRigArmature/Skeleton3D/Headwear/Seat" instance=ExtResource("crown")]
+scale = Vector3(0.85, 0.88, 0.91)
+visible = false
 
 [editable path="Модель"]

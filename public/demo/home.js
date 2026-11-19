@@ -2,7 +2,7 @@
   const $ = (id) => document.getElementById(id);
   const route = (id) => { if (typeof window.conceptGo === 'function') window.conceptGo(id); else location.hash = id; };
   const defaults = {name: 'Ричи', leaves: 0, xp: 0, night: false, onboardingDone: false,
-    food: 55, clean: 45, energy: 65, joy: 50, updated:Date.now(), couponUsed:false, mealFinished:false};
+    food:50, clean:50, energy:50, joy:50, updated:Date.now(), couponUsed:false, mealFinished:false};
   const profileKey='aki-concept-demo';
   function readProfile(){
     for(const key of [profileKey,profileKey+'.backup']){
@@ -22,6 +22,20 @@
     return {...defaults};
   }
   let saved=readProfile();
+  const wares=[
+    {id:'cap',name:'Льняная кепка',tier:'Обычная',group:'hat',price:10},
+    {id:'ranger',name:'Шляпа следопыта',tier:'Редкая',group:'hat',price:30},
+    {id:'crown',name:'Янтарная корона',tier:'Эпическая',group:'hat',price:80},
+    {id:'cushion',name:'Вышитая подушка',tier:'Обычная',group:'decor',price:15},
+    {id:'lantern',name:'Фонарь лесника',tier:'Редкий',group:'decor',price:35},
+    {id:'chest',name:'Дубовый сундук',tier:'Эпический',group:'decor',price:75},
+    {id:'settee',name:'Диван у окна',tier:'Редкий',group:'decor',price:40,replaces:'лежанку'},
+    {id:'bath',name:'Эмалированная купель',tier:'Редкая',group:'decor',price:55,replaces:'ванну'}
+  ];
+  const owned=new Set(wares.filter(w=>Array.isArray(saved.owned)&&saved.owned.includes(w.id)).map(w=>w.id));
+  const placed=new Set(wares.filter(w=>w.group==='decor'&&owned.has(w.id)&&Array.isArray(saved.placed)&&saved.placed.includes(w.id)).map(w=>w.id));
+  if(!wares.some(w=>w.id===saved.hat&&w.group==='hat'&&owned.has(w.id)))saved.hat=null;
+  let shopGroup='hat',preview=null;
   if (typeof saved.name !== 'string' || !saved.name.trim()) saved.name = defaults.name;
   if (!Number.isSafeInteger(saved.leaves) || saved.leaves < 0) saved.leaves = 0;
   if (!saved.onboardingDone) saved.name = defaults.name;
@@ -39,25 +53,48 @@
   }
   function advanceNeeds() {
     const now=Date.now();
+    if(!saved.onboardingDone){saved.updated=now;return;}
     const hours=Math.min(48,Math.max(0,(now-saved.updated)/3600000));
     for(const [key,rate] of Object.entries({food:-4,clean:-2,energy:saved.night?20:-3,joy:-3})){
       saved[key]=Math.min(100,Math.max(0,saved[key]+hours*rate));
     }
     saved.updated=Math.max(now,saved.updated);
   }
+  function replenish(key,amount,maxXp){
+    const gain=Math.min(100-saved[key],amount);
+    const xp=Math.floor(maxXp*gain/amount);
+    saved[key]+=gain;
+    saved.xp+=xp;
+    return xp;
+  }
   function care(key,amount){
-    advanceNeeds();if(saved[key]<75)saved.xp+=3;
-    saved[key]=Math.min(100,saved[key]+amount);
+    advanceNeeds();
+    replenish(key,amount,3);
     save();refreshHome();
   }
-  function addGameReward(){
-    advanceNeeds();saved.xp+=10;saved.leaves+=5;saved.joy=Math.min(100,saved.joy+18);
+  function addGameReward(leaves=5){
+    advanceNeeds();
+    saved.lastGameXp=replenish('joy',18,10);
+    saved.leaves+=leaves;
+    return {leaves,xp:saved.lastGameXp};
   }
   function gameReward(){
-    addGameReward();
+    const reward=addGameReward();
+    if(saved.pairs)saved.pairs.rewardXp=reward.xp;
     save();refreshHome();
   }
   window.petDemo={
+    playBlock(){
+      advanceNeeds();
+      if(saved.night)return 'Ричи спит. Разбуди его, когда захочешь поиграть.';
+      if(saved.food<=25)return 'Сначала угости енота. Он проголодался.';
+      if(saved.energy<=25)return 'Ричи устал. Дай ему поспать.';
+      return '';
+    },
+    refuse(reason){
+      petMotion('refuse');
+      feedback('М-м… '+reason.replace('Ричи',saved.name));
+    },
     finishMeeting(){
       if(saved.onboardingDone || saved.mealFinished)return;
       saved.mealFinished=true;save();
@@ -73,7 +110,11 @@
     storeGame(game,round){
       const previous=saved[game];
       if(previous?.id===round.id && previous.finished)return;
-      if(previous?.id===round.id && round.won)addGameReward();
+      if(previous && previous.id>round.id)return;
+      if(previous?.id===round.id && round.finished && round.won){
+        const leaves=game==='orchard'?Math.min(10,Math.floor(round.caught/3)):5+round.bonus;
+        round.reward=addGameReward(leaves);
+      }
       saved[game]=round;
       save();refreshHome();
     },
@@ -92,7 +133,16 @@
     const stage=saved.xp>=270?'adult':saved.xp>=90?'young':'kit';
     $('home').dataset.age=stage;
     const actor=$('pet-actor');
-    const asset='assets/pet-'+stage+'.webp';
+    const mood=saved.energy<=25?'sleepy':saved.food<=25?'hungry':saved.clean<=25?'dirty':saved.joy<=25?'lonely':'content';
+    const asset='assets/pet-'+(mood!=='content' && stage==='kit'?'mood-'+mood:stage)+'.webp';
+    actor.dataset.mood=mood;
+    const feeling={sleepy:'зевает',hungry:'проголодался',dirty:'испачкался',lonely:'скучает',content:'доволен'};
+    actor.alt=saved.name+' '+feeling[mood];
+    $('pet-figure').dataset.mood=mood;
+    $('shop-open').hidden=!saved.onboardingDone||saved.night;
+    paintOutfit();
+    $('home').classList.toggle('furnished-bed',placed.has('settee'));
+    $('wash').classList.toggle('furnished-bath',placed.has('bath'));
     if(actor.getAttribute('src')!==asset)actor.src=asset;
     $('rope-ball').hidden=!saved.ball||saved.night;
     $('ball-price').textContent=saved.ball?'В твоём домике':'5 листьев · в кошельке '+saved.leaves;
@@ -101,10 +151,71 @@
     $('aki-level').textContent = 'Уровень '+(1 + Math.floor(saved.xp/30));
     $('aki-meter').style.width = Math.max(7,saved.xp%30/30*100)+'%';
     $('home').classList.toggle('night',saved.night);
+    $('need-bars').hidden=!saved.onboardingDone;
+    for(const meter of $('need-bars').querySelectorAll('meter')){
+      const value=Math.round(saved[meter.dataset.need]);
+      meter.value=value;
+      meter.setAttribute('aria-valuetext',value<=25?'Мало':value>=75?'Хорошо':'Средне');
+    }
     $('aki-sleep').setAttribute('aria-label',saved.night?'Разбудить':'Уложить спать');
     $('aki-sleep').lastElementChild.textContent = saved.night ? 'Разбудить' : 'Уложить';
   }
   let messageTimer, heartTimer;
+  function paintOutfit(){
+    const hat=preview?.group==='hat'?preview.id:saved.hat;
+    $('pet-hat').hidden=!hat;
+    if(hat){
+      const slot=$('pet-hat');
+      const image=slot.firstElementChild || new Image();
+      const src='assets/shop-'+hat+'.webp';
+      if(image.getAttribute('src')!==src)image.src=src;
+      if(!image.parentElement){image.alt='';slot.append(image);}
+    }
+    const decor=wares.filter(w=>w.group==='decor'&&(placed.has(w.id)||preview?.id===w.id));
+    $('room-decor').replaceChildren(...decor.map(w=>{
+      const img=new Image();img.src='assets/'+(w.replaces?'room-':'shop-')+w.id+'.webp';img.alt='';img.dataset.furnishing=w.id;return img;
+    }));
+  }
+  function openShop(){
+    preview=null;$('shop-preview').hidden=true;
+    paintOutfit();
+    $('shop-balance').textContent=saved.leaves+' '+leafWord(saved.leaves);
+    for(const b of document.querySelectorAll('[data-shop-group]'))b.setAttribute('aria-pressed',String(b.dataset.shopGroup===shopGroup));
+    $('shop-list').replaceChildren(...wares.filter(w=>w.group===shopGroup).map(w=>{
+      const card=document.createElement('button');card.className='shop-item';card.type='button';
+      const pic=new Image();pic.alt='';pic.src='assets/shop-'+w.id+'.webp';
+      const copy=document.createElement('span'),name=document.createElement('strong'),tier=document.createElement('small'),price=document.createElement('span');
+      name.textContent=w.name;tier.textContent=w.tier+(w.replaces?' · заменяет '+w.replaces:'');copy.append(tier,name);
+      price.textContent=owned.has(w.id)?'Куплено':w.price+' '+leafWord(w.price);card.append(pic,copy,price);
+      card.onclick=()=>previewWare(w);return card;
+    }));
+    if(!$('cottage-shop').open)$('cottage-shop').showModal();
+  }
+  function leafWord(n){const d=n%10;return n%100>=11&&n%100<=14?'листьев':d===1?'лист':d>=2&&d<=4?'листа':'листьев';}
+  function previewWare(w){
+    $('cottage-shop').close();preview=w;paintOutfit();$('shop-preview').hidden=false;
+    const using=w.group==='hat'?saved.hat===w.id:placed.has(w.id);
+    $('preview-name').textContent=w.name;
+    $('preview-price').textContent=owned.has(w.id)?w.tier:w.tier+' · В кошельке '+saved.leaves+' '+leafWord(saved.leaves);
+    $('shop-confirm').disabled=!owned.has(w.id)&&saved.leaves<w.price;
+    $('shop-confirm').textContent=owned.has(w.id)?(using?'Убрать':w.group==='hat'?'Надеть':'Поставить'):'Купить за '+w.price+' '+leafWord(w.price);
+    $('shop-cancel').focus();
+  }
+  $('shop-open').onclick=openShop;$('shop-cancel').onclick=openShop;$('shop-close').onclick=()=>$('cottage-shop').close();
+  document.querySelectorAll('[data-shop-group]').forEach(b=>b.onclick=()=>{shopGroup=b.dataset.shopGroup;openShop();});
+  $('shop-confirm').onclick=()=>{
+    const w=preview;if(!w||(!owned.has(w.id)&&saved.leaves<w.price))return;
+    const previous={leaves:saved.leaves,hat:saved.hat,owned:[...owned],placed:[...placed]};
+    if(!owned.has(w.id)){saved.leaves-=w.price;owned.add(w.id);}
+    if(w.group==='hat')saved.hat=saved.hat===w.id?null:w.id;
+    else if(placed.has(w.id))placed.delete(w.id);else placed.add(w.id);
+    saved.owned=[...owned];saved.placed=[...placed];
+    if(!save()){
+      Object.assign(saved,previous);owned.clear();previous.owned.forEach(id=>owned.add(id));placed.clear();previous.placed.forEach(id=>placed.add(id));
+      $('preview-price').textContent='Не удалось сохранить покупку на устройстве. Попробуй ещё раз.';return;
+    }
+    preview=null;$('shop-preview').hidden=true;refreshHome();$('shop-open').focus();
+  };
   function feedback(text) {
     const output=$('aki-feedback');
     output.hidden=false; output.textContent=text;
@@ -115,8 +226,8 @@
     clearTimeout(heartTimer);heartTimer=setTimeout(()=>icon.classList.remove('show'),900);
   }
   function petMotion(name){
-    const actor=$('pet-actor');
-    actor.classList.remove('nuzzle','reach','bring');
+    const actor=$('pet-figure');
+    actor.classList.remove('nuzzle','reach','bring','refuse');
     void actor.offsetWidth;
     actor.classList.add(name);
   }
@@ -182,13 +293,26 @@
   };
   snack.onpointercancel=returnSnack;
   snack.onclick=e=>{if(e.detail===0)eatSnack();};
-  $('aki-sleep').onclick=()=>{advanceNeeds();saved.night=!saved.night;save();refreshHome();feedback(saved.night?'Спокойной ночи, '+saved.name+'!':'Доброе утро, '+saved.name+'!');};
+  $('aki-sleep').onclick=()=>{
+    advanceNeeds();
+    if(!saved.night && saved.energy>75){window.petDemo.refuse('Спать пока не хочется.');return;}
+    if(saved.night){
+      const recovered=saved.energy-(saved.sleepStartEnergy??saved.energy);
+      saved.xp+=Math.max(0,Math.min(3,Math.floor(recovered/10)));
+      delete saved.sleepStartEnergy;
+    }else saved.sleepStartEnergy=saved.energy;
+    saved.night=!saved.night;
+    save();refreshHome();feedback(saved.night?'Спокойной ночи, '+saved.name+'!':'Доброе утро, '+saved.name+'!');
+  };
   $('aki-name-input').value=saved.name;
   $('aki-name-input').oninput=()=>{$('aki-name-form').querySelector('button').disabled=!$('aki-name-input').value.trim();};
   $('aki-name-form').onsubmit=e=>{
     e.preventDefault();const name=$('aki-name-input').value.trim();if(!name)return;
+    if(saved.onboardingDone){route('home');return;}
     const previousName=saved.name;
     saved.name=name;saved.onboardingDone=true;
+    saved.food=saved.clean=saved.energy=saved.joy=50;
+    saved.updated=Date.now();
     if(!save()){
       saved.name=previousName;saved.onboardingDone=false;
       $('name-save-error').hidden=false;return;
@@ -225,43 +349,42 @@
   fruit.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();dropSuccess();}};
   const names={capybara:'Капибара',lemur:'Лемур',raccoon:'Енот',bison:'Зубр',tamarin:'Тамарин',caracal:'Каракал'};
   const shuffle=list=>{const result=list.slice();for(let j=result.length-1;j>0;j--){const i=Math.floor(Math.random()*(j+1));[result[j],result[i]]=[result[i],result[j]];}return result;};
-  let cards=[],opened=[],paired=new Set(),moves=0,locked=false,peek=false,gameTimer=null,active='',winShown=false;
+  let cards=[],opened=[],paired=new Set(),moves=0,locked=false,gameTimer=null,active='',winShown=false;
   const round=saved.pairs;
-  if(round && Array.isArray(round.cards) && round.cards.length===6 &&
+  if(round && Array.isArray(round.cards) && [6,12].includes(round.cards.length) &&
      round.cards.every(species=>Object.hasOwn(names,species)&&round.cards.filter(s=>s===species).length===2) &&
      Array.isArray(round.paired) && round.paired.every(s=>round.cards.includes(s)) &&
      Array.isArray(round.opened) && round.opened.length<=2 &&
-     round.opened.every(i=>Number.isInteger(i)&&i>=0&&i<6)){
+     round.opened.every(i=>Number.isInteger(i)&&i>=0&&i<round.cards.length)){
     cards=round.cards.slice();opened=round.opened.slice();paired=new Set(round.paired);
-    moves=Math.max(0,Number(round.moves)||0);locked=opened.length===2||paired.size===3;
+    moves=Math.max(0,Number(round.moves)||0);locked=opened.length===2||paired.size===cards.length/2;
     winShown=round.winShown===true;
   }
   function storeRound() {
-    saved.pairs={cards,opened,paired:[...paired],moves,winShown};
+    saved.pairs={cards,opened,paired:[...paired],moves,winShown,rewardXp:winShown?saved.pairs?.rewardXp:undefined};
     save();
   }
   function newGame() {
     clearTimeout(gameTimer);
-    const others=shuffle(Object.keys(names).filter(k=>k!=='capybara'));
-    const group=['capybara',...others.slice(0,2)];cards=shuffle(group.concat(group));opened=[];paired=new Set();moves=0;
-    locked=false;peek=true;winShown=false;storeRound();resumeGame();
+    const species=Object.keys(names);
+    cards=shuffle([...species,...species]);opened=[];paired=new Set();moves=0;
+    locked=false;winShown=false;storeRound();resumeGame();
   }
   function resumeGame() {
     clearTimeout(gameTimer);paintBoard();
-    if(paired.size===3){
+    if(paired.size===cards.length/2){
       gameTimer=setTimeout(()=>{if(active==='game')route('win');},550);
     }else if(opened.length===2){
       gameTimer=setTimeout(()=>{opened=[];locked=false;storeRound();paintBoard();},750);
-    }else if(peek){
-      gameTimer=setTimeout(()=>{peek=false;paintBoard();},1700);
     }
   }
   function paintBoard() {
     const board=$('aki-board');
     const focused=board.contains(document.activeElement)?document.activeElement.dataset.index:null;
+    board.classList.toggle('six-pairs',cards.length===12);
     board.replaceChildren();
     cards.forEach((species,i)=>{
-      const matched=paired.has(species),visible=peek||matched||opened.includes(i);
+      const matched=paired.has(species),visible=matched||opened.includes(i);
       const b=document.createElement('button');b.type='button';b.dataset.index=String(i);
       b.className='tile'+(visible?' face':'')+(matched?' match':'');b.disabled=matched;
       b.setAttribute('aria-label',visible?names[species]+(matched?', пара найдена':''):'Открыть карточку '+(i+1));
@@ -269,18 +392,17 @@
       b.onclick=()=>flip(i);board.appendChild(b);
     });
     if(focused!=null)board.querySelector('[data-index="'+focused+'"]:not(:disabled)')?.focus({preventScroll:true});
-    $('aki-pairs').textContent=paired.size+' из 3 пар';$('aki-moves').textContent='Ходов: '+moves;
+    $('aki-pairs').textContent=paired.size+' из '+(cards.length/2)+' пар';$('aki-moves').textContent='Ходов: '+moves;
   }
   function flip(i) {
     if(document.hidden||active!=='game'||locked||opened.includes(i)||paired.has(cards[i]))return;
-    if(peek){clearTimeout(gameTimer);peek=false;}
     opened.push(i);
     if(opened.length===1){storeRound();paintBoard();return;}
     moves++;
     if(cards[opened[0]]===cards[i]){
       paired.add(cards[i]);opened=[];paintBoard();
       saved.pairs={cards,opened,paired:[...paired],moves,winShown};
-      if(paired.size===3){locked=true;gameReward();resumeGame();}
+      if(paired.size===cards.length/2){locked=true;gameReward();resumeGame();}
       else save();
     }else{
       locked=true;storeRound();resumeGame();
@@ -291,11 +413,11 @@
     if(id===active)return;
     if(active==='intro'&&!eating)resetFruit();
     if(active==='game')clearTimeout(gameTimer);
-    if(active==='home'){snack.hidden=true;serving=null;returnSnack();}
+    if(active==='home'){snack.hidden=true;serving=null;returnSnack();preview=null;$('shop-preview').hidden=true;$('cottage-shop').close();}
     $('aki-pantry').hidden=true;$('aki-feedback').hidden=true;active=id;
     if(id==='intro'&&!eating)resetFruit();
-    if(id==='game'){if(!cards.length||(paired.size===3&&winShown))newGame();else resumeGame();}
-    if(id==='win'&&paired.size===3){winShown=true;storeRound();}
+    if(id==='game'){if(!cards.length||(paired.size===cards.length/2&&winShown))newGame();else resumeGame();}
+    if(id==='win'&&cards.length&&paired.size===cards.length/2){$('pair-xp').textContent='+'+(saved.pairs.rewardXp??saved.lastGameXp??0)+' опыта';winShown=true;storeRound();}
     if(id==='home')refreshHome();
     if(id==='chest'){$('toy-notice').textContent='';refreshHome();}
   }
@@ -304,6 +426,8 @@
     if(active!=='game')return;
     if(document.hidden)clearTimeout(gameTimer);else resumeGame();
   });
-  window.addEventListener('hashchange',()=>enter(location.hash.slice(1)));
-  refreshHome();enter(location.hash.slice(1)||'intro');
+  function refreshNeeds(){if(active==='home'&&!document.hidden){advanceNeeds();refreshHome();}}
+  document.addEventListener('visibilitychange',refreshNeeds);
+  window.setInterval(refreshNeeds,30000);
+  refreshHome();
 })();

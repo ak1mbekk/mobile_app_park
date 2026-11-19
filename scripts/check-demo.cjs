@@ -46,7 +46,8 @@ async function check(page, url, output) {
   assert.match(invitation,/TRIGGER:-PT30M/);assert.match(invitation,/DTSTART:\d{8}T125000Z/);
   await go('feed','map'); await go('map','animal');
   await click('#animal .p-back'); await visible('map'); await click('#map .p-back'); await visible('feed');
-  await tab('park'); await go('park','geo/1');await go('geo','overview');await go('overview','zone2');
+  await tab('park'); await go('park','zone1'); await visible('zone1');
+  await tab('park'); await click('#beforeVisit'); await go('park','geo/1');await go('geo','overview');await go('overview','zone2');
   await click('#zone2 .leaflet-control-zoom-in');
   await el('#zone2 select').selectOption('11');assert.match(await el('#zone2 .place-info h2').textContent(),/Зубр/);
   assert.ok(page.url().endsWith('#zone2/11'));await page.reload();await visible('zone2');
@@ -57,13 +58,13 @@ async function check(page, url, output) {
   assert.equal(await page.locator('#zone2 .place-picker option[value]:not([value=""])').count(),22);
   await el('#zone2 .service-picker select').selectOption('feed');
   assert.equal(await page.locator('#zone2 .place-picker option[value]:not([value=""])').count(),2);
-  await tab('park');await go('park','feed');
+  await tab('park');await click('#duringVisit');await go('park','feed');
   await visible('feed');await el('#feed [data-event]').waitFor();
   assert.equal(await page.locator('#feed [data-event]').count(),7);
   await click('#feed [data-event=raccoons]');await go('feed','zone1/54');
   await visible('zone1');assert.match(await el('#zone1 .place-info h2').textContent(),/Енот/);await snap('park-interactive-map');
   await go('zone1','species/enot-poloskun');await visible('species');await click('#species-place');await visible('zone1');
-  await tab('park');await go('park','feed');await snap('park-schedule');
+  await tab('park');await click('#duringVisit');await go('park','feed');await snap('park-schedule');
   await tab('park'); await go('park','animals'); await el('#animalSearch').fill('капибара');
   assert.equal(await page.locator('#animals .animalcard:visible').count(),1);
   await el('#animalSearch').fill('Пака');await page.locator('#animals .animalcard').filter({has:page.getByText('Пака',{exact:true})}).click();await visible('species');
@@ -98,6 +99,8 @@ async function check(page, url, output) {
   await page.goto(url); await visible('home'); assert.ok((await stats()).night); await click('#aki-sleep');
   await go('home','chest'); await snap('chest'); await go('chest','game'); await visible('game');
   const cards = await page.locator('#aki-board img').evaluateAll(imgs=>imgs.map(i=>i.src));
+  assert.equal(cards.length,12);
+  await page.waitForTimeout(1800);assert.equal(await page.locator("#aki-board .face").count(),0);
   const pairs = [...new Set(cards)].map(s=>cards.flatMap((a,i)=>a===s?[i]:[]));
   const beforeWin = await stats();
   for(const [n,pair] of pairs.entries()){
@@ -132,13 +135,19 @@ async function check(page, url, output) {
   const until=Date.now()+25000;
   while(await el('#catchSheet').isHidden()&&Date.now()<until){
     const fruit=await el('#fallFruit').boundingBox();
-    if(fruit)await page.mouse.move(fruit.x+fruit.width/2,field.y+field.height*.72);
+    if(fruit){
+      const ate=(await stats()).orchard.caught;
+      const apple=await el('#fallFruit').getAttribute('alt')==='Яблоко';
+      const catchIt=(ate<3)===apple;
+      const x=fruit.x+fruit.width/2;
+      await page.mouse.move(catchIt?x:field.x+(x-field.x<field.width/2?.91:.09)*field.width,field.y+field.height*.72);
+    }
     await page.waitForTimeout(100);
   }
-  await page.mouse.up();assert.match(await el('#catchTitle').textContent(),/Полная корзинка/);
-  assert.equal((await stats()).leaves,beforeWin.leaves+10);
+  await page.mouse.up();assert.match(await el('#catchTitle').textContent(),/Урожай собран/);
+  const afterHarvest=await stats();assert.equal(afterHarvest.orchard.errors,3);assert.equal(afterHarvest.orchard.reward.leaves,1);
   await go('catch','chest');await click('#buy-ball');await visible('home');
-  assert.equal((await stats()).leaves,beforeWin.leaves+5);await click('#rope-ball');
+  assert.equal((await stats()).leaves,afterHarvest.leaves-5);await click('#rope-ball');
   await page.locator('#aki-feedback').filter({hasText:/поймал мяч|вернул тебе мяч|принёс любимый мяч/}).waitFor();
   await page.reload();assert.equal((await stats()).ball,true);
   await tab('park'); await go('park','pass'); await el('#ticketCount').selectOption('0');

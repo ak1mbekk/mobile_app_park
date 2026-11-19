@@ -58,7 +58,11 @@
     loading.textContent = 'Загружаем домик…';
     frame = document.createElement('iframe');
     frame.title = scene==='intro'?'Первая встреча с Ричи в 3D':'Угощение для '+window.petDemo.stats().name;
-    frame.src = 'meeting3d/index.html?host=animal-park';
+    const roomUrl=new URL('meeting3d/index.html',document.baseURI);
+    roomUrl.searchParams.set('host','animal-park');
+    const hat=scene==='home'?window.petDemo.stats().hat:null;
+    if(hat)roomUrl.searchParams.set('hat',hat);
+    frame.src=roomUrl.href;
     container.prepend(frame);
     timeout = setTimeout(() => {
       loading.textContent = 'Домик ещё загружается. Можно вернуться к лёгкой версии.';

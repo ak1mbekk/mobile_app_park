@@ -38,8 +38,14 @@ const {chromium}=require('playwright');
     await page.locator('#aki-name-input').fill('Лёня');
     await page.locator('#aki-name-form button').click();
     await page.locator('#home.current').waitFor();
+    await page.evaluate(()=>{
+      const pet=JSON.parse(localStorage.getItem('aki-concept-demo'));
+      pet.hat='cap';pet.owned=['cap'];localStorage.setItem('aki-concept-demo',JSON.stringify(pet));
+    });
+    await page.reload();await page.locator('#home.current').waitFor();
     await page.locator('#aki-feed').click();
     await page.locator('#offer-apple').click();await ready();
+    assert.equal(new URL(await page.locator('#scene3d iframe').getAttribute('src')).searchParams.get('hat'),'cap');
     const before=await stats();
     const room=await page.locator('#scene3d iframe').boundingBox();
     const apple={x:room.x+room.width*.15,y:room.y+room.height*.753};

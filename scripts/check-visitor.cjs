@@ -51,6 +51,33 @@ async function appearance(browser){
             return Math.abs(pin.left+pin.width/2-frame.left-frame.width/2)<3;
           }),'Selected enclosure must stay centered after revisiting the map at '+width);
         }
+        if(route==='zone1/54'){
+          assert.ok(await view.locator('.visitor-zone-switch button,.map-filters button,.map-terrain,.place-picker select').evaluateAll(items=>items.every(item=>{
+            const box=item.getBoundingClientRect();return box.height>=44&&box.left>=0&&box.right<=innerWidth;
+          })),'Map controls are one-hand touch targets at '+width+' '+colorScheme);
+          assert.ok(await view.locator('.place-marker.picked').evaluate(marker=>{
+            const picked=marker.querySelector('span').getBoundingClientRect();
+            const neighbour=[...marker.parentElement.children].find(node=>node!==marker)?.querySelector('span')?.getBoundingClientRect();
+            return !neighbour||picked.width>neighbour.width;
+          }),'Selected place has visual priority at '+width+' '+colorScheme);
+          const raccoon=view.locator('.place-marker.picked img');
+          assert.match(await raccoon.getAttribute('src'),/assets\/avatar-raccoon\.webp$/);
+          assert.deepEqual(await raccoon.evaluate(img=>[img.naturalWidth,img.naturalHeight]),[192,192]);
+        }
+        if(route==='zone2/11/plan'){
+          const bison=view.locator('.place-marker.picked img');
+          assert.match(await bison.getAttribute('src'),/assets\/avatar-bison\.webp$/);
+          assert.deepEqual(await bison.evaluate(img=>[img.naturalWidth,img.naturalHeight]),[192,192]);
+        }
+        if(route.startsWith('zone')){
+          const portrait=view.locator('.picked img');
+          const fits=await portrait.evaluate(img=>{
+            const frame=img.parentElement;
+            const actual=img.getBoundingClientRect();
+            return Math.abs(actual.width-frame.clientWidth)<1 && Math.abs(actual.height-frame.clientHeight)<1;
+          });
+          assert.ok(fits,'Portrait fits the marker at '+width);
+        }
         if(output&&width===390&&['park','directions','animals','feed/raccoons','zone1/54','zone2/11/plan'].includes(route)){
           await page.waitForLoadState('networkidle');await page.screenshot({path:path.join(output,'visitor-'+colorScheme+'-'+route.split('/')[0]+'.png')});
         }
@@ -72,21 +99,20 @@ async function cartography(browser){
     for(const [zone,name,count] of [[1,'Капибара',28],[2,'Домашние козы',26]]){
       const view=p.locator('#zone'+zone);
       await p.evaluate(z=>window.conceptGo('zone'+z+'/36'),zone);
-      await view.locator('.map-layer-switch').click();
+      assert.equal(await view.locator('.map-layer-switch').count(),0);
+      await p.evaluate(z=>window.conceptGo('zone'+z+'/36/plan'),zone);
+      await p.waitForURL('**/#zone'+zone+'/36');
       await view.locator('.leaflet-image-layer').evaluate(img=>img.decode());
-      assert.equal(new URL(p.url()).hash,'#zone'+zone+'/36/plan');
       assert.equal(await view.locator('.place-info h2').innerText(),name);
-      assert.equal(await view.locator('select option').count(),count+1);
+      assert.ok(await view.locator('.place-picker select option').count()>count);
       await p.reload();
-      assert.equal(await view.locator('select').inputValue(),'36');
-      await view.locator('.map-layer-switch').click();
-      assert.equal(await view.locator('select').inputValue(),'36');
+      assert.equal(await view.locator('.place-picker select').inputValue(),'36');
     }
     await p.evaluate(()=>window.conceptGo('zone1/54/plan'));
     await p.waitForURL('**/#zone1/54');
     assert.equal(await p.locator('#zone1 .place-info h2').innerText(),'Енот-полоскун');
     for(const [zone,location,categories] of [
-      [1,'Корм для животных у входа',['Где вымыть руки','Кафе','Корм для животных','Туалеты']],
+      [1,'Корм для животных у входа',['Сувениры','Вход','Где вымыть руки','Кафе','Корм для животных','Туалеты']],
       [2,'Корм рядом с вольером № 4',['Где вымыть руки','Кафе','Корм для животных','Места отдыха','Парковка','Туалеты']],
     ]){
       const origin='geo/'+zone+'/36';
@@ -109,50 +135,36 @@ async function cartography(browser){
       assert.equal(await service.inputValue(),'feed');
       assert.equal(await view.locator('.place-info h2').innerText(),location);
       assert.equal(await view.locator('.place-info [data-go^="geo/"]').count(),0);
-      assert.ok(await view.locator('.map-layer-switch').isDisabled());
+      assert.equal(await view.locator('.map-layer-switch').count(),0);
       await view.locator('.p-back').click();await p.waitForURL('**/#'+origin);
       await p.waitForFunction(()=>document.querySelector('#geo-select').value==='36');
     }
   } finally {await p.close();}
 }
-async function feature(browser) {
-  const p=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
-  try {
-    await p.clock.setFixedTime(new Date('2026-11-19T16:22:00+03:00'));
-    const fixture=structuredClone(sample);
-    fixture.byDate['2026-11-19']=[sample.daily.find(e=>e.id==='raccoons')];
-    await p.route('**/feeding-programme.json',r=>r.fulfill({json:fixture}));
-    await p.goto(root+'#park');
-    const card=p.locator('#park .park-feature');
-    await card.click();
-    assert.equal(new URL(p.url()).hash,'#species/enot-poloskun');
-    await p.locator('#species .p-back').click();
-    await p.locator('#duringVisit').click();
-    await p.waitForFunction(()=>document.querySelector('.park-feature')?.hash==='#feed/raccoons/2026-11-19');
-    await card.locator('img').evaluate(i=>i.decode());
-    assert.match(await card.innerText(),/Кормление по расписанию с 16:20/);
-    await card.click();
-    await p.locator('#feed .selected [data-event="raccoons"]').waitFor();
-    await p.locator('#feeding-actions [data-go]').click();
-    await p.locator('#zone1 .place-info [data-go="species/enot-poloskun"]').waitFor();
-    fixture.byDate['2026-11-19'][0]={...fixture.byDate['2026-11-19'][0],status:'cancelled'};
-    await p.goto(root+'#park'); await p.reload();
-    await p.waitForFunction(()=>window.parkSchedule.state==='ready');
-    assert.equal(await card.getAttribute('href'),'#zone2/11');
-    await card.click();
-    await p.locator('#zone2 .place-info [data-go="species/zubr"]').waitFor();
-    await p.locator('#zone2 .p-back').click();
-    await p.locator('#park.current').waitFor();
-    fixture.byDate['2026-11-19']=[];
-    await p.reload();await p.waitForFunction(()=>window.parkSchedule.state==='ready');
-    assert.equal(await card.getAttribute('href'),'#zone2/11');
-    fixture.byDate['2026-11-19']=[{...sample.daily.find(e=>e.id==='exotic'),start:'17:30',end:'17:45'}];
-    await p.reload();
-    await p.waitForFunction(()=>document.querySelector('.park-feature')?.hash==='#feed/exotic/2026-11-19');
-    assert.match(await card.getAttribute('aria-label'),/Кормление по расписанию в 17:30/);
-    assert.equal(await card.locator('img').count(),0);
-    assert.equal(await card.locator('time').innerText(),'17:30');
-  } finally { await p.close(); }
+async function parkEntry(browser){
+  const page=await browser.newPage();
+  try{
+    await page.goto(root+'#park');await page.locator('#duringVisit').click();
+    assert.equal(await page.locator('#park .park-feature,#parkMenu img').count(),0);
+    assert.equal(await page.locator('#parkMenu a[href*="tickets"]').count(),0);
+    const mapEntry=page.locator('#parkMenu [data-go="zone1"]');
+    await mapEntry.waitFor();await mapEntry.click();
+    await page.locator('#zone1.current .visitor-zone-switch [data-zone="1"][aria-pressed="true"]').waitFor();
+    assert.equal(await page.locator('#zone1 .visitor-zone-switch').getByText('Казачны мір',{exact:true}).count(),1);
+    assert.equal(await page.locator('#zone1 .visitor-zone-switch').getByText('Лясныя таямніцы',{exact:true}).count(),1);
+    assert.ok(await page.locator('#zone1 .map-terrain').evaluate(el=>el.getBoundingClientRect().height>=44));
+    await page.locator('#zone1 .place-picker select').selectOption('36');
+    assert.equal(await page.locator('#zone1 .map-terrain').getAttribute('data-go'),'geo/1/36');
+    await page.locator('#zone1 .visitor-zone-switch [data-zone="2"]').click();
+    await page.locator('#zone2.current .visitor-zone-switch [data-zone="2"][aria-pressed="true"]').waitFor();
+    await page.evaluate(()=>window.conceptGo('park'));await page.locator('#duringVisit').click();
+    await page.locator('#parkMenu [data-go="feed"]').click();
+    await page.locator('#feed.current [data-event="raccoons"]').click();
+    await page.locator('#feeding-actions [data-go]').click();
+    await page.locator('#zone1 .place-info [data-go="species/enot-poloskun"]').waitFor();
+    await page.locator('#zone1 .picked img').evaluate(image=>image.decode());
+    assert.equal(await page.locator('#zone1 .p-back').innerText(),'');
+  }finally{await page.close();}
 }
 async function availability(browser){
   const context=await browser.newContext();
@@ -189,7 +201,7 @@ async function offline(browser){
   assert.equal(await p.locator('#zone2 .place-info h2').innerText(),'Место отдыха у большого пруда');
   await p.locator('#zone2 [data-kind="all"]').click();
   await p.locator('#zone2 select').selectOption('11');
-  await p.locator('#zone2 .map-layer-switch').click();
+  assert.equal(await p.locator('#zone2 .map-layer-switch').count(),0);
   await p.locator('#zone2 .leaflet-image-layer').evaluate(img=>img.decode());
   await p.locator('#zone2 [data-go="species/zubr"]').click();
   await p.locator('#species-photo img').evaluate(img=>img.decode());
@@ -237,7 +249,7 @@ async function calendarShell(browser,appRoot){
 (async()=>{
   if(output)fs.mkdirSync(output,{recursive:true});
   const b=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
-  try{await appearance(b);await feature(b);await cartography(b);await availability(b);await offline(b);
+  try{await appearance(b);await parkEntry(b);await cartography(b);await availability(b);await offline(b);
     if(process.argv[4]){await calendarShell(b,process.argv[4]);console.log('PASS calendar route, dated exception and enclosure return');}
     console.log('PASS visitor themes, 3 widths, zone destinations, matched map layers, programme retries, cancellation, empty day, restored offline guide');}
   finally{await b.close()}

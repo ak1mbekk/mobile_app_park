@@ -1,6 +1,6 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '11';
+const version = prefix + '14';
 const base = new URL(self.registration.scope);
 const shell = [
   'index.html','base.css','show.css','visitor.css','park-and-chest.css','vendor/park-menu/menu.css','vendor/park-menu/menu.js','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
@@ -8,7 +8,7 @@ const shell = [
   'geographic-map.js','map-alignment.json','assets/park-survey.webp',
   'guide-offline.js','meeting.js','home.js','show.js','match.js',
   'assets/plan-1.webp','assets/plan-2.webp','assets/technical-1.webp','assets/technical-2.webp',
-  'assets/park-header.webp','assets/park-zone.webp'
+  'assets/avatar-raccoon.webp','assets/avatar-bison.webp'
 ];
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
@@ -45,7 +45,7 @@ self.addEventListener('fetch',event=>{
     try {
       const response=await fetch(req);
       if(response.ok && path==='map-alignment.json')await cache.put(req,response.clone());
-      if (response.ok || response.status<500) return response;
+      if (response.ok) return response;
       return (await cache.match(key)) || response;
     } catch (error) {
       const saved=await cache.match(key);

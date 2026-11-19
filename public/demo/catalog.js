@@ -48,7 +48,11 @@
       mapLink.after(list);
     }
     photo.hidden = !entry?.thumbnail;
-    if(entry?.thumbnail) photo.querySelector('img').src = entry.thumbnail;
+    if(entry?.thumbnail){
+      const portrait = photo.firstElementChild || new Image();
+      if(portrait.getAttribute('src') !== entry.thumbnail) portrait.src = entry.thumbnail;
+      if(!portrait.parentElement){portrait.alt = ''; photo.append(portrait);}
+    }
   }
   function makeCard(entry) {
     const button = document.createElement('button');

@@ -2,29 +2,31 @@
   const {zones,places}=window.parkGuide;
   const schedule=window.parkSchedule;
   const mounted=new Map();
-  const services={cafe:'Кафе',rest:'Места отдыха',feed:'Корм для животных',wc:'Туалеты',wash:'Где вымыть руки',parking:'Парковка'};
+  const services={cafe:'Кафе',rest:'Места отдыха',feed:'Корм для животных',wc:'Туалеты',wash:'Где вымыть руки',parking:'Парковка',entrance:'Вход',gift:'Сувениры'};
   const titleFor = p => p.service || p.detail ? p.name : p.name+' · № '+p.badge;
   function mount(screen,zoneNumber) {
     const zone=zones[zoneNumber];
     const host=document.querySelector('#'+screen+' .map-mount');
-    host.innerHTML='<h1 class="p-title"></h1><div class="map-filters" role="group" aria-label="Что искать"><button data-kind="all">Все</button><button data-kind="animals">Животные</button><button data-kind="service">Инфраструктура</button></div><div class="park-surface" role="region" aria-label="Интерактивная схема"></div><label class="place-picker">Найти на схеме<select><option value="">Выберите место</option></select></label><div class="place-info" aria-live="polite"></div>';
-    host.querySelector('h1').textContent=zone.name;
+    host.innerHTML='<header class="visitor-map-head"><h1 class="p-title">Карта парка</h1><button type="button" class="map-terrain p-link">Местность</button><nav class="visitor-zone-switch" aria-label="Зона парка"><button type="button" data-zone="1"></button><button type="button" data-zone="2"></button></nav></header><div class="map-filters" role="group" aria-label="Что показать на карте"><button data-kind="all">Все</button><button data-kind="animals">Животные</button><button data-kind="service">Инфраструктура</button></div><div class="park-surface" role="region" aria-label="Интерактивная схема"></div><section class="visitor-map-sheet" aria-label="Поиск и выбранное место"><label class="place-picker"><span>Найти место</span><select><option value="">Выберите место</option></select></label><div class="place-info" aria-live="polite"></div></section>';
+    host.querySelectorAll('[data-zone]').forEach(button=>{
+      button.textContent=zones[Number(button.dataset.zone)].name;
+      const current=Number(button.dataset.zone)===zoneNumber;
+      button.setAttribute('aria-pressed',String(current));
+      button.onclick=()=>{if(!current)window.conceptGo('zone'+button.dataset.zone);};
+    });
     const surface=host.querySelector('.park-surface');
     const select=host.querySelector('select'),info=host.querySelector('.place-info');
+    const terrain=host.querySelector('.map-terrain');
     const local=places.filter(p=>p.zone===zoneNumber);
     const serviceField=document.createElement('label');
     serviceField.className='service-picker';
-    serviceField.append('Показать');
+    serviceField.append('Тип');
     const serviceSelect=document.createElement('select');serviceField.append(serviceSelect);
     serviceSelect.add(new Option('Всю инфраструктуру',''));
     for(const [value,label] of Object.entries(services)){
       if(local.some(p=>p.service===label))serviceSelect.add(new Option(label,value));
     }
-    let drawing=zone,bounds=[[0,0],[zone.height,zone.width]];
-    const switchPlan=document.createElement('button');
-    switchPlan.type='button';switchPlan.className='p-link map-layer-switch';
-    switchPlan.textContent='План вольеров';switchPlan.setAttribute('aria-pressed','false');
-    host.querySelector('.place-picker').before(switchPlan);
+    const bounds=[[0,0],[zone.height,zone.width]];
     const map=L.map(surface,{crs:L.CRS.Simple,attributionControl:false,zoomControl:false,minZoom:-3,maxZoom:3,zoomSnap:.125,zoomDelta:.5,scrollWheelZoom:false,maxBoundsViscosity:1});
     const mapStatus=document.createElement('p');
     mapStatus.className='map-status';mapStatus.setAttribute('role','status');
@@ -33,7 +35,7 @@
     host.append(mapStatus,retry);
     let failed=false;
     function updateStatus(){
-      const caption=drawing===zone?'Схема парка от 12.11.2025.':'План нумерации вольеров. Отмечены совпадающие номера на двух схемах.';
+      const caption='Схема парка от 12.11.2025.';
       mapStatus.textContent=failed?'Изображение схемы недоступно. Место можно выбрать из списка.':
         (navigator.onLine?'':'Без связи · ')+caption;
       retry.hidden=!failed;
@@ -41,7 +43,7 @@
     const overlay=L.imageOverlay(zone.image,bounds,{alt:'Посетительская схема зоны '+zoneNumber});
     overlay.on('error',()=>{failed=true;updateStatus();});
     overlay.on('load',()=>{failed=false;updateStatus();});
-    retry.onclick=()=>overlay.setUrl(drawing.image);
+    retry.onclick=()=>overlay.setUrl(zone.image);
     window.addEventListener('online',updateStatus);
     window.addEventListener('offline',updateStatus);
     updateStatus();overlay.addTo(map);
@@ -50,13 +52,14 @@
     let kind='all',category='',selected=null;
     const markers=new Map(),layer=L.layerGroup().addTo(map);
     function coordinates(point){
-      const [x,y]=drawing===zone?[point.x,point.y]:point.plan;
-      return [drawing.height-y,x];
+      return [zone.height-point.y,point.x];
     }
     function choose(point,focus=true){
       selected=point||null;select.value=selected?.id||'';
+      terrain.dataset.go='geo/'+zoneNumber+(selected?.plan?'/'+selected.id:'');
       markers.forEach((marker,id)=>{
         marker.getElement()?.classList.toggle('picked',id===selected?.id);
+        marker.getElement()?.setAttribute('aria-current',id===selected?.id?'true':'false');
         marker.setZIndexOffset(id===selected?.id?1000:0);
       });
       info.replaceChildren();
@@ -65,7 +68,10 @@
       const heading=document.createElement('h2'),detail=document.createElement('p');
       heading.textContent=point.name;
       detail.textContent=point.detail||(point.service?point.service+' · '+zone.name:'Вольер № '+point.badge+' · '+zone.name);
-      info.append(heading,detail);
+      const close=document.createElement('button');
+      close.type='button';close.className='map-sheet-close';close.setAttribute('aria-label','Закрыть карточку места');close.textContent='×';
+      close.onclick=()=>pick('');
+      info.append(close,heading,detail);
       if(point.plan){
         const geo=document.createElement('button');geo.className='p-link';
         geo.textContent='На карте местности →';geo.dataset.go='geo/'+zoneNumber+'/'+point.id;
@@ -94,11 +100,11 @@
         serviceSelect.value=category;
       }else serviceField.remove();
       host.querySelectorAll('[data-kind]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.kind===kind)));
-      const visible=local.filter(p=>(drawing===zone||p.plan) && (kind==='all'||(kind==='service')===Boolean(p.service))
+      const visible=local.filter(p=>(kind==='all'||(kind==='service')===Boolean(p.service))
         && (!category||p.service===services[category]));
       const groups=new Map();
       for(const p of visible){
-        const iconNode=document.createElement('span');iconNode.textContent=p.badge;
+        const iconNode=window.parkGuide.markerFace(p);
         const icon=L.divIcon({className:'place-marker'+(p.service?' service':''),html:iconNode,iconSize:[44,44],iconAnchor:[22,22]});
         const marker=L.marker(coordinates(p),{icon,title:titleFor(p),alt:titleFor(p),keyboard:true}).addTo(layer);
         marker.getElement().setAttribute('aria-label',titleFor(p));
@@ -111,21 +117,20 @@
       }
       choose(visible.includes(selected)?selected:null,false);
     }
-    function pick(id,plan=drawing===zone.technical,nextKind=kind,nextCategory=category){
+    function pick(id,nextKind=kind,nextCategory=category){
       // A new selection replaces the current map view in browser history.
-      const mode=plan?'plan':nextKind==='all'?'':nextKind;
+      const mode=nextKind==='all'?'':nextKind;
       const target=id||((mode||screen==='map')?'all':'');
       window.conceptReplace(screen+(target?'/'+target:'')+(mode?'/'+mode:'')+(mode==='service'&&nextCategory?'/'+nextCategory:''));
     }
-    switchPlan.onclick=()=>pick(selected?.id,drawing===zone);
     for(const b of host.querySelectorAll('[data-kind]'))b.onclick=()=>{
       const next=b.dataset.kind;
       const keep=selected && (next==='all'||(next==='service')===Boolean(selected.service));
-      pick(keep?selected.id:'',false,next,'');
+      pick(keep?selected.id:'',next,'');
     };
     serviceSelect.onchange=()=>{
       const value=serviceSelect.value;
-      pick(!value||selected?.service===services[value]?selected?.id:'',false,'service',value);
+      pick(!value||selected?.service===services[value]?selected?.id:'','service',value);
     };
     select.onchange=()=>pick(select.value);
     map.fitBounds(bounds,{animate:false});filter('all');
@@ -133,7 +138,7 @@
       if(selected && host.closest('.screen').classList.contains('current'))choose(selected,false);
     }
     document.addEventListener('parkprogrammechange',refreshSelection);
-    document.addEventListener('parkcatalogready',refreshSelection);
+    document.addEventListener('parkcatalogready',()=>filter(kind,category));
     return {
       show(id,mode,requestedCategory){
         const plan=mode==='plan';
@@ -147,22 +152,8 @@
         const nextCategory=requestedKind==='service' && Object.hasOwn(services,requestedCategory)
           && local.some(p=>p.service===services[requestedCategory]) && (!point||point.service===services[requestedCategory])
           ?requestedCategory:'';
-        if(plan && point && !point.plan){pick(id,false);return;}
-        const next=plan?zone.technical:zone;
-        if(drawing!==next){
-          drawing=next;bounds=[[0,0],[drawing.height,drawing.width]];
-          overlay.setBounds(bounds).setUrl(drawing.image);
-          overlay.getElement().alt=(plan?'План вольеров зоны ':'Посетительская схема зоны ')+zoneNumber;
-          map.fitBounds(bounds,{animate:false});
-          filter(requestedKind,nextCategory);
-          failed=false;updateStatus();
-        }
+        if(plan){pick(id,'all','');return;}
         if(kind!==requestedKind||category!==nextCategory)filter(requestedKind,nextCategory);
-        host.querySelector('.map-filters').hidden=plan;
-        switchPlan.setAttribute('aria-pressed',String(plan));
-        switchPlan.textContent=plan?'К схеме для прогулки':'План вольеров';
-        switchPlan.disabled=Boolean(point && !point.plan);
-        if(switchPlan.disabled)switchPlan.textContent='Место отмечено только на схеме для прогулки';
         if(point && !markers.has(point.id))filter('all');
         choose(point);
         if(!point && kind==='service' && markers.size){

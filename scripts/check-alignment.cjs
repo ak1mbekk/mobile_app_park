@@ -37,6 +37,15 @@ async function verifyMaps(){
   const root=(process.argv[2]||'http://127.0.0.1:8141')+'/demo/';
   const browser=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
   try{
+    const outage=await browser.newPage({viewport:{width:390,height:844},locale:'ru-RU'});
+    await outage.route('https://tile.openstreetmap.org/**',route=>route.abort('failed'));
+    await outage.goto(root+'index.html#geo/1',{waitUntil:'domcontentloaded'});
+    await outage.locator('#survey-map:not([hidden])').waitFor();
+    assert.match(await outage.locator('#geo-status').textContent(),/OpenStreetMap недоступна/);
+    await outage.unroute('https://tile.openstreetmap.org/**');
+    await outage.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await outage.locator('#terrain-map:not([hidden]) .leaflet-tile-loaded').first().waitFor();
+    await outage.close();
     const p=await browser.newPage({viewport:{width:1050,height:680},locale:'ru-RU'});
     p.setDefaultTimeout(15000);
     const errors=[];p.on('pageerror',e=>errors.push(e.message));
@@ -62,8 +71,8 @@ async function verifyMaps(){
     assert.equal(new URL(await p.locator('#base-map').getAttribute('src')).searchParams.has('pt'),false);
     await p.locator('#revert').click();
     await p.setViewportSize({width:390,height:844});await p.goto(root+'index.html#park',{waitUntil:'domcontentloaded'});
-    await p.locator('#duringVisit').click();
-    assert.equal(await p.locator('#parkMenu a[href*="tickets"]').count(),0);
+    await p.locator('#beforeVisit').click();
+    assert.equal(await p.locator('#parkMenu a[href*="tickets"]').count(),1);
     await p.locator('#parkMenu [data-go="geo/1"]').click();
     const pins=p.locator('#terrain-map .place-marker');
     await pins.first().waitFor();assert.ok(await pins.count()>=30);
@@ -73,7 +82,7 @@ async function verifyMaps(){
     await p.locator('#geo-boundaries').click();assert.ok(await outline.isHidden());
     await p.locator('#geo-boundaries').click();assert.ok(await outline.isVisible());
     await p.locator('#geo [data-geo-filter="wc"]').click();assert.equal(await pins.count(),3);
-    await p.locator('#geo-zone').selectOption('2');
+    await p.locator('#geo-zone [data-zone="2"]').click();
     await p.locator('#geo [data-geo-filter="wc"]').click();assert.equal(await pins.count(),2);
     await pins.first().click();assert.ok((await p.locator('#geo-select').inputValue()).startsWith('osm-'));
     await p.locator('#geo [data-geo-filter="animals"]').click();
@@ -81,8 +90,10 @@ async function verifyMaps(){
     await p.locator('#geo-details [data-go="species/zubr"]').waitFor();
     await p.locator('#geo-layer').selectOption('yandex');
     assert.equal(new URL(await p.locator('#geographic-map').getAttribute('src')).hostname,'yandex.by');
-    await p.locator('#geo-layer').selectOption('survey');
-    await p.locator('#survey-map .leaflet-image-layer').evaluate(im=>im.decode());
+    assert.match(await p.locator('#geo-status').textContent(),/внешним поставщиком/);
+    assert.equal(await p.locator('#geo-to-scheme').getAttribute('data-go'),'zone2/11');
+    assert.equal(await p.locator('#geo-layer option[value="survey"]').count(),0);
+    assert.equal(await p.locator('#terrain-map .leaflet-control-attribution svg').count(),0);
     await p.locator('#geo-layer').selectOption('map');
     if(process.argv[3]){await p.waitForTimeout(800);await p.screenshot({path:path.join(process.argv[3],'geographic-visitor.png')});}
     await p.locator('#geo-details [data-go="species/zubr"]').click();
@@ -93,7 +104,8 @@ async function verifyMaps(){
     const config=await p.evaluate(()=>fetch('map-alignment.json').then(r=>r.json()));
     await p.route('**/map-alignment.json',r=>r.fulfill({json:{...config,centerX:config.centerX+15,revision:config.revision+1,approaches:{'2/11':fixturePoint}}}));
     await p.evaluate(()=>window.dispatchEvent(new Event('focus')));
-    await p.getByText('Привязка плана № '+(config.revision+1)+'.',{exact:true}).waitFor();
+    await p.waitForFunction(oldLink=>document.querySelector('#geo-details a[href*="pt="]')?.href!==oldLink,initialLocation);
+    await p.locator('#geo-details a[href*="rtext="]').waitFor();
     assert.notEqual(await link.getAttribute('href'),initialLocation);
     const walk=p.locator('#geo-details a[href*="rtext="]');
     const walkURL=new URL(await walk.getAttribute('href'));
@@ -102,7 +114,14 @@ async function verifyMaps(){
     await p.locator('#geo [data-geo-filter="wc"]').click();
     await p.locator('#geo-select').selectOption('osm-9868296562');
     assert.equal(new URL(await link.getAttribute('href')).searchParams.get('pt'),'26.0213501,53.0904689');
+    assert.match(await link.textContent(),/Показать место в Яндексе/);
     assert.equal(await walk.count(),0);
+    await p.evaluate(()=>window.conceptGo('geo/1/54'));
+    await p.waitForFunction(()=>location.hash==='#geo/1/54'&&document.querySelector('#geo-select')?.value==='54');
+    assert.equal(await p.locator('#geo-select').inputValue(),'54');
+    assert.equal(await p.locator('#geo-to-scheme').getAttribute('data-go'),'zone1/54');
+    assert.equal(await p.locator('#geo-details [data-go="zone1/54"]').count(),1);
+    assert.match(await p.locator('#geo-status').textContent(),/полевая точность не проверена/i);
     const records=await p.evaluate(()=>window.parkGuide.places.filter(place=>place.plan));
     assert.equal(records.length,54);
     assert.equal(new Set(records.map(place=>place.zone+'/'+place.id)).size,54);

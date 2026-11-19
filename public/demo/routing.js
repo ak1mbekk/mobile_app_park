@@ -5,6 +5,14 @@ if(window.parent!==window && new URLSearchParams(location.search).get('layout')=
 const domestic=new Set(['intro','name','home','game','win','wash','chest','match','catch']);
 let lastHome='intro', currentScreen='', currentRoute='', previousScreens={};
 function present(id){
+  let blocked='';
+  if(['game','catch','match'].includes(id.split('/')[0])){
+    const pet=window.petDemo?.stats();
+    if(pet && !pet.onboardingDone)id=pet.mealFinished?'name':'intro';
+    else blocked=window.petDemo?.playBlock()||'';
+    if(blocked)id='home';
+    if(location.hash!=='#'+id)history.replaceState(history.state,'','#'+id);
+  }
   if(id==='intro' || id==='name'){
     const pet=window.petDemo?.stats();
     const stage=pet?.onboardingDone?'home':pet?.mealFinished?'name':'intro';
@@ -36,9 +44,10 @@ function present(id){
     backLink.dataset.go=dest;
     labels.visitor='Для посетителей';
     labels.geo='Карта территории';
-    if(id!=='geo' && backLink.lastChild?.nodeType===3) backLink.lastChild.textContent=(backLink.querySelector('svg')?'':'‹　')+(labels[dest.split('/')[0]]||'Назад');
+    backLink.setAttribute('aria-label','Назад · '+(labels[dest.split('/')[0]]||'Парк'));
   }
   document.dispatchEvent(new CustomEvent('conceptscreen',{detail:id}));
+  if(blocked)window.petDemo.refuse(blocked);
 }
 window.conceptGo=function(id,keepOrigin=false){
   const screen=id.split('/')[0];

@@ -8,18 +8,18 @@
 .room-objects{position:absolute;inset:0;pointer-events:none}.object{pointer-events:auto;position:absolute;background:transparent;border-radius:36%;min-width:44px;min-height:44px}
 .object:hover,.object:focus-visible,.jug:focus-visible{background:#ffe5ad26;outline:2px solid #fff1c4}.bowl{left:22%;top:63%;width:34%;height:17%}.tub{right:0;top:29%;width:32%;height:24%}.bed{left:0;top:37%;width:31%;height:21%}.chest{right:0;bottom:0;width:41%;height:26%}
 #home.night .room-objects .object:not(.bed),#home.night .pet{display:none}#home.night .bed{inset:16% 4% 3%;width:92%;height:auto}
-#home .pet{left:27%;top:45%;width:45%;height:19%}.pet-heart{z-index:2}.homemsg{z-index:3;bottom:20px}.sheet{z-index:5}.room-objects .object.pulse{animation:woodglow 1.7s 2}@keyframes woodglow{50%{box-shadow:inset 0 0 16px #ffe7be91}}
+#home .pet{left:27%;top:45%;width:45%;height:19%}.pet-heart{z-index:2}.homemsg{z-index:3;bottom:20px}.sheet{z-index:5}.room-objects .object.pulse{animation:woodglow 1.7s 2}@keyframes woodglow{50%{outline:2px solid #efe4cc;outline-offset:2px}}
 .bath-scene{background:#96785c url("assets/wash.webp") center/100% 100% no-repeat;overflow:hidden}.bath-scene.clean{background-image:url("assets/clean.webp")}
 .corner,.gameline .backbtn,.toy-chest .backbtn{background:#fff1d7e8;color:#553d28;font:30px/1 Georgia;min-width:44px;min-height:44px;border-radius:50%}.corner{position:absolute;left:14px;top:14px;z-index:2}
 #soap-area{position:absolute;top:21%;left:6%;width:85%;height:55%;touch-action:none;cursor:grab;border-radius:40%}.foam{position:absolute;left:50%;top:50%;width:23px;height:23px;opacity:0;border-radius:50%;background:radial-gradient(circle at 30% 28%,white,transparent 38%,#cbe1ff70 62%,white);box-shadow:16px 6px 0 #fff9,-13px 10px 0 #e8f7ffb8;pointer-events:none}
-.wash-status,.finish{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);padding:10px 16px;text-align:center;border-radius:18px;background:#39291eeb;color:#fff4df;font-size:14px;white-space:nowrap}.wash-status progress{height:5px;display:block;margin:6px auto 0;accent-color:#d0cc91;width:100%}.jug{position:absolute;bottom:8%;right:1%;width:29%;height:20%;background:transparent;border-radius:30%;box-shadow:0 0 0 2px #fff2b9,inset 0 0 18px #fff4b2aa}
+.wash-status,.finish{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);padding:10px 16px;text-align:center;border-radius:18px;background:#39291eeb;color:#fff4df;font-size:14px;white-space:nowrap}.wash-status progress{height:5px;display:block;margin:6px auto 0;accent-color:#d0cc91;width:100%}.jug{position:absolute;bottom:8%;right:1%;width:29%;height:20%;background:transparent;border-radius:30%;outline:2px solid #fff2b9}
 .finish{bottom:76px;background:#fdf2d7;color:#333c27;min-height:44px}
-.toy-chest{background:linear-gradient(140deg,#654428ef,#39291cf5),url("assets/room.webp") center/cover;color:#fff2cf}.toy-chest h1{font:normal 35px/1.1 Georgia,serif;margin:28px 0 18px}.toylist{display:grid;gap:12px}.toylist button{display:flex;align-items:center;gap:12px;background:#f5e6c6;color:#422e20;padding:10px 15px 10px 9px;text-align:left;border:2px solid #caaf80;border-radius:17px;font:22px Georgia,serif;box-shadow:0 3px 0 #261b15}.toylist img{width:65px;height:70px;object-fit:cover;border-radius:9px}.toylist span{flex:1}.toylist small{display:block;font:14px/1.35 system-ui;margin-top:4px;color:#645744}
+.toy-chest{background:#483327;color:#fff2cf}.toy-chest h1{font:normal 35px/1.1 Georgia,serif;margin:28px 0 18px}.toylist{display:grid;gap:12px}.toylist button{display:flex;align-items:center;gap:12px;background:#f5e6c6;color:#422e20;padding:10px 15px 10px 9px;text-align:left;border:2px solid #caaf80;border-radius:17px;font:22px Georgia,serif;box-shadow:0 3px 0 #261b15}.toylist img{width:65px;height:70px;object-fit:cover;border-radius:9px}.toylist span{flex:1}.toylist small{display:block;font:14px/1.35 system-ui;margin-top:4px;color:#645744}
 .gameline{display:flex;align-items:center;justify-content:space-between;gap:8px}.gameline span{background:#f9edce;color:#493d28;border-radius:15px;padding:8px 11px;font-size:14px;font-weight:650}
 #matchBoard{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:#81532d;padding:7px;border:3px solid #bb8a53;border-radius:14px;margin:auto 0 16px;touch-action:none}.piece{position:relative;aspect-ratio:1;padding:0;background:#744320;overflow:hidden;border-radius:6px}.piece img{height:100%;width:100%;object-fit:cover;pointer-events:none}.piece.chosen{outline:3px solid #ffe8a3;z-index:1}.piece.pop{animation:burst .23s ease-in forwards}@keyframes burst{50%{transform:scale(1.14);filter:brightness(1.5)}100%{transform:scale(.3);opacity:.1}}
 #match .gameHelp{min-height:48px;margin:0 2px auto}.game-end{display:grid;gap:8px}.secondary{min-height:44px;border-radius:12px;background:#e6dbbd}
 .orchard{background:#829250 url("assets/orchard.webp") center/cover}.orchard .gameline{position:absolute;top:15px;left:15px;right:15px;z-index:2}#catchField{position:absolute;inset:11% 0 1%;overflow:hidden;touch-action:none}#fallFruit{width:12%;position:absolute;transform:translate(-50%,-50%);pointer-events:none}#basket{position:absolute;bottom:1%;left:50%;transform:translateX(-50%);font-size:clamp(50px,15vw,78px);pointer-events:none;line-height:1.12}
-.park-top{position:relative;height:clamp(128px,22vh,180px);padding:17px 20px;background:linear-gradient(180deg,#fff7e7fb,transparent 67%),url("assets/park-header.webp") center/cover;color:#294c32}.park-top h1{font:650 45px/1.2 Georgia,serif}.park-top button[data-profile]{right:14px!important;top:14px!important}
+.park-top{position:relative;height:clamp(128px,22vh,180px);padding:17px 20px;background:var(--paper);color:#294c32}.park-top h1{font:650 45px/1.2 Georgia,serif}.park-top button[data-profile]{right:14px!important;top:14px!important}
 .modes{display:flex;gap:4px;padding:3px;background:#ede7d7;border-radius:13px;margin-bottom:15px}.modes button{flex:1;min-height:44px;border-radius:10px}.modes button[aria-pressed=true]{background:#385d3e;color:#fff9e8;font-weight:650}
 #parkMenu .p-menu{display:flex;flex-direction:column}.p-menu .priority{order:-1;background:#385d3e;color:#fffdf2;border-radius:14px;padding:11px;min-height:61px}.priority .p-row-copy small{color:#e3e8db}.pass,.coupon{border:1px dashed #9a8057!important;border-radius:13px;background:#f4ead2!important;color:#3c5037}.p-content .pass{width:100%;padding:16px;text-align:left;font-weight:650;margin-top:16px;display:flex;justify-content:space-between}.coupon{padding:20px;margin:20px 0 15px}.coupon strong{font:25px Georgia,serif}.coupon p{margin-top:7px}.count{display:flex;align-items:center;gap:12px;margin:16px 0}.count select{font:inherit;padding:7px 13px}.p-content #testBuy{background:#355741;color:white;padding:0 12px;margin-top:16px}
 @media(prefers-reduced-motion:reduce){.object,.piece{animation-duration:0s!important}}
@@ -33,13 +33,13 @@
 #snack-piece img{width:100%;height:100%;pointer-events:none}
 #home{--scene:url("assets/room-floor.webp")}
 #home.night{--scene:url("assets/sleep.webp")}
-#pet-actor{position:absolute;left:31%;bottom:27%;width:57%;height:auto;transform-origin:center bottom;pointer-events:none;filter:drop-shadow(2px 5px 3px #452c2450);animation:pet-breathe 3s ease-in-out infinite}
-#home[data-age=young] #pet-actor{left:36%;width:53%}
-#home[data-age=adult] #pet-actor{left:21%;width:75%}
-#home.night #pet-actor{display:none}
-#pet-actor.nuzzle{animation:nuzzle .65s ease-in-out,pet-breathe 3s .65s ease-in-out infinite}
-#pet-actor.reach{animation:reach .72s ease-in-out,pet-breathe 3s .72s ease-in-out infinite}
-#pet-actor.bring{animation:bring 1.55s ease-in-out,pet-breathe 3s 1.55s ease-in-out infinite}
+#pet-figure{position:absolute;left:31%;bottom:27%;width:57%;height:auto;transform-origin:center bottom;pointer-events:none;filter:drop-shadow(2px 5px 3px #452c2450);animation:pet-breathe 3s ease-in-out infinite}
+#home[data-age=young] #pet-figure{left:36%;width:53%}
+#home[data-age=adult] #pet-figure{left:21%;width:75%}
+#home.night #pet-figure{display:none}
+#pet-figure.nuzzle{animation:nuzzle .65s ease-in-out,pet-breathe 3s .65s ease-in-out infinite}
+#pet-figure.reach{animation:reach .72s ease-in-out,pet-breathe 3s .72s ease-in-out infinite}
+#pet-figure.bring{animation:bring 1.55s ease-in-out,pet-breathe 3s 1.55s ease-in-out infinite}
 @keyframes pet-breathe{50%{transform:scale(1.006,1.017)}}
 @keyframes nuzzle{40%{transform:rotate(-3deg) scale(1.04,.98)}75%{transform:rotate(1deg)}}
 @keyframes reach{50%{transform:translate(-3%,2%) rotate(-4deg) scale(1.025,.975)}}
@@ -49,7 +49,7 @@
 .ball-shop{display:flex;gap:12px;align-items:center;text-align:left;margin-top:20px;border:1px solid #b89a6f;border-radius:14px;padding:8px 12px;color:#fff4db;background:#604b36;font:600 17px system-ui}
 .ball-shop img{width:42px;height:42px}.ball-shop small{display:block;margin-top:3px;font-size:13px;font-weight:400}
 #toy-notice{margin:8px 0;color:#ffe9bb;font:14px system-ui}
-@media(prefers-reduced-motion:reduce){#home #pet-actor{animation:none}}
+@media(prefers-reduced-motion:reduce){#home #pet-figure{animation:none}}
 
 #species .p-animal-photo img{width:100%;height:100%;object-fit:cover}
 #species-latin{font-style:italic;color:var(--green);margin:12px 0}
@@ -74,6 +74,57 @@
 .feeding-summary{margin:8px 0 14px;padding-left:12px;border-left:3px solid #849b79;font:500 14px/1.5 system-ui;color:#4b5c49}
 .feeding-summary .p-link{display:block;min-height:44px;padding:5px 0;color:var(--green);text-align:left}
 .feeding-summary:empty{display:none}
+#need-bars:not([hidden]){
+  position:absolute;z-index:2;top:56px;left:12px;right:12px;display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:9px 12px 11px;
+  max-width:390px;border-radius:12px;background:#30261fec;color:#fff4df;
+  font:600 12px/1.3 system-ui;pointer-events:none;
+}
+#need-bars label{display:grid;gap:5px}
+#pet-actor{display:block;width:100%;height:auto}
+#pet-hat img{display:block;width:100%}
+#pet-hat{position:absolute;width:35%;left:13%;bottom:55%;transform:rotate(-8deg);pointer-events:none}
+#pet-figure:not([data-mood=content]) #pet-hat{left:17%;bottom:55%;width:38%}
+#home[data-age=young] #pet-hat{left:13%;bottom:76%;width:43%;transform:rotate(5deg)}
+#home[data-age=adult] #pet-hat{left:2%;bottom:75%;width:24%;transform:rotate(-10deg)}
+#room-decor{position:absolute;inset:0;pointer-events:none}
+#room-decor img{position:absolute;filter:drop-shadow(0 3px 2px #38271d66)}
+#room-decor [data-furnishing=cushion]{left:9%;bottom:16%;width:24%;transform:rotate(-8deg)}
+#room-decor [data-furnishing=lantern]{left:1%;bottom:62%;width:9%}
+#room-decor [data-furnishing=chest]{right:4%;bottom:16%;width:27%}
+#home.night #room-decor{display:none}
+#shop-open{position:absolute;z-index:3;top:9px;right:12px;padding:0 14px;min-height:44px;border-radius:13px;background:#fcf2db;color:#423222;font-weight:700}
+#cottage-shop{width:min(94vw,410px);max-height:86dvh;overflow:auto;margin:auto;padding:20px;background:#f8f0df;color:#3e3429}
+#cottage-shop h2{font:600 26px/1.2 Georgia,serif}
+.shop-tools,.shop-tools [role=group]{display:flex;align-items:center;gap:5px}
+.shop-tools{justify-content:space-between;margin:13px 0;color:#584d3c;font-size:13px}
+.shop-tools button,#shop-cancel{min-height:44px;padding:0 9px;border-radius:8px;font-weight:600;color:#493e32;background:transparent}
+.shop-tools [aria-pressed=true]{color:white;background:#405a44}
+.shop-item{display:grid;grid-template-columns:75px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:12px 0;border-top:1px solid #cfbea5;background:transparent;text-align:left;color:inherit}
+.shop-item img{width:75px;height:66px;object-fit:contain}
+.shop-item strong,.shop-item small{display:block}
+.shop-item small{color:#675a49;margin-bottom:4px}.shop-item>span:last-child{font-size:13px;font-weight:650}
+#shop-preview{z-index:7}#shop-preview>div{display:flex;gap:8px;align-items:center}
+#need-bars meter{--fill:#efac60;width:100%;height:6px;appearance:none;border:0;border-radius:4px;background:#64574e}
+#need-bars [data-need=clean]{--fill:#8fcfd8}
+#need-bars [data-need=energy]{--fill:#c1afd9}
+#need-bars [data-need=joy]{--fill:#a9cd8e}
+#need-bars meter::-webkit-meter-bar{height:6px;border:0;border-radius:4px;background:#64574e}
+#need-bars meter::-webkit-meter-optimum-value{border-radius:4px;background:var(--fill)}
+#need-bars meter::-moz-meter-bar{border-radius:4px;background:var(--fill)}
+#pet-figure.refuse{animation:refuse .48s ease-in-out}
+@keyframes refuse{0%,100%{transform:none}25%,70%{transform:skewX(-3deg) rotate(-1deg)}48%{transform:skewX(3deg) rotate(1deg)}}
+@media(prefers-reduced-motion:reduce){#pet-figure.refuse{animation:none}}
 .offline-guide .p-link,#retry-schedule{min-height:44px;display:inline-flex;align-items:center;margin-right:8px}
 #schedule-status:not(:empty){margin:12px 0;font-size:15px;color:var(--ink)}
 [hidden]#save-guide,[hidden]#retry-schedule,[hidden]#feeding-actions{display:none}
+
+#room-decor [data-furnishing=settee],#room-decor [data-furnishing=bath]{filter:none}
+#room-decor [data-furnishing=settee]{left:0;top:38%;width:45.2%;height:20.3%}
+#room-decor [data-furnishing=bath]{right:0;top:30.3%;width:38.3%;height:26.7%}
+.tiles.six-pairs{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.six-pairs .tile{aspect-ratio:.83}
+
+#home.night.furnished-bed{--scene:url("assets/sleep-settee.webp")}
+.bath-scene.furnished-bath{background-image:url("assets/wash-bath.webp")}
+.bath-scene.furnished-bath.clean{background-image:url("assets/clean-bath.webp")}

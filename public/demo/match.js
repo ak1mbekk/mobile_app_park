@@ -4,7 +4,7 @@
   const names = ['Малина','Груша','Яблоко','Орех','Слива'];
   const width=6, target=9;
   let cells=[], selected=-1, moves=12, berries=0, resolving=false, finished=false, pointer=null;
-  let roundId=0;
+  let roundId=0,bonus=0;
   const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   const randomPiece=()=>Math.floor(Math.random()*names.length);
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -29,25 +29,32 @@
       {duration:130,easing:'ease-in-out'}
     ).finished));
   }
-  function matches(board){
-    const out=new Set();
-    for(let i=0;i<board.length;i++){
-      for(const step of [1,width]){
-        if(step===1 && i%width>width-3)continue;
-        if(i+step*2>=board.length)continue;
-        if(board[i]===board[i+step]&&board[i]===board[i+step*2]){
-          out.add(i);out.add(i+step);out.add(i+step*2);
+  function findLines(state){
+    const removed=new Set(),lengths=[];
+    for(const vertical of [false,true]){
+      const step=vertical?width:1;
+      for(let lane=0;lane<width;lane++){
+        const start=vertical?lane:lane*width;
+        for(let offset=0;offset<width;){
+          const first=start+offset*step;
+          let end=offset+1;
+          while(end<width && state[start+end*step]===state[first])end++;
+          if(end-offset>=3){
+            lengths.push(end-offset);
+            for(let n=offset;n<end;n++)removed.add(start+n*step);
+          }
+          offset=end;
         }
       }
     }
-    return out;
+    return {removed,lengths};
   }
   function swap(board,a,b){[board[a],board[b]]=[board[b],board[a]];}
   function hasMove(board){
     for(let i=0;i<board.length;i++){
       for(const j of [i+1,i+width]){
         if(j>=board.length||(j===i+1&&j%width===0))continue;
-        swap(board,i,j);const valid=matches(board).size>0;swap(board,i,j);if(valid)return true;
+        swap(board,i,j);const valid=findLines(board).removed.size>0;swap(board,i,j);if(valid)return true;
       }
     }
     return false;
@@ -78,12 +85,15 @@
   function start(){
     const prior=window.petDemo.stats().match?.id;
     roundId=Number.isSafeInteger(prior)&&prior>0?prior+1:1;
-    cells=fillPlayable();selected=-1;moves=12;berries=0;finished=false;resolving=false;
-    window.petDemo.storeGame('match',{id:roundId,cells:cells.slice(),moves,berries,finished,won:false});
+    cells=fillPlayable();selected=-1;moves=12;berries=0;bonus=0;finished=false;resolving=false;
+    window.petDemo.storeGame('match',{id:roundId,cells:cells.slice(),moves,berries,bonus,finished,won:false});
     hint.textContent='Поменяй соседние плоды местами.';paint();
   }
   function outcome(){
-    if(berries>=target)return 'Корзинка полна! +10 опыта и 5 листьев.';
+    if(berries>=target){
+      const reward=window.petDemo.stats().match?.reward;
+      return reward?'Корзинка полна! Листья +'+reward.leaves+' · Опыт +'+reward.xp:'Корзинка полна!';
+    }
     if(moves===0)return 'Ходы закончились. Попробуешь ещё?';
     return 'Поменяй соседние плоды местами.';
   }
@@ -93,12 +103,13 @@
        !Array.isArray(game.cells) || game.cells.length!==36 ||
        !game.cells.every(n=>Number.isInteger(n)&&n>=0&&n<names.length) ||
        !Number.isInteger(game.moves)||game.moves<0||game.moves>12 ||
-       !Number.isSafeInteger(game.berries)||game.berries<0 || matches(game.cells).size ||
+       !Number.isSafeInteger(game.berries)||game.berries<0 || findLines(game.cells).removed.size ||
        game.finished!==(game.berries>=target||game.moves===0) ||
        (!game.finished&&!hasMove(game.cells))){
       start();return;
     }
     roundId=game.id;cells=game.cells.slice();moves=game.moves;berries=game.berries;
+    bonus=Math.max(0,Math.min(5,Number(game.bonus)||0));
     finished=game.finished;hint.textContent=outcome();paint();
   }
   function dropPieces(next,removed){
@@ -126,8 +137,8 @@
     if(distance!==1){selected=i;paint();return;}
     const previous=selected;selected=-1;resolving=true;
     const next=cells.slice();swap(next,previous,i);
-    let removed=matches(next);
-    if(!removed.size){
+    let lines=findLines(next);
+    if(!lines.removed.size){
       await animateSwap(previous,i);await awaitBoard();
       swap(cells,previous,i);paint();await animateSwap(previous,i);await awaitBoard();swap(cells,previous,i);
       hint.textContent='Нужна линия хотя бы из трёх плодов.';resolving=false;paint();return;
@@ -135,20 +146,25 @@
     // Resolve once. Reloading during any animation restores exactly this outcome.
     const cascades=[];
     let collected=berries;
-    while(removed.size){
+    while(lines.removed.size){
+      const {removed,lengths}=lines;
+      const longest=Math.max(...lengths);
+      const extra=lengths.reduce((sum,n)=>sum+(n>=5?2:n===4?1:0),cascades.length?1:0);
+      bonus=Math.min(5,bonus+extra);
       const before=next.slice();
       for(const index of removed)if(next[index]===0)collected++;
       const falls=dropPieces(next,removed);
-      cascades.push({before,removed,falls,after:next.slice(),collected});
-      removed=matches(next);
+      cascades.push({before,removed,falls,after:next.slice(),collected,longest});
+      lines=findLines(next);
     }
     const remaining=moves-1,won=collected>=target,ended=won||remaining===0;
     const shuffle=!ended&&!hasMove(next);
     const settled=shuffle?fillPlayable():next;
-    window.petDemo.storeGame('match',{id:roundId,cells:settled.slice(),moves:remaining,berries:collected,finished:ended,won});
+    window.petDemo.storeGame('match',{id:roundId,cells:settled.slice(),moves:remaining,berries:collected,bonus,finished:ended,won});
     await animateSwap(previous,i);await awaitBoard();
     moves=remaining;hint.textContent='Плоды собраны!';
-    for(const cascade of cascades){
+    for(const [i,cascade] of cascades.entries()){
+      hint.textContent=(i>0?'Каскад ×'+(i+1)+' · ':'')+'В ряд '+cascade.longest;
       cells=cascade.before;paint();
       for(const index of cascade.removed)board.children[index].classList.add('pop');
       await delay(reduced.matches?0:210);await awaitBoard();
@@ -162,7 +178,7 @@
       await awaitBoard();
     }
     cells=settled;finished=ended;resolving=false;
-    hint.textContent=shuffle?'Поле перемешано. Новый ход готов.':outcome();paint();
+    hint.textContent=shuffle?'Поле перемешано. Новый ход готов.':(!ended && bonus?'Бонус за комбинации: '+bonus:outcome());paint();
   }
   board.addEventListener('pointerdown',e=>{
     const b=e.target.closest('[data-cell]');if(!b||resolving||finished)return;

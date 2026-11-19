@@ -19,6 +19,20 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
       await page.evaluate(screen=>history.replaceState(null,'','#'+screen),screen);await page.reload();
       await page.locator('#'+screen+'.current').waitFor();
     }
+    const oldPairs={
+      cards:['lemur','lemur','raccoon','raccoon','bison','bison'],
+      paired:['lemur','raccoon'],opened:[],moves:3,winShown:false
+    };
+    await loadRound('pairs',oldPairs,'game');
+    assert.equal(await page.locator('#aki-board .tile').count(),6);
+    await page.locator('#aki-board [data-index="4"]').click();
+    await page.locator('#aki-board [data-index="5"]').click();
+    await page.locator('#win.current').waitFor();
+    assert.equal((await stats()).leaves,7);
+    await page.locator('#aki-replay').click();
+    await page.locator('#game.current').waitFor();
+    assert.equal(await page.locator('#aki-board .tile').count(),12);
+    assert.equal(await page.locator('#aki-board .face').count(),0);
     const round={id:8,cells,moves:1,berries:4,finished:false,won:false};
     await loadRound('match',round,'match');
     const board=page.locator('#matchBoard');
@@ -34,25 +48,42 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
     assert.equal(settled.moves,0);assert.equal(settled.won,true);
     await page.reload();await page.locator('#matchAgain').waitFor();
     assert.deepEqual((await stats()).match,settled);
-    assert.equal((await stats()).leaves,7);assert.equal((await stats()).xp,50);
+    assert.equal((await stats()).leaves,7+settled.bonus);assert.equal((await stats()).xp,50);
     assert.deepEqual(await board.locator('img').evaluateAll(imgs=>imgs.map(im=>
       Number(im.src.match(/piece-(\d+)\.webp$/)[1]))),settled.cells);
     await page.locator('#matchAgain').click();
     assert.equal((await stats()).match.id,9);assert.equal((await stats()).match.moves,12);
-    assert.equal((await stats()).leaves,7);
-    for(const won of [false,true]){
-      await loadRound('orchard',{id:3,attempt:7,caught:4,position:won?.5:.09,spot:.5,fall:.93,finished:false,won:false},'catch');
-      await page.getByText(won?'Полная корзинка!':'Яблоки закончились',{exact:true}).waitFor();
-      const result=(await stats()).orchard;
-      assert.equal(result.attempt,8);assert.equal(result.caught,won?5:4);assert.equal(result.won,won);
-      await page.reload();await page.getByRole('button',{name:'Ещё раз',exact:true}).waitFor();
-      assert.deepEqual((await stats()).orchard,result);
-      assert.equal((await stats()).leaves,won?7:2);
-      await page.locator('#catchStart').click();await page.locator('[data-tab="park"]').click();
-      await page.locator('#park.current').waitFor();
-      const paused=(await stats()).orchard;
-      await page.waitForTimeout(400);
-      assert.deepEqual((await stats()).orchard,paused);
+    assert.equal((await stats()).leaves,7+settled.bonus);
+    const lines=[
+      {field:'020043303241412104244120023402324143',swap:1,rolls:[3,4,2,0],bonus:1},
+      {field:'002002320042240204003202300120121403',swap:2,rolls:[2,0,2,1,4],bonus:2},
+      {field:'020403101023134041013213101443110011',swap:1,rolls:[1,1,2,2,1,4],bonus:1},
+    ];
+    for(const example of lines){
+      const field=Array.from(example.field,Number);
+      await loadRound('match',{id:11,cells:field,moves:1,berries:8,bonus:0,finished:false,won:false},'match');
+      await page.evaluate(({swap,rolls})=>{
+        const random=Math.random;
+        Math.random=()=>rolls.length?(rolls.shift()+.1)/5:random();
+        for(const i of [swap,swap+6])document.querySelector('#matchBoard [data-cell="'+i+'"]').click();
+        Math.random=random;
+      },example);
+      const game=(await stats()).match;
+      assert.equal(game.finished,true);assert.equal(game.bonus,example.bonus);
+      assert.equal(game.reward.leaves,5+example.bonus);
+    }
+    for(const [kind,grabbed,expectedErrors] of [['apple',false,3],['cone',true,3],['apple',true,2],['cone',false,2]]){
+      await loadRound('orchard',{id:3,attempt:7,caught:6,errors:2,kind,position:grabbed?.5:.09,spot:.5,fall:.97,finished:false,won:false},'catch');
+      await page.waitForFunction(()=>window.petDemo.stats().orchard.attempt>=8);
+      const state=(await stats()).orchard;
+      assert.equal(state.errors,expectedErrors);assert.equal(state.caught,kind==='apple'&&grabbed?7:6);
+      if(state.finished){
+        await page.getByText('Урожай собран',{exact:true}).waitFor();
+        assert.equal(state.reward.leaves,2);await page.reload();assert.equal((await stats()).leaves,4);
+        await page.locator('#catchStart').click();
+      }
+      await page.locator('[data-tab="park"]').click();await page.locator('#park.current').waitFor();
+      const paused=(await stats()).orchard;await page.waitForTimeout(400);assert.deepEqual((await stats()).orchard,paused);
     }
     assert.deepEqual(errors,[]);
     console.log('PASS interrupted matching move, shared-cell win, round replay, last catch/miss, saved reward and park pause');

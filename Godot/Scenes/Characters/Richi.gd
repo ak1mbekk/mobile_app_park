@@ -20,6 +20,10 @@ func _ready() -> void:
     else:
         player.animation_finished.connect(_on_finished)
 
+func wear_hat(style: String) -> void:
+    for hat: Node3D in skeleton.get_node("Headwear/Seat").get_children():
+        hat.visible = String(hat.name) == style
+
 func apple_grip() -> Vector3:
     var left := skeleton.get_bone_global_pose(left_palm).origin
     var right := skeleton.get_bone_global_pose(right_palm).origin

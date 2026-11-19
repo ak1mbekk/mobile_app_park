@@ -10,6 +10,8 @@
       yandex:'https://yandex.by/maps/org/lesnyye_tayny/55770037829/'}
   };
   const places = [
+    {zone:1,id:'entrance',name:'Вход в Казачны мір',x:57,y:563,service:'Вход'},
+    {zone:1,id:'souvenirs',name:'Сувениры у входа',x:107,y:546,service:'Сувениры'},
     {zone:1,id:'36',badge:'36',name:'Капибара',x:544,y:212,plan:[402,194],species:['kapibara']},
     {zone:1,id:'54',badge:'54',name:'Енот-полоскун',x:87,y:74,species:['enot-poloskun']},
     {zone:1,id:'62',badge:'62',name:'Носуха',x:46,y:246,species:['nosuxa']},
@@ -68,7 +70,7 @@
     {zone:1,id:'osm-9946443995',name:'Туалет в западной части зоны',geo:[26.0095583,53.0974340]},
     {zone:2,id:'osm-9868296562',name:'Туалет в южной части зоны',geo:[26.0213501,53.0904689]},
     {zone:2,id:'osm-10971056120',name:'Туалет в северной части зоны',geo:[26.0214259,53.0927221]}
-  ].map(p=>({...p,badge:'WC',service:true}));
+  ].map(p=>({...p,badge:'WC',service:'Туалеты'}));
   // Printed enclosure numbers on enclosures.png, names from the Russian legend
   // of visitor-2025-11-12.jpg. No visitor-poster pixels enter the projection.
   const numberedEnclosures=[
@@ -122,5 +124,41 @@
   ].map(p=>({...p,badge:p.id}));
   const compareIds=new Intl.Collator('ru',{numeric:true});
   const byZoneAndNumber=(a,b)=>a.zone-b.zone || Number(!!a.service)-Number(!!b.service) || compareIds.compare(a.id,b.id);
-  window.parkGuide={zones,places:[...places,...numberedEnclosures].sort(byZoneAndNumber),geoFacilities};
+  // Marker portraits are verified, face-first crops of the same catalogue photos.
+  // Other species keep using their catalogue thumbnail; missing photos keep the paw fallback.
+  const markerPortraits={
+    'enot-poloskun':'assets/avatar-raccoon.webp',
+    'zubr':'assets/avatar-bison.webp'
+  };
+  // Each facility has its own silhouette. Enclosures share one rim in both map views.
+  const serviceGlyphs={
+    'Вход':'M4 20V4h12v3 M4 20h12v-3 M11 12h10m-4-4 4 4-4 4',
+    'Сувениры':'M3 9h18v4H3z M5 13v8h14v-8 M12 9v12 M12 9C3 9 5 1 9 4l3 5c6-11 12-1 0 0z',
+    'Туалеты':'M5 4h3 M6.5 8v7m-2-6v4m4-4v4m-3 1v6m2-6v6 M16 4h2 M17 8l-3 7h6l-3-7zm-1 8v4m2-4v4',
+    'Кафе':'M3 9h13v5a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6z M16 10h2a3 3 0 0 1 0 6h-2 M6 3v3m4-4v3m4-2v3',
+    'Корм для животных':'M5 10h14l-2 11H7z M9 10C7 6 7 4 5 3c5-1 9 3 7 7m1-1c0-5 3-7 7-7 0 4-2 7-7 7z',
+    'Парковка':'M7 21V3h6a5 5 0 0 1 0 10H7',
+    'Места отдыха':'M4 6h16v5H4z M3 15h18 M6 15v5m12-5v5m-12-9v4m12-4v4',
+    'Где вымыть руки':'M3 14h17c0 4-3 6-8 6s-8-2-9-6z M8 11V6a3 3 0 0 1 6 0v2m-2 0h5'
+  };
+  function markerFace(point){
+    const badge=document.createElement('span');
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
+    if(point.service && serviceGlyphs[point.service]){
+      const path=document.createElementNS(svg.namespaceURI,'path');
+      path.setAttribute('d',serviceGlyphs[point.service]);svg.append(path);
+    }else{
+      const use=document.createElementNS(svg.namespaceURI,'use');
+      use.setAttribute('href','#aki-paw');svg.append(use);
+    }
+    badge.append(svg);
+    const src=point.species?.map(slug=>markerPortraits[slug]||window.parkGuide.speciesPhoto?.(slug)).find(Boolean);
+    if(src){
+      const portrait=new Image();portrait.alt='';portrait.decoding='async';
+      portrait.onload=()=>badge.replaceChildren(portrait);portrait.src=src;
+    }
+    return badge;
+  }
+  window.parkGuide={zones,markerFace,places:[...places,...numberedEnclosures].sort(byZoneAndNumber),geoFacilities};
 })();

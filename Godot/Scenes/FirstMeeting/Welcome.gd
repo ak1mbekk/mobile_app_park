@@ -30,6 +30,9 @@ func _ready() -> void:
     get_viewport().size_changed.connect(_layout)
     _layout()
     if _has_web_host():
+        var worn = JavaScriptBridge.eval("new URLSearchParams(location.search).get('hat')")
+        if worn is String:
+            aki.wear_hat(worn)
         web_pause_callback = JavaScriptBridge.create_callback(_sync_pause)
         JavaScriptBridge.get_interface("window").setParkScenePaused = web_pause_callback
         _notify_host("scene-ready")
