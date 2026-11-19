@@ -9,8 +9,11 @@
     return node;
   }
   const feed=parkAction('Кормления','Время и вольеры','feed');
-  const tours=id('visitor').querySelector('a[href*="gid-tur"]').cloneNode(true);
-  const directions=tours.cloneNode(true);
+  const tours=parkAction('Экскурсии','Предварительная запись','tours');
+  const directions=tickets.cloneNode(true);
+  feed.querySelector('.p-row-art svg').innerHTML='<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>';
+  directions.querySelector('.p-row-art svg').innerHTML='<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/>';
+  tours.querySelector('.p-row-art svg').innerHTML='<path d="M5 21V4c5-4 9 4 14 0v9c-5 4-9-4-14 0"/>';
   // The destination is the map point published by the park on its contacts page.
   directions.href='https://yandex.by/maps/?rtext=~53.093566,26.015863&rtt=auto';
   directions.querySelector('strong').textContent='Как доехать';
@@ -23,33 +26,6 @@
   }
   let inside=false;try{inside=localStorage.getItem('park-visit-mode')==='inside';}catch{}
   mode(inside);id('beforeVisit').onclick=()=>mode(false);id('duringVisit').onclick=()=>mode(true);
-  const visitDate=id('visit-date');
-  const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Minsk',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  visitDate.min=today;
-  let chosen;
-  try{chosen=localStorage.getItem('park-visit-date');}catch{}
-  visitDate.value=chosen>=today?chosen:today;
-  visitDate.onchange=()=>{
-    id('add-reminder').disabled=!visitDate.value||!visitDate.validity.valid;
-    id('calendar-hint').textContent='';
-    if(visitDate.validity.valid)try{localStorage.setItem('park-visit-date',visitDate.value);}catch{}
-  };
-  id('add-reminder').onclick=()=>{
-    if(!visitDate.value||!visitDate.reportValidity())return;
-    const compact=date=>date.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
-    const start=new Date(visitDate.value+'T15:50:00+03:00');
-    const end=new Date(visitDate.value+'T16:00:00+03:00');
-    const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Animal Park//Visitor//RU',
-      'BEGIN:VEVENT','UID:kapibara-'+visitDate.value+'@animal-park.by','DTSTAMP:'+compact(new Date()),
-      'DTSTART:'+compact(start),'DTEND:'+compact(end),'SUMMARY:Кормление капибар',
-      'LOCATION:Казачны мір · Вольер 36','BEGIN:VALARM','TRIGGER:-PT30M','ACTION:DISPLAY',
-      'DESCRIPTION:Кормление через 30 минут','END:VALARM','END:VEVENT','END:VCALENDAR'];
-    const link=document.createElement('a');
-    const url=URL.createObjectURL(new Blob([lines.join('\r\n')+'\r\n'],{type:'text/calendar;charset=utf-8'}));
-    link.href=url;link.download='kapibara-'+visitDate.value+'.ics';document.body.append(link);link.click();link.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),60000);
-    id('calendar-hint').textContent='Откройте файл в календаре телефона и сохраните событие.';
-  };
   const soap=id('soap-area'),foam=soap.querySelector('.foam');
   let clean=0,washed=false,stroke=null;
   function scrub(amount){

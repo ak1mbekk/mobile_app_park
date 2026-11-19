@@ -95,6 +95,7 @@
     "category": "Млекопитающие",
     "url": "https://animal-park.by/galereya/severnyij-olen.html",
     "slug": "severnyij-olen",
+    "description": "У северного оленя рога вырастают и у самцов, и у самок. Зимняя шерсть длиннее летней, а волоски с воздухом внутри помогают удерживать тепло.",
     "photo": "https://animal-park.by/gallery/olen.webp",
     "thumbnail": "assets/species/severnyij-olen.webp"
   },
@@ -659,6 +660,7 @@
     "category": "Млекопитающие",
     "url": "https://animal-park.by/galereya/surikatyi.html",
     "slug": "surikatyi",
+    "description": "Сурикаты разыскивают в земле насекомых и других беспозвоночных. Первые недели детёныши проводят в норе и примерно в три недели начинают выходить наружу.",
     "photo": "https://animal-park.by/gallery/surikatyi.jpg",
     "thumbnail": "assets/species/surikatyi.webp"
   },
@@ -813,6 +815,7 @@
     "category": "Млекопитающие",
     "url": "https://animal-park.by/galereya/enot-poloskun.html",
     "slug": "enot-poloskun",
+    "description": "Посмотрите на передние лапы енота. Пять подвижных пальцев оставляют след, похожий на маленькую ладонь. На хвосте можно насчитать от пяти до десяти тёмных колец.",
     "photo": "https://animal-park.by/gallery/enot-poloskun.jpg",
     "thumbnail": "assets/raccoon.webp"
   },
@@ -868,6 +871,7 @@
     "category": "Млекопитающие",
     "url": "https://animal-park.by/galereya/hijlend.html",
     "slug": "hijlend",
+    "description": "У хайленда два слоя шерсти. Плотный подшёрсток сохраняет тепло, а длинный наружный волос защищает от дождя. Узнать эту породу легко по чёлке над глазами.",
     "photo": "https://animal-park.by/gallery/hilend.webp",
     "thumbnail": "assets/species/hijlend.webp",
     "scientific": "Bos taurus"
@@ -941,6 +945,7 @@
     "category": "Парнокопытные",
     "url": "https://animal-park.by/galereya/olen-blagorodnyij.html",
     "slug": "olen-blagorodnyij",
+    "description": "Осенью у благородных оленей начинается гон. В это время самцы подают голос низким рёвом.",
     "photo": "https://animal-park.by/gallery/olen-blagorodnyij.jpg",
     "thumbnail": "assets/species/olen-blagorodnyij.webp"
   },
@@ -977,6 +982,7 @@
     "category": "Парнокопытные",
     "url": "https://animal-park.by/galereya/muflon.html",
     "slug": "muflon",
+    "description": "У взрослого самца муфлона заметны крупные изогнутые рога. Самки обычно мельче самцов.",
     "photo": "https://animal-park.by/gallery/muflon.jpg",
     "thumbnail": "assets/species/muflon.webp"
   },
@@ -995,6 +1001,7 @@
     "category": "Парнокопытные",
     "url": "https://animal-park.by/galereya/los.html",
     "slug": "los",
+    "description": "У лося длинные ноги. Чтобы дотянуться до воды, он глубже заходит в водоём или опускается на передние ноги.",
     "photo": "https://animal-park.by/gallery/los.jpg",
     "thumbnail": "assets/species/los.webp"
   },
@@ -1031,6 +1038,7 @@
     "category": "Парнокопытные",
     "url": "https://animal-park.by/galereya/zubr.html",
     "slug": "zubr",
+    "description": "У зубра высокая холка и тяжёлые плечи. Его короткие тёмные рога расходятся в стороны, а кончики загибаются вверх.",
     "photo": "https://animal-park.by/gallery/zubr.jpg",
     "thumbnail": "assets/bison.webp"
   },

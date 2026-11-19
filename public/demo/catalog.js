@@ -26,7 +26,14 @@
     document.getElementById('species-name').textContent = entry?.name || 'Карточка недоступна';
     document.getElementById('species-group').textContent = entry?.category || '';
     document.getElementById('species-latin').textContent = entry?.scientific || '';
+    const description=document.getElementById('species-description');
+    description.textContent=entry?.description || '';
+    description.hidden=!entry?.description;
     document.getElementById('species-source').href = entry?.url || 'https://animal-park.by/galereya/';
+    const mapLink=document.getElementById('species-place');
+    const place=window.parkGuide.places.find(p=>p.species?.includes(entry?.slug));
+    mapLink.hidden=!place;
+    if(place)mapLink.dataset.go='zone'+place.zone+'/'+place.id;
     photo.hidden = !entry?.thumbnail;
     if(entry?.thumbnail) photo.querySelector('img').src = entry.thumbnail;
   }
@@ -35,7 +42,7 @@
     button.type='button';button.className='animalcard';
     button.dataset.scientific=entry.scientific||'';
     if(entry.slug==='kapibara') button.dataset.go='animal';
-    else button.onclick=()=>{location.hash='species/'+entry.slug;};
+    else button.dataset.go='species/'+entry.slug;
     if(entry.thumbnail){
       const photo=document.createElement('img');photo.loading='lazy';photo.alt='';photo.src=entry.thumbnail;
       button.append(photo);
