@@ -2,9 +2,15 @@
 
 [ext_resource type="PackedScene" path="res://Art/Characters/Richi.glb" id="Rig"]
 [ext_resource type="Script" path="res://Scenes/Characters/Richi.gd" id="Behaviour"]
+[ext_resource type="Script" path="res://Scenes/Characters/Gaze.gd" id="Gaze"]
 
 [node name="Аки" type="Node3D"]
 script = ExtResource("Behaviour")
 
 [node name="Модель" parent="." instance=ExtResource("Rig")]
 scale = Vector3(0.36, 0.36, 0.36)
+
+[node name="Взгляд" type="SkeletonModifier3D" parent="Модель/SmartRigArmature/Skeleton3D" node_paths=PackedStringArray("skeleton", "actor_mesh")]
+script = ExtResource("Gaze")
+skeleton = NodePath("..")
+actor_mesh = NodePath("../output_unwrapped")

@@ -19,6 +19,10 @@ func _ready() -> void:
         return
     aki.meal_finished.connect(_after_meal)
     apple.picked_up.connect(hint.hide)
+    var gaze = aki.gaze
+    apple.picked_up.connect(gaze.follow_apple.bind(apple))
+    apple.returned_to_floor.connect(gaze.release_apple)
+    apple.accepted.connect(gaze.finish_tracking)
     apple.returned_to_floor.connect(hint.show)
     field.text_changed.connect(_validate)
     field.text_submitted.connect(_confirm_name)
@@ -34,6 +38,7 @@ func _ready() -> void:
     if save.load(save_path) == OK:
         var stage = save.get_value("meeting", "stage", "")
         if stage in ["name", "complete"]:
+            gaze.finish_tracking()
             apple.restore_eaten()
             aki.rest_after_meal()
             hint.hide()

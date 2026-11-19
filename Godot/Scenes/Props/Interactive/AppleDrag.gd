@@ -2,6 +2,7 @@ extends MeshInstance3D
 
 signal picked_up
 signal returned_to_floor
+signal accepted
 
 @export var first_bite: ArrayMesh
 @export var second_bite: ArrayMesh
@@ -53,6 +54,8 @@ func palm_center() -> Vector3:
 
 func try_grab(screen: Vector2, id: int) -> void:
     if pointer != NO_POINTER or settling:
+        return
+    if raccoon.gaze.finger >= 0 and id != raccoon.gaze.finger:
         return
     var cam := get_viewport().get_camera_3d()
     if cam == null:
@@ -117,13 +120,14 @@ func _process(delta: float) -> void:
     if settle_time >= 1.0:
         settling = false
         if delivered:
+            accepted.emit()
             raccoon.accept_apple()
         else:
             returned_to_floor.emit()
         set_process(delivered)
 
 func _notification(what: int) -> void:
-    if what == NOTIFICATION_APPLICATION_FOCUS_OUT and pointer != NO_POINTER:
+    if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_PAUSED] and pointer != NO_POINTER:
         release(false)
 
 func restore_eaten() -> void:

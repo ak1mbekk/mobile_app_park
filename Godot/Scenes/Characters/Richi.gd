@@ -9,6 +9,7 @@ const EAT := &"Eat_Apple"
 @onready var skeleton: Skeleton3D = $"Модель/SmartRigArmature/Skeleton3D"
 @onready var left_palm := skeleton.find_bone("mixamorig_LeftHandMiddle1")
 @onready var right_palm := skeleton.find_bone("mixamorig_RightHandMiddle1")
+@onready var gaze = skeleton.get_node("Взгляд")
 var eating_finished := false
 
 func _ready() -> void:
