@@ -4,7 +4,6 @@
   const list=document.getElementById('feeding-list'),actions=document.getElementById('feeding-actions');
   const date=document.getElementById('visit-date'),hint=document.getElementById('calendar-hint');
   const remind=document.getElementById('add-reminder');
-  const minskTime=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Minsk',hour:'2-digit',minute:'2-digit'});
   const next=document.createElement('p');
   next.className='feeding-summary';next.setAttribute('role','status');list.before(next);
   const status=document.getElementById('schedule-status'),retry=document.getElementById('retry-schedule');
@@ -12,17 +11,13 @@
   date.min=schedule.today();date.value=schedule.visitDate();
   function eventRoute(id){return 'feed/'+(id||'all')+'/'+date.value;}
   function showNext(){
-    const now=new Date();
     date.min=schedule.today();
     next.replaceChildren();
     if(!date.value||!date.validity.valid||!events.some(e=>e.status!=='cancelled'))return;
-    const from=date.value===date.min?minskTime.format(now):'00:00';
-    const published=events.filter(e=>e.status!=='cancelled');
-    const active=published.filter(event=>event.start<=from && event.end>from);
-    const upcoming=active[0]||published.find(event=>event.start>=from);
+    const {events:simultaneous,active}=schedule.nextFor(date.value);
+    const upcoming=simultaneous[0];
     if(!upcoming){next.textContent='На сегодня все опубликованные кормления уже начались.';return;}
-    const simultaneous=active.length?active:published.filter(event=>event.start===upcoming.start);
-    next.append(active.length?'Сейчас по программе · ':date.value===date.min?'Ближайшее по программе · ':'Начало программы · ');
+    next.append(active?'Сейчас по программе · ':date.value===date.min?'Ближайшее по программе · ':'Начало программы · ');
     const jump=document.createElement('button');jump.className='p-link';
     jump.textContent=upcoming.start+' · '+upcoming.name+(simultaneous.length>1?' и ещё '+(simultaneous.length-1):'');
     jump.onclick=()=>{window.conceptReplace(eventRoute(upcoming.id));list.querySelector('[data-event="'+upcoming.id+'"]')?.focus();};

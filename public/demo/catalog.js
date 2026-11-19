@@ -6,6 +6,7 @@
   const normalize = text => text.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[^а-яa-z0-9]+/g,' ').trim();
   const bySlug = new Map();
   window.parkGuide.speciesName=slug=>bySlug.get(slug)?.name;
+  window.parkGuide.speciesPhoto=slug=>bySlug.get(slug)?.thumbnail;
   let entries = [];
 
   function indexCards() {

@@ -115,6 +115,45 @@ async function cartography(browser){
     }
   } finally {await p.close();}
 }
+async function feature(browser) {
+  const p=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  try {
+    await p.clock.setFixedTime(new Date('2026-11-19T16:22:00+03:00'));
+    const fixture=structuredClone(sample);
+    fixture.byDate['2026-11-19']=[sample.daily.find(e=>e.id==='raccoons')];
+    await p.route('**/feeding-programme.json',r=>r.fulfill({json:fixture}));
+    await p.goto(root+'#park');
+    const card=p.locator('#park .park-feature');
+    await card.click();
+    assert.equal(new URL(p.url()).hash,'#species/enot-poloskun');
+    await p.locator('#species .p-back').click();
+    await p.locator('#duringVisit').click();
+    await p.waitForFunction(()=>document.querySelector('.park-feature')?.hash==='#feed/raccoons/2026-11-19');
+    await card.locator('img').evaluate(i=>i.decode());
+    assert.match(await card.innerText(),/Кормление по расписанию с 16:20/);
+    await card.click();
+    await p.locator('#feed .selected [data-event="raccoons"]').waitFor();
+    await p.locator('#feeding-actions [data-go]').click();
+    await p.locator('#zone1 .place-info [data-go="species/enot-poloskun"]').waitFor();
+    fixture.byDate['2026-11-19'][0]={...fixture.byDate['2026-11-19'][0],status:'cancelled'};
+    await p.goto(root+'#park'); await p.reload();
+    await p.waitForFunction(()=>window.parkSchedule.state==='ready');
+    assert.equal(await card.getAttribute('href'),'#zone2/11');
+    await card.click();
+    await p.locator('#zone2 .place-info [data-go="species/zubr"]').waitFor();
+    await p.locator('#zone2 .p-back').click();
+    await p.locator('#park.current').waitFor();
+    fixture.byDate['2026-11-19']=[];
+    await p.reload();await p.waitForFunction(()=>window.parkSchedule.state==='ready');
+    assert.equal(await card.getAttribute('href'),'#zone2/11');
+    fixture.byDate['2026-11-19']=[{...sample.daily.find(e=>e.id==='exotic'),start:'17:30',end:'17:45'}];
+    await p.reload();
+    await p.waitForFunction(()=>document.querySelector('.park-feature')?.hash==='#feed/exotic/2026-11-19');
+    assert.match(await card.getAttribute('aria-label'),/Кормление по расписанию в 17:30/);
+    assert.equal(await card.locator('img').count(),0);
+    assert.equal(await card.locator('time').innerText(),'17:30');
+  } finally { await p.close(); }
+}
 async function availability(browser){
   const context=await browser.newContext();
   const p=await context.newPage();let fixture=null;
@@ -198,7 +237,7 @@ async function calendarShell(browser,appRoot){
 (async()=>{
   if(output)fs.mkdirSync(output,{recursive:true});
   const b=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
-  try{await appearance(b);await cartography(b);await availability(b);await offline(b);
+  try{await appearance(b);await feature(b);await cartography(b);await availability(b);await offline(b);
     if(process.argv[4]){await calendarShell(b,process.argv[4]);console.log('PASS calendar route, dated exception and enclosure return');}
     console.log('PASS visitor themes, 3 widths, zone destinations, matched map layers, programme retries, cancellation, empty day, restored offline guide');}
   finally{await b.close()}

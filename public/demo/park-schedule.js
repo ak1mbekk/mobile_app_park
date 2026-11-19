@@ -1,6 +1,7 @@
 (() => {
   const storageKey = 'visitor-feeding-programme-v1';
   const day = new Intl.DateTimeFormat('sv-SE', {timeZone:'Europe/Minsk', year:'numeric', month:'2-digit', day:'2-digit'});
+  const hours = new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Minsk',hour:'2-digit',minute:'2-digit'});
   const isoDay = /^\d{4}-\d{2}-\d{2}$/;
   const clock = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   let programme, pending, state = 'idle';
@@ -61,14 +62,22 @@
     try {localStorage.setItem('park-visit-date',value);} catch {}
     return true;
   }
+  function forDay(date) {
+    if (!programme || !isoDay.test(date)) return [];
+    return [...(programme.byDate[date] ?? programme.daily)].sort((a,b) => a.start.localeCompare(b.start));
+  }
+  function nextFor(date) {
+    const now = new Date();
+    const time = date === day.format(now) ? hours.format(now) : '00:00';
+    const published = forDay(date).filter(event=>event.status!=='cancelled');
+    const ongoing = published.filter(event=>event.start<=time && event.end>time);
+    if (ongoing.length) return {events:ongoing, active:true};
+    const next = published.find(event=>event.start>=time);
+    return {events:next ? published.filter(event=>event.start===next.start) : [], active:false};
+  }
   window.parkSchedule = {
-    load, visitDate, setVisitDate, today,
+    load, visitDate, setVisitDate, today, forDay, nextFor,
     get state() { return state; },
     get edition() { return programme?.verifiedOn; },
-    forDay(date) {
-      if (!programme || !isoDay.test(date)) return [];
-      // A published dated list replaces the daily programme, including an explicitly empty list.
-      return [...(programme.byDate[date] ?? programme.daily)].sort((a,b) => a.start.localeCompare(b.start));
-    }
   };
 })();

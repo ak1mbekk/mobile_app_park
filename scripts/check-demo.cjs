@@ -54,7 +54,9 @@ async function check(page, url, output) {
   await go('zone2','species/zubr');await visible('species');await click('#species .p-back');await visible('zone2');
   await el('#zone2 select').selectOption('36');assert.match(await el('#zone2 .place-info h2').textContent(),/козы/);
   await click('#zone2 [data-kind=service]');assert.ok(await el('#zone2 .place-info').isHidden());
-  assert.equal(await page.locator('#zone2 select option').count(),3);
+  assert.equal(await page.locator('#zone2 .place-picker option[value]:not([value=""])').count(),22);
+  await el('#zone2 .service-picker select').selectOption('feed');
+  assert.equal(await page.locator('#zone2 .place-picker option[value]:not([value=""])').count(),2);
   await tab('park');await go('park','feed');
   await visible('feed');await el('#feed [data-event]').waitFor();
   assert.equal(await page.locator('#feed [data-event]').count(),7);
