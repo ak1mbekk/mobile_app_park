@@ -73,3 +73,6 @@
 .feeding-summary{margin:8px 0 14px;padding-left:12px;border-left:3px solid #849b79;font:500 14px/1.5 system-ui;color:#4b5c49}
 .feeding-summary .p-link{display:block;min-height:44px;padding:5px 0;color:var(--green);text-align:left}
 .feeding-summary:empty{display:none}
+.offline-guide .p-link,#retry-schedule{min-height:44px;display:inline-flex;align-items:center;margin-right:8px}
+#schedule-status:not(:empty){margin:12px 0;font-size:15px;color:var(--ink)}
+[hidden]#save-guide,[hidden]#retry-schedule,[hidden]#feeding-actions{display:none}

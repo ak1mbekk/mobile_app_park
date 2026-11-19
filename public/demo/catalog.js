@@ -47,6 +47,12 @@
       const photo=document.createElement('img');photo.loading='lazy';photo.alt='';photo.src=entry.thumbnail;
       button.append(photo);
     }
+    const place=window.parkGuide.places.find(p=>!p.detail && p.species?.includes(entry.slug));
+    if(place){
+      const tag=document.createElement('span');tag.className='enclosure-tag';
+      tag.innerHTML='<svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg>';
+      tag.append('№ '+place.badge);tag.setAttribute('aria-label','Вольер № '+place.badge);button.append(tag);
+    }
     const group=document.createElement('small'), name=document.createElement('b');
     group.textContent=entry.category;name.textContent=entry.name;
     button.append(group,name);

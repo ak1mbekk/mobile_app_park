@@ -24,14 +24,5 @@
     {zone:2,id:'wc',badge:'WC',name:'Туалет у вольера № 16',x:647,y:285,service:true},
     {zone:2,id:'parking',badge:'P',name:'Временная парковка',x:440,y:50,service:true}
   ];
-  const events = [
-    {id:'capybara',place:'36',start:'15:50',end:'16:00',name:'Капибары'},
-    {id:'exotic',place:'53',start:'16:00',end:'16:20',name:'Мир экзотических животных'},
-    {id:'raccoons',place:'54',start:'16:20',end:'16:30',name:'Еноты-полоскуны'},
-    {id:'porcupines',place:'50',start:'16:20',name:'Дикообразы'},
-    {id:'meerkats',place:'50',start:'16:20',name:'Сурикаты'},
-    {id:'coatis',place:'62',start:'16:30',end:'16:40',name:'Носухи'},
-    {id:'storks',place:'lake49',start:'16:30',name:'Аисты у озера'}
-  ];
-  window.parkGuide={zones,places,events};
+  window.parkGuide={zones,places};
 })();

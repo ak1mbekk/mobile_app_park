@@ -1,0 +1,104 @@
+/* Source: Animal-Park/zookeeper2v main @ 134532eeea90c9250488f76d25d68d4675e8722b
+   web/src/index.css and web/src/components/AnimalCard.jsx. */
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("vendor/ibm-plex-sans/IBMPlexSans.ttf") format("truetype");
+  font-weight: 100 700;
+  font-display: swap;
+}
+:root {
+  --zk-cream: 246 240 230;
+  --zk-cream-deep: 235 226 210;
+  --zk-ink: 42 33 24;
+  --zk-terracotta: 196 92 38;
+  --zk-terracotta-deep: 154 67 24;
+  --zk-leaf: 61 107 79;
+  --zk-leaf-soft: 92 138 108;
+  --zk-clay: 166 124 82;
+  --zk-stone: 122 110 98;
+  --zk-card: 255 250 242;
+  --zk-line: 217 203 182;
+  --zk-shadow-control: 0 2px 10px rgb(42 33 24 / 0.10);
+  --zk-shadow-panel: 0 12px 30px rgb(42 33 24 / 0.14);
+  --zk-radius-control: 9999px;
+  --zk-radius-panel: 16px;
+  color-scheme: light;
+}
+
+html.dark {
+  --zk-cream: 28 24 20;
+  --zk-cream-deep: 50 43 36;
+  --zk-ink: 243 234 220;
+  --zk-terracotta: 224 122 61;
+  --zk-terracotta-deep: 196 92 38;
+  --zk-leaf: 122 168 138;
+  --zk-leaf-soft: 92 143 114;
+  --zk-clay: 196 162 122;
+  --zk-stone: 179 163 148;
+  --zk-card: 38 33 27;
+  --zk-line: 74 64 54;
+  --zk-shadow-control: 0 2px 12px rgb(0 0 0 / 0.28);
+  --zk-shadow-panel: 0 14px 34px rgb(0 0 0 / 0.34);
+  color-scheme: dark;
+}
+:root { --zk-font: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; --zk-cta-text: white; --zk-cta: rgb(var(--zk-terracotta-deep)); --zk-caption: color-mix(in srgb, rgb(var(--zk-stone)) 85%, rgb(var(--zk-ink))); }
+html.dark { --zk-cta-text: #1c1814; --zk-cta: rgb(var(--zk-terracotta)); --zk-caption: rgb(var(--zk-stone)); }
+.visitor-screen,.tabs,#profileDialog {
+  --paper: rgb(var(--zk-cream)); --ink: rgb(var(--zk-ink)); --green: rgb(var(--zk-leaf));
+  --muted: var(--zk-caption); --line: rgb(var(--zk-line)); --surface: rgb(var(--zk-card));
+  --inset: rgb(var(--zk-cream-deep)); font-family:var(--zk-font); color:var(--ink);
+}
+body:has(.visitor-screen.current) { background:rgb(var(--zk-cream-deep)); }
+.visitor-screen { background:var(--paper); scrollbar-color:rgb(var(--zk-stone) / .45) transparent; }
+.visitor-screen .p-content,.visitor-screen :is(button,input,select,time,strong,small,summary,h1,h2,.place-picker,.visit-date,.feeding-summary,.coupon strong) { font-family:var(--zk-font); }
+.visitor-screen .p-title,.catalog h1,.park-top h1 { font:650 clamp(28px,8vw,34px)/1.14 var(--zk-font); letter-spacing:-.035em; color:var(--ink); }
+.park-top { display:flex;align-items:center;gap:8px;height:auto;padding:18px 20px 4px;background:var(--paper); }
+.park-top h1 { margin-right:auto; }
+.park-top .zk-circle { position:static;width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--ink);box-shadow:var(--zk-shadow-control); }
+#visitor-theme .sun-icon,html.dark #visitor-theme .moon-icon {display:none}
+html.dark #visitor-theme .sun-icon {display:block}
+.visitor-screen .modes { background:var(--inset);border-radius:var(--zk-radius-control);border:1px solid var(--line); }
+.visitor-screen .modes button { border-radius:var(--zk-radius-control); color:var(--muted);font-weight:600; }
+.visitor-screen .modes button[aria-pressed=true] { background:var(--surface);color:var(--ink);box-shadow:var(--zk-shadow-control); }
+#parkMenu .p-menu { gap:8px; }
+#parkMenu .p-row,.visitor-screen .animalcard,.feeding-row,.visitor-info details {
+  border:1px solid var(--line); border-radius:var(--zk-radius-panel); background:var(--surface); color:var(--ink);
+}
+#parkMenu .p-row { padding:10px 12px;min-height:66px; }
+#parkMenu .p-row.priority {border-color:rgb(var(--zk-leaf));}
+.p-row .p-row-art { background:var(--inset);border-color:var(--line);color:var(--green);border-radius:12px; }
+#parkMenu .p-row-copy small {color:var(--muted)}
+#parkMenu .p-row.priority[href*="/tickets/"] {background:var(--zk-cta);color:var(--zk-cta-text);border-color:transparent;}
+#parkMenu .priority[href*="/tickets/"] :is(.p-row-copy small,.p-end) {color:inherit}
+#parkMenu .priority[href*="/tickets/"] .p-row-art {background:rgb(var(--zk-card) / .15);color:inherit;border-color:transparent}
+.visitor-screen :is(.p-end,.p-back,.cat-back,.p-bio,.feeding-choice small,.feeding-summary,#calendar-hint) { color:var(--muted); }
+.visitor-screen .p-content .p-back,.visitor-screen .cat-back { min-height:44px; }
+.visitor-screen :is(.p-lead,.p-bio,.p-footnote p) { color:var(--muted); }
+.visitor-screen .p-footnote,.place-info,.feeding-summary { border-color:var(--line); }
+.visitor-screen .p-primary,.visitor-screen #testBuy { background:var(--zk-cta);color:var(--zk-cta-text);border-radius:12px;font-weight:600; }
+.visitor-screen :is(.p-link,.place-picker,.visit-date,.feeding-choice time) { color:var(--green); }
+.visitor-screen :is(input,select,.search) { background:var(--surface);color:var(--ink);border-color:var(--line); }
+.visitor-screen .search input { background:transparent; }
+.visitor-screen input::placeholder {color:var(--muted)}
+.visitor-screen .zone-card,.visitor-screen :is(.pass,.coupon) {background:var(--surface)!important;color:var(--ink);border:1px solid var(--line)!important;border-radius:16px;}
+.visitor-info details {padding:0 14px;margin:8px 0}
+.visitor-info details>div {padding-bottom:10px}
+.feeding-row.selected {border-color:var(--green)}
+.visitor-screen .map-filters {gap:8px}
+.map-filters button {background:var(--surface);border:1px solid var(--line);border-radius:9999px;color:var(--ink);min-height:44px; }
+.map-filters button[aria-pressed=true] { background:rgb(var(--zk-leaf) / .14);border-color:var(--green);color:var(--green); }
+.park-surface {border-color:var(--line);background:var(--inset)}
+.park-surface .leaflet-control-zoom {overflow:hidden;border:1px solid var(--line);border-radius:16px;box-shadow:var(--zk-shadow-control)}
+.park-surface .leaflet-control-zoom a {background:var(--surface);color:var(--ink);border-color:var(--line);width:44px;height:44px;line-height:44px}
+.visitor-screen .animalcard {position:relative;padding:8px;gap:0}
+.animalcard img {border:1px solid var(--line);border-radius:12px;aspect-ratio:1.05}
+.animalcard small {color:var(--green);font-size:12px;font-weight:600;margin:9px 3px 2px;line-height:1.4}
+.animalcard b {color:var(--ink);font-size:17px;line-height:1.2;letter-spacing:-.02em;margin:0 3px 7px}
+.animalcard .enclosure-tag {position:absolute;top:14px;right:14px;display:flex;align-items:center;gap:3px;padding:3px 7px;font-size:12px;font-weight:500;border:1px solid var(--line);border-radius:999px;background:rgb(var(--zk-card) / .95);box-shadow:var(--zk-shadow-control)}
+.enclosure-tag svg {width:13px;height:13px;color:var(--green)}
+.tabs,#profileDialog {background:var(--surface);border-color:var(--line)}
+.tabs button {color:var(--muted);border-radius:999px}
+.tabs button.sel {background:rgb(var(--zk-leaf) / .14);color:var(--green)}
+#profileDialog header button {background:var(--inset);color:var(--ink)}
+.visitor-screen :is(button,a,input,select,summary):focus-visible,.tabs button:focus-visible {outline:2px solid rgb(var(--zk-terracotta));outline-offset:2px}
+.visitor-screen .map-status {margin-top:12px;font-size:13px;line-height:1.4;color:var(--muted)}

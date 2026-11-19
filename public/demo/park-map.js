@@ -1,5 +1,6 @@
 (() => {
-  const {zones,places,events}=window.parkGuide;
+  const {zones,places}=window.parkGuide;
+  const schedule=window.parkSchedule;
   const mounted=new Map();
   const titleFor = p => p.service || p.detail ? p.name : p.name+' · № '+p.badge;
   const names={'indijskij-dikobraz':'Индийский дикообраз',surikatyi:'Сурикаты'};
@@ -13,7 +14,24 @@
     const local=places.filter(p=>p.zone===zoneNumber);
     const bounds=[[0,0],[zone.height,zone.width]];
     const map=L.map(surface,{crs:L.CRS.Simple,attributionControl:false,zoomControl:false,minZoom:-3,maxZoom:3,zoomSnap:.125,zoomDelta:.5,scrollWheelZoom:false,maxBoundsViscosity:1});
-    L.imageOverlay(zone.image,bounds,{alt:'Посетительская схема зоны '+zoneNumber}).addTo(map);
+    const mapStatus=document.createElement('p');
+    mapStatus.className='map-status';mapStatus.setAttribute('role','status');
+    const retry=document.createElement('button');retry.type='button';retry.className='p-link';
+    retry.textContent='Загрузить схему ещё раз';retry.hidden=true;
+    host.append(mapStatus,retry);
+    let failed=false;
+    function updateStatus(){
+      mapStatus.textContent=failed?'Изображение схемы недоступно. Место можно выбрать из списка.':
+        navigator.onLine?'Схема парка от 12.11.2025.':'Без связи · схема парка от 12.11.2025.';
+      retry.hidden=!failed;
+    }
+    const overlay=L.imageOverlay(zone.image,bounds,{alt:'Посетительская схема зоны '+zoneNumber});
+    overlay.on('error',()=>{failed=true;updateStatus();});
+    overlay.on('load',()=>{failed=false;updateStatus();});
+    retry.onclick=()=>overlay.setUrl(zone.image);
+    window.addEventListener('online',updateStatus);
+    window.addEventListener('offline',updateStatus);
+    updateStatus();overlay.addTo(map);
     map.setMaxBounds(bounds);
     L.control.zoom({position:'bottomright',zoomInTitle:'Увеличить',zoomOutTitle:'Уменьшить'}).addTo(map);
     let kind='all',selected=null;
@@ -38,7 +56,7 @@
         link.dataset.go=slug==='kapibara'?'animal':'species/'+slug;
         info.append(link);
       }
-      for(const event of zoneNumber===1?events.filter(e=>e.place===point.id):[]){
+      for(const event of schedule.forDay(schedule.visitDate()).filter(e=>e.zone===zoneNumber && e.place===point.id && e.status!=='cancelled')){
         const feed=document.createElement('button');feed.className='p-link';
         feed.textContent=event.start+' · '+event.name;feed.dataset.go='feed/'+event.id;info.append(feed);
       }
@@ -71,6 +89,9 @@
     };
     select.onchange=()=>pick(select.value);
     map.fitBounds(bounds,{animate:false});filter('all');
+    document.addEventListener('parkprogrammechange',()=>{
+      if(selected && host.closest('.screen').classList.contains('current'))choose(selected,false);
+    });
     return {
       show(id){
         map.invalidateSize({pan:false});
@@ -85,6 +106,7 @@
     const screen=e.detail;
     mounted.forEach(entry=>entry.hide());
     if(!['map','zone1','zone2'].includes(screen))return;
+    if(schedule.state==='idle')schedule.load();
     const route=location.hash.slice(1).split('/');
     const zone=screen==='zone2'?2:1;
     const key=screen+':'+zone;
