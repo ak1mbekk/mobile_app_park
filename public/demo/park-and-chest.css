@@ -1,0 +1,128 @@
+/* Hallmark redesign · app screens · ZooKeeper palette · photographic visitor guide and toy shelf */
+/* Critique: equal rows hid the primary action; each game now shows what the player handles. */
+:root {
+  --guide-gutter: clamp(16px, 5vw, 24px);
+  --pine: #243e30;
+  --pine-deep: #172a22;
+  --linen: #f9eed7;
+  --linen-muted: #d8cfb9;
+  --leather: #79512e;
+  --wood: #bb8d59;
+  --toy-ink: #3b2d22;
+  --shade: rgb(24 28 19 / .28);
+  --photo-shade: rgb(15 28 20 / .94);
+  --photo-clear: rgb(15 28 20 / 0);
+  --heading-face: Georgia, 'Times New Roman', serif;
+}
+html, body { overflow-x: clip; }
+#park .park-top { padding: 16px var(--guide-gutter) 8px; }
+.park-mast { flex: 1; min-width: 0; }
+#park .park-top h1 { margin: 0; font-size: clamp(24px, 7vw, 31px); overflow-wrap: break-word; }
+.park-mast p { font: 500 14px/1.4 var(--zk-font); color: var(--muted); }
+#park .p-content { padding: 6px var(--guide-gutter) 24px; }
+#park .modes {
+  padding: 0; gap: 24px; margin: 0 0 16px; border: 0; border-bottom: 1px solid var(--line);
+  border-radius: 0; background: transparent;
+}
+#park .modes button {
+  flex: none; position: relative; padding: 0 2px; min-height: 44px; border-radius: 0;
+  font-size: 16px; background: transparent; box-shadow: none;
+}
+#park .modes [aria-pressed="true"]::after {
+  content: ''; position: absolute; inset: auto 0 -1px; height: 3px; background: var(--green);
+}
+#parkMenu .p-menu { gap: 0; }
+#parkMenu .p-row {
+  gap: 12px; min-height: 60px; border: 0; border-bottom: 1px solid var(--line);
+  border-radius: 0; padding: 7px 2px; background: transparent;
+}
+#parkMenu .p-row-art {
+  width: 32px; height: 40px; flex: 0 0 32px; border: 0; background: transparent;
+  border-radius: 4px; color: var(--green);
+}
+#parkMenu .p-row-copy { min-width: 0; }
+#parkMenu .p-row-copy strong { font-weight: 600; font-size: 17px; line-height: 1.3; }
+#parkMenu .p-row-copy small { font-size: 13px; line-height: 1.4; }
+#parkMenu .p-row.priority {
+  display: flex; align-items: flex-end; position: relative; isolation: isolate; overflow: hidden;
+  min-height: clamp(138px, 21dvh, 184px); margin: 0 0 8px; padding: 18px; border: 0;
+  border-radius: 14px; background: var(--pine); color: var(--linen);
+}
+#parkMenu .priority::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, var(--photo-shade), var(--photo-shade) 15%, var(--photo-clear) 92%),
+    url('assets/capybara.webp') right 42% / 77% auto no-repeat;
+}
+#parkMenu .priority[data-go]::before {
+  background: linear-gradient(90deg, var(--photo-shade), var(--photo-shade) 13%, var(--photo-clear) 95%),
+    url('assets/park-zone.webp') right 70% / 84% auto no-repeat;
+}
+#parkMenu .priority .p-row-art { display: none; }
+#parkMenu .priority .p-row-copy { flex: 1; max-width: 65%; margin-right: auto; text-shadow: 0 1px 4px var(--pine-deep); }
+#parkMenu .priority .p-row-copy strong { color: var(--linen); font-size: clamp(25px, 7vw, 31px); }
+#parkMenu .priority .p-row-copy small { color: var(--linen); margin-top: 2px; }
+#parkMenu .priority > svg:last-child {
+  box-sizing: content-box; width: 20px; height: 20px; padding: 8px;
+  border-radius: 50%; color: var(--pine); background: var(--linen);
+}
+#parkMenu .p-row.priority[href] .p-end { color: var(--pine); }
+#park .p-content .pass { min-height: 48px; padding: 9px 14px; margin-top: 16px; }
+
+#chest {
+  color: var(--linen); font-family: var(--zk-font);
+  background: linear-gradient(170deg, var(--pine), var(--pine-deep));
+}
+#chest .gamepad { display: block; padding: 16px var(--guide-gutter) 24px; }
+#chest .backbtn {
+  display: inline-grid; place-items: center; border: 1px solid var(--linen-muted);
+  background: transparent; color: var(--linen); font: 26px/1 var(--zk-font);
+}
+#chest h1 { margin: 16px 0; font: 500 clamp(30px, 8vw, 40px)/1.07 var(--heading-face); overflow-wrap: break-word; }
+#chest .toylist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+#chest .toylist button {
+  position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-end;
+  isolation: isolate; overflow: hidden; margin: 0; padding: 0; border: 0; border-radius: 12px;
+  color: var(--toy-ink); background: var(--linen); box-shadow: 0 3px 0 var(--wood);
+  text-align: left; font-family: var(--zk-font);
+}
+#chest .toylist .toy-pairs { grid-column: 1/-1; min-height: 158px; justify-content: center; }
+#chest .toy-description { flex: none; display: block; padding: 12px 12px 16px; min-width: 0; }
+#chest .toy-pairs .toy-description { width: 52%; padding: 16px; }
+#chest .toy-description strong { display: block; font: 600 20px/1.1 var(--zk-font); }
+#chest .toy-pairs strong { font-size: clamp(23px, 6.4vw, 30px); }
+#chest .toy-description small { margin-top: 4px; font: 400 14px/1.35 var(--zk-font); color: var(--toy-ink); }
+#chest .playing-cards { position: absolute; inset: 0 0 0 53%; overflow: hidden; }
+#chest .playing-cards img {
+  position: absolute; left: 22%; top: 13%; width: 54%; height: 71%; border: 4px solid var(--linen);
+  border-radius: 7px; object-fit: cover; box-shadow: 0 3px 9px var(--shade); transform: rotate(12deg);
+}
+#chest .playing-cards img:first-child { left: 1%; top: 24%; transform: rotate(-19deg); }
+#chest .playing-cards img:last-child { left: 46%; top: 23%; transform: rotate(23deg); }
+#chest .mini-board, #chest .apple-branch {
+  flex: none; width: 100%; height: clamp(92px, 14dvh, 124px); position: relative; overflow: hidden;
+}
+#chest .mini-board {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, 1fr);
+  gap: 2px; padding: 0 14%; background: var(--leather);
+}
+#chest .mini-board img { min-height: 0; width: 100%; height: 100%; border-radius: 4px; object-fit: cover; }
+#chest .apple-branch { background: url('assets/orchard.webp') center 36% / cover; }
+#chest .apple-branch img {
+  position: absolute; top: 17%; left: 36%; width: 32%; height: 54%; object-fit: contain;
+  filter: drop-shadow(1px 3px 3px var(--shade));
+}
+#chest .toy-match .toy-description, #chest .toy-orchard .toy-description { flex: 1; }
+#chest .ball-shop {
+  width: 100%; margin-top: 24px; padding: 16px 0; gap: 16px; border: 0;
+  border-top: 1px solid var(--linen-muted); border-radius: 0; background: transparent;
+  color: var(--linen); font: 600 17px/1.25 var(--zk-font);
+}
+#chest .ball-shop img { width: 48px; height: 48px; border-radius: 50%; }
+#chest .ball-shop small { color: var(--linen-muted); font: 400 14px/1.4 var(--zk-font); }
+#chest #toy-notice { color: var(--linen); }
+#chest button:focus-visible, #park :is(button,a):focus-visible { outline: 3px solid currentColor; outline-offset: -3px; }
+@media (prefers-reduced-motion: no-preference) {
+  #chest .playing-cards img, #chest .apple-branch img { transition: transform 160ms ease; }
+  #chest .toy-pairs:active .playing-cards img:last-child { transform: rotate(29deg) translateY(-4px); }
+  #chest .toy-orchard:active .apple-branch img { transform: translateY(6px); }
+}

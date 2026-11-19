@@ -16,10 +16,30 @@ async function appearance(browser){
     assert.equal(await page.locator('#park').evaluate(el=>getComputedStyle(el).backgroundColor),colorScheme==='dark'?'rgb(28, 24, 20)':'rgb(246, 240, 230)');
     for(const width of [320,390,430]){
       await page.setViewportSize({width,height:844});
-      for(const route of ['park','directions','feed/raccoons','animals','zone1/54','zone2/11/plan','species/enot-poloskun','visitor','overview','tours','pass']){
+      await page.evaluate(()=>window.conceptGo('park'));
+      for(const mode of ['#beforeVisit','#duringVisit']){
+        await page.locator(mode).click();
+        const hero=page.locator('#parkMenu .priority:visible');
+        assert.equal(await hero.count(),1);
+        assert.ok(await hero.evaluate(row=>{
+          const copy=row.querySelector('.p-row-copy').getBoundingClientRect();
+          const arrow=row.lastElementChild.getBoundingClientRect();
+          const bounds=row.getBoundingClientRect();
+          return copy.width>bounds.width/2 && arrow.left>=copy.right && bounds.right-arrow.right<28;
+        }),'Hero title and arrow placement at '+width);
+      }
+      for(const route of ['park','chest','directions','feed/raccoons','animals','zone1/54','zone2/11/plan','species/enot-poloskun','visitor','overview','tours','pass']){
         await page.evaluate(route=>window.conceptGo(route),route);
         const view=page.locator('#'+route.split('/')[0]+'.current');await view.waitFor();
         assert.ok(await view.evaluate(el=>el.scrollWidth<=el.clientWidth+1),route+' '+width);
+        if(route==='chest'){
+          const games=view.locator('.toylist button');
+          assert.equal(await games.count(),3);
+          assert.ok(await games.evaluateAll(buttons=>buttons.every(button=>{
+            const box=button.getBoundingClientRect();
+            return box.height>=44 && box.width>=44 && button.scrollWidth<=button.clientWidth+1;
+          })),'Game targets at '+width);
+        }
         if(route==='zone2/11/plan'){
           assert.ok(await view.evaluate(el=>{
             const frame=el.querySelector('.park-surface').getBoundingClientRect();

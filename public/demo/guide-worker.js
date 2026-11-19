@@ -1,9 +1,9 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '6';
+const version = prefix + '8';
 const base = new URL(self.registration.scope);
 const shell = [
-  'index.html','base.css','show.css','visitor.css','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
+  'index.html','base.css','show.css','visitor.css','park-and-chest.css','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
   'places.js','routing.js','catalog.js','map-projection.js','park-map.js','park-schedule.js','feedings.js',
   'geographic-map.js','map-alignment.json','assets/park-survey.webp',
   'guide-offline.js','meeting.js','home.js','show.js','match.js',
