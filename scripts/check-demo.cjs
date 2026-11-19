@@ -31,7 +31,7 @@ async function check(page, url, output) {
   await click('#apple-hotspot'); await visible('intro');
   await drag('#apple-hotspot','#intro',.12,.45); await visible('intro');
   await tab('park'); await visible('park');
-  assert.match(await el('#park .priority').getAttribute('href'),/^https:\/\/animal-park.by\/tickets\//);
+  assert.match(await el('#parkMenu nav a').getAttribute('href'),/^https:\/\/animal-park.by\/tickets\//);
   await snap('park-before');
   await go('park','tours');await visible('tours');
   assert.match(await el('#tours .p-primary').getAttribute('href'),/^https:\/\/docs.google.com\/forms\//);

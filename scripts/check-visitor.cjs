@@ -19,14 +19,18 @@ async function appearance(browser){
       await page.evaluate(()=>window.conceptGo('park'));
       for(const mode of ['#beforeVisit','#duringVisit']){
         await page.locator(mode).click();
-        const hero=page.locator('#parkMenu .priority:visible');
-        assert.equal(await hero.count(),1);
-        assert.ok(await hero.evaluate(row=>{
-          const copy=row.querySelector('.p-row-copy').getBoundingClientRect();
-          const arrow=row.lastElementChild.getBoundingClientRect();
-          const bounds=row.getBoundingClientRect();
-          return copy.width>bounds.width/2 && arrow.left>=copy.right && bounds.right-arrow.right<28;
-        }),'Hero title and arrow placement at '+width);
+        const links=page.getByRole('navigation',{name:'Меню парка'}).getByRole('link');
+        assert.deepEqual(await links.allTextContents(),mode==='#beforeVisit'
+          ? ['Купить билеты','Как доехать','Экскурсии','Карта парка','Животные','Для посетителей']
+          : ['Карта парка','Кормления','Животные','Для посетителей']);
+        assert.ok(await links.evaluateAll(items=>items.every(a=>{
+          const box=a.getBoundingClientRect();
+          return box.height>=44 && box.right<=innerWidth && box.left>=0 && parseFloat(getComputedStyle(a).fontSize)>=25;
+        })),'Menu fits '+width);
+        const last=links.last();
+        await last.hover();
+        await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#parkMenu a:last-child .menu-vertical-arrow')).opacity)>.95);
+        assert.ok(await last.evaluate(a=>a.lastElementChild.getBoundingClientRect().right<=innerWidth),'Animated label fits '+width);
       }
       for(const route of ['park','chest','directions','feed/raccoons','animals','zone1/54','zone2/11/plan','species/enot-poloskun','visitor','overview','tours','pass']){
         await page.evaluate(route=>window.conceptGo(route),route);

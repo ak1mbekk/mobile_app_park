@@ -1,0 +1,26 @@
+.menu-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.8vh, 8px);
+  padding-block: clamp(16px, 5vh, 52px);
+}
+.menu-vertical a.menu-vertical-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 4px 32px 4px 0;
+  color: inherit;
+  text-decoration: none;
+  touch-action: manipulation;
+  font: 600 clamp(25px, 7.4vw, 38px)/1.15 var(--zk-font, system-ui);
+  letter-spacing: -.035em;
+}
+.menu-vertical-arrow {
+  position: absolute;
+  inset-inline-start: 0;
+  display: grid;
+  place-items: center;
+}
+.menu-vertical-arrow svg { width: 26px; height: 26px; }
+.menu-vertical-label { min-width: 0; overflow-wrap: break-word; }

@@ -1,19 +1,5 @@
 (() => {
   const id=s=>document.getElementById(s);
-  const parkMenu=id('parkMenu').querySelector('.p-menu');
-  const nodes=[...parkMenu.children];
-  const [map,animals,tickets,visitor]=nodes;
-  function parkAction(text,sub,route){
-    const node=visitor.cloneNode(true);node.dataset.go=route;
-    node.querySelector('strong').textContent=text;node.querySelector('small').textContent=sub;
-    return node;
-  }
-  const feed=parkAction('Кормления','Время и вольеры','feed');
-  const tours=parkAction('Экскурсии','Предварительная запись','tours');
-  const directions=parkAction('Как доехать','Две зоны в Яндекс Картах','directions');
-  feed.querySelector('.p-row-art svg').innerHTML='<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>';
-  directions.querySelector('.p-row-art svg').innerHTML='<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/>';
-  tours.querySelector('.p-row-art svg').innerHTML='<path d="M5 21V4c5-4 9 4 14 0v9c-5 4-9-4-14 0"/>';
   for(const [number,zone] of Object.entries(window.parkGuide.zones)){
     const link=document.createElement('a');link.className='zone-card direction-card';
     link.href=zone.yandex;link.target='_blank';link.rel='noopener noreferrer';
@@ -22,15 +8,6 @@
     const arrow=document.createElement('span');arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');
     link.append(label,arrow);id('zone-directions').append(link);
   }
-  function mode(during){
-    map.dataset.go='geo/1';
-    tickets.classList.toggle('priority',!during);map.classList.toggle('priority',during);
-    parkMenu.replaceChildren(...(during?[map,feed,animals,visitor]:[tickets,directions,tours,map,animals,visitor]));
-    id('beforeVisit').setAttribute('aria-pressed',String(!during));id('duringVisit').setAttribute('aria-pressed',String(during));
-    try{localStorage.setItem('park-visit-mode',during?'inside':'before');}catch{}
-  }
-  let inside=false;try{inside=localStorage.getItem('park-visit-mode')==='inside';}catch{}
-  mode(inside);id('beforeVisit').onclick=()=>mode(false);id('duringVisit').onclick=()=>mode(true);
   const soap=id('soap-area'),foam=soap.querySelector('.foam');
   let clean=0,washed=false,stroke=null;
   function scrub(amount){

@@ -57,6 +57,10 @@ document.addEventListener('click',e=>{
     byId('pr-name').textContent=name||'Ричи'; byId('profileDialog').showModal();return;
   }
   const el=e.target.closest('[data-go]');
+  if(el?.matches('a[href^="#"]')){
+    if(e.defaultPrevented || e.button!==0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)return;
+    e.preventDefault();
+  }
   if(el)conceptGo(el.dataset.go,el.matches('.p-back,.cat-back,.backbtn'));
 });
 function conceptStart(){
