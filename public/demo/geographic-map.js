@@ -1,10 +1,10 @@
 (() => {
-  const {places,geoFacilities,surveyPlaces}=window.parkGuide;
+  const {places,geoFacilities}=window.parkGuide;
   const {crs,toWorld,position,toRaster,widget}=window.parkProjection;
   const el=id=>document.getElementById(id);
   const screen=el('geo'), select=el('geo-select'), frame=el('geographic-map');
   const status=el('geo-status'), detail=el('geo-details');
-  const candidates=[...places.filter(p=>p.plan),...surveyPlaces,...geoFacilities];
+  const candidates=[...places.filter(p=>p.plan),...geoFacilities];
   let calibration, filter='all', selectedLayer='map', sequence=0;
   const maps={};
   function surveyOverlay(map){
@@ -87,10 +87,23 @@
         link.dataset.go=slug==='kapibara'?'animal':'species/'+slug;
         link.textContent=name+' →';detail.append(link);
       }
+      if(selected.plan){
+        const poster=document.createElement('button');poster.className='p-link';
+        poster.dataset.go='zone'+zone+'/'+selected.id;
+        poster.textContent='На схеме для прогулки →';detail.append(poster);
+      }
       const p=geographic(selected),link=document.createElement('a');
       const pair=p.lng.toFixed(7)+','+p.lat.toFixed(7);
       link.href='https://yandex.by/maps/?ll='+pair+'&pt='+pair+'&z=18';link.target='_blank';link.rel='noopener noreferrer';
       link.textContent='Открыть в Яндекс Картах ↗';link.className='p-link';detail.append(link);
+      const approach=calibration.approaches?.[zone+'/'+selected.id];
+      if(approach){
+        const walk=document.createElement('a'),destination=new URL('https://yandex.by/maps/');
+        destination.searchParams.set('rtext','~'+approach.join(','));
+        destination.searchParams.set('rtt','pd');
+        walk.href=destination.href;walk.target='_blank';walk.rel='noopener noreferrer';
+        walk.className='p-link';walk.textContent='Пешком к вольеру в Яндексе ↗';detail.append(walk);
+      }
     }
     const note=calibration.revision?'Привязка плана № '+calibration.revision+'.':'Предварительная привязка плана.';
     status.textContent=(navigator.onLine?'':'Без связи. ')+(selected?.service?'Место отмечено по данным OpenStreetMap.':note);

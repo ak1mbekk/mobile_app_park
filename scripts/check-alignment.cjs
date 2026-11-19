@@ -18,14 +18,16 @@ async function verifyStorage(){
   try{
     await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
     const origin='http://127.0.0.1:'+server.address().port;
-    const change={...initial,centerX:initial.centerX+5};
+    const change={...initial,centerX:initial.centerX+5,approaches:{'2/11':[53.0916,26.0209]}};
     const save=(body,from=origin)=>fetch(origin+'/__park/alignment',{method:'POST',headers:{Origin:from,'Content-Type':'application/json'},body:JSON.stringify(body)});
     assert.equal((await save(change,'http://elsewhere.test')).status,403);
     assert.equal((await save({...change,scale:-2})).status,422);
+    assert.equal((await save({...change,approaches:{'2/11':[26.0209,53.0916]}})).status,422);
     const results=await Promise.all([save(change),save(change)]);
     assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);
     const stored=JSON.parse(await fs.readFile(file,'utf8'));
     assert.equal(stored.centerX,change.centerX);assert.equal(stored.revision,initial.revision+1);
+    assert.deepEqual(stored.approaches,change.approaches);
   }finally{
     server.closeAllConnections();await new Promise(resolve=>server.close(resolve));
     await fs.unlink(file);await fs.rmdir(path.dirname(file));await fs.rmdir(root);
@@ -49,6 +51,16 @@ async function verifyMaps(){
     await p.locator('#region').selectOption('2');
     await p.waitForFunction(()=>document.querySelector('#base-map').src.includes('z=17'));
     if(process.argv[3]){await p.waitForTimeout(1000);await p.screenshot({path:path.join(process.argv[3],'alignment-editor.png')});}
+    await p.locator('details summary').click();
+    await p.locator('#approach-place').selectOption('2/11');
+    await p.locator('#place-approach').click();
+    await p.locator('#drag-area').click({position:{x:206,y:192}});
+    await p.waitForFunction(()=>document.querySelector('#base-map').src.includes('pt='));
+    const fixturePoint=(await p.locator('#approach-note').textContent()).split(': ')[1].split(', ').map(Number);
+    assert.ok(fixturePoint[0]>53.07 && fixturePoint[0]<53.12);
+    await p.locator('#remove-approach').click();
+    assert.equal(new URL(await p.locator('#base-map').getAttribute('src')).searchParams.has('pt'),false);
+    await p.locator('#revert').click();
     await p.setViewportSize({width:390,height:844});await p.goto(root+'index.html#park',{waitUntil:'domcontentloaded'});
     await p.locator('#duringVisit').click();
     assert.equal(await p.locator('#parkMenu a[href*="tickets"]').count(),0);
@@ -76,16 +88,50 @@ async function verifyMaps(){
     await p.locator('#geo-details [data-go="species/zubr"]').click();
     await p.locator('#species .p-back').click();await p.locator('#geo.current').waitFor();
     assert.equal(await p.locator('#geo-select').inputValue(),'11');
-    const link=p.locator('#geo-details a');
+    const link=p.locator('#geo-details a[href*="pt="]');
     const initialLocation=await link.getAttribute('href');
     const config=await p.evaluate(()=>fetch('map-alignment.json').then(r=>r.json()));
-    await p.route('**/map-alignment.json',r=>r.fulfill({json:{...config,centerX:config.centerX+15,revision:config.revision+1}}));
+    await p.route('**/map-alignment.json',r=>r.fulfill({json:{...config,centerX:config.centerX+15,revision:config.revision+1,approaches:{'2/11':fixturePoint}}}));
     await p.evaluate(()=>window.dispatchEvent(new Event('focus')));
     await p.getByText('Привязка плана № '+(config.revision+1)+'.',{exact:true}).waitFor();
     assert.notEqual(await link.getAttribute('href'),initialLocation);
+    const walk=p.locator('#geo-details a[href*="rtext="]');
+    const walkURL=new URL(await walk.getAttribute('href'));
+    assert.equal(walkURL.searchParams.get('rtext'),'~'+fixturePoint.join(','));
+    assert.equal(walkURL.searchParams.get('rtt'),'pd');
     await p.locator('#geo [data-geo-filter="wc"]').click();
     await p.locator('#geo-select').selectOption('osm-9868296562');
     assert.equal(new URL(await link.getAttribute('href')).searchParams.get('pt'),'26.0213501,53.0904689');
+    assert.equal(await walk.count(),0);
+    const records=await p.evaluate(()=>window.parkGuide.places.filter(place=>place.plan));
+    assert.equal(records.length,54);
+    assert.equal(new Set(records.map(place=>place.zone+'/'+place.id)).size,54);
+    for(const zone of [1,2]){
+      await p.evaluate(zone=>window.conceptGo('zone'+zone),zone);
+      const picker=p.locator('#zone'+zone+' select');
+      await picker.waitFor();
+      const choices=await picker.locator('option').evaluateAll(options=>options.map(o=>o.value));
+      for(const place of records.filter(place=>place.zone===zone)){
+        assert.ok(choices.includes(place.id),place.name);
+        assert.ok(place.x>=0 && place.x<760 && place.y>=0 && place.y<(zone===1?641:612));
+      }
+    }
+    // Number 3 belongs to different enclosures on the two posters.
+    for(const [zone,species] of [[1,'oslyi'],[2,'evropeyskaya-lan']]){
+      const poster=p.locator('#zone'+zone);
+      await p.evaluate(zone=>window.conceptGo('zone'+zone+'/3'),zone);
+      await poster.locator('.place-info [data-go="species/'+species+'"]').waitFor();
+      await poster.locator('.place-info [data-go="geo/'+zone+'/3"]').click();
+      await detailLink('zone'+zone+'/3').click();
+      assert.equal(await poster.locator('select').inputValue(),'3');
+    }
+    function detailLink(go){return p.locator('#geo-details [data-go="'+go+'"]');}
+    await p.locator('#zone2 .place-info [data-go="species/evropeyskaya-lan"]').click();
+    const locations=p.locator('#other-enclosures [data-go]');
+    await locations.first().waitFor();
+    assert.deepEqual(await locations.evaluateAll(items=>items.map(el=>el.dataset.go)),['zone2/3','zone2/10']);
+    await locations.last().click();await p.locator('#zone2.current').waitFor();
+    assert.equal(await p.locator('#zone2 select').inputValue(),'10');
     assert.deepEqual(errors,[]);
   }finally{await browser.close();}
 }

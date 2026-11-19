@@ -45,7 +45,7 @@ async function cartography(browser){
     await p.locator('#park [data-go="directions"]').click();
     const destinations=p.locator('#directions .direction-card');
     assert.deepEqual(await destinations.evaluateAll(links=>links.map(link=>new URL(link.href).pathname.split('/').at(-2))),['11025733579','55770037829']);
-    for(const [zone,name,count] of [[1,'Капибара',2],[2,'Домашние козы',5]]){
+    for(const [zone,name,count] of [[1,'Капибара',28],[2,'Домашние козы',26]]){
       const view=p.locator('#zone'+zone);
       await p.evaluate(z=>window.conceptGo('zone'+z+'/36'),zone);
       await view.locator('.map-layer-switch').click();

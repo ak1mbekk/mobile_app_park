@@ -17,9 +17,9 @@ export default function alignmentEditor() {
         if(req.method!=='POST'||req.headers['content-type']!=='application/json'){res.writeHead(405).end();return;}
         let body='';
         req.setEncoding('utf8');
-        req.on('data',part=>{if(body.length<=2048)body+=part;});
+        req.on('data',part=>{if(body.length<=16384)body+=part;});
         req.on('end',()=>{
-          if(body.length>2048){res.writeHead(413).end();return;}
+          if(body.length>16384){res.writeHead(413).end();return;}
           let input;
           try{input=JSON.parse(body);}catch{res.writeHead(400).end();return;}
           if(!input || input.raster!=='enclosures-2064x2369' || !Number.isSafeInteger(input.revision) ||
@@ -31,6 +31,16 @@ export default function alignmentEditor() {
             if(input.revision!==previous.revision){res.writeHead(409).end();return;}
             const {raster,centerX,centerY,scale,angle}=input;
             const result={raster,revision:previous.revision+1,centerX,centerY,scale,angle};
+            const approaches=input.approaches===undefined?previous.approaches:input.approaches;
+            if(approaches!==undefined){
+              if(!approaches || typeof approaches!=='object' || Array.isArray(approaches) ||
+                !Object.entries(approaches).every(([id,coord])=>/^[12]\/\d{1,3}(?:\.\d{1,2})?$/.test(id) &&
+                  Array.isArray(coord) && coord.length===2 && coord.every(Number.isFinite) &&
+                  coord[0]>=53.07 && coord[0]<=53.12 && coord[1]>=25.98 && coord[1]<=26.06)){
+                res.writeHead(422).end();return;
+              }
+              result.approaches=approaches;
+            }
             const json=JSON.stringify(result,null,2)+'\n';
             fs.writeFileSync(file+'.tmp',json);
             fs.renameSync(file+'.tmp',file);

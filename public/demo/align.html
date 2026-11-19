@@ -12,6 +12,12 @@
 <label>Масштаб плана, % <input id="scale" type="number" min="20" max="300" step="any" required inputmode="decimal"></label>
 <label>Поворот, ° <input id="angle" type="number" min="-180" max="180" step="any" required inputmode="decimal"></label>
 <label>Видимость плана <input id="opacity" type="range" min="0" max="100" value="50"></label>
+<details><summary>Точки подхода для маршрутов</summary>
+<label>Вольер <select id="approach-place"><option value="">Выберите вольер</option></select></label>
+<p>Отметь место на открытой гостевой дорожке у ограды. Эту точку получит Яндекс для пешего маршрута.</p>
+<button id="place-approach" type="button" disabled>Указать на карте</button>
+<button id="remove-approach" type="button" hidden>Убрать точку</button>
+<p id="approach-note" role="status"></p></details>
  </div><div class="buttons"><button id="revert" type="button">Отменить</button><button id="save" type="button" disabled>Сохранить для всех</button></div>
 <p role="status" id="status">Загружаем привязку…</p><a href="./index.html#geo/1" target="_blank" rel="noopener">Открыть карту посетителя ↗</a></aside></main>
-<script src="vendor/leaflet/leaflet.js"></script><script src="map-projection.js"></script><script src="align.js"></script></body></html>
+<script src="vendor/leaflet/leaflet.js"></script><script src="places.js"></script><script src="map-projection.js"></script><script src="align.js"></script></body></html>

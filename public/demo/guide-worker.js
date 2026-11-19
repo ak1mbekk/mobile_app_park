@@ -1,6 +1,6 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '4';
+const version = prefix + '5';
 const base = new URL(self.registration.scope);
 const shell = [
   'index.html','base.css','show.css','visitor.css','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',

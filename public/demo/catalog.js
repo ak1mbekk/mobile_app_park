@@ -32,19 +32,19 @@
     description.hidden=!entry?.description;
     document.getElementById('species-source').href = entry?.url || 'https://animal-park.by/galereya/';
     const mapLink=document.getElementById('species-place');
-    const place=window.parkGuide.places.find(p=>p.species?.includes(entry?.slug));
-    mapLink.hidden=!place;
-    if(place)mapLink.dataset.go='zone'+place.zone+'/'+place.id;
-    document.getElementById('other-enclosures')?.remove();
-    const surveyed=window.parkGuide.surveyPlaces.filter(p=>p.species.includes(entry?.slug));
-    if(surveyed.length){
-      const group=document.createElement('div');group.id='other-enclosures';
-      for(const p of surveyed){
+    const locations=window.parkGuide.places.filter(p=>entry && p.species?.includes(entry.slug));
+    const group=document.getElementById('other-enclosures');
+    group?.remove();
+    mapLink.hidden=locations.length!==1;
+    if(locations.length===1)mapLink.dataset.go='zone'+locations[0].zone+'/'+locations[0].id;
+    if(locations.length>1){
+      const list=document.createElement('div');list.id='other-enclosures';
+      for(const p of locations){
         const link=document.createElement('button');link.className='p-link';
         link.textContent=window.parkGuide.zones[p.zone].name+' · № '+p.id+' →';
-        link.dataset.go='geo/'+p.zone+'/'+p.id;group.append(link);
+        link.dataset.go='zone'+p.zone+'/'+p.id;list.append(link);
       }
-      mapLink.after(group);
+      mapLink.after(list);
     }
     photo.hidden = !entry?.thumbnail;
     if(entry?.thumbnail) photo.querySelector('img').src = entry.thumbnail;
@@ -59,7 +59,8 @@
       const photo=document.createElement('img');photo.loading='lazy';photo.alt='';photo.src=entry.thumbnail;
       button.append(photo);
     }
-    const place=window.parkGuide.places.find(p=>!p.detail && p.species?.includes(entry.slug));
+    const enclosures=window.parkGuide.places.filter(p=>!p.detail && p.species?.includes(entry.slug));
+    const place=enclosures.length===1?enclosures[0]:null;
     if(place){
       const tag=document.createElement('span');tag.className='enclosure-tag';
       tag.innerHTML='<svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg>';

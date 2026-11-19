@@ -3,7 +3,6 @@
   const schedule=window.parkSchedule;
   const mounted=new Map();
   const titleFor = p => p.service || p.detail ? p.name : p.name+' · № '+p.badge;
-  const names={'indijskij-dikobraz':'Индийский дикообраз',surikatyi:'Сурикаты'};
   function mount(screen,zoneNumber) {
     const zone=zones[zoneNumber];
     const host=document.querySelector('#'+screen+' .map-mount');
@@ -60,12 +59,14 @@
       info.append(heading,detail);
       if(point.plan){
         const geo=document.createElement('button');geo.className='p-link';
-        geo.textContent='На Яндекс Картах →';geo.dataset.go='geo/'+zoneNumber+'/'+point.id;
+        geo.textContent='На карте местности →';geo.dataset.go='geo/'+zoneNumber+'/'+point.id;
         info.append(geo);
       }
       for(const slug of point.species||[]){
         const link=document.createElement('button');link.className='p-link';
-        link.textContent=(point.species.length>1?names[slug]:'Карточка животного')+' →';
+        const name=window.parkGuide.speciesName?.(slug);
+        if(point.species.length>1 && !name)continue;
+        link.textContent=(point.species.length>1?name:'Карточка животного')+' →';
         link.dataset.go=slug==='kapibara'?'animal':'species/'+slug;
         info.append(link);
       }
@@ -83,7 +84,7 @@
       const visible=local.filter(p=>(drawing===zone||p.plan) && (kind==='all'||(kind==='service')===Boolean(p.service)));
       for(const p of visible){
         const iconNode=document.createElement('span');iconNode.textContent=p.badge;
-        const icon=L.divIcon({className:'place-marker'+(p.service?' service':''),html:iconNode,iconSize:[36,36],iconAnchor:[18,18]});
+        const icon=L.divIcon({className:'place-marker'+(p.service?' service':''),html:iconNode,iconSize:[44,44],iconAnchor:[22,22]});
         const marker=L.marker(coordinates(p),{icon,title:titleFor(p),alt:titleFor(p),keyboard:true}).addTo(layer);
         marker.getElement().setAttribute('aria-label',titleFor(p));
         marker.on('click',()=>pick(p.id));markers.set(p.id,marker);
@@ -103,9 +104,11 @@
     };
     select.onchange=()=>pick(select.value);
     map.fitBounds(bounds,{animate:false});filter('all');
-    document.addEventListener('parkprogrammechange',()=>{
+    function refreshSelection(){
       if(selected && host.closest('.screen').classList.contains('current'))choose(selected,false);
-    });
+    }
+    document.addEventListener('parkprogrammechange',refreshSelection);
+    document.addEventListener('parkcatalogready',refreshSelection);
     return {
       show(id,plan){
         // Resizing a previously hidden map can start Leaflet's animated bounds

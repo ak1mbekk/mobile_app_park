@@ -3,6 +3,18 @@
   const {crs,toWorld,widget}=window.parkProjection;
   const regions={all:[53.0941,26.019],1:[53.0961,26.0137],2:[53.0916,26.0209]};
   let saved,draft,drag,saving=false,view=crs.latLngToPoint(L.latLng(regions.all),16);
+  let placing=false;
+  const picker=el('approach-place');
+  const enclosures=window.parkGuide.places.filter(p=>p.plan);
+  for(const p of enclosures)picker.add(new Option(window.parkGuide.zones[p.zone].name+' · № '+p.id+' · '+p.name,p.zone+'/'+p.id));
+  function approachControls(){
+    const coord=draft?.approaches?.[picker.value];
+    el('place-approach').disabled=!draft||!picker.value||saving;
+    el('place-approach').textContent=placing?'Отменить выбор на карте':'Указать на карте';
+    el('remove-approach').hidden=!coord;
+    el('approach-note').textContent=placing?'Нажми на гостевую дорожку.':coord?'Точка подхода: '+coord.join(', '):'';
+    el('drag-area').style.cursor=placing?'crosshair':'';
+  }
   const factor=()=>2**(Number(el('zoom').value)-16);
   function draw(){
     if(!draft)return;
@@ -13,16 +25,30 @@
       (saved.revision>0 && JSON.stringify(saved)===JSON.stringify(draft));
   }
   function updateBase(){
-    el('base-map').src=widget(crs.pointToLatLng(view,16),Number(el('zoom').value));
+    const point=draft?.approaches?.[picker.value];
+    el('base-map').src=widget(crs.pointToLatLng(view,16),Number(el('zoom').value),point?[L.latLng(point)]:[]);
     draw();
   }
   function restore(){
-    draft={...saved};
+    draft=structuredClone(saved);placing=false;approachControls();
     el('scale').value=Number((draft.scale/0.59315515*100).toFixed(3));
     el('angle').value=Number(draft.angle.toFixed(5));
     el('status').textContent=saved.revision?'Сохранена общая привязка № '+saved.revision+'.':'Начальное совмещение по водоёмам. Проверь положение плана.';
-    draw();
+    updateBase();
   }
+  picker.onchange=()=>{
+    const p=enclosures.find(p=>p.zone+'/'+p.id===picker.value);
+    placing=false;
+    if(draft&&p){
+      el('region').value=p.zone;el('zoom').value=18;
+      view=crs.latLngToPoint(L.latLng(draft.approaches?.[picker.value]||window.parkProjection.position(draft,p.zone,p)),16);
+    }
+    approachControls();updateBase();
+  };
+  el('place-approach').onclick=()=>{placing=!placing;approachControls();};
+  el('remove-approach').onclick=()=>{
+    delete draft.approaches[picker.value];placing=false;approachControls();updateBase();
+  };
   el('region').onchange=()=>{
     const region=el('region').value;
     view=crs.latLngToPoint(L.latLng(regions[region]),16);
@@ -43,6 +69,13 @@
   const area=el('drag-area');
   area.onpointerdown=e=>{
     if(!draft||drag||saving)return;
+    if(placing){
+      const rect=area.getBoundingClientRect();
+      const offset=L.point(e.clientX-rect.left-rect.width/2,e.clientY-rect.top-rect.height/2);
+      const coord=crs.pointToLatLng(view.add(offset.divideBy(factor())),16);
+      (draft.approaches??={})[picker.value]=[Number(coord.lat.toFixed(7)),Number(coord.lng.toFixed(7))];
+      placing=false;approachControls();updateBase();return;
+    }
     area.setPointerCapture(e.pointerId);drag={id:e.pointerId,x:e.clientX,y:e.clientY,dx:0,dy:0};
   };
   area.onpointermove=e=>{
