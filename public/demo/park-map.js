@@ -58,6 +58,11 @@
       heading.textContent=point.name;
       detail.textContent=point.detail||(point.service?'Инфраструктура · '+zone.name:'Вольер № '+point.badge+' · '+zone.name);
       info.append(heading,detail);
+      if(point.plan){
+        const geo=document.createElement('button');geo.className='p-link';
+        geo.textContent='На Яндекс Картах →';geo.dataset.go='geo/'+zoneNumber+'/'+point.id;
+        info.append(geo);
+      }
       for(const slug of point.species||[]){
         const link=document.createElement('button');link.className='p-link';
         link.textContent=(point.species.length>1?names[slug]:'Карточка животного')+' →';
@@ -66,7 +71,7 @@
       }
       for(const event of schedule.forDay(schedule.visitDate()).filter(e=>e.zone===zoneNumber && e.place===point.id && e.status!=='cancelled')){
         const feed=document.createElement('button');feed.className='p-link';
-        feed.textContent=event.start+' · '+event.name;feed.dataset.go='feed/'+event.id;info.append(feed);
+        feed.textContent=event.start+' · '+event.name;feed.dataset.go='feed/'+event.id+'/'+schedule.visitDate();info.append(feed);
       }
       if(focus){
         map.setView(coordinates(point),Math.max(map.getBoundsZoom(bounds)+1.5,map.getZoom()),{animate:false,reset:true});

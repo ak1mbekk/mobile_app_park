@@ -1,4 +1,7 @@
 const byId=id=>document.getElementById(id);
+if(window.parent!==window && new URLSearchParams(location.search).get('layout')==='calendar'){
+  document.documentElement.classList.add('in-calendar');
+}
 const domestic=new Set(['intro','name','home','game','win','wash','chest','match','catch']);
 let lastHome='intro', currentScreen='', currentRoute='', previousScreens={};
 function present(id){
@@ -14,13 +17,14 @@ function present(id){
     if(on) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current');
   });
   let backLink=byId(id).querySelector('.p-back,.cat-back');
-  if(backLink && ['map','animal','species','zone1','zone2','tours'].includes(id)){
-    const fallback={map:'park',animal:'map',species:'animals',zone1:'overview',zone2:'overview',tours:'park'};
+  if(backLink && ['map','animal','species','zone1','zone2','tours','geo'].includes(id)){
+    const fallback={map:'park',animal:'map',species:'animals',zone1:'overview',zone2:'overview',tours:'park',geo:'park'};
     let dest=previousScreens[id] || fallback[id];
     let labels={park:'Парк животных',feed:'Кормления',map:'На схему парка',animals:'Все животные',win:'К результату игры',zone1:'Казачны мір',zone2:'Лясныя таямніцы',species:'К животному',animal:'Капибара',overview:'Карта парка'};
     backLink.dataset.go=dest;
     labels.visitor='Для посетителей';
-    if(backLink.lastChild?.nodeType===3) backLink.lastChild.textContent=(backLink.querySelector('svg')?'':'‹　')+(labels[dest.split('/')[0]]||'Назад');
+    labels.geo='Карта территории';
+    if(id!=='geo' && backLink.lastChild?.nodeType===3) backLink.lastChild.textContent=(backLink.querySelector('svg')?'':'‹　')+(labels[dest.split('/')[0]]||'Назад');
   }
   document.dispatchEvent(new CustomEvent('conceptscreen',{detail:id}));
 }

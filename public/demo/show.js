@@ -23,8 +23,9 @@
     link.append(label,arrow);id('zone-directions').append(link);
   }
   function mode(during){
+    map.dataset.go='geo/1';
     tickets.classList.toggle('priority',!during);map.classList.toggle('priority',during);
-    parkMenu.replaceChildren(...(during?[map,feed,animals,visitor,tickets]:[tickets,directions,tours,map,animals,visitor]));
+    parkMenu.replaceChildren(...(during?[map,feed,animals,visitor]:[tickets,directions,tours,map,animals,visitor]));
     id('beforeVisit').setAttribute('aria-pressed',String(!during));id('duringVisit').setAttribute('aria-pressed',String(during));
     try{localStorage.setItem('park-visit-mode',during?'inside':'before');}catch{}
   }

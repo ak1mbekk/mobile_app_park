@@ -1,0 +1,11 @@
+*{box-sizing:border-box}body{margin:0;background:rgb(var(--zk-cream));color:rgb(var(--zk-ink));font:16px/1.45 var(--zk-font)}main{height:100dvh;display:grid;grid-template-columns:minmax(0,1fr) 300px}
+#workspace{position:relative;min-height:0;overflow:hidden;background:#e9e8df;isolation:isolate}
+#base-map,#drag-area{position:absolute;inset:0;width:100%;height:100%;border:0}
+#drag-area{touch-action:none;cursor:grab;overflow:hidden;clip-path:inset(0 0 35px)}
+#drag-area:active{cursor:grabbing}#survey{position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:none;width:2064px;height:2369px;max-width:none}
+aside{padding:20px;overflow:auto;background:rgb(var(--zk-card));border-left:1px solid rgb(var(--zk-line))}h1{font-size:23px;margin:0}p{color:rgb(var(--zk-stone));margin:10px 0 18px}label{display:grid;gap:4px;font-weight:550;margin:12px 0}
+button,input,select{font:inherit;min-height:42px;max-width:100%;accent-color:rgb(var(--zk-leaf))}
+input[type=number],select,button{border:1px solid rgb(var(--zk-line));padding:5px 9px;border-radius:9px;background:rgb(var(--zk-card));color:inherit}
+.buttons{display:grid;gap:6px}#save{background:rgb(var(--zk-leaf));color:white}button:disabled{opacity:.55}a{color:rgb(var(--zk-leaf))}
+aside{display:flex;flex-direction:column;min-height:0;gap:8px}.adjustments{min-height:0;overflow:auto;flex:1}.buttons{display:flex}.buttons button{font-size:14px;min-height:44px}.buttons #save{flex:1}#status{font-size:13px;margin:0}aside>a{font-size:14px}
+@media(max-width:680px){main{grid-template-columns:1fr;grid-template-rows:minmax(240px,55dvh) minmax(0,1fr)}aside{border-left:0;padding:12px 16px}}

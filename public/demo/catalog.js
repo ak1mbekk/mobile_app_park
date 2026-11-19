@@ -5,6 +5,7 @@
   const empty = document.getElementById('animalEmpty');
   const normalize = text => text.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[^а-яa-z0-9]+/g,' ').trim();
   const bySlug = new Map();
+  window.parkGuide.speciesName=slug=>bySlug.get(slug)?.name;
   let entries = [];
 
   function indexCards() {
@@ -34,6 +35,17 @@
     const place=window.parkGuide.places.find(p=>p.species?.includes(entry?.slug));
     mapLink.hidden=!place;
     if(place)mapLink.dataset.go='zone'+place.zone+'/'+place.id;
+    document.getElementById('other-enclosures')?.remove();
+    const surveyed=window.parkGuide.surveyPlaces.filter(p=>p.species.includes(entry?.slug));
+    if(surveyed.length){
+      const group=document.createElement('div');group.id='other-enclosures';
+      for(const p of surveyed){
+        const link=document.createElement('button');link.className='p-link';
+        link.textContent=window.parkGuide.zones[p.zone].name+' · № '+p.id+' →';
+        link.dataset.go='geo/'+p.zone+'/'+p.id;group.append(link);
+      }
+      mapLink.after(group);
+    }
     photo.hidden = !entry?.thumbnail;
     if(entry?.thumbnail) photo.querySelector('img').src = entry.thumbnail;
   }
@@ -69,6 +81,7 @@
   }).then(data=>{
     if(!Array.isArray(data)||!data.length)return;
     for(const entry of data) bySlug.set(entry.slug,entry);
+    document.dispatchEvent(new Event('parkcatalogready'));
     const featured=['kapibara','karakal','zubr','koshachiy-lemur','enot-poloskun','edipov-tamarin'];
     const rest=data.filter(entry=>!featured.includes(entry.slug)).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
     const sorted=[...featured.map(slug=>bySlug.get(slug)).filter(Boolean),...rest];

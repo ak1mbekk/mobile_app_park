@@ -44,16 +44,25 @@
     announce();
     return pending;
   }
-  function visitDate() {
-    const today = day.format(new Date());
-    try {
-      const saved = localStorage.getItem('park-visit-date');
-      if (isoDay.test(saved) && saved >= today) return saved;
-    } catch {}
-    return today;
+  const today = () => day.format(new Date());
+  let selectedDay;
+  try { selectedDay=localStorage.getItem('park-visit-date'); } catch {}
+  function validVisitDay(value){
+    if(!isoDay.test(value) || value<today())return false;
+    const parsed=new Date(value+'T12:00:00Z');
+    return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0,10)===value;
+  }
+  function visitDate(){
+    return validVisitDay(selectedDay)?selectedDay:today();
+  }
+  function setVisitDate(value){
+    if(!validVisitDay(value))return false;
+    selectedDay=value;
+    try {localStorage.setItem('park-visit-date',value);} catch {}
+    return true;
   }
   window.parkSchedule = {
-    load, visitDate,
+    load, visitDate, setVisitDate, today,
     get state() { return state; },
     get edition() { return programme?.verifiedOn; },
     forDay(date) {

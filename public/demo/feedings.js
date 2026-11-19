@@ -4,17 +4,16 @@
   const list=document.getElementById('feeding-list'),actions=document.getElementById('feeding-actions');
   const date=document.getElementById('visit-date'),hint=document.getElementById('calendar-hint');
   const remind=document.getElementById('add-reminder');
-  const minskDay=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Minsk',year:'numeric',month:'2-digit',day:'2-digit'});
   const minskTime=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Minsk',hour:'2-digit',minute:'2-digit'});
-  const today=minskDay.format(new Date());
   const next=document.createElement('p');
   next.className='feeding-summary';next.setAttribute('role','status');list.before(next);
   const status=document.getElementById('schedule-status'),retry=document.getElementById('retry-schedule');
   let events=[],selected;
-  date.min=today;date.value=schedule.visitDate();
+  date.min=schedule.today();date.value=schedule.visitDate();
+  function eventRoute(id){return 'feed/'+(id||'all')+'/'+date.value;}
   function showNext(){
     const now=new Date();
-    date.min=minskDay.format(now);
+    date.min=schedule.today();
     next.replaceChildren();
     if(!date.value||!date.validity.valid||!events.some(e=>e.status!=='cancelled'))return;
     const from=date.value===date.min?minskTime.format(now):'00:00';
@@ -26,7 +25,7 @@
     next.append(active.length?'Сейчас по программе · ':date.value===date.min?'Ближайшее по программе · ':'Начало программы · ');
     const jump=document.createElement('button');jump.className='p-link';
     jump.textContent=upcoming.start+' · '+upcoming.name+(simultaneous.length>1?' и ещё '+(simultaneous.length-1):'');
-    jump.onclick=()=>{window.conceptGo('feed/'+upcoming.id);requestAnimationFrame(()=>list.querySelector('[data-event="'+upcoming.id+'"]')?.focus());};
+    jump.onclick=()=>{window.conceptReplace(eventRoute(upcoming.id));list.querySelector('[data-event="'+upcoming.id+'"]')?.focus();};
     next.append(jump);
   }
   function placeFor(event){return places.find(p=>p.zone===event.zone&&p.id===event.place);}
@@ -36,10 +35,10 @@
     return place.id==='53'?place.detail:'Вольер № '+place.id;
   }
   function render(eventId){
-    date.min=minskDay.format(new Date());
+    date.min=schedule.today();
     events=date.validity.valid?schedule.forDay(date.value):[];
     showNext();
-    selected=events.find(event=>event.id===eventId)||events.find(event=>event.status!=='cancelled')||events[0];
+    selected=eventId && eventId!=='all'?events.find(event=>event.id===eventId):events.find(event=>event.status!=='cancelled')||events[0];
     hint.textContent='';
     const edition=schedule.edition;
     document.getElementById('schedule-edition').textContent=edition?'Снимок программы от '+edition.split('-').reverse().join('.')+'.':'';
@@ -48,6 +47,7 @@
       schedule.state==='loading'&&!edition?'Загружаем программу…':'';
     if(!date.validity.valid)status.textContent+=' Выберите сегодняшнюю или будущую дату.';
     else if(edition && !events.length)status.textContent+=' Нет опубликованных событий.';
+    else if(edition && !selected)status.textContent+=' Выбранного кормления нет в программе на эту дату.';
     actions.hidden=true;
     list.replaceChildren();
     for(const event of events){
@@ -58,7 +58,7 @@
       const text=document.createElement('span'),title=document.createElement('strong'),place=document.createElement('small');
       title.textContent=event.name;place.textContent=event.status==='cancelled'?'Кормление отменено':placeText(event)+(event.end?' · до '+event.end:'');
       text.append(title,place);select.append(time,text);row.append(select);
-      select.onclick=()=>window.conceptGo('feed/'+event.id);
+      select.onclick=()=>{window.conceptReplace(eventRoute(event.id));list.querySelector('[data-event="'+event.id+'"]')?.focus({preventScroll:true});};
       if(event===selected && event.status!=='cancelled'){
         row.classList.add('selected');
         actions.hidden=false;
@@ -68,11 +68,11 @@
       list.append(row);
     }
   }
-  function refreshView(){render(location.hash.split('/')[1]||selected?.id);}
+  function refreshView(){render(location.hash.split('/')[1]);}
   retry.onclick=()=>schedule.load();
   date.onchange=()=>{
-    if(date.validity.valid)try{localStorage.setItem('park-visit-date',date.value);}catch{}
-    refreshView();
+    if(date.validity.valid && schedule.setVisitDate(date.value))window.conceptReplace(eventRoute('all'));
+    else refreshView();
   };
   remind.onclick=()=>{
     if(!selected||selected.status==='cancelled'||!date.reportValidity())return;
@@ -91,6 +91,14 @@
   };
   document.addEventListener('conceptscreen',e=>{
     if(e.detail!=='feed')return;
+    // A date in a shared event link takes precedence over an earlier visit.
+    const requested=location.hash.split('/')[2];
+    if(requested && !schedule.setVisitDate(requested)){
+      date.value=schedule.visitDate();
+      window.conceptReplace(eventRoute('all'));
+      return;
+    }
+    date.value=schedule.visitDate();
     if(schedule.state==='idle')schedule.load();
     refreshView();
   });
@@ -98,6 +106,6 @@
   document.addEventListener('visibilitychange',()=>{if(!document.hidden && document.getElementById('feed').classList.contains('current'))schedule.load();});
   setInterval(()=>{
     if(document.hidden || !document.getElementById('feed').classList.contains('current'))return;
-    if(date.min!==minskDay.format(new Date()))refreshView();else showNext();
+    if(date.min!==schedule.today())refreshView();else showNext();
   },60000);
 })();

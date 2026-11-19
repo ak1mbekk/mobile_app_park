@@ -1,0 +1,17 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Совмещение плана · Парк животных</title><link rel="stylesheet" href="visitor.css"><link rel="stylesheet" href="align.css"></head>
+<body><main>
+<div id="workspace" aria-label="Совмещение с Яндекс Картами">
+  <iframe id="base-map" title="Опорная карта Яндекса" tabindex="-1"></iframe>
+  <div id="drag-area" tabindex="0" aria-label="Сдвинуть план мышью или клавишами со стрелками"><img id="survey" alt="Технический план с номерами вольеров" src="assets/park-survey.webp" draggable="false"></div>
+</div>
+<aside><h1>Совмещение плана</h1><div class="adjustments"><p>Потяни план за дорожку или берег пруда. Сверь совпадение во второй зоне до сохранения.</p>
+<label>Участок <select id="region"><option value="all">Весь парк</option><option value="1">Казачны мір</option><option value="2">Лясныя таямніцы</option></select></label>
+<label>Перетаскивать <select id="move"><option value="plan">Технический план</option><option value="view">Поле просмотра</option></select></label>
+<label>Приближение карты <input id="zoom" type="range" min="14" max="19" step="1" value="14"></label>
+<label>Масштаб плана, % <input id="scale" type="number" min="20" max="300" step="any" required inputmode="decimal"></label>
+<label>Поворот, ° <input id="angle" type="number" min="-180" max="180" step="any" required inputmode="decimal"></label>
+<label>Видимость плана <input id="opacity" type="range" min="0" max="100" value="50"></label>
+ </div><div class="buttons"><button id="revert" type="button">Отменить</button><button id="save" type="button" disabled>Сохранить для всех</button></div>
+<p role="status" id="status">Загружаем привязку…</p><a href="./index.html#geo/1" target="_blank" rel="noopener">Открыть карту посетителя ↗</a></aside></main>
+<script src="vendor/leaflet/leaflet.js"></script><script src="map-projection.js"></script><script src="align.js"></script></body></html>

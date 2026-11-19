@@ -10,11 +10,11 @@ import {
 } from '../icons';
 
 const NAV_ITEMS = [
-  { path: '/animals', icon: PawIcon },
-  { path: '/calendar', icon: CalendarIcon },
-  { path: '/', icon: HomeIcon },
-  { path: '/map', icon: MapPinIcon },
-  { path: '/more', icon: MenuIcon },
+  { path: '/animals', icon: PawIcon, label: 'Животные' },
+  { path: '/calendar', icon: CalendarIcon, label: 'Календарь' },
+  { path: '/', icon: HomeIcon, label: 'Дом' },
+  { path: '/map', icon: MapPinIcon, label: 'Карта' },
+  { path: '/more', icon: MenuIcon, label: 'Ещё' },
 ] as const;
 
 const INDICATOR_WIDTH = 140;
@@ -35,7 +35,7 @@ function getActiveIndex(pathname: string): number {
   return 2;
 }
 
-export default function LiquidNav() {
+export default function LiquidNav({compact=false}: {compact?: boolean}) {
   const location = useLocation();
   const activeIndex = getActiveIndex(location.pathname);
   const navListRef = useRef<HTMLUListElement>(null);
@@ -58,6 +58,11 @@ export default function LiquidNav() {
     return () => window.removeEventListener('resize', updateIndicator);
   }, [activeIndex]);
 
+  if(compact){
+    return <nav className="calendar-nav" aria-label="Разделы путеводителя">{NAV_ITEMS.map(({path,icon:Icon,label})=>
+      <NavLink key={path} to={path} end={path==='/'}><Icon className="w-5 h-5" />{label}</NavLink>
+    )}</nav>;
+  }
   return (
     <nav className="shrink-0 overflow-visible">
       <div
@@ -101,7 +106,7 @@ export default function LiquidNav() {
             ref={navListRef}
             className="relative flex items-end pb-6 w-full h-full list-none m-0 p-0 z-10"
           >
-            {NAV_ITEMS.map(({ path, icon: Icon }, index) => {
+            {NAV_ITEMS.map(({ path, icon: Icon, label }, index) => {
               const active = isActive(path, location.pathname);
               return (
                 <li
@@ -110,6 +115,7 @@ export default function LiquidNav() {
                 >
                   <NavLink
                     to={path}
+                    aria-label={label}
                     end={path === '/'}
                     className="flex flex-1 justify-center items-end min-h-0 touch-manipulation no-underline text-inherit"
                   >

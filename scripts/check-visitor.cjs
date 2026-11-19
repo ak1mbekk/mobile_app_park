@@ -101,9 +101,47 @@ async function offline(browser){
   await p.locator('#feed [data-event="raccoons"]').waitFor();
   await context.close();
 }
+async function calendarShell(browser,appRoot){
+  const p=await browser.newPage({viewport:{width:390,height:844},locale:'ru-RU'});
+  try {
+    const sampleDay='2090-06-12';
+    const fixture=structuredClone(sample);
+    fixture.byDate[sampleDay]=[sample.daily[2]];
+    await p.route('**/feeding-programme.json',r=>r.fulfill({json:fixture}));
+    await p.goto(new URL('calendar',appRoot).href);
+    const calendar=p.frameLocator('iframe[title="Календарь кормлений парка"]');
+    await calendar.locator('#feed.current [data-event="raccoons"]').waitFor();
+    assert.equal(await calendar.locator('.tabs').isVisible(),false);
+    assert.ok(await p.locator('nav a[href="/animals"]').isVisible());
+    await calendar.locator('#visit-date').fill(sampleDay);
+    await calendar.locator('#visit-date').press('Tab');
+    const row=calendar.locator('#feed [data-event="raccoons"]');
+    await row.click();
+    assert.equal(await calendar.locator('#feed [data-event]').count(),1);
+    const eventLink=await row.evaluate(el=>el.ownerDocument.location.href);
+    assert.equal(new URL(eventLink).hash,'#feed/raccoons/'+sampleDay);
+    await calendar.locator('#feed .p-primary').click();
+    await calendar.locator('#zone1 .place-info [data-go="species/enot-poloskun"]').click();
+    await calendar.locator('#species.current .p-back').click();
+    await calendar.locator('#zone1.current .p-back').click();
+    assert.equal(await calendar.locator('#visit-date').inputValue(),sampleDay);
+    assert.equal(await row.getAttribute('aria-expanded'),'true');
+    if(output)await p.screenshot({path:path.join(output,'calendar-shell.png')});
+    await p.locator('nav a[href="/animals"]').click();
+    assert.equal(await p.locator('iframe').count(),0);
+    await p.goto(eventLink);
+    assert.equal(await p.locator('#visit-date').inputValue(),sampleDay);
+    assert.equal(await p.locator('#feed [data-event="raccoons"]').getAttribute('aria-expanded'),'true');
+    await p.goto(eventLink.replace('/raccoons/','/coatis/'));
+    await p.getByText('Выбранного кормления нет в программе на эту дату.').waitFor();
+    assert.ok(await p.locator('#feeding-actions').isHidden());
+  } finally {await p.close();}
+}
 (async()=>{
   if(output)fs.mkdirSync(output,{recursive:true});
   const b=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
-  try{await appearance(b);await cartography(b);await availability(b);await offline(b);console.log('PASS visitor themes, 3 widths, zone destinations, matched map layers, programme retries, cancellation, empty day, restored offline guide');}
+  try{await appearance(b);await cartography(b);await availability(b);await offline(b);
+    if(process.argv[4]){await calendarShell(b,process.argv[4]);console.log('PASS calendar route, dated exception and enclosure return');}
+    console.log('PASS visitor themes, 3 widths, zone destinations, matched map layers, programme retries, cancellation, empty day, restored offline guide');}
   finally{await b.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

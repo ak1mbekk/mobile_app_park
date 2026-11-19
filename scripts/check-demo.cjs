@@ -46,7 +46,7 @@ async function check(page, url, output) {
   assert.match(invitation,/TRIGGER:-PT30M/);assert.match(invitation,/DTSTART:\d{8}T125000Z/);
   await go('feed','map'); await go('map','animal');
   await click('#animal .p-back'); await visible('map'); await click('#map .p-back'); await visible('feed');
-  await tab('park'); await go('park','overview'); await go('overview','zone2');
+  await tab('park'); await go('park','geo/1');await go('geo','overview');await go('overview','zone2');
   await click('#zone2 .leaflet-control-zoom-in');
   await el('#zone2 select').selectOption('11');assert.match(await el('#zone2 .place-info h2').textContent(),/Зубр/);
   assert.ok(page.url().endsWith('#zone2/11'));await page.reload();await visible('zone2');
@@ -56,6 +56,7 @@ async function check(page, url, output) {
   await click('#zone2 [data-kind=service]');assert.ok(await el('#zone2 .place-info').isHidden());
   assert.equal(await page.locator('#zone2 select option').count(),3);
   await tab('park');await go('park','feed');
+  await visible('feed');await el('#feed [data-event]').waitFor();
   assert.equal(await page.locator('#feed [data-event]').count(),7);
   await click('#feed [data-event=raccoons]');await go('feed','zone1/54');
   await visible('zone1');assert.match(await el('#zone1 .place-info h2').textContent(),/Енот/);await snap('park-interactive-map');

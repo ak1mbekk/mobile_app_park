@@ -7,6 +7,15 @@ export default function AppLayout() {
   const location = useLocation();
   const isMapPage = location.pathname === '/map';
 
+  if (location.pathname.replace(/\/$/, '') === '/calendar') {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <main className="min-h-0 flex-1"><Outlet /></main>
+        <LiquidNav compact />
+      </div>
+    );
+  }
+
   return (
     <div className="relative h-full w-full overflow-hidden">
       <main className="absolute inset-0 overflow-hidden">

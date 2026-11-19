@@ -87,6 +87,17 @@
   </div></details>
   <button class="p-link" data-go="tours">Экскурсии и запись →</button>
 </div></section>
+<section id="geo" class="screen visitor-screen" aria-label="Карта территории">
+  <header class="geo-head"><button class="p-back" type="button" data-go="park" aria-label="Назад">‹</button><label><span>Пешеходная зона</span><select id="geo-zone"><option value="1">Казачны мір</option><option value="2">Лясныя таямніцы</option></select></label>
+    <select class="geo-mode" id="geo-layer" aria-label="Вид карты"><option value="map">Карта</option><option value="yandex">Яндекс</option><option value="survey">План</option></select></header>
+  <div class="geo-stage"><div id="terrain-map" aria-label="Географическая карта парка"></div><div id="survey-map" hidden aria-label="План с номерами вольеров и туалетами"></div><iframe id="geographic-map" hidden title="Яндекс Карты с местами выбранной зоны" allowfullscreen></iframe><button id="geo-boundaries" type="button" aria-pressed="true">Границы вольеров</button></div>
+  <div class="geo-sheet"><div class="geo-filters" role="group" aria-label="Места на карте"><button data-geo-filter="all">Все места</button><button data-geo-filter="animals">Вольеры</button><button data-geo-filter="wc">Туалеты</button></div>
+    <label class="geo-pick"><span>Место</span><select id="geo-select"><option>Выберите на карте</option></select></label>
+    <div id="geo-details" aria-live="polite"></div><p id="geo-status" role="status"></p>
+    <div class="geo-foot"><button class="p-link" data-go="overview">Схемы обеих зон →</button><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">Точки WC © OpenStreetMap</a></div>
+  </div>
+</section>
+<script src="map-projection.js" defer></script><script src="geographic-map.js" defer></script>
 <section id="directions" class="screen visitor-screen"><div class="p-content visitor-info">
   <button class="p-back" type="button" data-go="park">‹　Парк животных</button>
   <h1 class="p-title">Как доехать</h1>

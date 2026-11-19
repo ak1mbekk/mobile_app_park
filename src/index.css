@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+.calendar-nav { display:flex;justify-content:center;border-top:1px solid #d9cbb6;background:#fffaf2;padding:4px 4px max(4px,env(safe-area-inset-bottom)); }
+.calendar-nav a { flex:1 1 0;max-width:90px;min-height:44px;display:grid;justify-items:center;align-content:center;gap:2px;color:#5f5145;text-decoration:none;font-size:12px; }
+.calendar-nav a[aria-current=page] { background:#e4ebdd;color:#2c4e37;border-radius:12px;font-weight:600; }
+@media(prefers-color-scheme:dark){.calendar-nav {background:#26211b;border-color:#4a4036}.calendar-nav a {color:#d6c8b5}.calendar-nav a[aria-current=page]{background:#354436;color:#e1edda}}
+
 :root {
   --bg: #fafcf8;
   --bg-card: #ffffff;
