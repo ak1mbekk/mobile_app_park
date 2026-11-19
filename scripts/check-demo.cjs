@@ -72,6 +72,18 @@ async function check(page, url, output) {
   await visible('name'); await page.goto(url); await visible('name');
   assert.equal(await el('#aki-name-input').inputValue(),'Ричи');
   await el('#aki-name-input').fill('  '); assert.ok(await el('#aki-name-form button').isDisabled());
+  await page.evaluate(()=>{
+    const write=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(key,value){
+      if(key==='aki-concept-demo'){
+        Storage.prototype.setItem=write;
+        throw new DOMException('Storage full','QuotaExceededError');
+      }
+      return write.call(this,key,value);
+    };
+  });
+  await el('#aki-name-input').fill('Ричи');await click('#aki-name-form button');
+  await el('#name-save-error').waitFor();await visible('name');
   await el('#aki-name-input').fill('Ричи'); await click('#aki-name-form button'); await visible('home'); await snap('home');
   await click('#aki-feed'); await click('[data-snack][data-cost="0"]');
   const beforeMeal = await stats();
@@ -170,7 +182,9 @@ async function check(page, url, output) {
     const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,locale:'ru-RU',reducedMotion:'reduce'});
     page.setDefaultTimeout(6000);
     if(process.argv[3]) fs.mkdirSync(process.argv[3],{recursive:true});
-    await check(page,process.argv[2]||'http://127.0.0.1:8138/',process.argv[3]);
+    const url=new URL(process.argv[2]||'http://127.0.0.1:8138/');
+    url.searchParams.set('view','2d');
+    await check(page,url.href,process.argv[3]);
     console.log('PASS: meeting, saved name, gestures, sleep, bath, rounds, reward, park, map, tickets, mobile widths');
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -14,7 +14,8 @@ import SettingsPage from './pages/SettingsPage';
 
 function App() {
   const [query] = useSearchParams();
-  const meeting = query.get('view') === '3d' ? '?view=3d' : '';
+  const view = query.get('view');
+  const meeting = view === '2d' || view === '3d' ? '?view=' + view : '';
   return (
     <div className="h-full flex flex-col">
       <Routes>

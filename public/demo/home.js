@@ -3,13 +3,40 @@
   const route = (id) => { if (typeof window.conceptGo === 'function') window.conceptGo(id); else location.hash = id; };
   const defaults = {name: 'Ричи', leaves: 0, xp: 0, night: false, onboardingDone: false,
     food: 55, clean: 45, energy: 65, joy: 50, updated:Date.now(), couponUsed:false, mealFinished:false};
-  let saved;
-  try { saved = {...defaults, ...JSON.parse(localStorage.getItem('aki-concept-demo') || '{}')}; } catch { saved = {...defaults}; }
+  const profileKey='aki-concept-demo';
+  function readProfile(){
+    for(const key of [profileKey,profileKey+'.backup']){
+      let raw;
+      try{
+        raw=localStorage.getItem(key);
+        if(raw===null)continue;
+        const profile=JSON.parse(raw);
+        if(!profile || typeof profile!=='object' || Array.isArray(profile))throw Error('Invalid profile');
+        return {...defaults,...profile};
+      }catch{
+        if(key===profileKey && raw){
+          try{localStorage.setItem(profileKey+'.damaged',raw);}catch{}
+        }
+      }
+    }
+    return {...defaults};
+  }
+  let saved=readProfile();
   if (typeof saved.name !== 'string' || !saved.name.trim()) saved.name = defaults.name;
   if (!Number.isSafeInteger(saved.leaves) || saved.leaves < 0) saved.leaves = 0;
   if (!saved.onboardingDone) saved.name = defaults.name;
   if (!Number.isSafeInteger(saved.xp) || saved.xp < 0) saved.xp = 0;
-  function save() { try {localStorage.setItem('aki-concept-demo',JSON.stringify(saved));} catch {} }
+  for(const key of ['food','clean','energy','joy']){
+    saved[key]=Number.isFinite(saved[key])?Math.max(0,Math.min(100,saved[key])):defaults[key];
+  }
+  if(!Number.isFinite(saved.updated)||saved.updated<0)saved.updated=Date.now();
+  function save(){
+    saved.version=1;
+    const record=JSON.stringify(saved);
+    try{localStorage.setItem(profileKey,record);}catch{return false;}
+    try{localStorage.setItem(profileKey+'.backup',record);}catch{}
+    return true;
+  }
   function advanceNeeds() {
     const now=Date.now();
     const hours=Math.min(48,Math.max(0,(now-saved.updated)/3600000));
@@ -29,9 +56,14 @@
   }
   window.petDemo={
     finishMeeting(){
+      if(saved.onboardingDone || saved.mealFinished)return;
       saved.mealFinished=true;save();
       document.dispatchEvent(new Event('petmeal'));
       if(active==='intro')route('name');
+    },
+    finishAppleSnack(){
+      if(!saved.onboardingDone||saved.night)return;
+      care('food',32);heart();feedback(saved.name+' доел яблоко');
     },
     stats(){advanceNeeds();return {...saved,level:1+Math.floor(saved.xp/30)};},
     wash(){care('clean',55);},gameReward,
@@ -143,7 +175,16 @@
   $('aki-sleep').onclick=()=>{advanceNeeds();saved.night=!saved.night;save();refreshHome();feedback(saved.night?'Спокойной ночи, '+saved.name+'!':'Доброе утро, '+saved.name+'!');};
   $('aki-name-input').value=saved.name;
   $('aki-name-input').oninput=()=>{$('aki-name-form').querySelector('button').disabled=!$('aki-name-input').value.trim();};
-  $('aki-name-form').onsubmit=e=>{e.preventDefault();const name=$('aki-name-input').value.trim();if(!name)return;saved.name=name;saved.onboardingDone=true;save();refreshHome();route('home');};
+  $('aki-name-form').onsubmit=e=>{
+    e.preventDefault();const name=$('aki-name-input').value.trim();if(!name)return;
+    const previousName=saved.name;
+    saved.name=name;saved.onboardingDone=true;
+    if(!save()){
+      saved.name=previousName;saved.onboardingDone=false;
+      $('name-save-error').hidden=false;return;
+    }
+    $('name-save-error').hidden=true;refreshHome();route('home');
+  };
   const fruit=$('apple-hotspot'),intro=$('intro'),hint=$('intro-hint');
   let drag=null, feedTimer=null, eating=false;
   function resetFruit() {

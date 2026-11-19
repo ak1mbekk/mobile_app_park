@@ -5,6 +5,14 @@ if(window.parent!==window && new URLSearchParams(location.search).get('layout')=
 const domestic=new Set(['intro','name','home','game','win','wash','chest','match','catch']);
 let lastHome='intro', currentScreen='', currentRoute='', previousScreens={};
 function present(id){
+  if(id==='intro' || id==='name'){
+    const pet=window.petDemo?.stats();
+    const stage=pet?.onboardingDone?'home':pet?.mealFinished?'name':'intro';
+    if(pet && stage!==id){
+      id=stage;
+      history.replaceState(history.state,'','#'+id);
+    }
+  }
   currentRoute=id;
   id=id.split('/')[0];
   if(!byId(id)?.matches('.screen')) id='park';
@@ -52,11 +60,9 @@ document.addEventListener('click',e=>{
   if(el)conceptGo(el.dataset.go,el.matches('.p-back,.cat-back,.backbtn'));
 });
 function conceptStart(){
-  try{
-    const pet=JSON.parse(localStorage.getItem('aki-concept-demo'));
-    if(pet?.onboardingDone)lastHome='home';
-    else if(pet?.mealFinished)lastHome='name';
-  }catch{}
+  const pet=window.petDemo?.stats();
+  if(pet?.onboardingDone)lastHome='home';
+  else if(pet?.mealFinished)lastHome='name';
   let entry=location.hash.slice(1)||lastHome;
   present(entry);
 }
