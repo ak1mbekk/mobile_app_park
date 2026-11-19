@@ -9,6 +9,9 @@ const {chromium}=require('playwright');
     const touch=await page.context().newCDPSession(page);
     const errors=[];
     page.on('pageerror',e=>errors.push(e.message));
+    page.on('console',message=>{
+      if (/^(SCRIPT ERROR|ERROR):/.test(message.text())) errors.push(message.text());
+    });
     const root=process.argv[2]||'http://127.0.0.1:8138/';
     const ready=async()=>{
       await page.locator('#scene3d iframe').waitFor();
@@ -76,7 +79,10 @@ const {chromium}=require('playwright');
       if(r.method()==='GET' && /\/meeting3d\/index\.(pck|wasm)$/.test(r.url()))downloads.push(r.url());
     });
     await light.addInitScript(()=>Object.defineProperty(navigator,'connection',{value:{saveData:true}}));
-    await light.goto(root+'#park');
+    const lightUrl=new URL(root);
+    lightUrl.searchParams.delete('view');
+    lightUrl.hash='park';
+    await light.goto(lightUrl.href);
     await light.locator('#park.current').waitFor();
     await light.locator('[data-tab="home"]').click();
     await light.locator('#intro.current #open3d').waitFor();

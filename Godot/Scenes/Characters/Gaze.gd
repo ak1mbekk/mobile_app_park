@@ -15,10 +15,8 @@ extends SkeletonModifier3D
 @export var skeleton: Skeleton3D
 @export var actor_mesh: MeshInstance3D
 
-const EYE_SHADER := preload("res://Materials/RichiEyes.gdshader")
-const EYE_PATCH := preload("res://Art/Characters/EyesProjection.png")
+@export var surface: ShaderMaterial
 const NO_TOUCH := -1
-var surface := ShaderMaterial.new()
 var finger := NO_TOUCH
 var pointing := false
 var screen_point := Vector2.ZERO
@@ -33,11 +31,9 @@ var rest_eye: Vector3
 
 func _ready() -> void:
     var painted := actor_mesh.get_active_material(0) as StandardMaterial3D
-    surface.shader = EYE_SHADER
     surface.set_shader_parameter("coat", painted.albedo_texture)
     surface.set_shader_parameter("relief", painted.normal_texture)
     surface.set_shader_parameter("orm", painted.roughness_texture)
-    surface.set_shader_parameter("eye_projection", EYE_PATCH)
     actor_mesh.set_surface_override_material(0, surface)
     head = skeleton.find_bone("mixamorig_Head")
     rest_eye = skeleton.get_bone_global_rest(head).affine_inverse() * Vector3(0, 1.25, 0.40)

@@ -3,6 +3,13 @@
 [ext_resource type="PackedScene" path="res://Art/Characters/Richi.glb" id="Rig"]
 [ext_resource type="Script" path="res://Scenes/Characters/Richi.gd" id="Behaviour"]
 [ext_resource type="Script" path="res://Scenes/Characters/Gaze.gd" id="Gaze"]
+[ext_resource type="Shader" path="res://Materials/RichiEyes.gdshader" id="EyeShader"]
+[ext_resource type="Texture2D" path="res://Art/Characters/EyesProjection.png" id="EyeProjection"]
+
+[sub_resource type="ShaderMaterial" id="EyeMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("EyeShader")
+shader_parameter/eye_projection = ExtResource("EyeProjection")
 
 [node name="Аки" type="Node3D"]
 script = ExtResource("Behaviour")
@@ -12,5 +19,8 @@ scale = Vector3(0.36, 0.36, 0.36)
 
 [node name="Взгляд" type="SkeletonModifier3D" parent="Модель/SmartRigArmature/Skeleton3D" node_paths=PackedStringArray("skeleton", "actor_mesh")]
 script = ExtResource("Gaze")
+surface = SubResource("EyeMaterial")
 skeleton = NodePath("..")
 actor_mesh = NodePath("../output_unwrapped")
+
+[editable path="Модель"]
