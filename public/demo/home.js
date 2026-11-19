@@ -50,8 +50,11 @@
     saved[key]=Math.min(100,saved[key]+amount);
     save();refreshHome();
   }
-  function gameReward(){
+  function addGameReward(){
     advanceNeeds();saved.xp+=10;saved.leaves+=5;saved.joy=Math.min(100,saved.joy+18);
+  }
+  function gameReward(){
+    addGameReward();
     save();refreshHome();
   }
   window.petDemo={
@@ -67,6 +70,13 @@
     },
     stats(){advanceNeeds();return {...saved,level:1+Math.floor(saved.xp/30)};},
     wash(){care('clean',55);},gameReward,
+    storeGame(game,round){
+      const previous=saved[game];
+      if(previous?.id===round.id && previous.finished)return;
+      if(previous?.id===round.id && round.won)addGameReward();
+      saved[game]=round;
+      save();refreshHome();
+    },
     confirmDemoOrder(children,adults){
       if(![children,adults].every(n=>Number.isInteger(n)&&n>=0&&n<=3)||children+adults===0)return null;
       if(saved.demoOrder)return saved.demoOrder;

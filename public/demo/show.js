@@ -78,31 +78,56 @@
   children.onchange=adults.onchange=ticketView;
   const field=id('catchField'),fruit=id('fallFruit'),basket=id('basket');
   let running=false,attempt=0,caught=0,position=.5,fall=0,spot=.5,frame=0,last=0,active='';
+  let orchardId=0;
+  function saveOrchard(){
+    window.petDemo.storeGame('orchard',{id:orchardId,attempt,caught,position,spot,fall,
+      finished:!running,won:caught>=5});
+  }
   function moveBasket(x){position=Math.max(.09,Math.min(.91,x));basket.style.left=position*100+'%';}
   function moveAt(e){const r=field.getBoundingClientRect();moveBasket((e.clientX-r.left)/r.width);}
   field.onpointerdown=e=>{field.setPointerCapture(e.pointerId);moveAt(e);};field.onpointermove=e=>{if(field.hasPointerCapture(e.pointerId))moveAt(e);};
   field.onkeydown=e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();moveBasket(position+(e.key==='ArrowLeft'?-.08:.08));}};
-  function drop(){fall=.01;spot=.10+Math.random()*.80;fruit.style.left=spot*100+'%';fruit.style.top='1%';fruit.hidden=false;}
+  function drawFruit(){fruit.style.left=spot*100+'%';fruit.style.top=(fall*fall*92)+'%';fruit.hidden=!running;}
+  function drop(){fall=.01;spot=.10+Math.random()*.80;drawFruit();}
+  function orchardProgress(){
+    id('catchScore').textContent='В корзинке '+caught+' / 5 · '+attempt+' из 8';
+    id('catchSheet').hidden=running;drawFruit();
+    if(!running){
+      id('catchTitle').textContent=caught>=5?'Полная корзинка!':'Яблоки закончились';
+      id('catchTip').textContent=caught>=5?'+10 опыта и 5 листьев':'В корзинке '+caught+' из 5 нужных яблок.';
+      id('catchStart').textContent='Ещё раз';
+    }
+  }
+  function restoreOrchard(){
+    const round=window.petDemo.stats().orchard;
+    if(!round || !Number.isSafeInteger(round.id)||round.id<=0 ||
+       !Number.isInteger(round.attempt)||round.attempt<0||round.attempt>8 ||
+       !Number.isInteger(round.caught)||round.caught<0||round.caught>Math.min(5,round.attempt) ||
+       round.finished!==(round.caught===5||round.attempt===8) ||
+       ![round.position,round.spot,round.fall].every(n=>Number.isFinite(n)&&n>=0&&n<=1))return;
+    orchardId=round.id;attempt=round.attempt;caught=round.caught;fall=round.fall;spot=round.spot;
+    running=!round.finished;moveBasket(round.position);orchardProgress();
+  }
   function tick(t){
     if(!running||active!=='catch'||document.hidden)return;
     if(last)fall+=Math.min(60,t-last)/1900;last=t;
     fruit.style.top=(fall*fall*92)+'%';
     if(fall>=1){
       attempt++;if(Math.abs(position-spot)<.155)caught++;
-      id('catchScore').textContent='В корзинке '+caught+' / 5 · '+attempt+' из 8';
-      if(caught>=5||attempt===8){
-        running=false;fruit.hidden=true;id('catchSheet').hidden=false;
-        if(caught>=5)window.petDemo.gameReward();
-        id('catchTitle').textContent=caught>=5?'Полная корзинка!':'Яблоки закончились';
-        id('catchTip').textContent=caught>=5?'+10 опыта и 5 листьев':'В корзинке '+caught+' из 5 нужных яблок.';
-        id('catchStart').textContent='Ещё раз';return;
-      }drop();
+      running=caught<5&&attempt<8;
+      if(running)drop();else fall=1;
+      saveOrchard();orchardProgress();
+      if(!running)return;
     }
     frame=requestAnimationFrame(tick);
   }
   function resume(){cancelAnimationFrame(frame);last=0;if(running&&active==='catch'&&!document.hidden)frame=requestAnimationFrame(tick);}
-  document.addEventListener('visibilitychange',resume);
-  id('catchStart').onclick=()=>{attempt=0;caught=0;running=true;id('catchScore').textContent='В корзинке 0 / 5';id('catchSheet').hidden=true;moveBasket(.5);drop();resume();};
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&running)saveOrchard();resume();});
+  window.addEventListener('pagehide',()=>{if(running)saveOrchard();});
+  id('catchStart').onclick=()=>{
+    orchardId++;attempt=0;caught=0;running=true;moveBasket(.5);drop();
+    saveOrchard();orchardProgress();resume();
+  };
   function showStats(){
     const p=window.petDemo.stats();
     id('pr-name').textContent=p.name;
@@ -116,7 +141,10 @@
   }
   document.addEventListener('click',e=>{if(e.target.closest('[data-profile]'))showStats();});
   document.addEventListener('conceptscreen',e=>{
-    active=e.detail;resume();
+    if(active==='catch'&&running&&e.detail!=='catch')saveOrchard();
+    active=e.detail;
+    if(active==='catch'&&!orchardId)restoreOrchard();
+    resume();
     if(active==='wash'&&washed)resetBath();
     if(active==='pass')ticketView();
   });
