@@ -12,6 +12,7 @@ const DEFAULT_NAME := "Ричи"
 @onready var notice: Label = %Notice
 var confirmed := false
 var pet_name := DEFAULT_NAME
+var web_pause_callback: JavaScriptObject
 
 func _ready() -> void:
     if not aki or not apple:
@@ -25,6 +26,8 @@ func _ready() -> void:
     get_viewport().size_changed.connect(_layout)
     _layout()
     if _has_web_host():
+        web_pause_callback = JavaScriptBridge.create_callback(_sync_pause)
+        JavaScriptBridge.get_interface("window").setParkScenePaused = web_pause_callback
         _notify_host("scene-ready")
         return
     var save := ConfigFile.new()
@@ -58,7 +61,11 @@ func _after_meal() -> void:
     _open_name_panel()
 
 func _has_web_host() -> bool:
-    return OS.has_feature("web") and JavaScriptBridge.eval("window.parent !== window")
+    return OS.has_feature("web") and JavaScriptBridge.eval("window.parent !== window && new URLSearchParams(location.search).get('host') === 'animal-park'")
+
+func _sync_pause(args: Array) -> void:
+    if args.size() == 1 and args[0] is bool:
+        get_tree().paused = args[0]
 
 func _notify_host(event_name: String) -> void:
     var browser := JavaScriptBridge.get_interface("window")

@@ -5,6 +5,9 @@
   const loading = document.querySelector('#loading3d');
   let frame;
   let timeout;
+  function syncPause() {
+    frame?.contentWindow?.setParkScenePaused?.(document.hidden || !document.querySelector('#intro.current'));
+  }
 
   function leave() {
     clearTimeout(timeout);
@@ -29,7 +32,7 @@
     loading.textContent = 'Загружаем домик…';
     frame = document.createElement('iframe');
     frame.title = 'Первая встреча с Ричи в 3D';
-    frame.src = 'meeting3d/index.html';
+    frame.src = 'meeting3d/index.html?host=animal-park';
     container.prepend(frame);
     timeout = setTimeout(() => {
       loading.textContent = 'Домик ещё загружается. Можно вернуться к лёгкой версии.';
@@ -41,14 +44,14 @@
     if (event.data === 'animal-park:scene-ready') {
       clearTimeout(timeout);
       loading.hidden = true;
-      frame.focus();
+      syncPause();
+      if (document.querySelector('#intro.current')) frame.focus();
     }
     if (event.data === 'animal-park:meal-finished') {
       leave();
       window.petDemo.finishMeeting();
     }
   });
-  document.addEventListener('conceptscreen', event => {
-    if (frame && event.detail !== 'intro') leave();
-  });
+  document.addEventListener('conceptscreen', syncPause);
+  document.addEventListener('visibilitychange', syncPause);
 })();
