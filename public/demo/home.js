@@ -95,7 +95,7 @@
     const slow=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const frames=age==='kit'?['none',near,near]:['none',near,near,'none'];
     petMotion(age==='adult'?'bring':'reach');
-    try { await ball.animate(frames,{duration:slow?150:age==='kit'?900:1550,easing:'ease-in-out'}).finished; }
+    try { await ball.animate({transform:frames},{duration:slow?150:age==='kit'?900:1550,easing:'ease-in-out'}).finished; }
     finally { rolling=false; }
     if(active==='home'&&!saved.night){
       heart();feedback(saved.name+(age==='kit'?' поймал мяч!':age==='young'?' вернул тебе мяч':' принёс любимый мяч'));

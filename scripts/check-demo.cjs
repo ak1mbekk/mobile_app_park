@@ -125,6 +125,7 @@ async function check(page, url, output) {
   assert.equal((await stats()).leaves,beforeWin.leaves+10);
   await go('catch','chest');await click('#buy-ball');await visible('home');
   assert.equal((await stats()).leaves,beforeWin.leaves+5);await click('#rope-ball');
+  await page.locator('#aki-feedback').filter({hasText:/поймал мяч|вернул тебе мяч|принёс любимый мяч/}).waitFor();
   await page.reload();assert.equal((await stats()).ball,true);
   await tab('park'); await go('park','pass'); await el('#ticketCount').selectOption('0');
   assert.ok(await el('#testBuy').isDisabled());await el('#ticketCount').selectOption('2');
