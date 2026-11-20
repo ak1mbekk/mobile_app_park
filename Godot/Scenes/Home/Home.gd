@@ -28,6 +28,9 @@ const SHOP_SAVE_ERROR := "Не удалось сохранить изменен�
 @onready var ambience: WorldEnvironment = $"Комната/Свет комнаты"
 @onready var window_view: MeshInstance3D = $"Комната/Веранда/Пойма"
 @onready var window_material := window_view.get_active_material(0) as StandardMaterial3D
+@onready var curtain: Node3D = $"Комната/Веранда/Оконная стена/Портьера"
+@onready var linen: ShaderMaterial = curtain.get_node("Льняные складки").material_override
+@onready var curtain_rings := curtain.find_children("Петля *", "MeshInstance3D", false, false)
 @onready var rug: Node3D = $"Комната/Веранда/Ковёр"
 @onready var bedroom: Node3D = $Спальня
 @onready var night_lamp: OmniLight3D = $Спальня/Свет/Ночник
@@ -57,6 +60,9 @@ var night := false
 var hosted := false
 var has_host_state := false
 var meal_in_progress := false
+var awaiting_meal_result := false
+var keyboard_hotspots := false
+var guide_in_overlay := false
 var ball_owned := false
 var web_pause_callback: JavaScriptObject
 var web_state_callback: JavaScriptObject
@@ -93,12 +99,14 @@ func _ready() -> void:
     apple.returned_to_floor.connect(richi.gaze.release_apple)
     apple.accepted.connect(_on_accepted)
     richi.meal_finished.connect(_on_fed)
-    bathroom.rinse_available.connect(_on_rinse_available)
     bathroom.washed.connect(_on_washed)
+    bathroom.exit_button.pressed.connect(_back_to_room)
     %Feed.pressed.connect(_offer_apple)
     %Wash.pressed.connect(_start_wash)
     %Sleep.pressed.connect(_toggle_sleep)
     %Play.pressed.connect(_open_games)
+    %ToyBall.pressed.connect(_play_ball)
+    _set_hotspot_focus(false)
     care.play_finished.connect(_on_ball_finished)
     %MainRoom.pressed.connect(_go_to_room.bind(MAIN))
     %KitchenRoom.pressed.connect(_go_to_room.bind(KITCHEN))
@@ -107,15 +115,14 @@ func _ready() -> void:
     %GoalAction.pressed.connect(_take_bed_goal)
     %GoalLater.pressed.connect(_dismiss_bed_goal)
     %Profile.pressed.connect(_open_profile)
+    %Park.pressed.connect(_notify_host.bind("park"))
     %Profile.focus_entered.connect(%ProfileHint.show)
     %Profile.focus_exited.connect(%ProfileHint.hide)
     %LocalClose.pressed.connect(%LocalProfile.hide)
     %Back.pressed.connect(_back_to_room)
-    %Rinse.pressed.connect(_rinse)
     if game_room:
         game_room.closed.connect(_close_games)
         game_room.round_saved.connect(_store_round)
-        game_room.animal_requested.connect(_open_pair_animal)
         game_room.ball_purchase_requested.connect(_buy_ball)
         game_room.ball_play_requested.connect(_play_ball)
     if shop:
@@ -126,8 +133,7 @@ func _ready() -> void:
     hosted = OS.has_feature("web") and JavaScriptBridge.eval(
         "window.parent !== window && new URLSearchParams(location.search).get('host') === 'animal-park'"
     )
-    if game_room:
-        game_room.guide_available = hosted
+    %Park.visible = hosted
     get_viewport().size_changed.connect(_position_stations)
     %Header.resized.connect(_position_stations)
     _show_room()
@@ -161,6 +167,21 @@ func _show_room(animate := true) -> void:
     _set_status("")
     _check_hungry_room.call_deferred()
 
+func _update_input_modality(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and not keyboard_hotspots:
+        _set_hotspot_focus(true)
+    elif keyboard_hotspots and (event is InputEventScreenTouch or event is InputEventMouseButton):
+        _set_hotspot_focus(false)
+
+func _set_hotspot_focus(keyboard: bool) -> void:
+    keyboard_hotspots = keyboard
+    for hotspot in %Actions.get_children():
+        if hotspot is Button:
+            if keyboard:
+                hotspot.remove_theme_stylebox_override("focus")
+            else:
+                hotspot.add_theme_stylebox_override("focus", hotspot.get_theme_stylebox("normal"))
+
 func _offer_apple() -> void:
     if meal_in_progress or night or _moving_between_places():
         return
@@ -180,24 +201,30 @@ func _start_food() -> void:
     richi.offer_apple()
     apple.reset_apple()
     apple.set_process_input(true)
-    _set_status("Перетащи яблоко к лапам")
+    _set_status("")
 
 func _on_accepted() -> void:
     meal_in_progress = true
     richi.gaze.finish_tracking()
     %Back.disabled = true
-    _set_status(pet_name + " пробует яблоко")
 
 func _on_fed() -> void:
     meal_in_progress = false
     _set_mode(&"home")
     richi.idle_in_home()
     dining.finish_meal()
-    _set_status(pet_name + " доел яблоко")
+    _set_status("")
+    awaiting_meal_result = float(richi.needs.get("food", 50)) < 99.99
     if not hosted:
         _increase_native_need("food", 32)
+        _finish_meal_reaction(native_needs)
         _save_home()
     _notify_host("meal-finished")
+
+func _finish_meal_reaction(needs: Dictionary) -> void:
+    if awaiting_meal_result and float(needs.get("food", 0)) >= 99.99:
+        richi.react_to_full_meal()
+    awaiting_meal_result = false
 
 func _start_wash() -> void:
     if location != BATH or meal_in_progress or night or _moving_between_places() or active_mode != &"home":
@@ -216,7 +243,7 @@ func _moving_between_places() -> bool:
     return sleep_moving or bath_moving or tableware_moving
 
 func _go_to_room(next: StringName) -> bool:
-    if night or meal_in_progress or _moving_between_places() or active_mode != &"home":
+    if night or meal_in_progress or _moving_between_places() or active_mode not in [&"home", &"feed"]:
         _refresh_controls()
         return false
     if (game_room and game_room.visible) or (shop and shop.visible):
@@ -226,6 +253,7 @@ func _go_to_room(next: StringName) -> bool:
         _refresh_controls()
         return true
     if location == KITCHEN:
+        apple.set_process_input(false)
         dining.clear()
     richi.gaze.reset_attention()
     location = next
@@ -273,13 +301,14 @@ func _move_between_floor_and_bath(entering: bool) -> void:
     bathroom.preview()
     _set_status("")
     var camera_motion := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-    camera_motion.tween_property(room_camera, "fov", room_fov + 7.0, 0.35)
+    camera_motion.tween_property(room_camera, "fov", room_fov + 3.5, 0.35)
 
     var floor_pose := _day_pose()
     var outside := Transform3D(floor_pose.basis, bathroom.get_node("Подход к купели").global_position)
     var inside: Transform3D = bathroom.get_node("Место для Ричи").global_transform.scaled_local(awake_pose.basis.get_scale())
-    var toward_bath := _face_point(outside, inside.origin)
-    var away_from_bath := _face_point(inside, outside.origin)
+    var standing := Transform3D(inside.basis, bathroom.get_node("Опора при переступании").global_position)
+    var toward_bath := _face_point(outside, standing.origin)
+    var away_from_bath := _face_point(standing, outside.origin)
     var waypoints: Array[Vector3] = []
     var motion := create_tween()
     if entering:
@@ -287,10 +316,12 @@ func _move_between_floor_and_bath(entering: bool) -> void:
         _walk_on_floor(motion, floor_pose, waypoints)
         motion.tween_callback(_set_mode.bind(&"bath", false, false))
         motion.tween_property(richi, "transform", toward_bath, 0.29)
-        _step_over_bath_edge(motion, toward_bath, Transform3D(toward_bath.basis, inside.origin))
+        _step_over_bath_edge(motion, toward_bath, Transform3D(toward_bath.basis, standing.origin))
         motion.tween_callback(_play_travel_animation.bind(&"Idle_Step_Turn_Left", 0.0, 1.7, 0.12))
-        motion.tween_property(richi, "transform", inside, 0.29)
+        motion.tween_property(richi, "transform", standing, 0.29)
+        _change_bath_pose(motion, &"Stand_to_Sit_Transition_M", 4.3, inside)
     else:
+        _change_bath_pose(motion, &"Sit_to_Stand_Transition_M", 5.7, standing)
         motion.tween_callback(_play_travel_animation.bind(&"Idle_Step_Turn_Left", 0.0, 1.7, 0.12))
         motion.tween_property(richi, "transform", away_from_bath, 0.29)
         var landing := Transform3D(away_from_bath.basis, outside.origin)
@@ -301,6 +332,10 @@ func _move_between_floor_and_bath(entering: bool) -> void:
         motion.tween_property(richi, "transform", floor_pose, 0.23)
     motion.tween_property(room_camera, "fov", room_fov, 0.32).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
     motion.tween_callback(_finish_bath_movement.bind(entering))
+
+func _change_bath_pose(motion: Tween, clip: StringName, speed: float, target: Transform3D) -> void:
+    motion.tween_callback(_play_travel_animation.bind(clip, 0.0, speed, 0.16))
+    motion.tween_property(richi, "transform", target, richi.player.get_animation(clip).length / speed).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _walk_on_floor(motion: Tween, start: Transform3D, waypoints: Array[Vector3]) -> void:
     motion.tween_callback(_play_travel_animation.bind(&"Walking", 0.0, 1.22, 0.13))
@@ -319,36 +354,33 @@ func _step_over_bath_edge(motion: Tween, from: Transform3D, to: Transform3D) -> 
     motion.tween_method(_move_along_arc.bind(from, to, 0.23, 1.65), 0.0, 1.0, 0.59)
     motion.tween_interval(0.21)
 
-func _finish_bath_movement(entering: bool) -> void:
+func _finish_bath_movement(entering: bool, restored: bool = false) -> void:
     bath_moving = false
     if entering:
         richi.gaze.suspended = false
-        richi.wash_face()
+        richi.gaze.mood_angles = Vector2.ZERO
+        richi.resting_at_home = false
+        richi.player.play(&"Sit_Cross_Legged", 0.0 if restored else 0.18)
+        if restored:
+            richi.player.advance(0.0)
         bathroom.start(richi)
-        _set_status("Возьми губку и потри шёрстку")
+        _refresh_controls()
         _notify_host("wash-ready")
     else:
         _show_room()
         _notify_host("wash-closed")
 
-func _on_rinse_available() -> void:
-    _set_status("Пора смыть пену")
-    %Rinse.show()
-    %Rinse.disabled = false
-
-func _rinse() -> void:
-    %Rinse.hide()
-    %Back.disabled = true
-    bathroom.rinse()
-    _set_status("Смываем пену…")
-
 func _on_washed() -> void:
-    %Back.disabled = false
-    _set_status("Шёрстка чистая")
+    bathroom.exit_button.hide()
+    richi._set_eyelids(0.45, 0.14)
     if not hosted:
         _increase_native_need("clean", 55)
         _save_home()
     _notify_host("wash-finished")
+    await get_tree().create_timer(bathroom.CLEAN_SECONDS, false).timeout
+    richi._set_eyelids(0.0, 0.16)
+    if active_mode == &"bath" and not bath_moving:
+        _move_between_floor_and_bath(false)
 
 func _open_games() -> void:
     if location != MAIN or _moving_between_places():
@@ -374,7 +406,6 @@ func _buy_ball() -> void:
 func _play_ball() -> void:
     if location != MAIN or not ball_owned or active_mode != &"home" or not _can_start_play():
         return
-    care.stop_toy()
     _set_mode(&"ball", false)
     _set_status("")
     care.play_toy(richi, richi.age_stage)
@@ -383,9 +414,6 @@ func _on_ball_finished(stage: int) -> void:
     _show_room()
     var reactions := [" поймал мяч!", " вернул тебе мяч", " принёс тебе мяч"]
     _set_status(pet_name + reactions[stage])
-
-func _open_pair_animal(species: String) -> void:
-    _notify_host("pair-animal:" + species)
 
 func _can_start_play() -> bool:
     if night:
@@ -593,6 +621,7 @@ func _open_profile() -> void:
         %LocalProfile.popup_centered()
 
 func _input(event: InputEvent) -> void:
+    _update_input_modality(event)
     if event is InputEventMouseMotion and not event.relative.is_zero_approx():
         %ProfileHint.visible = %Profile.is_visible_in_tree() and %Profile.get_global_rect().has_point(event.position)
     elif event is InputEventScreenTouch:
@@ -697,8 +726,22 @@ func _move_between_floor_and_bed() -> void:
 
     var floor_pose := _day_pose()
     var settled := _sleep_pose()
-    var marker := "Подход к дивану" if settee_in_use else "Подход к лежанке"
-    var at_edge := Transform3D(floor_pose.basis, bedroom.get_node(marker).position)
+    # On the low bed a single step reaches the cushion. The settee has a raised lip.
+    if not settee_in_use:
+        var low_bed_motion := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+        if night:
+            low_bed_motion.tween_callback(_play_travel_animation.bind(&"Walking", 0.08, 1.05, 0.15))
+            low_bed_motion.tween_method(_move_along_arc.bind(floor_pose, settled, 0.055, 1.0), 0.0, 1.0, 0.78)
+            low_bed_motion.tween_callback(richi.sleep_on_bed.bind(true))
+            low_bed_motion.tween_method(_set_room_light, 0.0, 1.0, 0.80)
+        else:
+            low_bed_motion.tween_callback(richi._set_eyelids.bind(0.0, 0.48))
+            low_bed_motion.tween_callback(_play_travel_animation.bind(&"Sit_to_Stand_Transition_M", 1.0, 1.65, 0.22))
+            low_bed_motion.tween_method(_set_room_light, 1.0, 0.0, 0.70)
+            low_bed_motion.tween_method(_move_along_arc.bind(settled, floor_pose, 0.045, 1.0), 0.0, 1.0, 0.68)
+        low_bed_motion.tween_callback(_finish_sleep_movement.bind(true))
+        return
+    var at_edge := Transform3D(floor_pose.basis, bedroom.get_node("Подход к дивану").position)
     var walking_out := _face_point(floor_pose, at_edge.origin)
     var walking_in := _face_point(at_edge, floor_pose.origin)
     var inward := _face_point(at_edge, settled.origin)
@@ -708,15 +751,11 @@ func _move_between_floor_and_bed() -> void:
     if night:
         motion.tween_callback(_play_travel_animation.bind(&"Walking", 0.0, 1.22, 0.13))
         motion.tween_property(richi, "transform", walking_out, 0.21)
-        motion.tween_property(richi, "transform", Transform3D(walking_out.basis, at_edge.origin), 0.80 if not settee_in_use else 0.42)
-        if settee_in_use:
-            motion.tween_property(richi, "transform", inward, 0.27)
-            _travel_across_edge(motion, inward, Transform3D(inward.basis, settled.origin))
-            motion.tween_callback(_play_travel_animation.bind(&"Idle_Step_Turn_Left", 0.0, 1.75, 0.13))
-            motion.tween_property(richi, "transform", settled, 0.31)
-        else:
-            inward.basis = walking_out.basis
-            _travel_across_edge(motion, inward, settled)
+        motion.tween_property(richi, "transform", Transform3D(walking_out.basis, at_edge.origin), 0.42)
+        motion.tween_property(richi, "transform", inward, 0.27)
+        _travel_across_edge(motion, inward, Transform3D(inward.basis, settled.origin))
+        motion.tween_callback(_play_travel_animation.bind(&"Idle_Step_Turn_Left", 0.0, 1.75, 0.13))
+        motion.tween_property(richi, "transform", settled, 0.31)
         motion.tween_callback(richi.sleep_on_bed.bind(true))
         motion.tween_method(_set_room_light, 0.0, 1.0, 0.73)
     else:
@@ -724,27 +763,20 @@ func _move_between_floor_and_bed() -> void:
         motion.tween_callback(_play_travel_animation.bind(&"Sit_to_Stand_Transition_M", 1.05, 2.15, 0.28))
         motion.tween_method(_set_room_light, 1.0, 0.0, 0.80)
         var landing := Transform3D(outward.basis, at_edge.origin)
-        if settee_in_use:
-            motion.tween_callback(_play_travel_animation.bind(&"Idle_Step_Turn_Left", 0.0, 1.75, 0.13))
-            motion.tween_property(richi, "transform", outward, 0.30)
-        else:
-            outward.basis = settled.basis
+        motion.tween_callback(_play_travel_animation.bind(&"Idle_Step_Turn_Left", 0.0, 1.75, 0.13))
+        motion.tween_property(richi, "transform", outward, 0.30)
         _travel_across_edge(motion, outward, landing)
         motion.tween_callback(_play_travel_animation.bind(&"Walking", 0.0, 1.22, 0.13))
         motion.tween_property(richi, "transform", walking_in, 0.22)
-        motion.tween_property(richi, "transform", Transform3D(walking_in.basis, floor_pose.origin), 0.80 if not settee_in_use else 0.42)
+        motion.tween_property(richi, "transform", Transform3D(walking_in.basis, floor_pose.origin), 0.42)
         motion.tween_property(richi, "transform", floor_pose, 0.22)
     motion.tween_callback(_finish_sleep_movement.bind(true))
 
 func _travel_across_edge(motion: Tween, from: Transform3D, to: Transform3D) -> void:
-    if settee_in_use:
-        motion.tween_callback(_play_travel_animation.bind(&"Regular_Jump", 0.11, 1.35, 0.12))
-        motion.tween_interval(0.30)
-        motion.tween_method(_move_along_arc.bind(from, to, 0.12, 1.0), 0.0, 1.0, 0.50)
-        motion.tween_interval(0.26)
-    else:
-        motion.tween_callback(_play_travel_animation.bind(&"Walking", 0.05, 1.24, 0.13))
-        motion.tween_method(_move_along_arc.bind(from, to, 0.086, 1.0), 0.0, 1.0, 0.67)
+    motion.tween_callback(_play_travel_animation.bind(&"Regular_Jump", 0.11, 1.35, 0.12))
+    motion.tween_interval(0.30)
+    motion.tween_method(_move_along_arc.bind(from, to, 0.12, 1.0), 0.0, 1.0, 0.50)
+    motion.tween_interval(0.26)
 
 func _move_along_arc(progress: float, from: Transform3D, to: Transform3D, lift: float, ease_in: float) -> void:
     var pose := from.interpolate_with(to, pow(progress, ease_in))
@@ -759,9 +791,15 @@ func _finish_sleep_movement(curl_started := false) -> void:
             richi.sleep_on_bed(false)
     else:
         richi.idle_in_home()
+        if curl_started:
+            richi.react_to_wake()
     _set_status("")
 
 func _set_room_light(night_weight: float) -> void:
+    linen.set_shader_parameter("drawn", night_weight)
+    curtain.get_node("Льняной подхват").visible = night_weight < 0.08
+    for i in curtain_rings.size():
+        curtain_rings[i].position.x = lerpf(-0.275 + 0.085 * i, -2.21 + 0.485 * i, night_weight)
     bedroom.get_node("Свет").visible = night_weight > 0.02
     night_lamp.light_energy = night_lamp_energy * night_weight
     sun.visible = night_weight < 0.999
@@ -810,7 +848,6 @@ func _set_mode(mode: StringName, animate := true, position_actor := true) -> voi
             richi.transform = pose
     richi.gaze.enabled = not sleeping and not previewing
     %Back.disabled = false
-    %Rinse.hide()
     _refresh_controls()
     _position_stations()
 
@@ -822,35 +859,38 @@ func _set_status(message: String) -> void:
 func _refresh_controls() -> void:
     var playing: bool = game_room and game_room.visible
     var shopping: bool = shop and shop.visible
+    if hosted and guide_in_overlay != (playing or shopping):
+        guide_in_overlay = playing or shopping
+        _notify_host("overlay-open" if guide_in_overlay else "overlay-closed")
     var previewing := PREVIEW_ROOMS.has(active_mode)
     var free := active_mode == &"home"
     var in_main := location == MAIN
     var showing_main := not kitchen.visible and not bath_room.visible
     bedroom.visible = showing_main and not playing
     stations.visible = showing_main and not playing and not previewing
-    care.visible = in_main and ball_owned and active_mode == &"ball" and not playing and not shopping
+    care.visible = showing_main and ball_owned and active_mode in [&"home", &"ball", &"sleep"] and not playing and not shopping
     furnishings.visible = showing_main and not playing and not previewing
     var moving := _moving_between_places()
     %Actions.visible = (free or night) and not moving and not playing and not shopping
     %Feed.visible = free and location == KITCHEN
     %Wash.visible = free and location == BATH
     %Play.visible = free and in_main
+    %ToyBall.visible = free and in_main and ball_owned
     %Shop.visible = free and in_main and not moving and shop != null
     %Sleep.visible = in_main and has_sleep_furniture and (night or free)
     %Sleep.accessibility_name = "Разбудить" if night else "Уложить спать"
-    %Back.visible = not moving and active_mode in [&"feed", &"bath"]
-    %Back.text = "Из купели" if active_mode == &"bath" else "К миске"
+    %Back.hide()
     %MainRoom.set_pressed_no_signal(in_main)
     %KitchenRoom.set_pressed_no_signal(location == KITCHEN)
     %BathRoom.set_pressed_no_signal(location == BATH)
-    %RoomNavigation.visible = free and not moving and not playing and not shopping and not night
+    %RoomNavigation.visible = (free or active_mode == &"feed") and not meal_in_progress and not moving and not playing and not shopping and not night
     var goal := _bed_goal()
     var show_goal := in_main and free and not moving and not shopping and not playing and not goal.is_empty()
     %GoalText.text = str(goal.get("message", ""))
     %GoalText.visible = show_goal
     %GoalAction.text = str(goal.get("label", ""))
     %GoalButtons.visible = show_goal
-    %Dock.visible = not (playing or shopping or previewing) and (status.visible or %Back.visible or %Rinse.visible or show_goal)
+    %Dock.visible = not (playing or shopping or previewing) and (status.visible or %Back.visible or show_goal)
     var dock_edge := -92.0 if %RoomNavigation.visible else 0.0
     %Dock.offset_top += dock_edge - %Dock.offset_bottom
     %Dock.offset_bottom = dock_edge
@@ -869,6 +909,7 @@ func _position_stations() -> void:
         %Wash: bathroom.get_node("Метка купели"),
         %Sleep: sleep_target,
         %Play: stations.get_node("Сундук с игрушками/Метка"),
+        %ToyBall: care.ball,
     }
     var screen := get_viewport().get_visible_rect().size
     var header_bottom: float = %Header.get_global_rect().end.y + 6.0
@@ -1034,6 +1075,8 @@ func _sync_state(args: Array) -> void:
     richi.set_age_level(level, growth_mesh)
     %NeedsHud.set_values(data.get("needs", {}))
     richi.set_needs(data.get("needs", {}))
+    if awaiting_meal_result:
+        _finish_meal_reaction(data.get("needs", {}))
     richi.wear_hat(str(data.get("hat", "")))
     var goal = data.get("bed_goal")
     hosted_bed_goal = goal if goal is Dictionary else {}
@@ -1090,14 +1133,12 @@ func _restore_navigation(state: Dictionary) -> void:
         _offer_apple()
     elif target == BATH and state.get("mode") == "bath":
         _set_mode(&"bath", false)
-        _finish_bath_movement(true)
+        _finish_bath_movement(true, true)
         var checkpoint = state.get("bath")
         if checkpoint is Dictionary:
-            var phase: String = bathroom.restore_navigation(checkpoint)
-            if phase == "ready":
-                _on_rinse_available()
-            elif phase == "done":
-                _set_status("Шёрстка чистая")
+            bathroom.restore_navigation(checkpoint)
+            if bathroom.phase == &"done":
+                _move_between_floor_and_bath.call_deferred(false)
     elif target == MAIN and richi._need_is_low("food"):
         hunger_visit_started = true
 
@@ -1111,8 +1152,10 @@ func _interaction_state(_args: Array) -> String:
     var controls := {}
     var buttons := {
         "main": %MainRoom, "kitchen": %KitchenRoom, "bath": %BathRoom,
-        "feed": %Feed, "back": %Back, "wash": %Wash, "rinse": %Rinse,
+        "feed": %Feed, "back": bathroom.exit_button if active_mode == &"bath" else %Back, "wash": %Wash,
         "sleep": %Sleep, "profile": %Profile, "chest": %Play, "shop": %Shop,
+        "ball": %ToyBall,
+        "park": %Park,
         "goalAction": %GoalAction, "goalLater": %GoalLater,
     }
     for item in buttons:
@@ -1133,16 +1176,22 @@ func _interaction_state(_args: Array) -> String:
         grip = _interaction_point(camera.unproject_position(apple.palm_center()), size)
     var sponge: Variant = null
     var scrub_center: Variant = null
+    var jug: Variant = null
+    var pour_target: Variant = null
     if active_mode == &"bath" and not bath_moving:
         if bathroom.soap.is_visible_in_tree():
             sponge = _interaction_point(camera.unproject_position(bathroom.soap.global_position), size)
-        scrub_center = _interaction_point(camera.unproject_position(richi.global_position + Vector3(0, 0.36, 0.05)), size)
+        scrub_center = _interaction_point(camera.unproject_position(bathroom.chest_point()), size)
+        if bathroom.phase == &"ready":
+            jug = _interaction_point(camera.unproject_position(bathroom.jug_point()), size)
+            pour_target = _interaction_point(bathroom.pour_target(camera), size)
     return JSON.stringify({
         "location": str(location), "mode": str(active_mode), "moving": _moving_between_places(),
         "paused": get_tree().paused, "food": richi.needs.get("food", 50), "dining": str(dining.state),
         "controls": controls, "apple": fruit, "grip": grip, "applePointer": apple.pointer,
         "appleSettling": apple.settling, "mealInProgress": meal_in_progress, "mealPhase": richi.meal_phase(),
         "sponge": sponge, "scrubCenter": scrub_center,
+        "jug": jug, "pourTarget": pour_target, "bathPouring": bathroom.pouring,
         "navigation": _navigation_state(), "gameTiles": tiles,
     })
 

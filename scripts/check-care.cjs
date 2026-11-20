@@ -105,7 +105,16 @@ const { chromium } = require('playwright');
     await page.locator('#wash-start').click();
     assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/wash-bath/);
     await page.locator('#soap-area').focus();for(let i=0;i<5;i++)await page.keyboard.press('Enter');
-    await page.locator('#rinse').click();assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/clean-bath/);
+    await page.locator('#rinse').click();
+    assert.ok(!await page.locator('#wash.clean').count(),'A tap on the pitcher does not remove foam');
+    const pitcher=await page.locator('#rinse').boundingBox();
+    const fur=await page.locator('#soap-area').boundingBox();
+    await page.mouse.move(pitcher.x+pitcher.width/2,pitcher.y+pitcher.height/2);
+    await page.mouse.down();
+    await page.mouse.move(fur.x+fur.width/2,fur.y+fur.height*.38,{steps:8});
+    await page.locator('#wash.clean').waitFor();
+    await page.mouse.up();
+    assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/clean-bath/);
     async function previewRenovation(label){
       await page.locator('#shop-open').click();
       await page.locator('[data-shop-group="decor"]').click();

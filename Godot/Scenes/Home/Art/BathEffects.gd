@@ -1,0 +1,134 @@
+extends Node3D
+
+const BUBBLES := 42
+const STREAM_RINGS := 12
+const STREAM_SIDES := 6
+
+var foam := MultiMeshInstance3D.new()
+var water := MeshInstance3D.new()
+var stream := ImmediateMesh.new()
+var sparkle := MeshInstance3D.new()
+var foam_offsets: Array[Vector3] = []
+var foam_radii: Array[float] = []
+var sparkle_mesh := ImmediateMesh.new()
+
+func _ready() -> void:
+    var bubble := SphereMesh.new()
+    bubble.radius = 1.0
+    bubble.height = 2.0
+    bubble.radial_segments = 10
+    bubble.rings = 5
+    var pearl := StandardMaterial3D.new()
+    pearl.albedo_color = Color(0.94, 0.99, 0.98)
+    pearl.roughness = 0.31
+    bubble.material = pearl
+    foam.multimesh = MultiMesh.new()
+    foam.multimesh.transform_format = MultiMesh.TRANSFORM_3D
+    foam.multimesh.mesh = bubble
+    foam.multimesh.instance_count = BUBBLES
+    foam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+    add_child(foam)
+    var random := RandomNumberGenerator.new()
+    random.seed = 782
+    for index in range(BUBBLES):
+        var angle := index * 2.399963
+        var radius := sqrt(float(index + 1) / BUBBLES)
+        foam_offsets.append(Vector3(cos(angle) * radius * 0.24, random.randf_range(-0.11, 0.08), sin(angle) * radius * 0.11))
+        foam_radii.append(random.randf_range(0.018, 0.045))
+    foam.hide()
+
+    var blue := StandardMaterial3D.new()
+    blue.albedo_color = Color(0.39, 0.83, 0.94, 0.88)
+    blue.emission_enabled = true
+    blue.emission = Color(0.25, 0.49, 0.61)
+    blue.emission_energy_multiplier = 0.32
+    blue.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+    blue.roughness = 0.21
+    water.mesh = stream
+    water.material_override = blue
+    water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+    add_child(water)
+    water.hide()
+
+    var glow := StandardMaterial3D.new()
+    glow.albedo_color = Color(1.0, 0.91, 0.63)
+    glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+    glow.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+    glow.cull_mode = BaseMaterial3D.CULL_DISABLED
+    sparkle.mesh = sparkle_mesh
+    sparkle.material_override = glow
+    sparkle.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+    add_child(sparkle)
+    sparkle.hide()
+
+func show_foam(center: Vector3, amount: float, time: float) -> void:
+    foam.visible = amount > 0.002
+    if not foam.visible:
+        return
+    foam.global_position = center
+    foam.multimesh.visible_instance_count = mini(BUBBLES, ceili(amount * BUBBLES + 5.0))
+    for index in range(foam.multimesh.visible_instance_count):
+        var offset := foam_offsets[index]
+        var size := foam_radii[index] * smoothstep(0.0, 0.14, amount - maxf(0.0, float(index - 5) / BUBBLES))
+        offset.y += sin(time * 2.3 + index) * 0.007
+        foam.multimesh.set_instance_transform(index, Transform3D(Basis.from_scale(Vector3(size, size * 0.86, size)), offset))
+
+func show_stream(source: Vector3, impact: Vector3, time: float) -> void:
+    water.show()
+    source = to_local(source)
+    impact = to_local(impact)
+    var arc := (source + impact) * 0.5 + Vector3.UP * source.distance_to(impact) * 0.20
+    var side := Vector3.FORWARD.cross(impact - source).normalized()
+    if side.length_squared() < 0.001:
+        side = Vector3.RIGHT
+    stream.clear_surfaces()
+    stream.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+    for ring in range(STREAM_RINGS):
+        var t0 := float(ring) / STREAM_RINGS
+        var t1 := float(ring + 1) / STREAM_RINGS
+        for segment in range(STREAM_SIDES):
+            var a0 := TAU * segment / STREAM_SIDES
+            var a1 := TAU * (segment + 1) / STREAM_SIDES
+            _stream_vertex(source, arc, impact, side, t0, a0, time)
+            _stream_vertex(source, arc, impact, side, t1, a0, time)
+            _stream_vertex(source, arc, impact, side, t0, a1, time)
+            _stream_vertex(source, arc, impact, side, t0, a1, time)
+            _stream_vertex(source, arc, impact, side, t1, a0, time)
+            _stream_vertex(source, arc, impact, side, t1, a1, time)
+    stream.surface_end()
+
+func _stream_vertex(source: Vector3, arc: Vector3, impact: Vector3, side: Vector3, t: float, angle: float, time: float) -> void:
+    var curve := source.lerp(arc, t).lerp(arc.lerp(impact, t), t)
+    var tangent := (arc - source).lerp(impact - arc, t).normalized()
+    var normal := (side * cos(angle) + tangent.cross(side).normalized() * sin(angle)).normalized()
+    var radius := lerpf(0.027, 0.014, t) * (0.91 + 0.09 * sin(time * 33.0 - t * 37.0))
+    stream.surface_set_normal(normal)
+    stream.surface_add_vertex(curve + normal * radius)
+
+func show_sparkle(center: Vector3, phase: float) -> void:
+    sparkle.show()
+    sparkle.global_position = center
+    sparkle_mesh.clear_surfaces()
+    sparkle_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+    for index in range(4):
+        var angle := 0.42 + index * 1.5
+        var opening := clampf(phase * 1.7 - index * 0.18, 0.0, 1.0)
+        var center_offset := Vector3(cos(angle), sin(angle), 0.0) * lerpf(0.10, 0.29, opening)
+        var size := 0.075 * sin(opening * PI) * (1.0 - index * 0.10)
+        for point in range(8):
+            var corner := _sparkle_corner(point, size)
+            var next := _sparkle_corner(point + 1, size)
+            sparkle_mesh.surface_add_vertex(center_offset)
+            sparkle_mesh.surface_add_vertex(center_offset + corner)
+            sparkle_mesh.surface_add_vertex(center_offset + next)
+    sparkle_mesh.surface_end()
+
+func _sparkle_corner(point: int, radius: float) -> Vector3:
+    var angle := PI * point * 0.25
+    var length := radius * (1.0 if point % 2 == 0 else 0.24)
+    return Vector3(cos(angle) * length * 0.82, sin(angle) * length, 0.0)
+
+func clear_effects() -> void:
+    foam.hide()
+    water.hide()
+    sparkle.hide()

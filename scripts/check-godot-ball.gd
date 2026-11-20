@@ -3,6 +3,7 @@ extends SceneTree
 const HOME = preload("res://Scenes/Levels/Home.tscn")
 const LEVELS := [1, 4, 10]
 const RESULTS := ["поймал мяч!", "вернул тебе мяч", "принёс тебе мяч"]
+const SAMPLE_SECONDS := 1.0 / 60.0
 
 var room: Node3D
 var failures := 0
@@ -40,7 +41,7 @@ func _set_level(level: int) -> void:
 
 func _check_level(level: int) -> void:
     _set_level(level)
-    await create_timer(0.46).timeout
+    await _wait_for_home_pose()
     var actor: Node3D = room.richi
     var ball: MeshInstance3D = room.care.ball
     var origin := actor.global_position
@@ -48,7 +49,15 @@ func _check_level(level: int) -> void:
     var previous := floor
     var previous_finish := completed
     await _tap_ball()
-    _expect(room.active_mode == &"ball", "An on-screen tap starts the ball at level %d" % level)
+    var motion: Tween = room.care.motion
+    var started: bool = room.active_mode == &"ball" and motion != null and motion.is_running()
+    _expect(started, "An on-screen tap starts the ball at level %d" % level)
+    if not started:
+        return
+    var player: AnimationPlayer = actor.player
+    var process_mode := player.callback_mode_process
+    motion.pause()
+    player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
     var hold_samples := 0
     var carry_samples := 0
     var carry_start := Vector3.ZERO
@@ -61,7 +70,7 @@ func _check_level(level: int) -> void:
     var skeleton: Skeleton3D = actor.skeleton
     var chest := skeleton.find_bone("mixamorig_Spine2")
     for sample in 320:
-        await create_timer(0.016).timeout
+        await _advance_ball(motion, player)
         if room.active_mode != &"ball":
             break
         var clip: StringName = actor.player.current_animation
@@ -87,8 +96,9 @@ func _check_level(level: int) -> void:
             var forward := actor.global_basis.z.normalized()
             carry_clearance = minf(carry_clearance, forward.dot(ball.global_position - chest_center))
             if carry_samples == 6:
-                await _check_pause(actor, ball)
+                await _check_pause(actor, ball, motion, player, process_mode)
 
+    player.callback_mode_process = process_mode
     _expect(hold_samples >= 6, "The grip holds for multiple frames at level %d" % level)
     _expect(lowest_ball >= floor.y - 0.002, "The ball stays above the floor at level %d" % level)
     _expect(longest_step < 0.09, "The ball path has no position jump at level %d" % level)
@@ -109,27 +119,62 @@ func _check_level(level: int) -> void:
         _expect(maximum_walk < 0.01, "The younger pet plays from the rug")
 
 
-func _check_pause(actor: Node3D, ball: MeshInstance3D) -> void:
+func _check_pause(actor: Node3D, ball: MeshInstance3D, motion: Tween, player: AnimationPlayer,
+        process_mode: AnimationMixer.AnimationCallbackModeProcess) -> void:
+    room._sync_pause([true])
+    # Re-enable automatic playback while paused to exercise the real SceneTree pause.
+    player.callback_mode_process = process_mode
+    motion.play()
     var position := ball.global_position
     var body := actor.global_transform
-    room._sync_pause([true])
+    var motion_time := motion.get_total_elapsed_time()
+    var animation_time := player.current_animation_position
     await create_timer(0.14).timeout
     _expect(position.is_equal_approx(ball.global_position) and body.is_equal_approx(actor.global_transform), "Switching to the park freezes the held ball")
+    _expect(is_equal_approx(motion_time, motion.get_total_elapsed_time()) and is_equal_approx(animation_time, player.current_animation_position),
+        "Switching to the park freezes both the tween and the carry animation")
+    motion.pause()
+    player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
     room._sync_pause([false])
 
 
 func _check_cancellation() -> void:
     _set_level(10)
-    await create_timer(0.45).timeout
+    await _wait_for_home_pose()
     var previous_finish := completed
     await _tap_ball()
-    await create_timer(1.55).timeout
+    var motion: Tween = room.care.motion
+    _expect(motion != null and motion.is_running(), "The adult ball session starts before cancellation")
+    if motion == null:
+        return
+    var player: AnimationPlayer = room.richi.player
+    var process_mode := player.callback_mode_process
+    motion.pause()
+    player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+    for sample in 93:
+        await _advance_ball(motion, player)
+    _expect(room.care.holding and room.active_mode == &"ball", "The adult is holding the ball when play is cancelled")
     room.care.stop_toy()
+    player.callback_mode_process = process_mode
     room._show_room()
+    _expect(not motion.is_valid(), "Cancellation discards the rest of the motion")
     _expect(room.care.ball.global_position.is_equal_approx(room.care.marker.global_position), "Cancellation returns the ball to its marker")
     _expect(room.care.playing_actor == null and room.richi.gaze.fruit == null, "Cancellation releases the grip and gaze")
     await create_timer(3.0).timeout
     _expect(previous_finish == completed, "The cancelled play emits no late result")
+
+
+func _wait_for_home_pose() -> void:
+    var pose: Tween = room.pose_tween
+    if pose != null and pose.is_running():
+        await pose.finished
+
+
+func _advance_ball(motion: Tween, player: AnimationPlayer) -> void:
+    # Step the actual animation and tween at 60 Hz regardless of the runner's frame rate.
+    player.advance(SAMPLE_SECONDS)
+    motion.custom_step(SAMPLE_SECONDS)
+    await process_frame
 
 
 func _tap_ball() -> void:

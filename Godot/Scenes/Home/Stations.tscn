@@ -5,7 +5,7 @@
 [node name="Станции ухода" type="Node3D"]
 
 [node name="Сундук с игрушками" type="Node3D" parent="."]
-position = Vector3(0.225, 0, 1.77)
+position = Vector3(0.225, 0, 1.43)
 rotation = Vector3(0, -0.23, 0)
 scale = Vector3(0.61, 0.61, 0.61)
 
@@ -16,4 +16,4 @@ position = Vector3(0, 0.15, 0.09)
 scale = Vector3(0.62, 0.65, 0.62)
 
 [node name="Метка лежанки" type="Marker3D" parent="."]
-position = Vector3(-0.108, 0.12, 0.77)
+position = Vector3(-0.0655, 0.12, 0.77)

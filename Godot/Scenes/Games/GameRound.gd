@@ -1,6 +1,7 @@
 extends VBoxContainer
 
 signal round_saved(round: Dictionary)
+signal menu_requested
 
 var round_id := 0
 var revision := 0

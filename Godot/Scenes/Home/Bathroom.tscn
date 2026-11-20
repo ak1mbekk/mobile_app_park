@@ -4,6 +4,9 @@
 [ext_resource type="PackedScene" path="res://Scenes/Props/Furniture/EnamelBath.tscn" id="EnamelBath"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Furniture/WoodenWashTub.tscn" id="WoodenWashTub"]
 [ext_resource type="Shader" path="res://Scenes/Home/Art/TubWater.gdshader" id="WaterShader"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Care/wash-pitcher.glb" id="Pitcher"]
+[ext_resource type="Script" path="res://Scenes/Home/Art/BathEffects.gd" id="Effects"]
+[ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="TouchButton"]
 
 [sub_resource type="ShaderMaterial" id="Water"]
 shader = ExtResource("WaterShader")
@@ -20,10 +23,18 @@ roughness = 0.63
 albedo_color = Color(0.045, 0.075, 0.055, 1)
 roughness = 0.76
 
-[sub_resource type="StandardMaterial3D" id="Foam"]
-albedo_color = Color(0.89, 0.97, 0.93, 0.74)
+[sub_resource type="StandardMaterial3D" id="PitcherWater"]
+albedo_color = Color(0.27, 0.73, 0.84, 1)
+metallic = 0.12
+roughness = 0.22
+emission_enabled = true
+emission = Color(0.16, 0.45, 0.54, 1)
+emission_energy_multiplier = 0.16
+
+[sub_resource type="StandardMaterial3D" id="ToolGuide"]
+albedo_color = Color(1, 0.87, 0.49, 0.7)
 transparency = 1
-roughness = 0.51
+shading_mode = 0
 
 [sub_resource type="CylinderMesh" id="WaterTop"]
 material = SubResource("Water")
@@ -59,12 +70,47 @@ height = 0.024
 radial_segments = 8
 rings = 4
 
-[sub_resource type="SphereMesh" id="Bubble"]
-material = SubResource("Foam")
-radius = 0.058
-height = 0.116
-radial_segments = 24
-rings = 12
+[sub_resource type="CylinderMesh" id="WaterInPitcher"]
+material = SubResource("PitcherWater")
+top_radius = 0.075
+bottom_radius = 0.075
+height = 0.008
+radial_segments = 32
+
+[sub_resource type="TorusMesh" id="GuideRing"]
+material = SubResource("ToolGuide")
+inner_radius = 0.132
+outer_radius = 0.144
+rings = 32
+ring_segments = 8
+
+[sub_resource type="StyleBoxFlat" id="MeterTrack"]
+bg_color = Color(0.129, 0.101, 0.064, 0.89)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="MeterSoap"]
+bg_color = Color(0.97, 0.77, 0.37, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="MeterRinse"]
+bg_color = Color(0.51, 0.86, 0.91, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="ExitButton"]
+bg_color = Color(0.13, 0.21, 0.16, 0.92)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_left = 30
+corner_radius_bottom_right = 30
 
 [sub_resource type="Animation" id="Float"]
 resource_name = "float"
@@ -76,29 +122,19 @@ tracks/0/keys = {"times": PackedFloat32Array(0, 0.4, 0.8, 1.2, 1.6), "transition
 tracks/1/type = "value"
 tracks/1/path = NodePath("Купель/Вода:position:y")
 tracks/1/keys = {"times": PackedFloat32Array(0, 0.8, 1.6), "transitions": PackedFloat32Array(1, 1, 1), "update": 0, "values": [0.304, 0.313, 0.304]}
-tracks/2/type = "value"
-tracks/2/path = NodePath("Пена:scale")
-tracks/2/keys = {"times": PackedFloat32Array(0), "transitions": PackedFloat32Array(1), "update": 0, "values": [Vector3(1, 1, 1)]}
-
-[sub_resource type="Animation" id="Rinse"]
-resource_name = "rinse"
-length = 0.9
-tracks/0/type = "value"
-tracks/0/path = NodePath("Пена:scale")
-tracks/0/keys = {"times": PackedFloat32Array(0, 0.9), "transitions": PackedFloat32Array(1.75, 1), "update": 0, "values": [Vector3(1, 1, 1), Vector3(0.01, 0.01, 0.01)]}
-tracks/1/type = "value"
-tracks/1/path = NodePath("Купель/Вода:position:y")
-tracks/1/keys = {"times": PackedFloat32Array(0, 0.4, 0.9), "transitions": PackedFloat32Array(1, 1, 1), "update": 0, "values": [0.304, 0.334, 0.304]}
 
 [sub_resource type="AnimationLibrary" id="Library"]
-_data = {&"float": SubResource("Float"), &"rinse": SubResource("Rinse")}
+_data = {&"float": SubResource("Float")}
 
 [node name="Купание" type="Node3D"]
 script = ExtResource("Script")
 
 [node name="Место для Ричи" type="Marker3D" parent="."]
-position = Vector3(0.12, 0.23, 0.47)
+position = Vector3(0.12, 0.136, 0.47)
 rotation = Vector3(0, -0.32, 0)
+
+[node name="Опора при переступании" type="Marker3D" parent="."]
+position = Vector3(0.12, 0.23, 0.47)
 
 [node name="Подход к купели" type="Marker3D" parent="."]
 position = Vector3(0.045, 0.008, 1.235)
@@ -155,38 +191,83 @@ rotation = Vector3(1.25, 0, -0.68)
 scale = Vector3(1.08, 1, 0.62)
 mesh = SubResource("Soap")
 
-[node name="Пена" type="Node3D" parent="."]
+[node name="Кувшин" type="Node3D" parent="."]
+position = Vector3(0.46, 0.016, 1.20)
+rotation = Vector3(0, -0.53, 0)
+scale = Vector3(0.91, 0.91, 0.91)
+
+[node name="Керамика" parent="Кувшин" instance=ExtResource("Pitcher")]
+
+[node name="Вода" type="MeshInstance3D" parent="Кувшин"]
+position = Vector3(0, 0.244, 0)
+mesh = SubResource("WaterInPitcher")
+cast_shadow = 0
+
+[node name="Носик" type="Marker3D" parent="Кувшин"]
+position = Vector3(-0.050, 0.265, 0.125)
+
+[node name="Подсказка" type="MeshInstance3D" parent="."]
 visible = false
-position = Vector3(0.16, 0.48, 0.93)
+mesh = SubResource("GuideRing")
+cast_shadow = 0
 
-[node name="Пузырь 1" type="MeshInstance3D" parent="Пена"]
-position = Vector3(-0.16, 0.03, 0.015)
-mesh = SubResource("Bubble")
+[node name="Эффекты" type="Node3D" parent="."]
+script = ExtResource("Effects")
 
-[node name="Пузырь 2" type="MeshInstance3D" parent="Пена"]
-position = Vector3(-0.03, 0.07, 0.007)
-scale = Vector3(1.12, 1.12, 1.12)
-mesh = SubResource("Bubble")
+[node name="Отклик" type="CanvasLayer" parent="."]
+layer = 3
 
-[node name="Пузырь 3" type="MeshInstance3D" parent="Пена"]
-position = Vector3(0.11, 0.01, 0.03)
-scale = Vector3(0.92, 0.92, 0.92)
-mesh = SubResource("Bubble")
+[node name="Выход" type="Button" parent="Отклик"]
+visible = false
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -91.0
+offset_right = 84.0
+offset_bottom = -31.0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.98, 0.94, 0.84, 1)
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("ExitButton")
+theme_override_styles/hover = SubResource("ExitButton")
+theme_override_styles/pressed = SubResource("ExitButton")
+text = "‹"
+accessibility_name = "Выйти из купели"
+script = ExtResource("TouchButton")
 
-[node name="Пузырь 4" type="MeshInstance3D" parent="Пена"]
-position = Vector3(0.15, 0.15, -0.025)
-scale = Vector3(0.58, 0.58, 0.58)
-mesh = SubResource("Bubble")
+[node name="ХодКупания" type="HBoxContainer" parent="Отклик"]
+visible = false
+anchor_left = 0.23
+anchor_top = 1.0
+anchor_right = 0.87
+anchor_bottom = 1.0
+offset_top = -67.0
+offset_bottom = -56.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 6
 
-[node name="Пузырь 5" type="MeshInstance3D" parent="Пена"]
-position = Vector3(-0.10, 0.12, -0.012)
-scale = Vector3(0.71, 0.71, 0.71)
-mesh = SubResource("Bubble")
+[node name="Намыливание" type="ProgressBar" parent="Отклик/ХодКупания"]
+custom_minimum_size = Vector2(0, 11)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_styles/background = SubResource("MeterTrack")
+theme_override_styles/fill = SubResource("MeterSoap")
+max_value = 1.0
+step = 0.0
+show_percentage = false
 
-[node name="Пузырь 6" type="MeshInstance3D" parent="Пена"]
-position = Vector3(0.047, 0.16, -0.026)
-scale = Vector3(0.57, 0.57, 0.57)
-mesh = SubResource("Bubble")
+[node name="Ополаскивание" type="ProgressBar" parent="Отклик/ХодКупания"]
+custom_minimum_size = Vector2(0, 11)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_styles/background = SubResource("MeterTrack")
+theme_override_styles/fill = SubResource("MeterRinse")
+max_value = 1.0
+step = 0.0
+show_percentage = false
 
 [node name="Свет над ванной" type="OmniLight3D" parent="."]
 position = Vector3(-0.3, 1.2, 1.0)

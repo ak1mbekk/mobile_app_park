@@ -8,8 +8,8 @@
 animation_player_path = NodePath("Модель/AnimationPlayer")
 
 [node name="Игровая камера" parent="."]
-position = Vector3(0.022, 0.96, 4.13)
-rotation = Vector3(-0.191, 0, 0)
+position = Vector3(0.082, 0.84, 3.41)
+rotation = Vector3(-0.159, 0, 0)
 
 [node name="Тень на коврике" parent="."]
 visible = false

@@ -26,6 +26,7 @@ var finger := -1
 
 func _ready() -> void:
     %Again.pressed.connect(_new_round)
+    %Chest.pressed.connect(func(): menu_requested.emit())
     for index in WIDTH * WIDTH:
         var button := TILE.instantiate()
         button.pressed.connect(_choose.bind(index))
@@ -266,7 +267,7 @@ func _paint() -> void:
 func _update_result() -> void:
     if resolving:
         return
-    %Again.visible = finished
+    %ResultActions.visible = finished
     if berries >= TARGET:
         var payout := reward_text()
         %Hint.text = "Корзинка полна!" if payout.is_empty() else "Корзинка полна!\n" + payout

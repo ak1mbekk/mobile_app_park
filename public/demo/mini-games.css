@@ -1,0 +1,279 @@
+#chest .gamepad {
+  padding-bottom: max(56px, env(safe-area-inset-bottom));
+}
+
+#chest .toylist button {
+  gap: 4px;
+}
+
+#chest .toylist .toy-pairs {
+  min-height: clamp(129px, 39vw, 168px);
+  background: radial-gradient(ellipse at 85% 95%, #ead4a8, transparent 65%), var(--linen);
+}
+
+#chest .toy-pairs .toy-description {
+  width: 59%;
+}
+
+#chest .toy-match .toy-description,
+#chest .toy-orchard .toy-description {
+  padding-bottom: 12px;
+}
+
+#chest .playing-cards {
+  inset: 0 0 0 50%;
+}
+
+#chest .playing-cards img {
+  width: 60%;
+  height: 92%;
+  border: 0;
+  border-radius: 0;
+  object-fit: contain;
+  box-shadow: none;
+  filter: drop-shadow(0 5px 4px #52362438);
+}
+
+#chest .playing-cards img:first-child {
+  inset: 1% auto auto 1%;
+  transform: rotate(-8deg);
+}
+
+#chest .playing-cards img:last-child {
+  inset: 9% auto auto 38%;
+  transform: rotate(6deg);
+}
+
+#chest .mini-board,
+#chest .apple-branch {
+  height: clamp(80px, 27vw, 112px);
+}
+
+#chest .mini-board {
+  padding: 4px 16%;
+  background: #895b3e;
+}
+
+#chest .apple-branch {
+  background: radial-gradient(ellipse at 50% 70%, #dce4a5, transparent 70%), #a9bd86;
+}
+
+#chest .apple-branch img {
+  inset: 10% auto auto 22%;
+  width: 56%;
+  height: 80%;
+}
+
+#chest .toy-match strong,
+#chest .toy-orchard strong {
+  font-size: clamp(17px, 5vw, 20px);
+}
+
+#chest .ball-shop {
+  margin-top: 16px;
+  padding-block: 12px;
+}
+
+#game .gamepad {
+  width: min(100%, 440px);
+  margin-inline: auto;
+  padding-inline: clamp(13px, 4.2vw, 24px);
+}
+
+#game .gamebar {
+  margin-bottom: clamp(13px, 4dvh, 27px);
+}
+
+#game .gamebar button {
+  width: 44px;
+  height: 44px;
+}
+
+#game .gameTitle,
+#win .gameTitle {
+  font-family: var(--heading-face, Georgia, serif);
+  font-size: clamp(30px, 9vw, 42px);
+}
+
+#game .boardBox {
+  margin-block: clamp(14px, 4dvh, 32px) 0;
+  padding: 0;
+}
+
+#game .tiles {
+  gap: clamp(5px, 2vw, 9px);
+}
+
+#game .tile {
+  min-height: 44px;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border-color: #c99d69;
+  box-shadow: 0 3px 0 #1d2b22;
+}
+
+#game .tile.face {
+  background: linear-gradient(#fff6e0, #f4e1b7);
+  border-color: #e4c794;
+}
+
+#game .tile.face .front {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 1px 2px 5px;
+}
+
+#game .tile .front img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+#game .tile .front span {
+  font: 650 clamp(9px, 2.7vw, 12px)/1.15 var(--zk-font);
+  white-space: nowrap;
+}
+
+#game .tile .reverse {
+  background-color: #8d583e;
+  background-image: repeating-linear-gradient(34deg, transparent 0 5px, #eec49338 5px 6px, transparent 6px 11px);
+}
+
+#game .reverse::before {
+  inset: 4px;
+  border: 1px solid #e9c99585;
+}
+
+#game .reverse i {
+  width: clamp(31px, 10vw, 44px);
+  height: clamp(31px, 10vw, 44px);
+  border-radius: 50%;
+  border-color: #e9c995a0;
+  transform: none;
+}
+
+#game .reverse .ic {
+  width: 70%;
+  height: 70%;
+  transform: none;
+}
+
+#game .tile.match {
+  border-color: #7da770;
+}
+
+#game .tile.match::after {
+  content: "";
+  width: 17px;
+  height: 17px;
+  background: #385e47;
+}
+
+#game .tile.match::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  right: 9px;
+  top: 8px;
+  width: 8px;
+  height: 4px;
+  border: solid #fff9ee;
+  border-width: 0 0 1.5px 1.5px;
+  transform: rotate(-45deg);
+}
+
+#game .gamefoot {
+  justify-content: flex-end;
+  margin-top: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+#game button:focus-visible,
+#win button:focus-visible {
+  outline: 2px solid #fff6d4;
+  outline-offset: 2px;
+}
+
+#win .win-pad {
+  width: min(100%, 440px);
+  margin-inline: auto;
+  padding: clamp(60px, 17dvh, 138px) 18px 24px;
+}
+
+#win #pair-result-moves {
+  margin-top: 12px;
+  color: #e5deca;
+}
+
+#win .reward {
+  margin: 20px 0 28px;
+}
+
+#win .reward b {
+  min-height: 36px;
+  border-radius: 8px;
+  background: #e6ebc8;
+  color: #2d4f37;
+  border-color: #a3b180;
+}
+
+#win .win-actions,
+#match #matchEnd,
+#catch .catch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 0;
+}
+
+#win .win-actions button,
+#match #matchEnd button,
+#catch .catch-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  font: 650 14px/1.2 var(--zk-font);
+}
+
+#win .win-actions button .ic,
+#game .gamebar .ic,
+#match #matchEnd .ic,
+#catch .catch-actions .ic {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.7;
+}
+
+#catch #catchSheet {
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+#catch .catch-actions {
+  justify-content: flex-start;
+}
+
+#match #matchEnd .secondary {
+  color: #382c20;
+}
+
+#catch .catch-actions button:focus-visible {
+  outline: 2px solid #294532;
+  outline-offset: 2px;
+}
+
+#match #matchEnd button:focus-visible {
+  outline: 2px solid #fff6d4;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #chest .toy-pairs:active .playing-cards img:last-child {
+    transform: rotate(9deg) translateY(-4px);
+  }
+}

@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scenes/Games/Pairs.gd" id="1"]
 [ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="2"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/game-replay.svg" id="Replay"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/game-chest.svg" id="Chest"]
 
 [node name="Pairs" type="VBoxContainer"]
 size_flags_vertical = 3
@@ -32,7 +34,8 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 356)
 layout_mode = 2
 size_flags_vertical = 3
-ratio = 0.87
+ratio = 1.02
+alignment_vertical = 0
 
 [node name="Paper" type="VBoxContainer" parent="Board"]
 layout_mode = 2
@@ -60,21 +63,25 @@ vertical_alignment = 1
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
+alignment = 1
 theme_override_constants/separation = 8
 
 [node name="Again" type="Button" parent="ResultActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 74)
+custom_minimum_size = Vector2(176, 74)
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_constants/icon_max_width = 28
+theme_override_font_sizes/font_size = 22
+icon = ExtResource("Replay")
 text = "Ещё раз"
 script = ExtResource("2")
 
-[node name="Animal" type="Button" parent="ResultActions"]
+[node name="Chest" type="Button" parent="ResultActions"]
 unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(0, 74)
+custom_minimum_size = Vector2(176, 74)
 layout_mode = 2
-size_flags_horizontal = 3
-text = "Об этом животном"
+theme_override_constants/icon_max_width = 28
+theme_override_font_sizes/font_size = 22
+icon = ExtResource("Chest")
+text = "К сундуку"
 script = ExtResource("2")

@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=7 format=3]
+[gd_resource type="Theme" load_steps=10 format=3]
 
 [sub_resource type="StyleBoxFlat" id="Normal"]
 content_margin_left = 16.0
@@ -67,6 +67,35 @@ corner_radius_top_right = 10
 corner_radius_bottom_left = 10
 corner_radius_bottom_right = 10
 
+[sub_resource type="StyleBoxFlat" id="Choice"]
+bg_color = Color(0.98, 0.937, 0.835, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.77, 0.65, 0.48, 1)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_left = 17
+corner_radius_bottom_right = 17
+shadow_color = Color(0.25, 0.16, 0.09, 0.18)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="ChoiceHover"]
+bg_color = Color(1, 0.96, 0.875, 1)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_left = 17
+corner_radius_bottom_right = 17
+
+[sub_resource type="StyleBoxFlat" id="ChoicePressed"]
+bg_color = Color(0.9, 0.825, 0.68, 1)
+corner_radius_top_left = 17
+corner_radius_top_right = 17
+corner_radius_bottom_left = 17
+corner_radius_bottom_right = 17
+
 [resource]
 default_font_size = 25
 Button/colors/font_color = Color(0.99, 0.95, 0.87, 1)
@@ -77,5 +106,9 @@ Button/styles/normal = SubResource("Normal")
 Button/styles/hover = SubResource("Hover")
 Button/styles/pressed = SubResource("Press")
 Button/styles/focus = SubResource("Focus")
+GameChoice/base_type = &"Button"
+GameChoice/styles/normal = SubResource("Choice")
+GameChoice/styles/hover = SubResource("ChoiceHover")
+GameChoice/styles/pressed = SubResource("ChoicePressed")
 Label/colors/font_color = Color(0.22, 0.16, 0.11, 1)
 PanelContainer/styles/panel = SubResource("Panel")

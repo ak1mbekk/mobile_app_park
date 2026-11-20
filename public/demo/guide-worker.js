@@ -1,6 +1,6 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '29';
+const version = prefix + '31';
 const base = new URL(self.registration.scope);
 const shell = [
   'index.html','base.css','show.css','visitor.css','park-and-chest.css','vendor/park-menu/menu.css','vendor/park-menu/menu.js','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
@@ -14,6 +14,8 @@ const shell = [
   'assets/kitchen-furnished.webp','assets/kitchen-furnished-hungry.webp','assets/wash-tile-room.webp',
   'assets/base-bath.webp','assets/room-bath.webp','assets/wash.webp','assets/wash-bath.webp','assets/clean.webp','assets/clean-bath.webp',
   'assets/harvest-basket.webp',
+  'mini-games.css','assets/woodland-shop.svg','assets/bath-jug.svg','assets/richi-profile.webp',
+  ...['bison','lemur','raccoon','capybara','tamarin','caracal'].map(id=>'assets/game-toy-'+id+'.webp'),
   'assets/shop-chest.webp','assets/shop-bed.webp','assets/room-settee.webp','assets/rope-ball.webp','assets/piece-0.webp','assets/piece-1.webp',
   'assets/shop-wallpaper.webp','assets/shop-kitchen-cabinet.webp','assets/shop-bath-tile.webp',
   'assets/sleep-bed-curled.webp','assets/sleep-settee-curled.webp',

@@ -9,6 +9,8 @@
 [ext_resource type="PackedScene" path="res://Scenes/Games/GameRoom.tscn" id="GameRoom"]
 
 [ext_resource type="PackedScene" path="res://Scenes/Home/Stations.tscn" id="Stations"]
+[ext_resource type="Texture2D" path="res://Art/Brand/woodland-shop.svg" id="ShopFront"]
+[ext_resource type="Texture2D" path="res://Art/Brand/trail-sign.svg" id="TrailSign"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/RoomFurnishings.tscn" id="Decor"]
 [ext_resource type="PackedScene" path="res://Scenes/Shop/Shop.tscn" id="Shop"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/NeedsHud.tscn" id="NeedsHud"]
@@ -101,7 +103,7 @@ Label/colors/font_color = Color(1, 0.98, 0.93, 1)
 Label/styles/normal = SubResource("Chip")
 Button/styles/normal = SubResource("Invisible")
 Button/styles/hover = SubResource("Invisible")
-Button/styles/pressed = SubResource("Focus")
+Button/styles/pressed = SubResource("Invisible")
 Button/styles/focus = SubResource("Focus")
 
 [node name="Домик" type="Node3D"]
@@ -155,6 +157,11 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(175, 90)
 accessibility_name = "Сундук с играми"
 
+[node name="ToyBall" type="Button" parent="Интерфейс/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(78, 78)
+accessibility_name = "Покатить плетёный мяч"
+
 [node name="Header" type="PanelContainer" parent="Интерфейс"]
 unique_name_in_owner = true
 anchor_right = 1.0
@@ -188,11 +195,24 @@ theme_override_font_sizes/font_size = 18
 
 [node name="Shop" type="Button" parent="Интерфейс/Header/Contents/Row"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(94, 58)
+custom_minimum_size = Vector2(68, 64)
 size_flags_vertical = 4
-text = "Лавка"
+icon = ExtResource("ShopFront")
+expand_icon = true
+icon_alignment = 1
+theme_override_constants/icon_max_width = 56
 accessibility_name = "Лесная лавка"
 script = ExtResource("TouchButton")
+
+[node name="Park" type="Button" parent="Интерфейс/Header/Contents/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+size_flags_vertical = 4
+icon = ExtResource("TrailSign")
+expand_icon = true
+icon_alignment = 1
+theme_override_constants/icon_max_width = 46
+accessibility_name = "Открыть парк"
 
 [node name="Profile" type="Button" parent="Интерфейс/Header/Contents/Row"]
 unique_name_in_owner = true
@@ -269,12 +289,6 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(112, 54)
 text = "Позже"
 script = ExtResource("TouchButton")
-
-[node name="Rinse" type="Button" parent="Интерфейс/Dock/Content"]
-unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(0, 58)
-text = "Смыть пену"
 
 [node name="Back" type="Button" parent="Интерфейс/Dock/Content"]
 unique_name_in_owner = true

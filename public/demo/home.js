@@ -6,7 +6,55 @@
   const defaults = {name: 'Ричи', leaves: 0, xp: 0, night: false, onboardingDone: false,
     food:50, clean:50, energy:50, joy:50, ball:false, updated:Date.now(), couponUsed:false, mealFinished:false};
   const profileKey='aki-concept-demo';
+  const checkpoints='checkpoints';
   let storedProfile=null;
+  let roundDatabase,roundRecovery;
+  function openRoundDatabase(){
+    return roundDatabase??=new Promise(resolve=>{
+      let request;
+      try{request=indexedDB.open('animal-park-progress',1);}catch{resolve(null);return;}
+      request.onupgradeneeded=()=>request.result.createObjectStore(checkpoints);
+      request.onsuccess=()=>request.result ? resolve(request.result) : resolve(null);
+      request.onerror=request.onblocked=()=>resolve(null);
+    });
+  }
+  async function checkpointNativeRound(previous,record){
+    const db=await openRoundDatabase();
+    if(!db)return;
+    await new Promise(resolve=>{
+      const transaction=db.transaction(checkpoints,'readwrite',{durability:'strict'});
+      const store=transaction.objectStore(checkpoints);
+      const request=store.get(profileKey);
+      request.onsuccess=()=>{
+        // The browser may flush any earlier localStorage snapshot before it is stopped.
+        const known=request.result?.record===previous?request.result.known:[];
+        store.put({record,known:[...known.slice(-31),previous]},profileKey);
+      };
+      transaction.oncomplete=transaction.onabort=resolve;
+    }).catch(()=>{});
+  }
+  async function recoverNativeRound(){
+    const db=await openRoundDatabase();
+    if(!db)return;
+    return new Promise(resolve=>{
+      const request=db.transaction(checkpoints).objectStore(checkpoints).get(profileKey);
+      request.onerror=()=>resolve();
+      request.onsuccess=()=>{
+        const checkpoint=request.result;
+        try{
+          if(checkpoint?.known.includes(storedProfile)&&localStorage.getItem(profileKey)===storedProfile){
+            const restored=JSON.parse(checkpoint.record);
+            if(writeProfile(checkpoint.record)){
+              saved={...defaults,...restored};
+              restorePairs();
+              refreshHome();
+            }
+          }
+        }catch{}
+        resolve();
+      };
+    }).catch(()=>{});
+  }
   function readProfile(){
     for(const key of [profileKey,profileKey+'.backup']){
       let raw;
@@ -59,15 +107,17 @@
     saved[key]=Number.isFinite(saved[key])?Math.max(0,Math.min(100,saved[key])):defaults[key];
   }
   if(!Number.isFinite(saved.updated)||saved.updated<0)saved.updated=Date.now();
-  function save(){
-    saved.version=1;
-    const record=JSON.stringify(saved);
+  function writeProfile(record){
     try{
       localStorage.setItem(profileKey,record);
       storedProfile=record;
     }catch{return false;}
     try{localStorage.setItem(profileKey+'.backup',record);}catch{}
     return true;
+  }
+  function save(){
+    saved.version=1;
+    return writeProfile(JSON.stringify(saved));
   }
   function advanceNeeds() {
     const now=Date.now();
@@ -140,7 +190,7 @@
     },
     finishAppleSnack(){
       if(!saved.onboardingDone||saved.night)return;
-      care('food',32);heart();feedback(saved.name+' доел яблоко');
+      care('food',32);heart();
     },
     stats(){advanceNeeds();return {...saved,level:1+Math.floor(saved.xp/30)};},
     wash(){if(!saved.night)care('clean',55);},gameReward,buyBall,
@@ -158,7 +208,8 @@
       if(!saved.night)purchasePreview();
     },
     setResting,
-    storeGame(game,round){
+    recoverNativeRound(){return roundRecovery??=recoverNativeRound();},
+    storeGame(game,round,native=false){
       if(!['pairs','match','orchard'].includes(game)||!Number.isSafeInteger(round?.id)||round.id<1)return;
       // A queued or pagehide round must not overwrite a profile restored in the meantime.
       try{if(localStorage.getItem(profileKey)!==storedProfile)return;}catch{return;}
@@ -168,6 +219,7 @@
       if(previous?.id===round.id && Number.isSafeInteger(round.revision) && (previous.revision??0)>round.revision)return;
       if(!Number.isSafeInteger(round.revision))round.revision=(previous?.id===round.id?previous.revision??0:0)+1;
       const before={...saved};
+      const previousRecord=storedProfile;
       if(previous?.id===round.id && round.finished && (round.won||!saved.starterRoundRewarded)){
         const leaves=!round.won?0:game==='orchard'?Math.min(10,Math.floor(round.caught/3)):game==='pairs'?5:5+round.bonus;
         round.reward=addGameReward(leaves,round.won);
@@ -178,6 +230,7 @@
       }
       saved[game]=round;
       if(!save()){saved=before;return;}
+      if(native)return checkpointNativeRound(previousRecord,storedProfile).then(refreshHome);
       refreshHome();
     },
     confirmDemoOrder(children,adults){
@@ -215,8 +268,11 @@
   function refreshHome() {
     const stage=saved.xp>=270?'adult':saved.xp>=90?'young':'kit';
     $('home').dataset.age=stage;
-    const mood=saved.energy<=25?'sleepy':saved.food<=25?'hungry':saved.clean<=25?'dirty':saved.joy<=25?'lonely':'content';
+    const moodValue=Math.round(saved.joy*100)/100;
+    const mood=saved.energy<30?'sleepy':saved.food<30?'hungry':saved.clean<30?'dirty':moodValue<30?'tearful':moodValue<50?'lonely':moodValue>80?'happy':'content';
     $('pet-figure').dataset.mood=mood;
+    $('pet-figure').classList.toggle('dusty', saved.clean<30 && !saved.night);
+    $('rope-ball').hidden=!saved.ball||saved.night;
     $('shop-open').hidden=!saved.onboardingDone||saved.night;
     const goal=bedGoal();
     $('bed-goal').hidden=!goal;
@@ -249,12 +305,13 @@
   function paintPet(hat){
     const home=$('home'),figure=$('pet-figure'),actor=$('pet-actor');
     const stage=home.dataset.age,mood=figure.dataset.mood;
-    const feeling={sleepy:'зевает',hungry:'проголодался',dirty:'испачкался',lonely:'скучает',content:'доволен'};
-    const bare='assets/pet-'+(mood!=='content'&&stage==='kit'?'mood-'+mood:stage)+'.webp';
+    const feeling={sleepy:'зевает',hungry:'проголодался',dirty:'испачкался',lonely:'скучает',tearful:'вот-вот заплачет',happy:'радуется',content:'доволен'};
+    const pose=mood==='tearful'?'lonely':mood==='happy'?'content':mood;
+    const bare='assets/pet-'+(pose!=='content'&&stage==='kit'?'mood-'+pose:stage)+'.webp';
     const portraits='assets/fallback-wardrobe/';
     const showWardrobe=hat&&!navigator.connection?.saveData;
     const fitted=showWardrobe&&!saved.night;
-    const portrait=fitted?portraits+stage+'-'+(stage==='kit'?mood:'content')+'-'+hat+'.webp':bare;
+    const portrait=fitted?portraits+stage+'-'+(stage==='kit'?pose:'content')+'-'+hat+'.webp':bare;
     const baseLabel=saved.name+' '+feeling[mood];
     if(actor.dataset.frame!==portrait){
       actor.dataset.frame=portrait;
@@ -413,11 +470,27 @@
   $('buy-ball').onclick=()=>{
     if(saved.ball&&!saved.night){route('home');rollBall();return;}
     const refusal=buyBall();
-    $('toy-notice').textContent=refusal||'Мяч в сундуке. Можно поиграть!';
+    if(refusal) $('toy-notice').textContent=refusal;
+    else route('home');
   };
-  let rolling=false;
+  let rolling=false, ballAnimation=null, ballActorAnimation=null;
+  const syncBallAnimation=()=>{
+    if(!ballAnimation)return;
+    const home=$('home');
+    const pause=document.hidden||!home.classList.contains('current')||home.classList.contains('in-kitchen')||saved.night;
+    for(const motion of [ballAnimation,ballActorAnimation]){
+      if(!motion||motion.playState==='finished')continue;
+      if(pause)motion.pause();
+      else motion.play();
+    }
+  };
+  document.addEventListener('visibilitychange',syncBallAnimation);
+  document.addEventListener('conceptscreen',syncBallAnimation);
+  $('rope-ball').onclick=rollBall;
   async function rollBall(){
     if(rolling||saved.night||!saved.ball)return;
+    const refusal=window.petDemo.playBlock();
+    if(refusal){ feedback(refusal); return; }
     rolling=true;
     const ball=$('rope-ball'),age=$('home').dataset.age;
     ball.hidden=false;
@@ -426,10 +499,14 @@
     const near='translate('+dx+'px,'+dy+'px) rotate(280deg) scale(.73)';
     const slow=matchMedia('(prefers-reduced-motion: reduce)').matches;
     const frames=age==='kit'?['none',near,near]:['none',near,near,'none'];
-    petMotion(age==='adult'?'bring':'reach');
-    try { await ball.animate({transform:frames},{duration:slow?150:age==='kit'?900:1550,easing:'ease-in-out'}).finished; }
-    finally { ball.hidden=true;rolling=false; }
-    if(active==='home'&&!saved.night){
+    const petFrames=age==='adult'
+      ? [{transform:'none'},{transform:'translate(-8%,2%) rotate(-3deg)',offset:.4},{transform:'translate(-3%,-1%)',offset:.75},{transform:'none'}]
+      : [{transform:'none'},{transform:'translate(-3%,2%) rotate(-4deg) scale(1.025,.975)'},{transform:'none'}];
+    ballActorAnimation=$('pet-figure').animate(slow?[{opacity:1},{opacity:1}]:petFrames,{duration:slow?150:age==='adult'?1550:720,easing:'ease-in-out'});
+    ballAnimation=ball.animate({transform:frames},{duration:slow?150:age==='kit'?900:1550,easing:'ease-in-out'});
+    try { await ballAnimation.finished; }
+    finally { ballAnimation=null;ballActorAnimation=null;ball.hidden=!saved.ball||saved.night;rolling=false; }
+    if(active==='home'&&!saved.night&&!$('home').classList.contains('in-kitchen')){
       heart();feedback(saved.name+(age==='kit'?' поймал мяч!':age==='young'?' вернул тебе мяч':' принёс любимый мяч'));
     }
   }
@@ -491,6 +568,7 @@
     if(kitchen.hidden===!open)return;
     kitchen.hidden=!open;
     $('home').classList.toggle('in-kitchen',open);
+    syncBallAnimation();
     setPantry(false);
     if(open){
       if(preview)setShopPreview(null);
@@ -632,18 +710,20 @@
   const names={capybara:'Капибара',lemur:'Лемур',raccoon:'Енот',bison:'Зубр',tamarin:'Тамарин',caracal:'Каракал'};
   const shuffle=list=>{const result=list.slice();for(let j=result.length-1;j>0;j--){const i=Math.floor(Math.random()*(j+1));[result[j],result[i]]=[result[i],result[j]];}return result;};
   let cards=[],opened=[],paired=new Set(),moves=0,locked=false,gameTimer=null,active='',winShown=false,pairId=0,pairRevision=0;
-  const round=saved.pairs;
-  if(round && Array.isArray(round.cards) && [6,12].includes(round.cards.length) &&
-     round.cards.every(species=>Object.hasOwn(names,species)&&round.cards.filter(s=>s===species).length===2) &&
-     Array.isArray(round.paired) && round.paired.every(s=>round.cards.includes(s)) &&
-     Array.isArray(round.opened) && round.opened.length<=2 &&
-     round.opened.every(i=>Number.isInteger(i)&&i>=0&&i<round.cards.length)){
+  function restorePairs(){
+    const round=saved.pairs;
+    if(!round || !Array.isArray(round.cards) || ![6,12].includes(round.cards.length) ||
+       !round.cards.every(species=>Object.hasOwn(names,species)&&round.cards.filter(s=>s===species).length===2) ||
+       !Array.isArray(round.paired) || !round.paired.every(s=>round.cards.includes(s)) ||
+       !Array.isArray(round.opened) || round.opened.length>2 ||
+       !round.opened.every(i=>Number.isInteger(i)&&i>=0&&i<round.cards.length))return;
     cards=round.cards.slice();opened=round.opened.slice();paired=new Set(round.paired);
     moves=Math.max(0,Number(round.moves)||0);locked=opened.length===2||paired.size===cards.length/2;
     winShown=round.winShown===true;
     pairId=Number.isSafeInteger(round.id)?round.id:0;
     pairRevision=Number.isSafeInteger(round.revision)?round.revision:0;
   }
+  restorePairs();
   function recordRound() {
     const finished=paired.size===cards.length/2;
     const previous=saved.pairs?.id===pairId?saved.pairs:null;
@@ -676,11 +756,24 @@
       const b=document.createElement('button');b.type='button';b.dataset.index=String(i);
       b.className='tile'+(visible?' face':'')+(matched?' match':'');b.disabled=matched;
       b.setAttribute('aria-label',visible?names[species]+(matched?', пара найдена':''):'Открыть карточку '+(i+1));
-      b.innerHTML='<span class="reverse" aria-hidden="true"><i><svg class="ic"><use href="#aki-paw"/></svg></i></span><span class="front" aria-hidden="true"><img alt="" src="assets/'+species+'.webp"><span>'+names[species]+'</span></span>';
+      b.innerHTML=visible
+        ? '<span class="front" aria-hidden="true"><img alt="" src="assets/game-toy-'+species+'.webp"><span>'+names[species]+'</span></span>'
+        : '<span class="reverse" aria-hidden="true"><i><svg class="ic"><use href="#aki-paw"/></svg></i></span>';
       b.onclick=()=>flip(i);board.appendChild(b);
     });
     if(focused!=null)board.querySelector('[data-index="'+focused+'"]:not(:disabled)')?.focus({preventScroll:true});
     $('aki-pairs').textContent=paired.size+' из '+(cards.length/2)+' пар';$('aki-moves').textContent='Ходов: '+moves;
+  }
+  function showPairResults(){
+    const reward=saved.pairs.reward;
+    const leaves=reward?.leaves??5;
+    const xp=reward?.xp??saved.pairs.rewardXp??saved.lastGameXp??0;
+    $('pair-result-moves').textContent='Ходов: '+moves;
+    $('pair-result-leaves').textContent='+'+leaves+' '+leafWord(leaves);
+    $('pair-xp').textContent='+'+xp+' опыта';
+    $('pair-xp').hidden=!xp;
+    winShown=true;
+    storeRound();
   }
   function flip(i) {
     if(document.hidden||active!=='game'||locked||opened.includes(i)||paired.has(cards[i]))return;
@@ -708,11 +801,10 @@
     if(active==='intro'&&!eating)resetFruit();
     if(active==='game')clearTimeout(gameTimer);
     if(active==='home'){if(preview)setShopPreview(null);$('shop-preview').hidden=true;$('cottage-shop').close();}
-    if(id==='wash')setWashing(false);
     $('aki-feedback').hidden=true;active=id;
     if(id==='intro'&&!eating)resetFruit();
     if(id==='game'){if(!cards.length||(paired.size===cards.length/2&&winShown))newGame();else resumeGame();}
-    if(id==='win'&&cards.length&&paired.size===cards.length/2){$('pair-xp').textContent='+'+(saved.pairs.rewardXp??saved.lastGameXp??0)+' опыта';winShown=true;storeRound();}
+    if(id==='win'&&cards.length&&paired.size===cards.length/2)showPairResults();
     if(id==='home')refreshHome();
     if(id==='chest'){$('toy-notice').textContent='';refreshHome();}
   }

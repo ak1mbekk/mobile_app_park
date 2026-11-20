@@ -2,7 +2,6 @@ extends Control
 
 signal closed
 signal round_saved(game: String, round: Dictionary)
-signal animal_requested(species: String)
 signal ball_purchase_requested
 signal ball_play_requested
 
@@ -15,7 +14,6 @@ const GAMES := {
 var rounds := {}
 var active_game := ""
 var board: Control
-var guide_available := false
 var owns_ball := false
 
 
@@ -90,9 +88,7 @@ func _select(game: String) -> void:
     board = GAMES[game].instantiate()
     %Board.add_child(board)
     board.round_saved.connect(_store_round.bind(game))
-    if game == "pairs":
-        board.guide_available = guide_available
-        board.animal_requested.connect(func(species: String): animal_requested.emit(species))
+    board.menu_requested.connect(_back)
     board.restore(rounds.get(game, {}))
     %Back.grab_focus()
 

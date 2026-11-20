@@ -12,7 +12,7 @@ const RICHI := "res://Art/Characters/Richi.glb"
 # These clips have no gameplay callers. The source rig and its editor import keep them.
 const UNUSED_CLIPS := [
     &"Running", &"Eat", &"Cheer_with_Both_Hands_Up", &"Idle_Turn_Right", &"Scheming_Hand_Rub",
-    &"Sit_Cross_Legged", &"Stand_to_Sit_Transition_M", &"Wake_Up_and_Look_Up", &"Wave_One_Hand",
+    &"Wake_Up_and_Look_Up", &"Wave_One_Hand",
 ]
 const EXPORT_FOLDER := "res://.godot/park_web_export"
 

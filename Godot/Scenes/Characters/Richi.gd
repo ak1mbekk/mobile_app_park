@@ -8,9 +8,9 @@ const EAT := &"Eat_Apple"
 const SLEEP := &"Sleep_Normally"
 const FURNITURE_SLEEP := &"Sleep/Curled"
 const SLEEP_LIBRARY := preload("res://Art/Characters/Sleep/CurledSleep.tres")
+const CALM_IDLE := preload("res://Scenes/Characters/IdleFacing.tres")
 const WASH := &"Wash_Face"
 const REST := &"Idle"
-const RUB_EYES := &"Rub_Eyes"
 const WALK := &"Casual_Walk"
 const PURCHASE_JUMP := &"Regular_Jump"
 const PURCHASE_CLAP := &"Stand_Clap_and_Sit_Down"
@@ -21,6 +21,7 @@ const PURCHASE_CLAP := &"Stand_Clap_and_Sit_Down"
 @onready var right_palm := skeleton.find_bone("mixamorig_RightHandMiddle1")
 @onready var gaze = skeleton.get_node("Взгляд")
 @onready var paw_pose = skeleton.get_node("PawPose")
+@onready var presentation = $NeedsPresentation
 @onready var body: MeshInstance3D = gaze.actor_mesh
 @onready var baby_mesh := body.mesh
 @onready var hat_seat: Node3D = skeleton.get_node("Headwear/Seat")
@@ -28,14 +29,22 @@ const PURCHASE_CLAP := &"Stand_Clap_and_Sit_Down"
 var eating_finished := false
 var resting_at_home := false
 var needs: Dictionary = {}
-var mood: StringName
 var age_stage := 0
 var sleeping_on_furniture := false
 var celebrating_purchase := false
 var eyelid_tween: Tween
+var eyelid_value := 0.0
 
 func _ready() -> void:
     paw_pose.player = player
+    if not Engine.is_editor_hint():
+        if player.has_animation(REST):
+            var library := player.get_animation_library(&"").duplicate() as AnimationLibrary
+            library.remove_animation(REST)
+            library.add_animation(REST, CALM_IDLE)
+            player.remove_animation_library(&"")
+            player.add_animation_library(&"", library)
+        presentation.attach(self, skeleton.get_node("NeedsPose"))
     player.play(REST if player.has_animation(REST) else WAIT)
     player.advance(0)
     if Engine.is_editor_hint():
@@ -77,12 +86,13 @@ func offer_apple() -> void:
 
 func sleep() -> void:
     _clear_expression()
-    gaze.surface.set_shader_parameter("eyelids", 1.0)
+    _write_eyelids(1.0)
     player.play(SLEEP, 0.24)
 
 func sleep_on_bed(animate := true) -> void:
     resting_at_home = false
     sleeping_on_furniture = true
+    presentation.cancel_reaction()
     gaze.mood_angles = Vector2.ZERO
     gaze.reset_attention()
     gaze.suspended = true
@@ -112,12 +122,17 @@ func idle_in_home() -> void:
     stop_purchase_celebration()
     resting_at_home = true
     gaze.suspended = false
-    _apply_mood(true, 0.60 if waking else 0.0)
+    _set_eyelids(0.0, 0.60 if waking else 0.20)
+    player.play(REST, 0.28)
 
 func set_needs(values: Dictionary) -> void:
     needs = values
-    if resting_at_home:
-        _apply_mood(false)
+
+func react_to_full_meal() -> void:
+    presentation.start_reaction(&"full")
+
+func react_to_wake() -> void:
+    presentation.start_reaction(&"wake")
 
 func celebrate_purchase() -> void:
     _clear_expression()
@@ -142,6 +157,7 @@ func _clear_expression() -> void:
     resting_at_home = false
     sleeping_on_furniture = false
     stop_purchase_celebration()
+    presentation.cancel_reaction()
     gaze.mood_angles = Vector2.ZERO
     _set_eyelids(0.0)
 
@@ -150,48 +166,23 @@ func _set_eyelids(value: float, duration := 0.0) -> void:
         eyelid_tween.kill()
         eyelid_tween = null
     if duration <= 0.0:
-        gaze.surface.set_shader_parameter("eyelids", value)
+        _write_eyelids(value)
         return
-    var material: ShaderMaterial = gaze.surface
     eyelid_tween = create_tween()
-    eyelid_tween.tween_property(material, "shader_parameter/eyelids", value, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    eyelid_tween.tween_method(_write_eyelids, eyelid_value, value, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _write_eyelids(value: float) -> void:
+    eyelid_value = value
+    gaze.surface.set_shader_parameter("eyelids", value)
+
+func need_amount(key: String) -> float:
+    var amount: Variant = needs.get(key, 50.0)
+    if (amount is int or amount is float) and is_finite(float(amount)):
+        return clampf(float(amount), 0.0, 100.0)
+    return 50.0
 
 func _need_is_low(key: String) -> bool:
-    var amount: Variant = needs.get(key, 50.0)
-    return (amount is int or amount is float) and is_finite(float(amount)) and float(amount) <= 25.0
-
-func _apply_mood(force: bool, wake_duration := 0.0) -> void:
-    var next_mood := &"rest"
-    if _need_is_low("energy"):
-        next_mood = &"sleepy"
-    elif _need_is_low("food"):
-        next_mood = &"hungry"
-    elif _need_is_low("clean"):
-        next_mood = &"dirty"
-    elif _need_is_low("joy"):
-        next_mood = &"lonely"
-    if next_mood == mood and not force:
-        return
-    mood = next_mood
-    var clip := REST
-    var angles := Vector2(1.2, -3.5)
-    var eyelids := 0.0
-    match mood:
-        &"sleepy":
-            clip = RUB_EYES
-            angles = Vector2(2.0, 7.5)
-            eyelids = 0.48
-        &"hungry":
-            angles = Vector2(-2.0, -11.0)
-        &"dirty":
-            clip = WASH
-            angles = Vector2(4.0, -3.0)
-        &"lonely":
-            angles = Vector2(-12.0, 6.0)
-            eyelids = 0.22
-    gaze.mood_angles = angles
-    _set_eyelids(eyelids, wake_duration)
-    player.play(clip, wake_duration if wake_duration > 0.0 else 0.22)
+    return need_amount(key) <= 25.0
 
 func meal_phase() -> float:
     if eating_finished:
@@ -216,5 +207,5 @@ func _on_finished(clip: StringName) -> void:
         player.play_section(PURCHASE_CLAP, 0.24, 1.86, 0.13, 1.3)
     elif celebrating_purchase and clip == PURCHASE_CLAP:
         idle_in_home()
-    elif resting_at_home and clip in [WASH, RUB_EYES]:
+    elif resting_at_home and clip == WASH:
         player.play(REST, 0.22)

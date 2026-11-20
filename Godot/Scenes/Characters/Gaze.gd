@@ -18,6 +18,7 @@ extends SkeletonModifier3D
 @export var surface: ShaderMaterial
 const NO_TOUCH := -1
 const TAP_LOOK_SECONDS := 0.48
+const MOUSE_LOOK_SECONDS := 1.40
 var finger := NO_TOUCH
 var pointing := false
 var tap_look_left := 0.0
@@ -30,6 +31,8 @@ var head_wait := 0.0
 var last_direction := Vector2.ZERO
 var head: int
 var rest_eye: Vector3
+var rest_forward: Vector3
+var face_camera := false
 var mood_angles := Vector2.ZERO
 var reaction_yaw := 0.0
 
@@ -41,6 +44,7 @@ func _ready() -> void:
     actor_mesh.set_surface_override_material(0, surface)
     head = skeleton.find_bone("mixamorig_Head")
     rest_eye = skeleton.get_bone_global_rest(head).affine_inverse() * Vector3(0, 1.25, 0.40)
+    rest_forward = skeleton.get_bone_global_rest(head).basis.inverse() * Vector3.BACK
     set_process(false)
 
 func _input(event: InputEvent) -> void:
@@ -62,6 +66,7 @@ func _unhandled_input(event: InputEvent) -> void:
             point_at(event.position)
     elif event is InputEventMouseMotion and finger == NO_TOUCH and event.device != InputEvent.DEVICE_ID_EMULATION:
         point_at(event.position)
+        tap_look_left = MOUSE_LOOK_SECONDS
 
 func point_at(target: Vector2) -> void:
     screen_point = target
@@ -150,13 +155,21 @@ func _process(delta: float) -> void:
 
 func _process_modification_with_delta(_delta: float) -> void:
     var turn_angles := head_angles + mood_angles + Vector2(reaction_yaw, 0.0)
-    if not enabled or turn_angles.is_zero_approx() or not is_instance_valid(skeleton):
+    if not enabled or (turn_angles.is_zero_approx() and not face_camera) or not is_instance_valid(skeleton):
         return
     var camera := get_viewport().get_camera_3d()
     if not camera:
         return
     var camera_axes := skeleton.global_basis.orthonormalized().inverse() * camera.global_basis.orthonormalized()
-    var turn := Basis(camera_axes.y.normalized(), deg_to_rad(turn_angles.x)) * Basis(camera_axes.x.normalized(), deg_to_rad(turn_angles.y))
     var pose := skeleton.get_bone_global_pose(head)
+    if face_camera:
+        var forward := pose.basis * rest_forward
+        var toward_camera := skeleton.to_local(camera.global_position) - pose.origin
+        forward.y = 0.0
+        toward_camera.y = 0.0
+        if not forward.is_zero_approx() and not toward_camera.is_zero_approx():
+            var aim := forward.signed_angle_to(toward_camera, Vector3.UP)
+            pose.basis = Basis(Vector3.UP, clampf(aim, -0.45, 0.45)) * pose.basis
+    var turn := Basis(camera_axes.y.normalized(), deg_to_rad(turn_angles.x)) * Basis(camera_axes.x.normalized(), deg_to_rad(turn_angles.y))
     pose.basis = turn * pose.basis
     skeleton.set_bone_global_pose(head, pose)

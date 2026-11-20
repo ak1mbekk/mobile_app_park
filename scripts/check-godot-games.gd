@@ -9,7 +9,6 @@ const CELLS := [
 
 var room
 var committed := []
-var animal_links := []
 var failures := 0
 var ball_requests := 0
 var ball_play_requests := 0
@@ -27,8 +26,6 @@ func _run() -> void:
     room.round_saved.connect(func(game: String, record: Dictionary):
         committed.append([game, record])
     )
-    room.guide_available = true
-    room.animal_requested.connect(func(species: String): animal_links.append(species))
     room.ball_purchase_requested.connect(func(): ball_requests += 1)
     room.ball_play_requested.connect(func(): ball_play_requests += 1)
     room.closed.connect(func(): closed_rooms += 1)
@@ -43,7 +40,7 @@ func _run() -> void:
     await process_frame
     await _test_home_play_needs()
     if failures == 0:
-        print("PASS Godot chest and ball action, pair reveal/replay/guide, match combos, orchard hearts/replay, return home, and play needs")
+        print("PASS Godot chest and ball action, pair reveal/replay, match combos, orchard hearts/replay, return home, and play needs")
     quit(failures)
 
 
@@ -54,7 +51,7 @@ func _test_ball() -> void:
     _expect(ball_requests == 0, "An unaffordable ball cannot be requested")
     room.set_ball_shop(false, true)
     _tap(ball)
-    _expect(ball_requests == 1 and not ball.disabled, "The ball button delegates an affordable purchase")
+    _expect(ball_requests == 1 and ball_play_requests == 0 and not ball.disabled, "The ball button delegates an affordable purchase without starting a game")
     room.set_ball_shop(true, true)
     _tap(ball)
     _expect(ball_requests == 1 and ball_play_requests == 1 and not room.visible, "The owned ball starts play without charging for it again")
@@ -63,6 +60,10 @@ func _test_ball() -> void:
 func _test_home_play_needs() -> void:
     var home = HOME.instantiate()
     root.add_child(home)
+    if DisplayServer.get_name() == "headless":
+        var murmur: AudioStreamPlayer = home.richi.get_node("SoftMurmur")
+        # This fixture checks the refusal animation. The dummy driver can retain overlapping WAV voices.
+        murmur.stream = null
     home.night = false
     home.ball_owned = true
     home._show_room()
@@ -95,8 +96,6 @@ func _test_home_play_needs() -> void:
     games.pressed.emit()
     home._play_ball()
     _expect(not home.game_room.visible and home.active_mode == &"sleep", "Sleep prevents a new game or toy session")
-    var murmur: AudioStreamPlayer = home.richi.get_node("SoftMurmur")
-    await create_timer(murmur.stream.get_length() + 0.1).timeout
     home.queue_free()
     await process_frame
 
@@ -122,9 +121,11 @@ func _test_pairs() -> void:
     await process_frame
     _expect(committed.size() == count, "Completed pairs can reopen without another reward")
     _expect(room.board.get_node("%Hint").text.contains("Листья +5"), "The authoritative reward is displayed")
-    _tap(room.board.get_node("%Animal"))
-    _expect(animal_links == ["bison"], "Result link requests the last matched species")
-    _expect(committed.size() == count, "The guide link keeps the completed round")
+    _tap(room.board.get_node("%Chest"))
+    _expect(room.get_node("%Picker").visible and not room.board, "The result returns to the chest menu")
+    _expect(committed.size() == count, "Returning to the chest keeps the completed round")
+    _tap(room.get_node("%Pairs"))
+    await process_frame
     _tap(room.board.get_node("%Again"))
     _expect(room.rounds.pairs.id == 2 and room.rounds.pairs.cards.size() == 12, "Replay gets a new round with six pairs")
     await process_frame
@@ -139,8 +140,9 @@ func _test_pairs() -> void:
     _expect(room.board.opened == [0, mismatch], "A mismatch remains visible for comparison")
     _tap(grid.get_child(3))
     _expect(room.board.opened == [0, mismatch] and grid.get_child(3).face.texture == null, "A third touch is ignored while comparing")
-    await create_timer(0.74).timeout
-    _expect(room.board.opened.is_empty() and grid.get_child(0).face.texture == null, "Mismatched cards turn back over")
+    if not await _wait_for(func() -> bool: return room.board.opened.is_empty(), 2.0, "The mismatch comparison ends"):
+        return
+    _expect(grid.get_child(0).face.texture == null and grid.get_child(mismatch).face.texture == null, "Both mismatched cards turn back over")
 
     var checkpoint: Dictionary = room.rounds.pairs.duplicate(true)
     checkpoint.opened = [0]
@@ -148,7 +150,8 @@ func _test_pairs() -> void:
     room.open("pairs")
     await process_frame
     var opened_tile = room.board.get_node("%Grid").get_child(0)
-    _expect(opened_tile.face.texture != null, "An open card is visible after JSON round recovery")
+    _expect(opened_tile.face.texture.resource_path.ends_with("game-toy-%s.webp" % room.board.cards[0]), "An open card shows its toy after JSON round recovery")
+    _expect(opened_tile.face.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "The whole toy fits inside the card")
     var before_tap := committed.size()
     _tap(opened_tile)
     _expect(committed.size() == before_tap and room.board.opened == [0], "The restored card cannot match itself")
@@ -162,9 +165,17 @@ func _test_match() -> void:
     await process_frame
     var grid: GridContainer = room.board.get_node("%Grid")
     _expect(grid.get_child_count() == 36, "Match-3 opens an editable 6 by 6 board")
-    _tap(grid.get_child(0))
-    _tap(grid.get_child(1))
-    await create_timer(0.34).timeout
+    var first = grid.get_child(0)
+    var second = grid.get_child(1)
+    var first_face: Vector2 = first.face.position
+    var second_face: Vector2 = second.face.position
+    _tap(first)
+    _tap(second)
+    _expect(room.board.resolving, "A rejected swap starts its animation")
+    if not await _wait_for(func() -> bool: return not room.board.resolving, 2.0, "The rejected swap finishes both halves of its animation"):
+        return
+    _expect(room.board.cells == CELLS and first.face.position.is_equal_approx(first_face) and second.face.position.is_equal_approx(second_face),
+        "The rejected swap restores both tiles before the next swipe")
     _expect(room.rounds.match == original, "A rejected swap does not consume a move")
     _touch(grid.get_child(21).get_global_rect().get_center(), true)
     _touch(grid.get_child(27).get_global_rect().get_center(), false)
@@ -191,10 +202,8 @@ func _test_match() -> void:
     _tap(grid.get_child(7))
     var earned_bonus: int = room.rounds.match.bonus
     _expect(earned_bonus > 0 and room.board.bonus == 0 and room.board.resolving, "Final bonus saves immediately but waits for the visual match")
-    for frame in 320:
-        if not room.board.resolving:
-            break
-        await create_timer(0.025).timeout
+    if not await _wait_for(func() -> bool: return not room.board.resolving, 8.0, "The match cascade finishes"):
+        return
     _expect(room.board.bonus == earned_bonus and room.board.get_node("%Combo").visible, "The animation updates the visible bonus")
     await _return_home()
 
@@ -274,6 +283,15 @@ func _touch(point: Vector2, pressed: bool) -> void:
     event.position = point
     event.pressed = pressed
     root.push_input(event, true)
+
+
+func _wait_for(condition: Callable, max_seconds: float, label: String) -> bool:
+    var watchdog := create_timer(max_seconds)
+    while not condition.call() and watchdog.time_left > 0.0:
+        await process_frame
+    var reached: bool = condition.call()
+    _expect(reached, label)
+    return reached
 
 
 func _expect(value: bool, label: String) -> void:

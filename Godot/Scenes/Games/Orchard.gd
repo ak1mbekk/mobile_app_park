@@ -1,5 +1,6 @@
 extends "res://Scenes/Games/GameRound.gd"
 
+const REPLAY_ICON = preload("res://Scenes/Games/Art/game-replay.svg")
 const LIVES := 3
 const COLLISION_RANGE := 0.155
 
@@ -18,6 +19,7 @@ var basket_tilt := 0.0
 
 func _ready() -> void:
     %Again.pressed.connect(_new_round)
+    %Chest.pressed.connect(func(): menu_requested.emit())
     set_process(false)
 
 
@@ -181,6 +183,8 @@ func _paint() -> void:
 func _update_result() -> void:
     %Again.visible = not running
     %Again.text = "Ещё раз" if errors == LIVES else "Начать"
+    %Again.icon = REPLAY_ICON if errors == LIVES else null
+    %Chest.visible = not running and errors == LIVES
     if running:
         return
     var payout := reward_text()

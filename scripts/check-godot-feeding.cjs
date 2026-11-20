@@ -3,7 +3,7 @@ const {chromium}=require('playwright');
 
 (async()=>{
   const browser=await chromium.launch({executablePath:process.env.BROWSER_EXE,
-    args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+    args:process.env.PARK_TEST_ANGLE ? ['--use-angle='+process.env.PARK_TEST_ANGLE] : ['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   try{
     const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
     await page.addInitScript(()=>{
@@ -64,12 +64,13 @@ const {chromium}=require('playwright');
         const raw=output.result;
         if(!raw)return null;
         const state=JSON.parse(raw);
-        const {control, appleIdle, holdingApple, canScrub, fromRoom, ...expected}=criteria;
+        const {control, appleIdle, holdingApple, canScrub, canPour, fromRoom, ...expected}=criteria;
         if(!Object.entries(expected).every(([key,value])=>state[key]===value))return null;
         if(control&&!state.controls[control])return null;
         if(appleIdle&&(!state.apple||state.applePointer!==-2||state.appleSettling))return null;
         if(holdingApple&&state.applePointer<0)return null;
         if(canScrub&&(!state.sponge||!state.scrubCenter))return null;
+        if(canPour&&(!state.jug||!state.pourTarget))return null;
         if(fromRoom&&state.location===fromRoom&&!state.moving)return null;
         return state;
       },{selector:roomSelector,criteria},{polling:120,timeout:30000}).catch(error=>{
@@ -233,9 +234,14 @@ const {chromium}=require('playwright');
       await touchAt('touchMove',point(bath,x,scrubCenter.y));
     }
     await touchAt('touchEnd');
-    await pressControl('rinse');
+    const {jug,pourTarget}=await interaction({mode:'bath',canPour:true});
+    await press(jug.x,jug.y);
+    assert.ok((await stats()).clean<=after.clean+0.01,'Tapping the pitcher alone cannot wash the pet');
+    await touchAt('touchStart',point(bath,jug.x,jug.y));
+    await touchAt('touchMove',point(bath,pourTarget.x,pourTarget.y));
+    await interaction({bathPouring:true});
     await page.waitForFunction(clean=>window.petDemo.stats().clean>clean+20,after.clean,{timeout:45000});
-    await pressControl('back');
+    await touchAt('touchEnd');
     await page.waitForFunction(()=>window.parkTestEvents.includes('animal-park:wash-closed'));
     assert.equal((await stats()).leaves,0);
     await enterRoom('main','main');
@@ -251,7 +257,7 @@ const {chromium}=require('playwright');
     await pressControl('sleep');
     await page.waitForFunction(()=>window.petDemo.stats().night);
     const night=await stats();
-    await page.locator('[data-tab="park"]').click();
+    await pressControl('park');
     await page.locator('#park.current').waitFor();
     await page.locator('[data-tab="home"]').click();
     await ready('home');

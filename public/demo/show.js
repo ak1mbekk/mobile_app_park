@@ -9,29 +9,64 @@
     link.append(label,arrow);id('zone-directions').append(link);
   }
   const soap=id('soap-area'),foam=soap.querySelector('.foam');
-  let clean=0,washed=false,stroke=null;
+  const jug=id('rinse'), wash=id('wash'), meter=id('scrub');
+  let clean=0,washed=false,stroke=null,poured=0,pourFrame=0,pourTime=0,hand=null,onFur=false,finishTimer=0;
   function scrub(amount){
-    clean=Math.min(100,clean+amount);id('scrub').value=clean;
+    clean=Math.min(100,clean+amount);meter.value=clean;
+    foam.style.opacity=String(clean/100);
     if(clean===100){
-      id('rinse').hidden=false;id('washHint').textContent='Коснись кувшина, чтобы смыть пену';
-      foam.style.opacity='0';
+      jug.hidden=false;id('washHint').textContent='Кувшин готов';meter.setAttribute('aria-label','Пена на шерсти');
     }
   }
   soap.onpointerdown=e=>{if(clean>=100)return;stroke={id:e.pointerId,x:e.clientX,y:e.clientY};soap.setPointerCapture(e.pointerId);};
   soap.onpointermove=e=>{
     if(!stroke||stroke.id!==e.pointerId||clean>=100)return;
     const distance=Math.hypot(e.clientX-stroke.x,e.clientY-stroke.y);if(distance<2)return;
-    const rect=soap.getBoundingClientRect();foam.style.left=(e.clientX-rect.left)+'px';foam.style.top=(e.clientY-rect.top)+'px';foam.style.opacity='1';
+    const rect=soap.getBoundingClientRect();
+    if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom){stroke.x=e.clientX;stroke.y=e.clientY;return;}
     stroke.x=e.clientX;stroke.y=e.clientY;scrub(distance/4);
   };
-  soap.onpointerup=soap.onpointercancel=()=>{stroke=null;foam.style.opacity='0';};
+  soap.onpointerup=soap.onpointercancel=()=>{stroke=null;};
   soap.onkeydown=e=>{if(!washed&&(e.key==='Enter'||e.key===' ')){e.preventDefault();scrub(20);}};
-  id('rinse').onclick=()=>{
-    if(clean<100||washed)return;washed=true;window.petDemo.wash();id('wash').classList.add('clean');
-    id('rinse').hidden=true;id('washHint').textContent='Шёрстка чистая';id('scrub').hidden=true;id('bathDone').hidden=false;
+  function releaseJug(){
+    if(hand && typeof hand.id==='number' && jug.hasPointerCapture(hand.id))jug.releasePointerCapture(hand.id);
+    hand=null;onFur=false;cancelAnimationFrame(pourFrame);pourTime=0;
+    jug.style.translate='';jug.classList.remove('pouring');wash.classList.remove('rinsing');
+  }
+  function pour(now){
+    if(!hand||document.hidden||!wash.classList.contains('current')){releaseJug();return;}
+    if(onFur && pourTime) poured=Math.min(1,poured+Math.min(now-pourTime,80)/1600);
+    pourTime=now;foam.style.opacity=String(1-poured);meter.value=(1-poured)*100;
+    jug.classList.toggle('pouring',onFur);wash.classList.toggle('rinsing',onFur);
+    if(poured<1){pourFrame=requestAnimationFrame(pour);return;}
+    releaseJug();washed=true;jug.hidden=true;meter.hidden=true;wash.classList.add('clean');
+    id('washHint').textContent='Шёрстка чистая';window.petDemo.wash();
+    finishTimer=setTimeout(()=>{if(wash.classList.contains('current')){wash.classList.remove('washing');id('wash-entry').hidden=false;resetBath();}},1150);
+  }
+  function aim(x,y){
+    jug.style.translate=(x-hand.x)+'px '+(y-hand.y)+'px';
+    const rect=soap.getBoundingClientRect();
+    onFur=x>=rect.left+rect.width*.16 && x<=rect.right-rect.width*.08 && y>rect.top && y<rect.bottom;
+  }
+  jug.onpointerdown=e=>{
+    if(clean<100||washed||hand||e.button!==0)return;
+    hand={id:e.pointerId,x:e.clientX,y:e.clientY};jug.setPointerCapture(e.pointerId);pourFrame=requestAnimationFrame(pour);
   };
+  jug.onpointermove=e=>{if(hand?.id===e.pointerId)aim(e.clientX,e.clientY);};
+  jug.onpointerup=jug.onpointercancel=jug.onlostpointercapture=e=>{if(hand?.id===e.pointerId)releaseJug();};
+  jug.onkeydown=e=>{
+    if(e.key!==' '&&e.key!=='Enter')return;
+    e.preventDefault();if(hand||clean<100||washed)return;
+    const origin=jug.getBoundingClientRect(),target=soap.getBoundingClientRect();
+    hand={id:'keyboard',x:origin.x+origin.width/2,y:origin.y+origin.height/2};
+    aim(target.x+target.width*.55,target.y+target.height*.36);pourFrame=requestAnimationFrame(pour);
+  };
+  jug.onkeyup=e=>{if(hand?.id==='keyboard'&&(e.key===' '||e.key==='Enter'))releaseJug();};
+  jug.onblur=()=>{if(hand?.id==='keyboard')releaseJug();};
+  window.addEventListener('blur',releaseJug);
   function resetBath(){
-    washed=false;clean=0;stroke=null;id('rinse').hidden=true;id('bathDone').hidden=true;
+    clearTimeout(finishTimer);releaseJug();washed=false;clean=0;poured=0;stroke=null;foam.style.opacity='0';jug.hidden=true;id('bathDone').hidden=true;
+    meter.setAttribute('aria-label','Сколько шерсти намылено');
     id('wash').classList.remove('clean');id('scrub').hidden=false;id('scrub').value=0;id('washHint').textContent='Потри шерсть губкой';
   }
   const children=id('ticketCount');
@@ -152,7 +187,9 @@
     if(!running){
       id('catchTitle').textContent='Урожай собран';
       id('catchTip').textContent=(orchardTip.textContent?orchardTip.textContent+' · ':'')+'Яблоки: '+caught+(reward?' · Листья +'+reward.leaves+' · Опыт +'+reward.xp:'');
-      id('catchStart').textContent='Ещё раз';
+      id('catchStartLabel').textContent='Ещё раз';
+      id('catchAgainIcon').removeAttribute('hidden');
+      id('catchChest').hidden=false;
     }
   }
   function restoreOrchard(){
@@ -235,7 +272,14 @@
     active=e.detail;
     if(active==='catch'&&!orchardId)restoreOrchard();
     resume();
-    if(active==='wash'&&washed)resetBath();
+    if(active!=='wash'){
+      releaseJug();
+      stroke=null;
+    }else if(washed){
+      wash.classList.remove('washing');
+      id('wash-entry').hidden=false;
+      resetBath();
+    }
     if(active==='pass'||active==='park')ticketView();
   });
 })();

@@ -1,15 +1,13 @@
 extends "res://Scenes/Games/GameRound.gd"
 
-signal animal_requested(species: String)
-
 const TILE = preload("res://Scenes/Games/GameTile.tscn")
 const ANIMALS := {
-    "capybara": ["Капибара", preload("res://Scenes/Games/Art/capybara.webp")],
-    "lemur": ["Лемур", preload("res://Scenes/Games/Art/lemur.webp")],
-    "raccoon": ["Енот", preload("res://Scenes/Games/Art/raccoon.webp")],
-    "bison": ["Зубр", preload("res://Scenes/Games/Art/bison.webp")],
-    "tamarin": ["Тамарин", preload("res://Scenes/Games/Art/tamarin.webp")],
-    "caracal": ["Каракал", preload("res://Scenes/Games/Art/caracal.webp")],
+    "capybara": ["Капибара", preload("res://Scenes/Games/Art/game-toy-capybara.webp")],
+    "lemur": ["Лемур", preload("res://Scenes/Games/Art/game-toy-lemur.webp")],
+    "raccoon": ["Енот", preload("res://Scenes/Games/Art/game-toy-raccoon.webp")],
+    "bison": ["Зубр", preload("res://Scenes/Games/Art/game-toy-bison.webp")],
+    "tamarin": ["Тамарин", preload("res://Scenes/Games/Art/game-toy-tamarin.webp")],
+    "caracal": ["Каракал", preload("res://Scenes/Games/Art/game-toy-caracal.webp")],
 }
 
 var cards: Array = []
@@ -17,12 +15,11 @@ var opened: Array = []
 var paired: Array = []
 var moves := 0
 var finished := false
-var guide_available := false
 
 
 func _ready() -> void:
     %Again.pressed.connect(_new_round)
-    %Animal.pressed.connect(_show_animal)
+    %Chest.pressed.connect(func(): menu_requested.emit())
 
 
 func restore(record: Dictionary) -> void:
@@ -91,12 +88,12 @@ func _make_grid() -> void:
         %Grid.remove_child(tile)
         tile.queue_free()
     %Grid.columns = 4 if cards.size() == 12 else 3
-    %Board.ratio = 0.87 if cards.size() == 12 else 1.16
+    %Board.ratio = 1.02 if cards.size() == 12 else 1.26
     for index in cards.size():
         var tile := TILE.instantiate()
         tile.pressed.connect(_flip.bind(index))
         %Grid.add_child(tile)
-        tile.fit_portrait()
+        tile.fit_toy()
 
 
 func _flip(index: int) -> void:
@@ -147,10 +144,7 @@ func _paint() -> void:
 
 func _update_result() -> void:
     %ResultActions.visible = finished
-    %Animal.visible = finished and guide_available
     if finished:
-        if guide_available:
-            %Animal.accessibility_name = "Об этом животном · " + ANIMALS[paired[-1]][0]
         var payout := reward_text()
         %Hint.text = "Все пары найдены!" if payout.is_empty() else "Все пары найдены!\n" + payout
     elif opened.size() == 2:
@@ -159,8 +153,3 @@ func _update_result() -> void:
         %Hint.text = ANIMALS[cards[int(opened[0])]][0] + " · найди пару"
     else:
         %Hint.text = "Открывай по две карточки."
-
-
-func _show_animal() -> void:
-    if finished and guide_available:
-        animal_requested.emit(String(paired[-1]))

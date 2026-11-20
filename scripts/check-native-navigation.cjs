@@ -19,7 +19,7 @@ const initialProfile = {
 async function main() {
   const browser = await chromium.launch({
     executablePath: process.env.BROWSER_EXE,
-    args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+    args: process.env.PARK_TEST_ANGLE ? ['--use-angle='+process.env.PARK_TEST_ANGLE] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
   });
   try {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -82,7 +82,9 @@ async function main() {
       await pressPoint((await state({ control: name })).controls[name]);
     }
     async function park() {
-      await demo.locator('.park-entrance').tap();
+      const entrance=demo.locator('.park-entrance');
+      if(await entrance.isVisible()) await entrance.tap();
+      else await press('park');
       await demo.locator('#park.current').waitFor();
     }
     async function mapAndBack() {

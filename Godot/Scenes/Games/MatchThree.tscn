@@ -1,8 +1,10 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scenes/Games/MatchThree.gd" id="1"]
 [ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="2"]
 [ext_resource type="Texture2D" path="res://Scenes/Games/Art/piece-0.webp" id="3"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/game-replay.svg" id="Replay"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/game-chest.svg" id="Chest"]
 
 [node name="MatchThree" type="VBoxContainer"]
 size_flags_vertical = 3
@@ -80,10 +82,29 @@ autowrap_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Again" type="Button" parent="."]
+[node name="ResultActions" type="HBoxContainer" parent="."]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(0, 74)
 layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Again" type="Button" parent="ResultActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 74)
+layout_mode = 2
+theme_override_constants/icon_max_width = 28
+theme_override_font_sizes/font_size = 22
+icon = ExtResource("Replay")
 text = "Ещё раз"
+script = ExtResource("2")
+
+[node name="Chest" type="Button" parent="ResultActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 74)
+layout_mode = 2
+theme_override_constants/icon_max_width = 28
+theme_override_font_sizes/font_size = 22
+icon = ExtResource("Chest")
+text = "К сундуку"
 script = ExtResource("2")

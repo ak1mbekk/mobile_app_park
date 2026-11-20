@@ -246,7 +246,7 @@
 .care-room-heading{position:absolute;z-index:3;top:10px;left:12px;right:12px;display:flex;align-items:center;gap:10px;pointer-events:none}
 .care-room-heading .backbtn{position:static;width:44px;height:44px;flex:none;pointer-events:auto;background:#fff1d7;color:#553d28}
 .care-room-heading .backbtn .ic{pointer-events:none}
-.care-room-heading :is(h1,h2){font:650 24px/1.12 var(--zk-font);color:#fff4df;text-shadow:0 2px 5px #24170f}
+.care-room-heading :is(h1,h2){font:650 24px/1.12 var(--zk-font);color:#382d23;background:#fcf2db;border-radius:9px;padding:5px 10px}
 #kitchen-room{position:absolute;inset:0;pointer-events:none}
 #kitchen-room :is(button,#aki-pantry){pointer-events:auto}
 #home.in-kitchen{container-type:size;--kitchen-art-width:max(100cqw,56.25cqh);--kitchen-art-height:max(100cqh,177.7778cqw)}
@@ -307,7 +307,23 @@
 #home:not(.night,.in-kitchen) #room-decor [data-furnishing=settee]{top:auto;left:1%;bottom:19%;width:38%}
 #home:not(.night,.in-kitchen) #aki-sleep{left:8%;top:auto;bottom:20%;display:grid;align-items:center}
 #home:not(.night,.in-kitchen) #aki-sleep[hidden]{display:none}
-#home:not(.night,.in-kitchen) #rope-ball{left:14%;top:auto;bottom:24%}
+#home:not(.night,.in-kitchen) #rope-ball{left:38%;top:auto;bottom:15%}
+#home #rope-ball { pointer-events:auto; border:0; padding:0; background:none; touch-action:manipulation; }
+#rope-ball img { width:100%; height:100%; object-fit:contain; }
+#home #shop-open { width:48px; height:48px; padding:2px; }
+#shop-open img { display:block; margin:auto; }
+#intro-hint,#kitchen-hint,#washHint { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+.room-objects .object:hover:not(:focus-visible){background:transparent;outline:0}
+#wash .wash-status { width:104px; bottom:8%; padding:5px 7px; background:#3d5243; pointer-events:none; }
+#wash .wash-status:has(progress[hidden]) { display:none; }
+#wash .wash-status progress { height:7px; margin:0; width:100%; accent-color:#a6e0cf; }
+#wash .jug { width:clamp(68px,21%,104px); height:auto; aspect-ratio:1; right:4%; bottom:16%; padding:0; border:0; outline:0; background:transparent; touch-action:none; cursor:grab; z-index:4; }
+#wash .jug:focus-visible { outline:2px solid #283e31; }
+.jug img { display:block; width:100%; transition:transform .18s ease-out; pointer-events:none; }
+.jug.pouring img { transform:rotate(-54deg); }
+.jug.pouring::after { content:""; position:absolute; left:0; top:56%; width:7px; height:48%; border-radius:30% 25% 60% 15%; background:linear-gradient(90deg,#abf2e2,#78c3ce 55%,#e4fcf3); transform:rotate(12deg); transform-origin:top; pointer-events:none; }
+#soap-area .foam { inset:38% 20% auto; height:23%; width:auto; border:0; box-shadow:none; border-radius:50%; transition:opacity .14s linear; background:radial-gradient(circle at 26% 47%,#fffcfa 2%,#c1e0df 9%,transparent 11%),radial-gradient(circle at 68% 36%,#fff 1%,#d8f3ef 10%,transparent 12%),radial-gradient(circle at 57% 76%,#f6fffe 4%,#a0c6c7 17%,transparent 19%),radial-gradient(circle at 38% 70%,#fffdf7 6%,#c4dfda 21%,transparent 23%); }
+.object,.fruit,#soap-area,#wash-start { -webkit-tap-highlight-color:transparent; }
 
 #catch {
   background-position: center top;
@@ -434,3 +450,36 @@
 }
 #catch .orchard-feedback:empty,
 #catch :is(.orchard-impact,.orchard-twig)[hidden] { display: none; }
+
+/* Keep the rendered sleep poses in proportion at different phone aspect ratios. */
+#home.night #night-room {
+  background-size: cover;
+}
+
+/* Keep the pet and its touch target together as the age-specific portrait grows. */
+#home {
+  --veranda-pet-width: 58%;
+}
+
+#home[data-age="young"] {
+  --veranda-pet-width: 62%;
+}
+
+#home[data-age="adult"] {
+  --veranda-pet-width: 70%;
+}
+
+#home.current:not(.night, .in-kitchen) #pet-figure {
+  left: 48%;
+  width: var(--veranda-pet-width);
+}
+
+#home.current:not(.night, .in-kitchen) #aki-pet {
+  left: 19%;
+  width: 58%;
+  height: 31%;
+}
+
+#home.current:not(.night, .in-kitchen) #aki-heart {
+  left: 49%;
+}

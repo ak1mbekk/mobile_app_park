@@ -8,10 +8,6 @@
   const progress = document.querySelector('#opening-progress');
   const close = document.querySelector('#close3d');
   const preference = new URLSearchParams(location.search).get('view');
-  const pairSpecies = new Map([
-    ['capybara','kapibara'], ['lemur','koshachiy-lemur'], ['raccoon','enot-poloskun'],
-    ['bison','zubr'], ['tamarin','edipov-tamarin'], ['caracal','karakal']
-  ]);
   let frame, room, timeout;
   let progressObserver;
   let ready = false;
@@ -52,7 +48,7 @@
     const previous = window.petDemo.stats()[game];
     if (previous && round && previous.id === round.id &&
         Number.isSafeInteger(round.revision) && previous.revision >= round.revision) return;
-    window.petDemo.storeGame(game, round);
+    window.petDemo.storeGame(game, round, true);
   }
 
   function checkpointNavigation(forReload = false) {
@@ -89,6 +85,7 @@
   }
 
   function leave() {
+    document.body.removeAttribute('data-game-overlay');
     clearTimeout(timeout);
     progressObserver?.disconnect();
     frame?.remove();
@@ -244,10 +241,13 @@
     leave();
   };
 
-  window.addEventListener('message', event => {
+  window.addEventListener('message', async event => {
     if (event.origin !== location.origin || !frame || event.source !== frame.contentWindow) return;
     if (event.data === (room.id === 'intro' ? 'animal-park:scene-ready' : 'animal-park:home-ready')) {
+      const readyFrame = frame;
       clearTimeout(timeout);
+      if (room.id === 'home') await window.petDemo.recoverNativeRound();
+      if (frame !== readyFrame) return;
       const resume = room.id === 'home' ? takeNavigation() : {};
       ready = true;
       frame.inert = false;
@@ -268,6 +268,10 @@
       } else window.petDemo.finishAppleSnack();
     }
     if (room?.id !== 'home') return;
+    if(event.data==='animal-park:overlay-open'||event.data==='animal-park:overlay-closed'){
+      document.body.toggleAttribute('data-game-overlay',event.data==='animal-park:overlay-open');
+      return;
+    }
     if (event.data === 'animal-park:wash-finished') window.petDemo.wash();
     if (event.data === 'animal-park:sleep' || event.data === 'animal-park:wake') {
       const refusal = window.petDemo.setResting(event.data === 'animal-park:sleep');
@@ -284,20 +288,14 @@
       const refusal = window.petDemo.buyBall();
       if (refusal) syncHome({refusal});
     }
-    if (typeof event.data === 'string' && event.data.startsWith('animal-park:pair-animal:')) {
-      const species = event.data.slice('animal-park:pair-animal:'.length);
-      const slug = pairSpecies.get(species);
-      const pairs = window.petDemo.stats().pairs;
-      if (room.classList.contains('current') && slug && Array.isArray(pairs?.paired) &&
-          pairs.cards?.length === 2 * pairs.paired.length && pairs.paired.at(-1) === species) {
-        window.conceptGo('species/' + slug);
-      }
-    }
     if (event.data === 'animal-park:shop') {
       if (frame.contentWindow.parkNativeShop) {
         window.petDemo.nativeShopClear();
         syncHome({open_shop:true});
       } else window.petDemo.openShop();
+    }
+    if (event.data === 'animal-park:park' && room.classList.contains('current')) {
+      document.querySelector('.park-entrance').click();
     }
     if (event.data === 'animal-park:profile') document.querySelector('#park [data-profile]')?.click();
     if (event.data === 'animal-park:shop:closed' || event.data === 'animal-park:shop:catalog') {
