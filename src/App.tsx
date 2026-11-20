@@ -47,7 +47,9 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
   const requested = useRef(hash);
   const pending = useRef(false);
   const [startup] = useState(() => {
-    const saved = nativeReloadNavigation() ?? (window.history.state?.animalParkGuide as GuideNavigation | undefined);
+    const entry = window.history.state?.animalParkGuide as GuideNavigation | undefined;
+    const currentGuide = entry?.hostUrl === window.location.href && typeof entry.hash === 'string' && demoHash(entry.hash, false);
+    const saved = currentGuide ? entry : nativeReloadNavigation() ?? entry;
     const resume = !profile && saved?.hostUrl === window.location.href &&
       typeof saved.hash === 'string' && (demoHash(saved.hash, false) || saved.hash === '#home')
       ? saved : undefined;
@@ -93,6 +95,11 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
 
   useEffect(() => {
     try { sessionStorage.removeItem(nativeReloadKey); } catch {}
+    function onGuideTransition(event: Event) {
+      if (event.target !== frame.current) return;
+      saveGuideNavigation();
+      event.preventDefault();
+    }
     function onGuideNavigation(event: MessageEvent) {
       if (event.origin === window.location.origin && event.source === frame.current?.contentWindow &&
           event.data === 'animal-park:guide-navigation') {
@@ -105,9 +112,11 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
       child?.captureParkGameNavigation?.(true);
       saveGuideNavigation();
     }
+    window.addEventListener('animal-park:guide-navigation', onGuideTransition);
     window.addEventListener('message', onGuideNavigation);
     window.addEventListener('pagehide', onPageHide);
     return () => {
+      window.removeEventListener('animal-park:guide-navigation', onGuideTransition);
       window.removeEventListener('message', onGuideNavigation);
       window.removeEventListener('pagehide', onPageHide);
     };

@@ -83,7 +83,11 @@ function present(id){
   }
   document.dispatchEvent(new CustomEvent('conceptscreen',{detail:id}));
   if(window.parent!==window && location.protocol!=='file:'){
-    window.parent.postMessage('animal-park:guide-navigation',location.origin);
+    // The containing app must save the route before a reload can interrupt this turn.
+    const frame=window.frameElement;
+    if(!frame || frame.dispatchEvent(new Event('animal-park:guide-navigation',{bubbles:true,cancelable:true}))){
+      window.parent.postMessage('animal-park:guide-navigation',location.origin);
+    }
   }
   if(blocked)window.petDemo.refuse(blocked);
 }

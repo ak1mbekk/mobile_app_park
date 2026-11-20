@@ -96,9 +96,20 @@ async function main() {
       await demo.locator('#park.current .back-to-game').tap();
       return ready();
     }
-    async function reloadPark() {
+    async function reloadPark(openAndReload = false) {
       const requests = engineRequests.length;
-      await page.reload({ waitUntil: 'domcontentloaded' });
+      if (openAndReload) {
+        const navigation = page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+        await page.evaluate(() => {
+          const guide = document.querySelector('iframe').contentWindow;
+          guide.document.querySelector('.park-entrance').click();
+          if (history.state?.animalParkGuide?.hash !== '#park') throw Error('The Park route must be saved in the same turn as the tap');
+          location.reload();
+        });
+        await navigation;
+      } else {
+        await page.reload({ waitUntil: 'domcontentloaded' });
+      }
       await demo.locator('#park.current').waitFor();
       assert.equal(await engine.count(), 0, 'Reloading the guide did not recreate Godot early');
       assert.equal(engineRequests.length, requests);
@@ -212,8 +223,7 @@ async function main() {
       return pairs.paired.length === 5 && pairs.opened[0] === 1;
     });
     const unfinished = (await stats()).pairs;
-    await park();
-    restored = await reloadPark();
+    restored = await reloadPark(true);
     assert.equal(restored.navigation.game, 'pairs', 'Restored the open native board, not the chest or home');
     assert.deepEqual(restored.navigation.round, unfinished);
     assert.deepEqual((await stats()).pairs, unfinished);
