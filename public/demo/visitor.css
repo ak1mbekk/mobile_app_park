@@ -111,9 +111,9 @@ html.dark #visitor-theme .sun-icon {display:block}
 #profileDialog header button {background:var(--inset);color:var(--ink)}
 .visitor-screen :is(button,a,input,select,summary):focus-visible,.tabs button:focus-visible {outline:2px solid rgb(var(--zk-terracotta));outline-offset:2px}
 .visitor-screen .map-status {margin-top:12px;font-size:13px;line-height:1.4;color:var(--muted)}
-.in-calendar body {padding:0}
-.in-calendar .shell {width:100%;max-height:none;height:100dvh;grid-template-rows:minmax(0,1fr)}
-.in-calendar .tabs {display:none}
+.guide-embed body {padding:0}
+.guide-embed .shell {width:100%;max-height:none;height:100dvh;grid-template-rows:minmax(0,1fr)}
+.guide-embed .tabs {display:none}
 #geo.current {display:grid;grid-template-rows:auto minmax(120px,1fr) auto;overflow:hidden}
 .geo-head,.geo-filters,.geo-foot,.geo-pick {display:flex;align-items:center;gap:8px}
 .geo-head {padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
@@ -195,6 +195,38 @@ html.dark #visitor-theme .sun-icon {display:block}
 html.dark .visitor-map-sheet{box-shadow:0 -8px 24px rgb(0 0 0 / .35)}
 @media(max-width:340px){.visitor-zone-switch button{font-size:12px!important}.visitor-map .map-filters button{font-size:12px}.visitor-map-sheet .place-picker{grid-template-columns:1fr;gap:4px}.visitor-map .park-surface{height:54dvh}}
 @media(prefers-reduced-motion:reduce){.place-marker{transition:none}}
+.map-hit-chooser{position:absolute;z-index:1100;left:10px;right:10px;bottom:10px;max-height:min(46dvh,340px);overflow:auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:var(--zk-shadow-panel)}
+.map-hit-chooser[hidden]{display:none}.map-hit-chooser>strong,.map-hit-chooser>span{display:block;padding-right:44px}.map-hit-chooser>strong{font-size:17px}.map-hit-chooser>span{margin:2px 0 8px;color:var(--muted);font-size:12px}
+.map-hit-chooser>div{display:grid;gap:5px}.map-hit-chooser>div>button{display:grid;width:100%;min-height:48px;padding:7px 12px;text-align:left;border:1px solid var(--line)!important;border-radius:11px!important;background:var(--paper)!important;color:var(--ink)!important}
+.map-hit-chooser b{font-size:14px;line-height:1.25}.map-hit-chooser small{color:var(--muted);font-size:12px}.map-hit-close{position:absolute;top:8px;right:8px;width:44px;height:44px;border-radius:50%!important;background:var(--inset)!important;font-size:24px!important}
 
 .visitor-map .map-status,.visitor-map .map-status + button{order:6;margin:8px 12px 0;text-align:start}
 .visitor-map .map-status{color:var(--muted);font:400 12px/1.4 var(--zk-font)}
+
+#map .visitor-map-head{grid-template-columns:1fr;min-height:50px;padding:4px 10px 8px}
+#map .visitor-map-head .p-title{margin:7px 0 6px 48px}
+#map .visitor-zone-switch{width:100%;grid-column:1;margin:0}
+#map .map-filters{grid-template-columns:1fr 1fr 1.45fr}
+#map .park-surface{position:relative;isolation:isolate;height:clamp(235px,42dvh,550px);background:#dae2c8}
+#map .visitor-map-head{order:0}
+#map .visitor-survey{position:absolute;top:0;left:0;width:2064px;height:2369px;max-width:none;transform-origin:0 0;pointer-events:none}
+#map .place-marker.place-point::after{content:'';display:block;width:14px;height:14px;box-sizing:border-box;border:2px solid white;border-radius:50%;background:#285d43;box-shadow:0 1px 4px #172c1d80}
+#map .place-marker.place-point.picked::after{width:20px;height:20px;background:#214632;outline:3px solid #174c37;outline-offset:2px}
+#map .place-marker:focus-visible{outline:2px solid #174c37;outline-offset:-2px;border-radius:50%}
+#map .place-area{fill:#397951;fill-opacity:.18;stroke:#25543d;stroke-opacity:.95;stroke-width:2;cursor:pointer}
+#map .place-area.picked,#map .place-area:hover,#map .place-area:focus-visible{fill-opacity:.44;stroke:#123d2b;stroke-width:3}
+#map .place-marker.service .map-wc-label{font:700 11px/1 var(--zk-font);letter-spacing:.02em}
+#map .map-place-heading{display:flex;align-items:center;gap:9px;min-width:0}
+#map .map-place-heading>div{min-width:0}
+#map .map-place-portrait{flex:none;display:block;width:46px;height:46px;object-fit:cover;border:1px solid var(--line);border-radius:10px;background:var(--inset)}
+#map .map-place-heading h2{overflow-wrap:anywhere}
+#map .map-place-heading p{font-size:13px;line-height:1.35}
+#map .visitor-map-sheet .place-info small{display:block;margin-top:5px;color:var(--muted);font-size:13px}
+#map .map-offline{order:7;padding:0 12px;color:var(--muted);font-size:13px}
+#map .map-offline .p-link{min-height:44px}
+#map .map-offline p:empty{display:none}
+@media(max-width:340px){
+  #map .park-surface{height:clamp(220px,37dvh,418px)}
+  #map .map-place-portrait{width:42px;height:42px}
+  #map .map-place-heading h2{font-size:18px}
+}

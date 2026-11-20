@@ -71,17 +71,36 @@
 <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
 <h1 class="p-title" id="p-feed-title">Кормления</h1><p class="p-lead">Зона «Казачны мір»</p>
 <label class="visit-date">Дата посещения <input type="date" id="visit-date" required></label>
-<div role="status" id="schedule-status"></div><button id="retry-schedule" class="p-link" type="button" hidden>Повторить загрузку</button><div class="feeding-list" id="feeding-list"></div><div id="feeding-actions" class="feeding-actions" hidden><button type="button" data-go="map" class="p-primary">Показать место на схеме →</button><button type="button" id="add-reminder" class="p-link">В календарь · за 30 минут</button><small id="calendar-hint" role="status"></small></div><div class="p-footnote"><strong>Перед посещением</strong><p><span id="schedule-edition"></span> Изменения на дату поездки уточняйте в парке.</p>
+<div role="status" id="schedule-status"></div><button id="retry-schedule" class="p-link" type="button" hidden>Повторить загрузку</button><div class="feeding-list" id="feeding-list"></div><div id="feeding-actions" class="feeding-actions" hidden><button type="button" data-go="map" class="p-primary">Показать место на карте →</button><button type="button" id="add-reminder" class="p-link">В календарь · за 30 минут</button><small id="calendar-hint" role="status"></small></div><div class="p-footnote"><strong>Перед посещением</strong><p><span id="schedule-edition"></span> Изменения на дату поездки уточняйте в парке.</p>
 <a href="https://animal-park.by/dopolnitelnyie-uslugi/pokazatelnoe-kormlenie.html" target="_blank" rel="noopener noreferrer" class="p-link">Расписание на сайте парка <svg viewBox="0 0 24 24" class="p-icon" aria-hidden="true"><path d="M6 18 18 6M7 6h11v11"/></svg></a></div>
 </div></section>
-<section class="screen visitor-screen" id="map" aria-label="Карта парка"><div class="p-content visitor-map"><button class="p-back" data-go="park" aria-label="Назад · Парк"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><div class="map-mount"></div></div></section>
+<section class="screen visitor-screen" id="map" aria-label="Карта парка">
+  <div class="p-content visitor-map">
+    <button type="button" class="p-back" data-go="park" aria-label="Назад · Парк"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+    <div class="map-mount">
+      <header class="visitor-map-head"><h1 class="p-title">Карта парка</h1><div class="visitor-zone-switch" role="group" aria-label="Зона парка"><button type="button" data-zone="1">Казачны мір</button><button type="button" data-zone="2">Лясныя таямніцы</button></div></header>
+      <div class="map-filters" role="group" aria-label="Места на карте"><button type="button" data-kind="all">Все места</button><button type="button" data-kind="animals">Вольеры</button><button type="button" data-kind="service">Инфраструктура</button></div>
+      <label class="service-picker" hidden><span>Тип места</span><select><option value="">Все типы</option></select></label>
+      <div class="park-surface" role="region" aria-label="Интерактивная карта территории"></div>
+      <section class="visitor-map-sheet">
+        <label class="place-picker"><span>Найти место</span><select><option value="">Выберите место</option></select></label>
+        <div class="place-info" aria-live="polite" hidden></div>
+      </section>
+      <p class="map-status" role="status">Загружаем карту…</p>
+      <div class="map-offline">
+        <button type="button" class="p-link" id="save-guide">Сохранить для прогулки без связи</button>
+        <p id="offline-guide-status" role="status"></p>
+      </div>
+    </div>
+  </div>
+</section>
 <section class="screen visitor-screen" id="animal" aria-labelledby="p-animal-title"><div class="p-content">
-<button class="p-back" type="button" data-go="map" aria-label="Назад · На схему парка"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+<button class="p-back" type="button" data-go="map" aria-label="Назад · Карта парка"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
 <div class="p-animal-photo"><img src="assets/capybara.webp" alt="Капибара крупным планом"></div>
 <p class="p-species">Hydrochoerus hydrochaeris</p><h1 class="p-title" id="p-animal-title">Капибара</h1>
 <p class="p-bio">Глаза и уши капибары расположены высоко. Во время плавания они остаются над водой, даже когда почти всё тело погружено.</p>
 <dl class="p-facts"><div><dt>Родина</dt><dd>Южная Америка</dd></div><div><dt>Масса тела</dt><dd>35–70 кг</dd></div></dl>
-<button class="p-place-row" type="button" data-go="map"><svg viewBox="0 0 24 24" class="p-icon" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Казачны мір · Вольер № 36</span><svg viewBox="0 0 24 24" class="p-icon p-end" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button>
+<button class="p-place-row" type="button" data-go="map/1/36"><svg viewBox="0 0 24 24" class="p-icon" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Казачны мір · Вольер № 36</span><svg viewBox="0 0 24 24" class="p-icon p-end" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></button>
 <a class="p-link" href="https://animal-park.by/galereya/kapibara.html" rel="noopener noreferrer" target="_blank">Карточка на сайте парка <svg viewBox="0 0 24 24" class="p-icon" aria-hidden="true"><path d="M6 18 18 6M7 6h11v11"/></svg></a>
 </div></section>
 <section id="visitor" class="screen visitor-screen"><div class="p-content visitor-info">
@@ -99,7 +118,8 @@
   </div></details>
   <details><summary>Где перекусить и отдохнуть</summary><div>
     <p>У входа в первую зону есть мини-кафе. На территории также работают кафе с террасой и киоски у озера.</p>
-    <button class="p-link" data-go="zone1/rest">Зона отдыха на схеме →</button>
+    <button class="p-link" data-go="map/1/rest/service/rest">Зона отдыха на карте →</button>
+    <button class="p-link" data-go="map/1/service/cafe">Кафе на карте →</button>
     <a href="tel:+375447137525">Обед для группы · +375 44 713 75 25</a>
     <a href="https://animal-park.by/dopolnitelnyie-uslugi/pitanie/" target="_blank" rel="noopener noreferrer">Кафе и фотографии ↗</a>
   </div></details>
@@ -109,17 +129,6 @@
   </div></details>
   <button class="p-link" data-go="tours">Экскурсии и запись →</button>
 </div></section>
-<section id="geo" class="screen visitor-screen" aria-label="Карта территории">
-  <header class="geo-head"><button class="p-back" type="button" data-go="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><div id="geo-zone" role="group" aria-label="Пешеходная зона"><button type="button" data-zone="1" aria-pressed="true">Казачны мір</button><button type="button" data-zone="2" aria-pressed="false">Лясныя таямніцы</button></div>
-    <button id="geo-to-scheme" class="p-link" type="button" data-go="zone1">Схема для прогулки</button><select class="geo-mode" id="geo-layer" aria-label="Вид карты"><option value="map">Карта</option><option value="yandex">Яндекс</option></select></header>
-  <div class="geo-stage"><div id="terrain-map" aria-label="Географическая карта парка"></div><div id="survey-map" hidden aria-label="План с номерами вольеров и туалетами"></div><iframe id="geographic-map" hidden title="Яндекс Карты с местами выбранной зоны" allowfullscreen></iframe><button id="geo-boundaries" type="button" aria-pressed="true">Границы вольеров</button></div>
-  <div class="geo-sheet"><div class="geo-filters" role="group" aria-label="Места на карте"><button data-geo-filter="all">Все места</button><button data-geo-filter="animals">Вольеры</button><button data-geo-filter="wc">Туалеты</button></div>
-    <label class="geo-pick"><span>Место</span><select id="geo-select"><option>Выберите на карте</option></select></label>
-    <div id="geo-details" aria-live="polite"></div><p id="geo-status" role="status"></p>
-    <div class="geo-foot"><button class="p-link" id="geo-services" data-go="zone1/all/service">Кафе, отдых и корм на схеме →</button><button class="p-link" data-go="overview">Схемы обеих зон →</button><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">Точки WC © OpenStreetMap</a></div>
-  </div>
-</section>
-<script src="map-projection.js" defer></script><script src="geographic-map.js" defer></script>
 <section id="directions" class="screen visitor-screen"><div class="p-content visitor-info">
   <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
   <h1 class="p-title">Как доехать</h1>
@@ -136,12 +145,7 @@
   <a class="p-primary" href="https://docs.google.com/forms/d/e/1FAIpQLSc3f-Eug6DlobNSAYqWwvjMS7PhRMU9GnymfdAsuu_X9Z1p0Q/viewform?usp=header" target="_blank" rel="noopener noreferrer">Подать заявку в парк ↗</a>
   <a class="p-link" href="tel:+375447329219">Позвонить · +375 44 732 92 19</a>
   <a class="p-link" href="https://animal-park.by/dopolnitelnyie-uslugi/gid-tur.html" target="_blank" rel="noopener noreferrer">Цены и условия на сайте парка ↗</a>
-</div></section><section id="overview" class="screen visitor-screen"><div class="p-content"><button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 class="p-title">Карта парка</h1><nav class="zone-choices" aria-label="Пешеходные зоны"><button data-go="zone1"><small>Зона 1</small><strong>Казачны мір</strong><svg class="p-icon" aria-hidden="true"><use href="#aki-arrow"/></svg></button><button data-go="zone2"><small>Зона 2</small><strong>Лясныя таямніцы</strong><svg class="p-icon" aria-hidden="true"><use href="#aki-arrow"/></svg></button></nav><div class="p-footnote offline-guide"><strong>Схема парка от 12.11.2025</strong>
-<button type="button" class="p-link" id="save-guide">Сохранить для прогулки без связи</button>
-<p id="offline-guide-status" role="status"></p>
-<div><a class="p-link" download="Казачны мір.webp" href="assets/plan-1.webp">Скачать схему зоны 1</a>
-<a class="p-link" download="Лясныя таямніцы.webp" href="assets/plan-2.webp">Скачать схему зоны 2</a></div></div>
-</div></section><section id="zone1" class="screen visitor-screen" aria-label="Схема зоны 1"><div class="p-content visitor-map"><button class="p-back" data-go="overview" aria-label="Назад · Обе зоны"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><div class="map-mount"></div></div></section><section id="zone2" class="screen visitor-screen" aria-label="Схема зоны 2"><div class="p-content visitor-map"><button class="p-back" data-go="overview" aria-label="Назад · Обе зоны"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><div class="map-mount"></div></div></section><section class="screen visitor-screen" id="animals" aria-labelledby="catalog-title">
+</div></section><section class="screen visitor-screen" id="animals" aria-labelledby="catalog-title">
   <div class="catalog">
     <button type="button" class="cat-back" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
     <h1 id="catalog-title">Животные</h1>
@@ -158,7 +162,7 @@
   </div>
 </section>
 
-<section class="screen visitor-screen" id="species"><div class="p-content"><button class="p-back" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="species-name" class="p-title">Карточка животного</h1><p id="species-group" class="p-lead"></p><figure class="p-animal-photo" id="species-photo" hidden></figure><p id="species-latin"></p><p id="species-description" class="p-bio" hidden></p><button class="p-primary" id="species-place" hidden>Показать место на схеме →</button><a id="species-source" class="p-link" href="https://animal-park.by/galereya/" target="_blank" rel="noopener">Подробнее на сайте парка ↗</a></div></section><section id="wash" class="screen bath-scene">
+<section class="screen visitor-screen" id="species"><div class="p-content"><button class="p-back" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="species-name" class="p-title">Карточка животного</h1><p id="species-group" class="p-lead"></p><figure class="p-animal-photo" id="species-photo" hidden></figure><p id="species-latin"></p><p id="species-description" class="p-bio" hidden></p><button class="p-primary" id="species-place" hidden>Показать место на карте →</button><a id="species-source" class="p-link" href="https://animal-park.by/galereya/" target="_blank" rel="noopener">Подробнее на сайте парка ↗</a></div></section><section id="wash" class="screen bath-scene">
 
 <button class="corner" data-go="home" aria-label="В домик">‹</button>
 <div id="soap-area" role="button" tabindex="0" aria-label="Намылить шерсть губкой"><span class="foam" aria-hidden="true"></span></div>
@@ -178,5 +182,23 @@
 <section id="catch" class="screen orchard"><div class="gameline"><button class="backbtn" data-go="chest" aria-label="К игрушкам">‹</button><span id="catchScore">Яблоки 0 · Попытки 3</span></div>
 <div id="catchField" tabindex="0" role="application" aria-label="Двигай корзинку пальцем или стрелками"><img id="fallFruit" src="assets/fruit.webp" alt="" hidden><div id="basket" aria-hidden="true">🧺</div></div>
 <div class="sheet" id="catchSheet"><h2 id="catchTitle">Лови яблоки</h2><p id="catchTip">Веди корзинку пальцем. Собирай яблоки и пропускай шишки. У тебя три попытки.</p><button class="primary" id="catchStart">Начать</button></div></section>
-<section id="pass" class="screen visitor-screen"><div class="p-content"><button class="p-back" data-go="park" aria-label="Назад · Парк"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 class="p-title">Награда за уровень</h1><div class="coupon"><strong>10% на детский билет</strong><p id="couponStatus"></p></div>
-<p>Тестовая касса. Оплата не списывается.</p><label class="count">Детских билетов <select id="ticketCount"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></label><label class="count">Взрослых билетов <select id="adultCount"><option selected>0</option><option>1</option><option>2</option><option>3</option></select></label><small>Демо-тарифы · детский 10 BYN, взрослый 15 BYN</small><p id="ticketTotal"></p><button id="testBuy" class="primary">Подтвердить тестовый заказ</button> <button class="secondary" id="newOrder" hidden>Новый расчёт</button></div></section></main><nav class="tabs" aria-label="Разделы приложения"><button type="button" data-tab="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z"/></svg>Дом</button><button type="button" data-tab="park"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 2-5 7h3l-4 6h12l-4-6h3Zm0 13v6m9-17-3 5 3 5h-2l-1 3h8l-4-6h3Zm1 13v4"/></svg>Парк</button></nav><dialog id="profileDialog"><form method="dialog"><header><h2>Профиль</h2><button aria-label="Закрыть">×</button></header><p>На этом устройстве</p><div class="profile-line">Питомец<strong id="pr-name">Ричи</strong></div></form></dialog></div><script src="vendor/leaflet/leaflet.js"></script><script src="places.js"></script><script src="park-schedule.js"></script><script src="routing.js"></script><script src="home.js"></script><script src="catalog.js"></script><script src="park-map.js"></script><script src="guide-offline.js"></script><script src="feedings.js"></script><script src="show.js"></script><script src="match.js"></script><script>conceptStart()</script></body></html>
+<section id="pass" class="screen visitor-screen"><div class="p-content"><button class="p-back" data-go="park" aria-label="Назад · Парк"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 class="p-title">Награда за уровень</h1><figure class="coupon" aria-labelledby="coupon-title">
+<div class="coupon-stub"><span>Парк животных</span><strong>10<span>%</span></strong></div>
+<figcaption><strong id="coupon-title">Детский билет</strong><p id="couponStatus"></p>
+<progress id="coupon-progress" value="1" max="10" aria-label="Прогресс до награды"></progress></figcaption>
+</figure>
+<p>Тестовая касса. Оплата не списывается.</p><label class="count">Детских билетов <select id="ticketCount"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></label><label class="count">Взрослых билетов <select id="adultCount"><option selected>0</option><option>1</option><option>2</option><option>3</option></select></label><small>Демо-тарифы · детский 10 BYN, взрослый 15 BYN</small><p id="ticketTotal"></p><button id="testBuy" class="primary">Подтвердить тестовый заказ</button> <button class="secondary" id="newOrder" hidden>Новый расчёт</button></div></section></main><nav class="tabs" aria-label="Разделы приложения"><button type="button" data-tab="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z"/></svg>Дом</button><button type="button" data-tab="park"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 2-5 7h3l-4 6h12l-4-6h3Zm0 13v6m9-17-3 5 3 5h-2l-1 3h8l-4-6h3Zm1 13v4"/></svg>Парк</button></nav><dialog id="profileDialog"><form method="dialog"><header><h2>Профиль</h2><button aria-label="Закрыть">×</button></header><div class="profile-line">Питомец на устройстве<strong id="pr-name">Ричи</strong></div></form>
+<section id="family-account" aria-labelledby="family-title"><h3 id="family-title">Семейный аккаунт</h3>
+<p id="family-status" role="status"></p>
+<form id="family-access" hidden>
+<label>Логин<input name="login" autocomplete="username" required minlength="3" maxlength="32"></label>
+<label>Пароль<input name="password" type="password" autocomplete="current-password" required minlength="10" maxlength="128"></label>
+<button type="submit" id="family-submit">Войти</button>
+<button type="button" id="family-mode">Создать аккаунт</button></form>
+<div id="family-signed" hidden><button type="button" id="family-save">Сохранить енота в аккаунте</button>
+<button type="button" id="family-restore">Восстановить енота</button>
+<button type="button" id="family-logout">Выйти</button></div>
+<div id="family-review" hidden><p id="family-comparison"></p><button type="button" id="family-confirm"></button>
+<button type="button" id="family-cancel">Отмена</button></div>
+<button id="family-retry" type="button" hidden>Повторить подключение</button>
+</section></dialog><script src="family.js" defer></script></div><script src="vendor/leaflet/leaflet.js"></script><script src="places.js"></script><script src="park-schedule.js"></script><script src="routing.js"></script><script src="home.js"></script><script src="catalog.js"></script><script src="map-projection.js"></script><script src="park-map.js"></script><script src="guide-offline.js"></script><script src="feedings.js"></script><script src="show.js"></script><script src="match.js"></script><script>conceptStart()</script></body></html>

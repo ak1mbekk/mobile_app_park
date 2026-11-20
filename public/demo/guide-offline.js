@@ -3,12 +3,11 @@
   const status=document.getElementById('offline-guide-status');
   if (!window.isSecureContext || !('serviceWorker' in navigator)) {
     button.hidden=true;
-    status.textContent='Для прогулки без связи скачайте обе схемы.';
     return;
   }
   const workerUrl=new URL('guide-worker.js',document.baseURI).href;
   function ready(){
-    status.textContent='Обе схемы и фотографии животных сохранены для этого браузера.';
+    status.textContent='Карта и фотографии животных сохранены для этого браузера.';
     button.hidden=true;
   }
   navigator.serviceWorker.getRegistration(new URL('./',document.baseURI)).then(reg=>{
@@ -16,7 +15,7 @@
   }).catch(()=>{});
   button.onclick=async()=>{
     button.disabled=true;
-    status.textContent='Сохраняем схемы и каталог животных…';
+    status.textContent='Сохраняем карту и каталог животных…';
     try {
       await window.parkSchedule.load();
       const registration=await navigator.serviceWorker.register('guide-worker.js');

@@ -20,7 +20,7 @@
     {zone:1,id:'lake49',badge:'≈',name:'Озеро у вольера № 49',x:163,y:102,detail:'Наблюдение за кормлением аистов с берега'},
     {zone:1,id:'15',badge:'15',name:'Северный олень',x:208,y:373,plan:[244,363],species:['severnyij-olen']},
     {zone:1,id:'65wc',badge:'WC',name:'Туалет у водоёма',x:558,y:74,service:'Туалеты'},
-    {zone:1,id:'rest',badge:'☕',name:'Зона отдыха · кафе',x:99,y:139,service:'Кафе'},
+    {zone:1,id:'rest',badge:'☕',name:'Зона отдыха · кафе',x:99,y:139,service:'Места отдыха',services:['Места отдыха','Кафе']},
     {zone:1,id:'cafe-entry',badge:'☕',name:'Кафе у входа',x:129,y:612,service:'Кафе'},
     {zone:1,id:'cafe-pavilion',badge:'☕',name:'Кафе у домика кузнеца',x:65,y:167,service:'Кафе'},
     {zone:1,id:'cafe-pond',badge:'☕',name:'Кафе у водоёма с птицами',x:526,y:117,service:'Кафе'},
@@ -70,7 +70,15 @@
     {zone:1,id:'osm-9946443995',name:'Туалет в западной части зоны',geo:[26.0095583,53.0974340]},
     {zone:2,id:'osm-9868296562',name:'Туалет в южной части зоны',geo:[26.0213501,53.0904689]},
     {zone:2,id:'osm-10971056120',name:'Туалет в северной части зоны',geo:[26.0214259,53.0927221]}
-  ].map(p=>({...p,badge:'WC',service:'Туалеты'}));
+  ].map(p=>({...p,badge:'WC',service:'Туалеты'})).concat([
+    // Public OpenStreetMap amenity nodes. The tourist plan uses other names;
+    // don't assign these coordinates to a printed name without a source match.
+    {zone:1,id:'osm-9868277716',name:'Точка перекуса у центрального водоёма',geo:[26.0102931,53.0963101],service:'Кафе'},
+    {zone:1,id:'osm-9868296517',name:'Точка перекуса в западной части зоны',geo:[26.0108785,53.0965494],service:'Кафе'},
+    {zone:1,id:'osm-9868296518',name:'Точка перекуса в северной части зоны',geo:[26.0133625,53.0978163],service:'Кафе'},
+    {zone:2,id:'osm-9868296561',name:'Точка перекуса в южной части зоны',geo:[26.0212333,53.0910999],service:'Кафе'},
+    {zone:2,id:'osm-9847947117',name:'Беседка для отдыха',geo:[26.0239426,53.0926083],service:'Места отдыха'}
+  ]);
   // Printed enclosure numbers on enclosures.png, names from the Russian legend
   // of visitor-2025-11-12.jpg. No visitor-poster pixels enter the projection.
   const numberedEnclosures=[
@@ -130,11 +138,11 @@
     'enot-poloskun':'assets/avatar-raccoon.webp',
     'zubr':'assets/avatar-bison.webp'
   };
+  const speciesPortrait=slug=>markerPortraits[slug]||window.parkGuide.speciesPhoto?.(slug);
   // Each facility has its own silhouette. Enclosures share one rim in both map views.
   const serviceGlyphs={
     'Вход':'M4 20V4h12v3 M4 20h12v-3 M11 12h10m-4-4 4 4-4 4',
     'Сувениры':'M3 9h18v4H3z M5 13v8h14v-8 M12 9v12 M12 9C3 9 5 1 9 4l3 5c6-11 12-1 0 0z',
-    'Туалеты':'M5 4h3 M6.5 8v7m-2-6v4m4-4v4m-3 1v6m2-6v6 M16 4h2 M17 8l-3 7h6l-3-7zm-1 8v4m2-4v4',
     'Кафе':'M3 9h13v5a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6z M16 10h2a3 3 0 0 1 0 6h-2 M6 3v3m4-4v3m4-2v3',
     'Корм для животных':'M5 10h14l-2 11H7z M9 10C7 6 7 4 5 3c5-1 9 3 7 7m1-1c0-5 3-7 7-7 0 4-2 7-7 7z',
     'Парковка':'M7 21V3h6a5 5 0 0 1 0 10H7',
@@ -143,6 +151,9 @@
   };
   function markerFace(point){
     const badge=document.createElement('span');
+    if(point.service==='Туалеты'){
+      badge.className='map-wc-label';badge.setAttribute('aria-hidden','true');badge.textContent='WC';return badge;
+    }
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
     if(point.service && serviceGlyphs[point.service]){
@@ -153,12 +164,55 @@
       use.setAttribute('href','#aki-paw');svg.append(use);
     }
     badge.append(svg);
-    const src=point.species?.map(slug=>markerPortraits[slug]||window.parkGuide.speciesPhoto?.(slug)).find(Boolean);
+    const src=point.species?.map(speciesPortrait).find(Boolean);
     if(src){
       const portrait=new Image();portrait.alt='';portrait.decoding='async';
       portrait.onload=()=>badge.replaceChildren(portrait);portrait.src=src;
     }
     return badge;
   }
-  window.parkGuide={zones,markerFace,places:[...places,...numberedEnclosures].sort(byZoneAndNumber),geoFacilities};
+  function bindMarkerHitChooser({container,markers,pointFor,open}){
+    let origin=null;
+    const panel=document.createElement('div');panel.className='map-hit-chooser';panel.hidden=true;
+    panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Выберите место под пальцем');container.append(panel);
+    function dismiss(){panel.hidden=true;panel.replaceChildren();}
+    function closeChooser(){dismiss();origin?.focus({preventScroll:true});}
+    L.DomEvent.disableClickPropagation(panel);
+    L.DomEvent.disableScrollPropagation(panel);
+    panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();closeChooser();}});
+    function choose(candidates){
+      panel.replaceChildren();
+      const heading=document.createElement('strong');heading.textContent='Что открыть?';
+      const hint=document.createElement('span');hint.textContent='Несколько мест под пальцем';
+      const list=document.createElement('div');
+      for(const {point} of candidates){
+        const button=document.createElement('button'),name=document.createElement('b'),type=document.createElement('small');
+        button.type='button';button.dataset.placeId=point.id;name.textContent=point.name;
+        type.textContent=point.service||'Животное · вольер '+point.badge;
+        button.append(name,type);button.onclick=()=>{dismiss();open(point);};list.append(button);
+      }
+      const close=document.createElement('button');close.type='button';close.className='map-hit-close';close.textContent='×';
+      close.setAttribute('aria-label','Закрыть выбор мест');close.onclick=closeChooser;
+      panel.append(heading,hint,list,close);panel.hidden=false;list.firstElementChild?.focus({preventScroll:true});
+    }
+    function activate(point,event){
+      if(!event || !event.detail || event.type==='keypress' || event.type==='keydown'){
+        dismiss();open(point);return;
+      }
+      const hits=[];
+      for(const [id,marker] of markers){
+        const rect=marker.getElement()?.getBoundingClientRect();
+        if(!rect || event.clientX<rect.left || event.clientX>rect.right ||
+            event.clientY<rect.top || event.clientY>rect.bottom)continue;
+        const candidate=pointFor(id);
+        if(candidate)hits.push({point:candidate,distance:Math.hypot(event.clientX-(rect.left+rect.width/2),event.clientY-(rect.top+rect.height/2))});
+      }
+      if(hits.length<2){dismiss();open(point);return;}
+      origin=markers.get(point.id)?.getElement();
+      hits.sort((a,b)=>a.distance-b.distance||compareIds.compare(a.point.id,b.point.id));
+      choose(hits);
+    }
+    return {dismiss,activate};
+  }
+  window.parkGuide={zones,markerFace,speciesPortrait,bindMarkerHitChooser,places:[...places,...numberedEnclosures].sort(byZoneAndNumber),geoFacilities};
 })();

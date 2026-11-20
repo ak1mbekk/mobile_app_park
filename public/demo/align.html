@@ -18,6 +18,17 @@
 <button id="place-approach" type="button" disabled>Указать на карте</button>
 <button id="remove-approach" type="button" hidden>Убрать точку</button>
 <p id="approach-note" role="status"></p></details>
+<details id="boundary-editor"><summary>Границы вольеров</summary>
+<label>Вольер <select id="boundary-place"><option value="">Выберите вольер</option></select></label>
+<p>На техническом плане отметьте вершины по видимой ограде. При сохранении контур замыкается и публикуется отдельно от геопривязки.</p>
+<div class="boundary-actions">
+  <button id="trace-boundary" type="button" disabled>Начать обводку</button>
+  <button id="undo-boundary" type="button" disabled>Убрать вершину</button>
+  <button id="cancel-boundary" type="button" disabled>Отменить обводку</button>
+  <button id="save-boundary" type="button" disabled>Сохранить контур</button>
+  <button id="clear-boundary" type="button" hidden>Удалить контур</button>
+</div>
+<p id="boundary-note" role="status">Загружаем контуры…</p></details>
  </div><div class="buttons"><button id="revert" type="button">Отменить</button><button id="save" type="button" disabled>Сохранить для всех</button></div>
-<p role="status" id="status">Загружаем привязку…</p><a href="./index.html#geo/1" target="_blank" rel="noopener">Открыть карту посетителя ↗</a></aside></main>
-<script src="vendor/leaflet/leaflet.js"></script><script src="places.js"></script><script src="map-projection.js"></script><script src="align.js"></script></body></html>
+<p role="status" id="status">Загружаем привязку…</p><a href="./index.html#map/1" target="_blank" rel="noopener">Открыть карту посетителя ↗</a></aside></main>
+<script src="vendor/leaflet/leaflet.js"></script><script src="places.js"></script><script src="map-projection.js"></script><script type="module" src="align.js"></script></body></html>

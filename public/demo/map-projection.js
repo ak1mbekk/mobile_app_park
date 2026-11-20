@@ -8,12 +8,15 @@
     return L.point(config.centerX+config.scale*(dx*Math.cos(a)-dy*Math.sin(a)),
       config.centerY+config.scale*(dx*Math.sin(a)+dy*Math.cos(a)));
   }
-  function position(config,zone,point){
-    if(point.geo)return L.latLng(point.geo[1],point.geo[0]);
+  function planPixel(zone,point){
     if(!point.plan)return null;
     const [x,y]=point.plan;
-    const pixel=zone===1?[x,877+y]:[455+x*1345/1009,1370+y*999/749];
-    return crs.pointToLatLng(toWorld(config,...pixel),16);
+    return zone===1?[x,877+y]:[455+x*1345/1009,1370+y*999/749];
+  }
+  function position(config,zone,point){
+    if(point.geo)return L.latLng(point.geo[1],point.geo[0]);
+    const pixel=planPixel(zone,point);
+    return config&&pixel?crs.pointToLatLng(toWorld(config,...pixel),16):null;
   }
   function toRaster(config,latlng){
     const d=crs.latLngToPoint(latlng,16).subtract(L.point(config.centerX,config.centerY));
@@ -28,5 +31,5 @@
     if(points.length)url.searchParams.set('pt',points.map(p=>p.lng.toFixed(7)+','+p.lat.toFixed(7)).join('~'));
     return url.href;
   }
-  window.parkProjection={crs,toWorld,toRaster,position,widget};
+  window.parkProjection={crs,toWorld,toRaster,planPixel,position,widget};
 })();

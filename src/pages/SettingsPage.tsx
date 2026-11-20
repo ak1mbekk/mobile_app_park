@@ -136,6 +136,10 @@ export default function SettingsPage() {
             {syncResult?.ok && (
               <p className="mt-3 text-sm text-[var(--accent)]">Данные загружены</p>
             )}
+            <div className="mt-3 flex flex-wrap gap-x-4 text-sm font-semibold text-[var(--accent)]">
+              <Link className="inline-flex min-h-[44px] items-center" to="/map/editor">Редактор карты</Link>
+              <Link className="inline-flex min-h-[44px] items-center" to="/animals/synced">Синхронизированные животные</Link>
+            </div>
           </section>
 
           <section className="card p-5">

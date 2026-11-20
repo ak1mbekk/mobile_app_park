@@ -41,6 +41,7 @@
     maps.map.tiles.redraw();
   }
   function render(){
+    Object.values(maps).forEach(entry=>entry.hitChooser?.dismiss());
     if(!calibration || !screen.classList.contains('current'))return;
     const {zone,id}=route();
     const local=candidates.filter(p=>p.zone===zone);
@@ -77,17 +78,23 @@
           });
           tiles.on('tileerror',()=>{if(++tileErrors>=2&&!mapFailed){mapFailed=true;render();}});
         }
-        maps[mode]={map,pins:L.layerGroup().addTo(map),outline:survey?null:surveyOverlay(map),tiles};
+        const pins=L.layerGroup().addTo(map),markers=new Map();
+        const hitChooser=window.parkGuide.bindMarkerHitChooser({container:map.getContainer(),markers,
+          pointFor:id=>candidates.find(point=>point.zone===route().zone&&point.id===id),
+          open:point=>navigate(point.zone,point.id)});
+        maps[mode]={map,pins,markers,hitChooser,outline:survey?null:surveyOverlay(map),tiles};
       }
-      const {map,pins}=maps[mode];
-      map.invalidateSize({pan:false});pins.clearLayers();
+      const {map,pins,markers,hitChooser}=maps[mode];
+      map.invalidateSize({pan:false});pins.clearLayers();markers.clear();hitChooser.dismiss();
       const bounds=[];
       for(const point of visible){
         const geo=geographic(point),xy=toRaster(calibration,geo),ll=survey?[2369-xy.y,xy.x]:geo;
         const badge=window.parkGuide.markerFace(point);
         const icon=L.divIcon({html:badge,className:'place-marker'+(point.service?' service':'')+(point===selected?' picked':''),iconSize:[44,44],iconAnchor:[22,22]});
-        const pin=L.marker(ll,{icon,title:label(point),alt:label(point),zIndexOffset:point===selected?1000:0}).addTo(pins);
-        pin.on('click',()=>navigate(zone,point.id));bounds.push(ll);
+        const pin=L.marker(ll,{icon,title:label(point),alt:label(point),zIndexOffset:point===selected?1000:0});
+        pin.on('add',()=>{pin.getElement().dataset.placeId=point.id;});
+        pin.addTo(pins);
+        pin.on('click',event=>hitChooser.activate(point,event.originalEvent));markers.set(point.id,pin);bounds.push(ll);
       }
       if(selected){
         const geo=geographic(selected),xy=toRaster(calibration,geo);

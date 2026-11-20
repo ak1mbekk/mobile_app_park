@@ -57,7 +57,7 @@
       if(event===selected && event.status!=='cancelled'){
         row.classList.add('selected');
         actions.hidden=false;
-        actions.querySelector('[data-go]').dataset.go=event.zone===1&&event.place==='36'?'map':'zone'+event.zone+'/'+event.place;
+        actions.querySelector('[data-go]').dataset.go='map/'+event.zone+'/'+event.place;
         row.append(actions);
       }
       list.append(row);

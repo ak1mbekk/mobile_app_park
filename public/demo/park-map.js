@@ -1,178 +1,403 @@
+// The visitor uses one map. Technical-plan positions are tied to the manually saved alignment.
 (() => {
-  const {zones,places}=window.parkGuide;
-  const schedule=window.parkSchedule;
-  const mounted=new Map();
-  const services={cafe:'Кафе',rest:'Места отдыха',feed:'Корм для животных',wc:'Туалеты',wash:'Где вымыть руки',parking:'Парковка',entrance:'Вход',gift:'Сувениры'};
-  const titleFor = p => p.service || p.detail ? p.name : p.name+' · № '+p.badge;
-  function mount(screen,zoneNumber) {
-    const zone=zones[zoneNumber];
-    const host=document.querySelector('#'+screen+' .map-mount');
-    host.innerHTML='<header class="visitor-map-head"><h1 class="p-title">Карта парка</h1><button type="button" class="map-terrain p-link">Местность</button><nav class="visitor-zone-switch" aria-label="Зона парка"><button type="button" data-zone="1"></button><button type="button" data-zone="2"></button></nav></header><div class="map-filters" role="group" aria-label="Что показать на карте"><button data-kind="all">Все</button><button data-kind="animals">Животные</button><button data-kind="service">Инфраструктура</button></div><div class="park-surface" role="region" aria-label="Интерактивная схема"></div><section class="visitor-map-sheet" aria-label="Поиск и выбранное место"><label class="place-picker"><span>Найти место</span><select><option value="">Выберите место</option></select></label><div class="place-info" aria-live="polite"></div></section>';
-    host.querySelectorAll('[data-zone]').forEach(button=>{
-      button.textContent=zones[Number(button.dataset.zone)].name;
-      const current=Number(button.dataset.zone)===zoneNumber;
-      button.setAttribute('aria-pressed',String(current));
-      button.onclick=()=>{if(!current)window.conceptGo('zone'+button.dataset.zone);};
-    });
-    const surface=host.querySelector('.park-surface');
-    const select=host.querySelector('select'),info=host.querySelector('.place-info');
-    const terrain=host.querySelector('.map-terrain');
-    const local=places.filter(p=>p.zone===zoneNumber);
-    const serviceField=document.createElement('label');
-    serviceField.className='service-picker';
-    serviceField.append('Тип');
-    const serviceSelect=document.createElement('select');serviceField.append(serviceSelect);
-    serviceSelect.add(new Option('Всю инфраструктуру',''));
-    for(const [value,label] of Object.entries(services)){
-      if(local.some(p=>p.service===label))serviceSelect.add(new Option(label,value));
-    }
-    const bounds=[[0,0],[zone.height,zone.width]];
-    const map=L.map(surface,{crs:L.CRS.Simple,attributionControl:false,zoomControl:false,minZoom:-3,maxZoom:3,zoomSnap:.125,zoomDelta:.5,scrollWheelZoom:false,maxBoundsViscosity:1});
-    const mapStatus=document.createElement('p');
-    mapStatus.className='map-status';mapStatus.setAttribute('role','status');
-    const retry=document.createElement('button');retry.type='button';retry.className='p-link';
-    retry.textContent='Загрузить схему ещё раз';retry.hidden=true;
-    host.append(mapStatus,retry);
-    let failed=false;
-    function updateStatus(){
-      const caption='Схема парка от 12.11.2025.';
-      mapStatus.textContent=failed?'Изображение схемы недоступно. Место можно выбрать из списка.':
-        (navigator.onLine?'':'Без связи · ')+caption;
-      retry.hidden=!failed;
-    }
-    const overlay=L.imageOverlay(zone.image,bounds,{alt:'Посетительская схема зоны '+zoneNumber});
-    overlay.on('error',()=>{failed=true;updateStatus();});
-    overlay.on('load',()=>{failed=false;updateStatus();});
-    retry.onclick=()=>overlay.setUrl(zone.image);
-    window.addEventListener('online',updateStatus);
-    window.addEventListener('offline',updateStatus);
-    updateStatus();overlay.addTo(map);
-    map.setMaxBounds(bounds);
-    L.control.zoom({position:'bottomright',zoomInTitle:'Увеличить',zoomOutTitle:'Уменьшить'}).addTo(map);
-    let kind='all',category='',selected=null;
-    const markers=new Map(),layer=L.layerGroup().addTo(map);
-    function coordinates(point){
-      return [zone.height-point.y,point.x];
-    }
-    function choose(point,focus=true){
-      selected=point||null;select.value=selected?.id||'';
-      terrain.dataset.go='geo/'+zoneNumber+(selected?.plan?'/'+selected.id:'');
-      markers.forEach((marker,id)=>{
-        marker.getElement()?.classList.toggle('picked',id===selected?.id);
-        marker.getElement()?.setAttribute('aria-current',id===selected?.id?'true':'false');
-        marker.setZIndexOffset(id===selected?.id?1000:0);
-      });
-      info.replaceChildren();
-      if(!selected){info.hidden=true;return;}
-      info.hidden=false;
-      const heading=document.createElement('h2'),detail=document.createElement('p');
-      heading.textContent=point.name;
-      detail.textContent=point.detail||(point.service?point.service+' · '+zone.name:'Вольер № '+point.badge+' · '+zone.name);
-      const close=document.createElement('button');
-      close.type='button';close.className='map-sheet-close';close.setAttribute('aria-label','Закрыть карточку места');close.textContent='×';
-      close.onclick=()=>pick('');
-      info.append(close,heading,detail);
-      if(point.plan){
-        const geo=document.createElement('button');geo.className='p-link';
-        geo.textContent='На карте местности →';geo.dataset.go='geo/'+zoneNumber+'/'+point.id;
-        info.append(geo);
-      }
-      for(const slug of point.species||[]){
-        const link=document.createElement('button');link.className='p-link';
-        const name=window.parkGuide.speciesName?.(slug);
-        if(point.species.length>1 && !name)continue;
-        link.textContent=(point.species.length>1?name:'Карточка животного')+' →';
-        link.dataset.go=slug==='kapibara'?'animal':'species/'+slug;
-        info.append(link);
-      }
-      for(const event of schedule.forDay(schedule.visitDate()).filter(e=>e.zone===zoneNumber && e.place===point.id && e.status!=='cancelled')){
-        const feed=document.createElement('button');feed.className='p-link';
-        feed.textContent=event.start+' · '+event.name;feed.dataset.go='feed/'+event.id+'/'+schedule.visitDate();info.append(feed);
-      }
-      if(focus){
-        map.setView(coordinates(point),Math.max(map.getBoundsZoom(bounds)+1.5,map.getZoom()),{animate:false,reset:true});
-      }
-    }
-    function filter(next,nextCategory=''){
-      kind=next;category=nextCategory;layer.clearLayers();markers.clear();select.replaceChildren(new Option('Выберите место',''));
-      if(kind==='service'){
-        surface.before(serviceField);
-        serviceSelect.value=category;
-      }else serviceField.remove();
-      host.querySelectorAll('[data-kind]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.kind===kind)));
-      const visible=local.filter(p=>(kind==='all'||(kind==='service')===Boolean(p.service))
-        && (!category||p.service===services[category]));
-      const groups=new Map();
-      for(const p of visible){
-        const iconNode=window.parkGuide.markerFace(p);
-        const icon=L.divIcon({className:'place-marker'+(p.service?' service':''),html:iconNode,iconSize:[44,44],iconAnchor:[22,22]});
-        const marker=L.marker(coordinates(p),{icon,title:titleFor(p),alt:titleFor(p),keyboard:true}).addTo(layer);
-        marker.getElement().setAttribute('aria-label',titleFor(p));
-        marker.on('click',()=>pick(p.id));markers.set(p.id,marker);
-        if(p.service && !groups.has(p.service)){
-          const group=document.createElement('optgroup');
-          group.label=p.service;groups.set(p.service,group);select.append(group);
-        }
-        (groups.get(p.service)||select).append(new Option(titleFor(p),p.id));
-      }
-      choose(visible.includes(selected)?selected:null,false);
-    }
-    function pick(id,nextKind=kind,nextCategory=category){
-      // A new selection replaces the current map view in browser history.
-      const mode=nextKind==='all'?'':nextKind;
-      const target=id||((mode||screen==='map')?'all':'');
-      window.conceptReplace(screen+(target?'/'+target:'')+(mode?'/'+mode:'')+(mode==='service'&&nextCategory?'/'+nextCategory:''));
-    }
-    for(const b of host.querySelectorAll('[data-kind]'))b.onclick=()=>{
-      const next=b.dataset.kind;
-      const keep=selected && (next==='all'||(next==='service')===Boolean(selected.service));
-      pick(keep?selected.id:'',next,'');
-    };
-    serviceSelect.onchange=()=>{
-      const value=serviceSelect.value;
-      pick(!value||selected?.service===services[value]?selected?.id:'','service',value);
-    };
-    select.onchange=()=>pick(select.value);
-    map.fitBounds(bounds,{animate:false});filter('all');
-    function refreshSelection(){
-      if(selected && host.closest('.screen').classList.contains('current'))choose(selected,false);
-    }
-    document.addEventListener('parkprogrammechange',refreshSelection);
-    document.addEventListener('parkcatalogready',()=>filter(kind,category));
-    return {
-      show(id,mode,requestedCategory){
-        const plan=mode==='plan';
-        const requestedKind=['service','animals'].includes(mode)?mode:'all';
-        // Resizing a previously hidden map can start Leaflet's animated bounds
-        // correction. Lay out the new view before restoring the drag boundary.
-        map.setMaxBounds(null);
-        map.invalidateSize({pan:false});
-        map.stop();
-        const point=local.find(p=>p.id===id);
-        const nextCategory=requestedKind==='service' && Object.hasOwn(services,requestedCategory)
-          && local.some(p=>p.service===services[requestedCategory]) && (!point||point.service===services[requestedCategory])
-          ?requestedCategory:'';
-        if(plan){pick(id,'all','');return;}
-        if(kind!==requestedKind||category!==nextCategory)filter(requestedKind,nextCategory);
-        if(point && !markers.has(point.id))filter('all');
-        choose(point);
-        if(!point && kind==='service' && markers.size){
-          map.fitBounds([...markers.values()].map(marker=>marker.getLatLng()),{padding:[24,24],animate:false});
-        }
-        map.panInsideBounds(bounds,{animate:false});
-        map.setMaxBounds(bounds);
-      }
-    };
+  const guide = window.parkGuide;
+  const projection = window.parkProjection;
+  const host = document.querySelector('#map .map-mount');
+  const serviceNames = {
+    cafe: 'Кафе', rest: 'Места отдыха', feed: 'Корм для животных', wc: 'Туалеты',
+    wash: 'Где вымыть руки', parking: 'Парковка', entrance: 'Вход', gift: 'Сувениры'
+  };
+  const places = [...guide.places, ...guide.geoFacilities];
+  const views = new Map();
+  const state = { zone: 1, id: '', kind: 'all', service: '' };
+  let surface, map, layer, picker, card, serviceField, status, calibration, hitChooser, tiles;
+  let boundaryData;
+  let refreshing, redrawSurvey;
+  let loading = false, mapReady = false, drawing = false, tileUnavailable = false, surveyFailed = false;
+  const markers = new Map();
+  const local = () => places.filter(point => point.zone === state.zone);
+  const label = point => point.service ? point.name : '№ ' + point.badge + ' · ' + point.name;
+  const serviceKeys = point => point.services || [point.service];
+  const visible = point =>
+    (state.kind === 'all' || (state.kind === 'service') === Boolean(point.service)) &&
+    (!state.service || serviceKeys(point).includes(serviceNames[state.service]));
+
+  function parseRoute() {
+    const [, zone, ...parts] = location.hash.slice(1).split('/');
+    if (parts[0] === 'all') parts.shift();
+    const kindIndex = parts.findIndex(part => part === 'animals' || part === 'service');
+    const id = kindIndex === 0 ? '' : parts[0] || '';
+    const kind = parts[kindIndex] === 'animals' || parts[kindIndex] === 'service' ? parts[kindIndex] : 'all';
+    const service = kind === 'service' && Object.hasOwn(serviceNames, parts[kindIndex + 1]) ? parts[kindIndex + 1] : '';
+    let rememberedZone;
+    try { rememberedZone = localStorage.getItem('park-map-zone'); } catch {}
+    return { zone: (zone || rememberedZone) === '2' ? 2 : 1, id, kind, service };
   }
-  document.addEventListener('conceptscreen',e=>{
-    const screen=e.detail;
-    if(!['map','zone1','zone2'].includes(screen))return;
-    if(schedule.state==='idle')schedule.load();
-    const route=location.hash.slice(1).split('/');
-    const zone=screen==='zone2'?2:1;
-    const key=screen+':'+zone;
-    // Zone-specific deep links use the zone screens, so each element owns a single map.
-    if(!mounted.has(key))mounted.set(key,mount(screen,zone));
-    mounted.get(key).show(route[1] || (screen==='map'?'36':null),route[2],route[3]);
+
+  function navigate(next) {
+    const value = { ...state, ...next };
+    const route = ['map', value.zone];
+    if (value.id) route.push(value.id);
+    if (value.kind !== 'all') route.push(value.kind);
+    if (value.kind === 'service' && value.service) route.push(value.service);
+    window.conceptReplace(route.join('/'));
+  }
+
+  function position(point) {
+    if (calibration) return projection.position(calibration, point.zone, point);
+    const pixel = projection.planPixel(point.zone, point);
+    return pixel ? L.latLng(-pixel[1], pixel[0]) : null;
+  }
+
+  function boundary(point) {
+    const ring = boundaryData?.enclosures[point.zone + '/' + point.id];
+    return ring?.map(([x, y]) => {
+      const px = x * 2064, py = y * 2369;
+      return calibration ? projection.crs.pointToLatLng(projection.toWorld(calibration, px, py), 16) : L.latLng(-py, px);
+    });
+  }
+
+  function updateStatus() {
+    const messages = [];
+    if (surveyFailed) messages.push('Изображение карты не загрузилось. Места доступны в списке.');
+    else if (!calibration) messages.push('Открыта локальная карта. Географические точки сейчас недоступны.');
+    else if (!navigator.onLine || tileUnavailable) messages.push('Открыта локальная карта парка.');
+    status.textContent = messages.join(' ');
+    status.hidden = !messages.length;
+  }
+
+  function addSurvey() {
+    if (!calibration) {
+      L.imageOverlay('assets/park-survey.webp', [[-2369, 0], [0, 2064]], { alt: 'Техническая карта парка' })
+        .on('error', () => { surveyFailed = true; updateStatus(); })
+        .addTo(map);
+      return;
+    }
+    const image = new Image(2064, 2369);
+    image.className = 'visitor-survey';
+    image.alt = '';
+    image.draggable = false;
+    image.onerror = () => { surveyFailed = true; updateStatus(); };
+    image.src = 'assets/park-survey.webp';
+    map.getPane('overlayPane').append(image);
+    function redraw() {
+      if (!Number.isFinite(map.getZoom())) return;
+      const at = (x, y) => map.project(projection.crs.pointToLatLng(projection.toWorld(calibration, x, y), 16))
+        .subtract(map.getPixelOrigin());
+      const origin = at(0, 0);
+      const right = at(2064, 0).subtract(origin).divideBy(2064);
+      const bottom = at(0, 2369).subtract(origin).divideBy(2369);
+      image.style.transform = 'matrix(' + [right.x, right.y, bottom.x, bottom.y, origin.x, origin.y].join(',') + ')';
+    }
+    map.on('zoomend viewreset resize moveend', redraw);
+    redrawSurvey = redraw;
+  }
+
+  function cardLink(text, href) {
+    const link = document.createElement('a');
+    link.className = 'p-link';
+    link.href = href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = text;
+    return link;
+  }
+
+  function renderCard(point) {
+    card.replaceChildren();
+    card.hidden = !point;
+    if (!point) return;
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'map-sheet-close';
+    close.textContent = '×';
+    close.setAttribute('aria-label', 'Закрыть карточку места');
+    close.onclick = () => { navigate({ id: '' }); picker.focus({ preventScroll: true }); };
+    const title = document.createElement('h2');
+    title.textContent = point.name;
+    const detail = document.createElement('p');
+    detail.textContent = point.detail || (point.service || 'Вольер № ' + point.badge) + ' · ' + guide.zones[point.zone].name;
+    const header = document.createElement('div');
+    header.className = 'map-place-heading';
+    const words = document.createElement('div');
+    words.append(title, detail);
+    const portraitSlug = !point.service && point.species?.find(slug => guide.speciesPortrait(slug));
+    if (portraitSlug) {
+      const photo = new Image(46, 46);
+      photo.className = 'map-place-portrait';
+      photo.alt = point.species.length > 1 ? guide.speciesName?.(portraitSlug) || '' : '';
+      photo.decoding = 'async';
+      photo.onerror = () => photo.remove();
+      photo.src = guide.speciesPortrait(portraitSlug);
+      header.append(photo);
+    }
+    header.append(words);
+    card.append(close, header);
+
+    for (const slug of point.species || []) {
+      const name = guide.speciesName?.(slug);
+      if (!name && slug !== 'kapibara') continue;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'p-link';
+      button.dataset.go = slug === 'kapibara' ? 'animal' : 'species/' + slug;
+      button.textContent = (name || 'Капибара') + ' →';
+      card.append(button);
+    }
+
+    const geo = projection.position(calibration, point.zone, point);
+    const note = document.createElement('small');
+    if (geo) {
+      const pair = geo.lng.toFixed(7) + ',' + geo.lat.toFixed(7);
+      card.append(cardLink('Открыть место в Яндекс Картах ↗', 'https://yandex.by/maps/?ll=' + pair + '&pt=' + pair + '&z=18'));
+      note.textContent = point.geo ? 'Источник координат — OpenStreetMap.' :
+        boundary(point) ? 'Контур обведён по технической карте парка. Отметка приблизительная.' :
+          'Приблизительная отметка по технической карте парка.';
+    } else {
+      card.append(cardLink('Открыть зону в Яндекс Картах ↗', guide.zones[point.zone].yandex));
+      note.textContent = 'Географическая точка места пока не подтверждена.';
+    }
+    const approach = calibration?.approaches?.[point.zone + '/' + point.id];
+    if (Array.isArray(approach) && approach.length === 2 && approach.every(Number.isFinite) &&
+        Math.abs(approach[0]) <= 90 && Math.abs(approach[1]) <= 180) {
+      const destination = new URL('https://yandex.by/maps/');
+      destination.searchParams.set('rtext', '~' + approach.join(','));
+      destination.searchParams.set('rtt', 'pd');
+      card.append(cardLink('Пешком в Яндекс Картах ↗', destination.href));
+    }
+    card.append(note);
+  }
+
+  function saveView() {
+    if (drawing || !mapReady || !document.getElementById('map').classList.contains('current')) return;
+    const { lat, lng } = map.getCenter();
+    const view = { zone: state.zone, geographic: Boolean(calibration), lat, lng, zoom: map.getZoom() };
+    views.set(state.zone, view);
+    history.replaceState({ ...history.state, parkMapView: view }, '');
+  }
+
+  function restoreCamera(point) {
+    const previous = history.state?.parkMapView;
+    const saved = previous?.zone === state.zone ? previous : views.get(state.zone);
+    if (saved?.geographic === Boolean(calibration) && [saved.lat, saved.lng, saved.zoom].every(Number.isFinite)) {
+      const center = L.latLng(saved.lat, saved.lng);
+      if (!mapReady || !map.getCenter().equals(center) || map.getZoom() !== saved.zoom) {
+        map.setView(center, saved.zoom, { animate: false });
+      }
+      if (point && !map.getBounds().pad(-0.14).contains(point)) map.panTo(point, { animate: false });
+    } else if (point) {
+      map.setView(point, calibration ? 17 : 0, { animate: false });
+    } else {
+      // Use all located places so hiding categories never changes the overview or presents an empty viewport.
+      const bounds = L.latLngBounds(local().map(position).filter(Boolean));
+      map.fitBounds(bounds, { padding: [30, 32], maxZoom: calibration ? 17 : 0, animate: false });
+    }
+  }
+
+  function labelTarget(element, point, picked, activate) {
+    element.dataset.placeId = point.id;
+    element.setAttribute('aria-label', label(point));
+    element.setAttribute('aria-pressed', String(picked));
+    element.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      event.stopPropagation();
+      activate(event);
+    });
+  }
+
+  function draw() {
+    const point = local().find(item => item.id === state.id);
+    drawing = true;
+    map.invalidateSize({ pan: false });
+    hitChooser.dismiss();
+    layer.clearLayers();
+    markers.clear();
+    picker.replaceChildren(new Option('Выберите место', ''));
+    const groups = new Map();
+    for (const item of local().filter(visible)) {
+      const ll = position(item);
+      const groupLabel = item.service || 'Вольеры и животные';
+      if (!groups.has(groupLabel)) {
+        const group = document.createElement('optgroup');
+        group.label = groupLabel;
+        groups.set(groupLabel, group);
+        picker.append(group);
+      }
+      groups.get(groupLabel).append(new Option(label(item) + (ll ? '' : ' · без отметки'), item.id));
+      if (!ll) continue;
+
+      const picked = item === point;
+      const ring = boundary(item);
+      if (ring) {
+        const area = L.polygon(ring, {
+          pane: 'visitor-areas', className: 'place-area' + (picked ? ' picked' : ''), bubblingMouseEvents: false
+        });
+        const open = () => navigate({ id: item.id });
+        area.on('add', () => {
+          const element = area.getElement();
+          element.setAttribute('tabindex', '0');
+          element.setAttribute('role', 'button');
+          labelTarget(element, item, picked, open);
+        }).on('click', open).addTo(layer);
+        continue;
+      }
+      const face = item.service ? guide.markerFace(item) : '';
+      const icon = L.divIcon({
+        className: 'place-marker ' + (item.service ? 'service' : 'place-point') + (picked ? ' picked' : ''),
+        html: face, iconSize: [44, 44], iconAnchor: [22, 22]
+      });
+      const marker = L.marker(ll, {
+        icon, pane: item.service ? 'visitor-services' : 'markerPane',
+        title: label(item), keyboard: true, autoPanOnFocus: false, zIndexOffset: picked ? 1000 : 0
+      });
+      marker.on('add', () => {
+        labelTarget(marker.getElement(), item, picked, event => hitChooser.activate(item, event));
+      }).addTo(layer);
+      marker.on('click', event => hitChooser.activate(item, event.originalEvent));
+      markers.set(item.id, marker);
+    }
+    if (point && !visible(point)) picker.append(new Option(label(point), point.id));
+    picker.value = point?.id || '';
+    renderCard(point);
+    restoreCamera(point && position(point));
+    redrawSurvey?.();
+    mapReady = true;
+    drawing = false;
+    saveView();
+  }
+
+  function mount() {
+    surface = host.querySelector('.park-surface');
+    picker = host.querySelector('.place-picker select');
+    card = host.querySelector('.place-info');
+    serviceField = host.querySelector('.service-picker');
+    status = host.querySelector('.map-status');
+    const serviceSelect = serviceField.querySelector('select');
+    for (const [key, name] of Object.entries(serviceNames)) serviceSelect.add(new Option(name, key));
+
+    map = L.map(surface, {
+      crs: calibration ? L.CRS.EPSG3857 : L.CRS.Simple,
+      minZoom: calibration ? 14 : -4, maxZoom: calibration ? 19 : 2,
+      zoomSnap: calibration ? 1 : 0.125, zoomDelta: calibration ? 1 : 0.5,
+      attributionControl: Boolean(calibration), zoomControl: false, zoomAnimation: false
+    });
+    map.createPane('visitor-areas').style.zIndex = '620';
+    map.createPane('visitor-services').style.zIndex = '630';
+    map.attributionControl?.setPrefix(false).setPosition('bottomleft');
+    L.control.zoom({ position: 'topright', zoomInTitle: 'Увеличить', zoomOutTitle: 'Уменьшить' }).addTo(map);
+    if (calibration) {
+      tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      });
+      tiles.on('tileerror', () => { tileUnavailable = true; updateStatus(); });
+      tiles.on('tileload', () => { if (tileUnavailable) { tileUnavailable = false; updateStatus(); } });
+      tiles.addTo(map);
+    }
+    addSurvey();
+    layer = L.layerGroup().addTo(map);
+    hitChooser = guide.bindMarkerHitChooser({
+      container: surface, markers,
+      pointFor: id => local().find(point => point.id === id),
+      open: point => navigate({ id: point.id })
+    });
+    map.on('movestart', () => hitChooser.dismiss());
+    map.on('moveend', saveView);
+    map.on('click', () => hitChooser.dismiss());
+    host.querySelectorAll('[data-zone]').forEach(button => {
+      button.onclick = () => navigate({ zone: Number(button.dataset.zone), id: '' });
+    });
+    host.querySelectorAll('[data-kind]').forEach(button => {
+      button.onclick = () => navigate({ id: '', kind: button.dataset.kind, service: '' });
+    });
+    picker.onchange = () => navigate({ id: picker.value });
+    serviceSelect.onchange = () => navigate({ id: '', kind: 'service', service: serviceSelect.value });
+    window.addEventListener('online', () => { tiles?.redraw(); updateStatus(); });
+    window.addEventListener('offline', updateStatus);
+  }
+
+  function validAlignment(value) {
+    return value?.raster === 'enclosures-2064x2369' && value.scale > 0 &&
+      [value.scale, value.angle, value.centerX, value.centerY].every(Number.isFinite);
+  }
+
+  async function readAlignment() {
+    const key = 'park-map-alignment';
+    try {
+      const response = await fetch('map-alignment.json', { cache: 'no-store', signal: AbortSignal.timeout(3500) });
+      if (!response.ok) throw Error();
+      const value = await response.json();
+      if (!validAlignment(value)) throw Error();
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+      return value;
+    } catch {
+      try {
+        const saved = JSON.parse(localStorage.getItem(key));
+        if (validAlignment(saved)) return saved;
+      } catch {}
+      return null;
+    }
+  }
+
+  async function readBoundaries() {
+    try {
+      const [{ validBoundaries }, response] = await Promise.all([
+        import('./map-boundary-geometry.js'),
+        fetch('map-boundaries.json', { cache: 'no-store', signal: AbortSignal.timeout(3500) })
+      ]);
+      if (!response.ok) return null;
+      const value = await response.json();
+      return validBoundaries(value) ? value : null;
+    } catch { return null; }
+  }
+
+  function show() {
+    if (!document.getElementById('map').classList.contains('current')) return;
+    if (calibration === undefined) {
+      if (!loading) {
+        loading = true;
+        Promise.all([readAlignment(), readBoundaries()]).then(([value, boundaries]) => {
+          calibration = value;
+          boundaryData = boundaries;
+          show();
+        });
+      }
+      return;
+    }
+    Object.assign(state, parseRoute());
+    try { localStorage.setItem('park-map-zone', String(state.zone)); } catch {}
+    if (!map) mount();
+    host.querySelectorAll('[data-zone]').forEach(button => {
+      button.setAttribute('aria-pressed', String(Number(button.dataset.zone) === state.zone));
+    });
+    host.querySelectorAll('[data-kind]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.kind === state.kind));
+    });
+    serviceField.hidden = state.kind !== 'service';
+    serviceField.querySelector('select').value = state.service;
+    updateStatus();
+    draw();
+  }
+
+  function refreshAlignment() {
+    if (refreshing || !map || !document.getElementById('map').classList.contains('current')) return;
+    refreshing = Promise.all([readAlignment(), readBoundaries()]).then(([next, boundaries]) => {
+      const alignmentChanged = next && calibration && ['revision', 'centerX', 'centerY', 'scale', 'angle']
+        .some(key => next[key] !== calibration[key]);
+      const boundariesChanged = boundaries && boundaries.revision !== boundaryData?.revision;
+      if (!alignmentChanged && !boundariesChanged) return;
+      if (alignmentChanged) calibration = next;
+      if (boundariesChanged) boundaryData = boundaries;
+      if (document.getElementById('map').classList.contains('current')) draw();
+    }).finally(() => { refreshing = null; });
+  }
+
+  document.addEventListener('conceptscreen', event => {
+    if (event.detail === 'map') show();
+    else hitChooser?.dismiss();
   });
+  document.addEventListener('parkcatalogready', () => {
+    if (map && document.getElementById('map').classList.contains('current')) draw();
+  });
+  window.addEventListener('focus', refreshAlignment);
 })();

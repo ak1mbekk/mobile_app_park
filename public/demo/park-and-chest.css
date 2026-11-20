@@ -88,3 +88,44 @@ html, body { overflow-x: clip; }
 }
 
 #geo-to-scheme { grid-area: 1 / 2; min-height: 44px; justify-self: start; padding: 0 5px; font: 600 14px/1.2 var(--zk-font); color: var(--green); }
+
+#profileDialog {
+  width: min(400px, calc(100vw - 28px)); max-height: calc(100dvh - 40px); overflow: auto;
+  border: 1px solid var(--line); border-radius: 18px; padding: 20px; color: var(--ink);
+}
+#profileDialog::backdrop { background: rgb(20 24 18 / .55); }
+#profileDialog header {display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+#profileDialog #petNeeds {display:flex;flex-wrap:wrap;gap:4px 12px;color:var(--muted);font-size:14px}
+#family-account {margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+#family-account h3 {font:600 20px/1.2 var(--zk-font);margin:0}
+#family-account p {margin:8px 0 12px;font:400 15px/1.42 var(--zk-font);overflow-wrap:anywhere}
+#family-access,#family-signed,#family-review {display:grid;gap:9px}
+#family-account label {display:grid;gap:5px;font:550 14px/1.3 var(--zk-font)}
+#family-account input {box-sizing:border-box;width:100%;font:400 16px/1.3 var(--zk-font);padding:11px 12px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px}
+#family-account button {min-height:44px;border-radius:9px;font:600 15px/1.3 var(--zk-font);background:var(--inset);color:var(--ink);padding:9px 12px}
+#family-account :is(#family-submit,#family-save,#family-confirm) {background:var(--green);color:var(--surface)}
+#family-account button:disabled {opacity:.55;cursor:default}
+@media (max-width:360px), (max-height:680px) {
+  #profileDialog { padding:14px 16px; max-height:calc(100dvh - 16px); }
+  #profileDialog header { margin-bottom:8px; }
+  #profileDialog .profile-line { padding-block:8px; }
+  #family-account { margin-top:10px; padding-top:12px; }
+  #family-access { gap:6px; }
+  #family-account p { margin-block:5px 8px; }
+}
+#pass .coupon {
+  display:grid;grid-template-columns:minmax(96px, .78fr) 1.22fr;align-items:stretch;
+  padding:0;overflow:hidden;background:#244d42!important;color:#fff6da!important;
+  border:0!important;border-radius:12px!important;margin:18px 0;
+}
+.coupon-stub {display:grid;align-content:space-between;min-height:132px;padding:14px 12px;border-right:2px dashed #abbea2;background:#315e50}
+#pass .coupon-stub>span {font:600 12px/1.2 var(--zk-font);color:#e2ebcd}
+#pass .coupon-stub>strong {font:500 clamp(38px,11vw,56px)/1 Georgia,serif;color:#ffe3a2}
+#pass .coupon-stub strong span {font-size:.55em}
+#pass .coupon figcaption {display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:16px;min-width:0}
+#pass .coupon figcaption strong {font:600 20px/1.15 var(--zk-font);color:#fff6da}
+#pass .coupon figcaption p {margin:6px 0 12px;font:400 14px/1.35 var(--zk-font);color:#e2ebcd}
+#coupon-progress {width:100%;height:6px;border-radius:4px;border:0;background:#507466;appearance:none}
+#coupon-progress::-webkit-progress-bar {background:#507466;border-radius:4px}
+#coupon-progress::-webkit-progress-value {background:#f0cc83;border-radius:4px}
+#coupon-progress::-moz-progress-bar {background:#f0cc83;border-radius:4px}

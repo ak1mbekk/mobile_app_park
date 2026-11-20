@@ -1,5 +1,32 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { validBoundaries } from '../public/demo/map-boundary-geometry.js';
+
+function localJsonRequest(req,res,limit,save) {
+  const address=req.socket.remoteAddress;
+  const host=req.headers.host;
+  if(!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(address) ||
+     !/^(127\.0\.0\.1|localhost):[0-9]+$/.test(host||'') || req.headers.origin!=='http://'+host){
+    res.writeHead(403).end();return;
+  }
+  if(req.method!=='POST'||req.headers['content-type']!=='application/json'){res.writeHead(405).end();return;}
+  let body='';
+  req.setEncoding('utf8');
+  req.on('data',part=>{if(body.length<=limit)body+=part;});
+  req.on('end',()=>{
+    if(body.length>limit){res.writeHead(413).end();return;}
+    let input;
+    try{input=JSON.parse(body);}catch{res.writeHead(400).end();return;}
+    save(input);
+  });
+}
+
+function publish(file, result, res) {
+  const json=JSON.stringify(result,null,2)+'\n';
+  fs.writeFileSync(file+'.tmp',json);
+  fs.renameSync(file+'.tmp',file);
+  res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'}).end(json);
+}
 
 // Only the local Vite development server can persist the public raster transform.
 export default function alignmentEditor() {
@@ -7,21 +34,7 @@ export default function alignmentEditor() {
     name: 'park-alignment-editor',
     configureServer(server) {
       const file=path.join(server.config.publicDir,'demo','map-alignment.json');
-      server.middlewares.use('/__park/alignment',(req,res)=>{
-        const address=req.socket.remoteAddress;
-        const host=req.headers.host;
-        if(!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(address) ||
-           !/^(127\.0\.0\.1|localhost):[0-9]+$/.test(host||'') || req.headers.origin!=='http://'+host){
-          res.writeHead(403).end();return;
-        }
-        if(req.method!=='POST'||req.headers['content-type']!=='application/json'){res.writeHead(405).end();return;}
-        let body='';
-        req.setEncoding('utf8');
-        req.on('data',part=>{if(body.length<=16384)body+=part;});
-        req.on('end',()=>{
-          if(body.length>16384){res.writeHead(413).end();return;}
-          let input;
-          try{input=JSON.parse(body);}catch{res.writeHead(400).end();return;}
+      server.middlewares.use('/__park/alignment',(req,res)=>localJsonRequest(req,res,16384,input=>{
           if(!input || input.raster!=='enclosures-2064x2369' || !Number.isSafeInteger(input.revision) ||
              ![input.centerX,input.centerY,input.scale,input.angle].every(Number.isFinite) ||
              Math.abs(input.centerX-9601312)>5000 || Math.abs(input.centerY-5472047)>5000 ||
@@ -41,13 +54,18 @@ export default function alignmentEditor() {
               }
               result.approaches=approaches;
             }
-            const json=JSON.stringify(result,null,2)+'\n';
-            fs.writeFileSync(file+'.tmp',json);
-            fs.renameSync(file+'.tmp',file);
-            res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'}).end(json);
+            publish(file,result,res);
           }catch{res.writeHead(500).end();}
-        });
-      });
+      }));
+      const boundaries=path.join(server.config.publicDir,'demo','map-boundaries.json');
+      server.middlewares.use('/__park/boundaries',(req,res)=>localJsonRequest(req,res,131072,input=>{
+        if(!validBoundaries(input)){res.writeHead(422).end();return;}
+        try{
+          const previous=JSON.parse(fs.readFileSync(boundaries,'utf8'));
+          if(input.revision!==previous.revision){res.writeHead(409).end();return;}
+          publish(boundaries,{raster:input.raster,revision:input.revision+1,enclosures:input.enclosures},res);
+        }catch{res.writeHead(500).end();}
+      }));
     },
   };
 }

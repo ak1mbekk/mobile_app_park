@@ -40,6 +40,7 @@
     const pet=window.petDemo.stats(),order=pet.demoOrder;
     const eligible=pet.level>=10&&!pet.couponUsed;
     id('couponStatus').textContent=pet.couponUsed?'Купон использован':eligible?'Купон доступен':'Откроется на уровне 10 · сейчас '+pet.level;
+    id('coupon-progress').value=Math.min(10,pet.level);
     if(order){children.value=String(order.children);adults.value=String(order.adults);}
     const subtotal=Number(children.value)*10+Number(adults.value)*15;
     const total=order?order.total:subtotal-(eligible&&Number(children.value)>0?1:0);
@@ -117,10 +118,12 @@
   };
   function showStats(){
     const p=window.petDemo.stats();
-    id('pr-name').textContent=p.name;
+    id('pr-name').closest('.profile-line').hidden = !p.onboardingDone;
+    id('pr-name').textContent=p.onboardingDone?p.name:'';
     let summary=id('petNeeds');
     if(!summary){summary=document.createElement('div');summary.id='petNeeds';id('profileDialog').querySelector('form').append(summary);}
     summary.replaceChildren();
+    if(!p.onboardingDone)return;
     const age=p.level>=10?'Взрослый':p.level>=4?'Подросший':'Малыш';
     for(const text of [age+' · Уровень '+p.level,'Опыт '+p.xp+' · Листья '+p.leaves]){
       const line=document.createElement('p');line.textContent=text;summary.append(line);

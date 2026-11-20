@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import PageLayout from '../components/layout/PageLayout';
@@ -79,7 +79,7 @@ export default function AnimalsPage() {
                 </div>
                 {a.source === 'api' && a.hasCoords ? (
                   <Link
-                    to="/map"
+                    to="/map/editor"
                     className="p-2.5 rounded-xl text-[var(--accent)] hover:bg-[var(--bg-hover)] shrink-0 transition-colors"
                     title="На карту"
                   >

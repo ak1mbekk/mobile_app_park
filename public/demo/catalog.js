@@ -37,13 +37,13 @@
     const group=document.getElementById('other-enclosures');
     group?.remove();
     mapLink.hidden=locations.length!==1;
-    if(locations.length===1)mapLink.dataset.go='zone'+locations[0].zone+'/'+locations[0].id;
+    if(locations.length===1)mapLink.dataset.go='map/'+locations[0].zone+'/'+locations[0].id;
     if(locations.length>1){
       const list=document.createElement('div');list.id='other-enclosures';
       for(const p of locations){
         const link=document.createElement('button');link.className='p-link';
         link.textContent=window.parkGuide.zones[p.zone].name+' · № '+p.id+' →';
-        link.dataset.go='zone'+p.zone+'/'+p.id;list.append(link);
+        link.dataset.go='map/'+p.zone+'/'+p.id;list.append(link);
       }
       mapLink.after(list);
     }

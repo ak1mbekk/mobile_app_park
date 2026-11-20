@@ -1,20 +1,44 @@
 const byId=id=>document.getElementById(id);
-if(window.parent!==window && new URLSearchParams(location.search).get('layout')==='calendar'){
-  document.documentElement.classList.add('in-calendar');
+const guideLayout=new URLSearchParams(location.search).get('layout');
+if(window.parent!==window && ['calendar','map'].includes(guideLayout)){
+  document.documentElement.classList.add('guide-embed');
 }
 const domestic=new Set(['intro','name','home','game','win','wash','chest','match','catch']);
 let lastHome='intro', currentScreen='', currentRoute='', previousScreens={};
+function visitorMapRoute(route){
+  const [screen,...parts]=route.split('/');
+  if(screen==='overview')return 'map';
+  if(screen==='geo')return ['map',...parts].join('/');
+  if(screen==='zone1'||screen==='zone2'){
+    return ['map',screen.slice(-1),...parts.filter(part=>part!=='plan')].join('/');
+  }
+  return route;
+}
 function present(id){
+  const canonical=visitorMapRoute(id);
+  if(canonical!==id){id=canonical;history.replaceState(history.state,'','#'+id);}
+  const pet=window.petDemo?.stats();
+  if(pet&&!pet.onboardingDone&&domestic.has(id.split('/')[0])){
+    const stage=pet.mealFinished?'name':'intro';
+    if(id!==stage){id=stage;history.replaceState(history.state,'','#'+id);}
+  }
   let blocked='';
+  if(id.split('/')[0]==='win'){
+    const round=pet?.pairs;
+    const species=new Set(round?.cards);
+    if(!pet?.onboardingDone || ![6,12].includes(round?.cards?.length) ||
+       !Array.isArray(round?.paired) || species.size!==round.cards.length/2 ||
+       ![...species].every(s=>round.paired.includes(s))){
+      id=pet?.onboardingDone?'game':pet?.mealFinished?'name':'intro';
+      history.replaceState(history.state,'','#'+id);
+    }
+  }
   if(['game','catch','match'].includes(id.split('/')[0])){
-    const pet=window.petDemo?.stats();
-    if(pet && !pet.onboardingDone)id=pet.mealFinished?'name':'intro';
-    else blocked=window.petDemo?.playBlock()||'';
+    blocked=window.petDemo?.playBlock()||'';
     if(blocked)id='home';
     if(location.hash!=='#'+id)history.replaceState(history.state,'','#'+id);
   }
   if(id==='intro' || id==='name'){
-    const pet=window.petDemo?.stats();
     const stage=pet?.onboardingDone?'home':pet?.mealFinished?'name':'intro';
     if(pet && stage!==id){
       id=stage;
@@ -37,23 +61,28 @@ function present(id){
     if(on) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current');
   });
   let backLink=byId(id).querySelector('.p-back,.cat-back');
-  if(backLink && ['map','animal','species','zone1','zone2','tours','geo'].includes(id)){
-    const fallback={map:'park',animal:'map',species:'animals',zone1:'overview',zone2:'overview',tours:'park',geo:'park'};
+  if(backLink && ['map','animal','species','tours'].includes(id)){
+    const fallback={map:'park',animal:'map/1/36',species:'animals',tours:'park'};
     let dest=previousScreens[id] || fallback[id];
-    let labels={park:'Парк животных',feed:'Кормления',map:'На схему парка',animals:'Все животные',win:'К результату игры',zone1:'Казачны мір',zone2:'Лясныя таямніцы',species:'К животному',animal:'Капибара',overview:'Карта парка'};
+    let labels={park:'Парк животных',feed:'Кормления',map:'Карта парка',animals:'Все животные',win:'К результату игры',species:'К животному',animal:'Капибара'};
+    if(id==='species')labels.home='К результату игры';
     backLink.dataset.go=dest;
     labels.visitor='Для посетителей';
-    labels.geo='Карта территории';
     backLink.setAttribute('aria-label','Назад · '+(labels[dest.split('/')[0]]||'Парк'));
   }
   document.dispatchEvent(new CustomEvent('conceptscreen',{detail:id}));
   if(blocked)window.petDemo.refuse(blocked);
 }
 window.conceptGo=function(id,keepOrigin=false){
+  id=visitorMapRoute(id);
   const screen=id.split('/')[0];
   if(!byId(screen)?.matches('.screen'))return;
-  if(!keepOrigin && currentScreen && screen!==currentScreen && previousScreens[currentScreen]!==id) previousScreens[screen]=currentRoute||currentScreen;
-  if(location.hash!=='#'+id)location.hash=id;else present(id);
+  if(location.hash!=='#'+id){
+    const origin=!keepOrigin && currentScreen && screen!==currentScreen ? currentRoute : '';
+    const origins=origin?{...previousScreens,[screen]:origin}:previousScreens;
+    history.pushState({parkOrigins:origins,parkReturnRoute:origin},'','#'+id);
+  }
+  present(id);
 };
 window.conceptReplace=function(id){
   history.replaceState(history.state,'','#'+id);
@@ -70,11 +99,20 @@ document.addEventListener('click',e=>{
     byId('pr-name').textContent=name||'Ричи'; byId('profileDialog').showModal();return;
   }
   const el=e.target.closest('[data-go]');
+  if(guideLayout==='map' && window.parent!==window && el?.matches('#map .p-back[data-go="park"]')){
+    window.parent.postMessage({type:'animal-park:map-back'},location.origin);
+    return;
+  }
   if(el?.matches('a[href^="#"]')){
     if(e.defaultPrevented || e.button!==0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)return;
     e.preventDefault();
   }
-  if(el)conceptGo(el.dataset.go,el.matches('.p-back,.cat-back,.backbtn'));
+  if(el){
+    const back=el.matches('.p-back,.cat-back,.backbtn');
+    // Returning to the original entry restores its own Back target and map camera.
+    if(back && el.dataset.go===history.state?.parkReturnRoute){history.back();return;}
+    conceptGo(el.dataset.go,back);
+  }
 });
 function conceptStart(){
   const pet=window.petDemo?.stats();

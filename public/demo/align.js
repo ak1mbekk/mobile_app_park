@@ -1,12 +1,23 @@
+import { setupBoundaryEditor } from './align-boundaries.js';
+import { height, width } from './map-boundary-geometry.js';
+
 (() => {
   const el=id=>document.getElementById(id);
-  const {crs,toWorld,widget}=window.parkProjection;
+  const {crs,toWorld,toRaster,widget}=window.parkProjection;
   const regions={all:[53.0941,26.019],1:[53.0961,26.0137],2:[53.0916,26.0209]};
   let saved,draft,drag,saving=false,view=crs.latLngToPoint(L.latLng(regions.all),16);
   let placing=false;
   const picker=el('approach-place');
   const enclosures=window.parkGuide.places.filter(p=>p.plan);
-  for(const p of enclosures)picker.add(new Option(window.parkGuide.zones[p.zone].name+' · № '+p.id+' · '+p.name,p.zone+'/'+p.id));
+  const label=p=>window.parkGuide.zones[p.zone].name+' · № '+p.id+' · '+p.name;
+  for(const p of enclosures)picker.add(new Option(label(p),p.zone+'/'+p.id));
+  const boundaries=setupBoundaryEditor(enclosures,label,p=>{
+    if(!draft)return;
+    placing=false;
+    el('region').value=p.zone;el('zoom').value=18;
+    view=crs.latLngToPoint(window.parkProjection.position(draft,p.zone,p),16);
+    approachControls();updateBase();
+  },draw);
   function approachControls(){
     const coord=draft?.approaches?.[picker.value];
     el('place-approach').disabled=!draft||!picker.value||saving;
@@ -19,8 +30,11 @@
   function draw(){
     if(!draft)return;
     const box=el('workspace'), f=factor(), corner=toWorld(draft,0,0).subtract(view).multiplyBy(f);
-    el('survey').style.transform='translate('+(box.clientWidth/2+corner.x)+'px,'+(box.clientHeight/2+corner.y)+'px) rotate('+draft.angle+'deg) scale('+draft.scale*f+')';
-    el('survey').style.opacity=Number(el('opacity').value)/100;
+    const transform='translate('+(box.clientWidth/2+corner.x)+'px,'+(box.clientHeight/2+corner.y)+'px) rotate('+draft.angle+'deg) scale('+draft.scale*f+')';
+    el('survey').style.transform=transform;
+    el('survey').style.opacity=boundaries.open?1:Number(el('opacity').value)/100;
+    el('drag-area').style.cursor=placing||boundaries.drawing?'crosshair':'';
+    boundaries.draw(transform);
     el('save').disabled=saving || !el('scale').validity.valid || !el('angle').validity.valid ||
       (saved.revision>0 && JSON.stringify(saved)===JSON.stringify(draft));
   }
@@ -61,18 +75,23 @@
     else draft.angle=Number(el(key).value);
     draw();
   };
+  const movingView=()=>boundaries.open||el('move').value==='view';
   function shift(dx,dy){
-    if(el('move').value==='view')view=view.subtract(L.point(dx,dy).divideBy(factor()));
+    if(movingView())view=view.subtract(L.point(dx,dy).divideBy(factor()));
     else {draft.centerX+=dx/factor();draft.centerY+=dy/factor();}
     draw();
   }
   const area=el('drag-area');
   area.onpointerdown=e=>{
     if(!draft||drag||saving)return;
-    if(placing){
+    if(placing||boundaries.drawing){
       const rect=area.getBoundingClientRect();
       const offset=L.point(e.clientX-rect.left-rect.width/2,e.clientY-rect.top-rect.height/2);
       const coord=crs.pointToLatLng(view.add(offset.divideBy(factor())),16);
+      if(boundaries.drawing){
+        const pixel=toRaster(draft,coord);
+        boundaries.add([pixel.x/width,pixel.y/height]);return;
+      }
       (draft.approaches??={})[picker.value]=[Number(coord.lat.toFixed(7)),Number(coord.lng.toFixed(7))];
       placing=false;approachControls();updateBase();return;
     }
@@ -83,17 +102,17 @@
     const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
     drag.x=e.clientX;drag.y=e.clientY;drag.dx+=dx;drag.dy+=dy;
     shift(dx,dy);
-    if(el('move').value==='view')el('base-map').style.transform='translate('+drag.dx+'px,'+drag.dy+'px)';
+    if(movingView())el('base-map').style.transform='translate('+drag.dx+'px,'+drag.dy+'px)';
   };
   area.onpointerup=area.onpointercancel=e=>{
     if(drag?.id!==e.pointerId)return;drag=null;
-    if(el('move').value==='view'){el('base-map').style.transform='';updateBase();}
+    if(movingView()){el('base-map').style.transform='';updateBase();}
   };
   area.onkeydown=e=>{
     const direction={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
     if(!draft||!direction||saving)return;
     e.preventDefault();shift(...direction.map(v=>v*(e.shiftKey?10:1)));
-    if(el('move').value==='view')updateBase();
+    if(movingView())updateBase();
   };
   el('revert').onclick=()=>{if(saved&&!saving)restore();};
   el('save').onclick=async()=>{

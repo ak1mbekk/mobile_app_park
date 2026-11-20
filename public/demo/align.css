@@ -3,6 +3,11 @@
 #base-map,#drag-area{position:absolute;inset:0;width:100%;height:100%;border:0}
 #drag-area{touch-action:none;cursor:grab;overflow:hidden;clip-path:inset(0 0 35px)}
 #drag-area:active{cursor:grabbing}#survey{position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:none;width:2064px;height:2369px;max-width:none}
+#boundary-layer{position:absolute;top:0;left:0;width:2064px;height:2369px;transform-origin:0 0;pointer-events:none}
+#boundary-layer polygon,#boundary-layer polyline{stroke:#f36d27;stroke-width:2.5;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+#boundary-layer polygon{fill:#f36d2744}#boundary-layer polyline{fill:none}
+#boundary-layer circle{fill:#fff;stroke:#8d3616;stroke-width:1.2;vector-effect:non-scaling-stroke}
+.boundary-actions{display:grid;gap:5px}.boundary-actions button{text-align:left}
 aside{padding:20px;overflow:auto;background:rgb(var(--zk-card));border-left:1px solid rgb(var(--zk-line))}h1{font-size:23px;margin:0}p{color:rgb(var(--zk-stone));margin:10px 0 18px}label{display:grid;gap:4px;font-weight:550;margin:12px 0}
 button,input,select{font:inherit;min-height:42px;max-width:100%;accent-color:rgb(var(--zk-leaf))}
 input[type=number],select,button{border:1px solid rgb(var(--zk-line));padding:5px 9px;border-radius:9px;background:rgb(var(--zk-card));color:inherit}

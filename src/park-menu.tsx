@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MenuVertical } from "./components/ui/menu-vertical";
 
-const map = { label: "Карта парка", href: "#geo/1" };
+const map = { label: "Карта парка", href: "#map" };
 const animals = { label: "Животные", href: "#animals" };
 const visitor = { label: "Для посетителей", href: "#visitor" };
 const beforeVisit = [
@@ -10,7 +10,7 @@ const beforeVisit = [
   { label: "Как доехать", href: "#directions" },
   { label: "Экскурсии", href: "#tours" }, map, animals, visitor,
 ];
-const duringVisit = [{ ...map, href: "#zone1" }, { label: "Кормления", href: "#feed" }, animals, visitor];
+const duringVisit = [map, { label: "Кормления", href: "#feed" }, animals, visitor];
 
 function ParkMenu() {
   const [inside, setInside] = useState(() => {
