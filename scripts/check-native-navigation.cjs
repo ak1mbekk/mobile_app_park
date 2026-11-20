@@ -53,7 +53,7 @@ async function main() {
     const capture = async name => {
       if (output) await page.screenshot({ path: path.join(output, name + '.png') });
     };
-    async function state(expected = {}) {
+    async function state(expected = {}, timeout = 30000) {
       const frame = await child();
       const result = await frame.waitForFunction(criteria => {
         const scene = document.querySelector('#scene3d iframe')?.contentWindow;
@@ -66,7 +66,7 @@ async function main() {
         if (activeGame !== undefined && value.navigation?.game !== activeGame) return null;
         if (bathPhase !== undefined && value.navigation?.bath?.phase !== bathPhase) return null;
         return Object.entries(keys).every(([key, expected]) => value[key] === expected) ? value : null;
-      }, expected, { timeout: 30000, polling: 100 });
+      }, expected, { timeout, polling: 100 });
       try { return await result.jsonValue(); } finally { await result.dispose(); }
     }
     async function ready() {
@@ -146,7 +146,9 @@ async function main() {
     await press('bath');
     await state({ location: 'bathroom', mode: 'home' });
     await press('wash');
-    const bath = await state({ location: 'bathroom', mode: 'bath', moving: false, bathPhase: 'scrub' });
+    // Check the tap promptly, then allow the software renderer to finish the animated climb.
+    await state({ location: 'bathroom', moving: true });
+    const bath = await state({ location: 'bathroom', mode: 'bath', moving: false, bathPhase: 'scrub' }, 75000);
     await scrub(bath.sponge, bath.scrubCenter, 3);
     const scrubbed = (await state({ bathPhase: 'scrub' })).navigation.bath.scrub;
     assert.ok(scrubbed > 0 && scrubbed < .51);
@@ -168,7 +170,7 @@ async function main() {
     console.log('PASS bathing mode and partially scrubbed fur survive Park, map and reload without granting XP');
 
     await press('back');
-    await state({ location: 'bathroom', mode: 'home', moving: false });
+    await state({ location: 'bathroom', mode: 'home', moving: false }, 75000);
     await press('main');
     await press('chest');
     await state({ activeGame: '', control: 'pairs' });
