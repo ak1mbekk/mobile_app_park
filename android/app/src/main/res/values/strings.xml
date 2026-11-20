@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">MapModule</string>
-    <string name="title_activity_main">MapModule</string>
+    <string name="app_name">Парк животных</string>
+    <string name="title_activity_main">@string/app_name</string>
     <string name="package_name">by.animalpark.mapmodule</string>
     <string name="custom_url_scheme">by.animalpark.mapmodule</string>
 </resources>
