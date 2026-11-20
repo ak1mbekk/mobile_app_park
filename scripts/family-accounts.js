@@ -2,6 +2,7 @@ import { createHash, randomBytes, scrypt as derive, timingSafeEqual } from 'node
 import { promisify } from 'node:util';
 import { existsSync, mkdirSync, realpathSync } from 'node:fs';
 import path from 'node:path';
+import { familyOidc } from './family-oidc.js';
 
 const scrypt = promisify(derive);
 const cookie = 'park_family';
@@ -16,20 +17,30 @@ function inside(parent, candidate) {
   return relative === '' || (relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative));
 }
 
-async function readBody(req) {
+function getCookie(req, name) {
+  return req.headers.cookie?.split(/;\s*/).find(entry => entry.startsWith(name + '='))?.slice(name.length + 1);
+}
+
+async function readPayload(req, sizeLimit = limit) {
   let bytes = 0;
   const chunks = [];
   for await (const chunk of req) {
     bytes += chunk.length;
-    if (bytes > limit) throw { status: 413 };
+    if (bytes > sizeLimit) throw { status: 413 };
     chunks.push(chunk);
   }
-  try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
+  return Buffer.concat(chunks).toString('utf8');
+}
+
+async function readBody(req) {
+  const text = await readPayload(req);
+  try { return JSON.parse(text); }
   catch { throw { status: 400 }; }
 }
 
 // Separate from staff authentication. The browser explicitly saves or restores a family snapshot.
-export default function familyAccounts({ directory } = {}) {
+export default function familyAccounts({ directory, oauth } = {}) {
+  const signIn = familyOidc(oauth);
   const attempts = new Map();
   let database;
   async function open({ root, publicDir, build }) {
@@ -45,12 +56,21 @@ export default function familyAccounts({ directory } = {}) {
       const dbPath = path.join(realDirectory, 'families.sqlite');
       const db = new DatabaseSync(dbPath);
       db.exec(`PRAGMA foreign_keys = ON;
+        PRAGMA busy_timeout = 5000;
         CREATE TABLE IF NOT EXISTS families(
           id INTEGER PRIMARY KEY, login TEXT UNIQUE NOT NULL, salt TEXT NOT NULL,
           verifier TEXT NOT NULL, snapshot TEXT, revision INTEGER NOT NULL DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS sessions(
           token TEXT PRIMARY KEY, family INTEGER NOT NULL REFERENCES families(id), expires INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS family_identities(
+          provider TEXT NOT NULL, identity TEXT NOT NULL, family INTEGER NOT NULL REFERENCES families(id),
+          PRIMARY KEY(provider, identity), UNIQUE(family, provider)
+        );
+        CREATE TABLE IF NOT EXISTS family_oidc_attempts(
+          state TEXT PRIMARY KEY, provider TEXT NOT NULL, binding TEXT NOT NULL, nonce TEXT NOT NULL,
+          verifier TEXT, session TEXT, expires INTEGER NOT NULL
         );`);
       return db;
     }).catch(error => { database = undefined; throw error; });
@@ -68,25 +88,44 @@ export default function familyAccounts({ directory } = {}) {
       };
       try {
         const address = req.socket.remoteAddress;
-        const tls = Boolean(req.socket.encrypted);
+        const tls = signIn.isTls(req);
         if (!tls && (!localAddresses.has(address) || !localHost.test(req.headers.host ?? '')))
           return send(403, { error: 'Для входа с телефона нужен HTTPS.' });
         const action = req.url.split('?')[0];
         const change = req.method === 'POST';
+        const requestOrigin = (tls ? 'https://' : 'http://') + req.headers.host;
+        const isCallback = /^\/oauth\/(google|apple)\/callback$/.test(action);
         if (!change && req.method !== 'GET') return send(405, {});
-        if (change && (req.headers.origin !== (tls ? 'https://' : 'http://') + req.headers.host ||
+        if (change && !isCallback && (req.headers.origin !== requestOrigin ||
             req.headers['content-type']?.split(';')[0] !== 'application/json')) return send(403, {});
         const db = await open(server.config);
         const now = Date.now();
-        const key = req.headers.cookie?.split(/;\s*/).find(entry => entry.startsWith(cookie+'='))?.slice(cookie.length+1);
+        const key = getCookie(req, cookie);
         const tokenHash = key && digest(key);
         const getUser = () => tokenHash && db.prepare(
           'SELECT f.id,f.login,f.revision FROM sessions s JOIN families f ON f.id=s.family WHERE s.token=? AND s.expires>?'
         ).get(tokenHash, Date.now());
         const options = '; Path=/api/family; HttpOnly; SameSite=Strict' + (tls ? '; Secure' : '');
+        const createSession = (family, priorSession) => {
+          if (priorSession) db.prepare('DELETE FROM sessions WHERE token=?').run(priorSession);
+          db.prepare('DELETE FROM sessions WHERE expires<=?').run(now);
+          const token = randomBytes(32).toString('hex');
+          db.prepare('INSERT INTO sessions VALUES (?,?,?)').run(digest(token), family, now + lifetime * 1000);
+          const existing = res.getHeader('Set-Cookie');
+          const sessionCookie = cookie + '=' + token + options + '; Max-Age=' + lifetime;
+          res.setHeader('Set-Cookie', existing ? [existing, sessionCookie] : sessionCookie);
+        };
+        const sessionResponse = user => ({
+          login: user?.login ?? null, revision: user?.revision ?? 0,
+          ...signIn.sessionDetails(db, user, requestOrigin),
+        });
+        if (action.startsWith('/oauth/')) {
+          return await signIn.handle(action, {
+            req, res, change, tls, requestOrigin, db, tokenHash, user: getUser(), send, getCookie, readPayload, createSession,
+          });
+        }
         if (!change && action === '/session') {
-          const user = getUser();
-          return send(200, { login: user?.login ?? null, revision: user?.revision ?? 0 });
+          return send(200, sessionResponse(getUser()));
         }
         if (change && (action === '/login' || action === '/register')) {
           const body = await readBody(req);
@@ -108,12 +147,8 @@ export default function familyAccounts({ directory } = {}) {
           } else if (!row || !timingSafeEqual(verifier, Buffer.from(row.verifier, 'hex'))) {
             return send(401, { error: 'Проверьте логин и пароль.' });
           }
-          if (tokenHash) db.prepare('DELETE FROM sessions WHERE token=?').run(tokenHash);
-          db.prepare('DELETE FROM sessions WHERE expires<=?').run(now);
-          const token = randomBytes(32).toString('hex');
-          db.prepare('INSERT INTO sessions VALUES (?,?,?)').run(digest(token), row.id, now + lifetime*1000);
-          res.setHeader('Set-Cookie', cookie+'='+token+options+'; Max-Age='+lifetime);
-          return send(200, { login, revision: row.revision });
+          createSession(row.id, tokenHash);
+          return send(200, sessionResponse({ ...row, login }));
         }
         if (action !== '/save' && !(change && action === '/logout')) return send(404, {});
         const body = change && action === '/save' ? await readBody(req) : null;

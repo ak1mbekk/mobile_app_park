@@ -13,14 +13,34 @@
   let registering = false;
   let pending = null;
   let busy = false;
+  const names = { google: 'Google', apple: 'Apple' };
+  const external = document.createElement('div');
+  external.id = 'family-external';
+  external.setAttribute('role', 'group');
+  external.setAttribute('aria-label', 'Вход через Google и Apple');
+  external.style.cssText = 'display:grid;gap:9px;margin-top:9px';
+  external.hidden = true;
+  const externalStatus = document.createElement('p');
+  const providerButtons = Object.entries(names).map(([provider, label]) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'family-' + provider;
+    button.onclick = task(async () => {
+      const result = await request('oauth/' + provider + '/start', {});
+      window.top.location.assign(result.url);
+    });
+    return [provider, label, button];
+  });
+  external.append(...providerButtons.map(([, , button]) => button), externalStatus);
+  signed.after(external);
 
   async function request(action, body) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 9000);
     try {
       const options = { cache: 'no-store', credentials: 'same-origin', signal: controller.signal, headers: {} };
-      if (session.login && ['save', 'logout'].includes(action)) {
-        options.headers['X-Park-Family'] = encodeURIComponent(session.login);
+      if ((session.login && ['save', 'logout'].includes(action)) || action.startsWith('oauth/')) {
+        options.headers['X-Park-Family'] = encodeURIComponent(session.login ?? '');
       }
       if (body !== undefined) {
         options.method = 'POST';
@@ -50,10 +70,22 @@
     signed.hidden = !session.login;
     review.hidden = true;
     retry.hidden = true;
+    external.hidden = false;
+    const missingProviders = [];
+    for (const [provider, label, button] of providerButtons) {
+      const available = session.providers?.includes(provider);
+      const linked = session.linked?.includes(provider);
+      button.textContent = linked ? label + ' подключён' : (session.login ? 'Подключить ' : 'Войти через ') + label;
+      button.disabled = !available || linked;
+      if (!available && !linked) missingProviders.push(label);
+    }
+    externalStatus.hidden = missingProviders.length === 0;
+    externalStatus.textContent = 'Недоступные способы входа · ' + missingProviders.join(', ');
     restoreButton.disabled = !session.revision;
     saveButton.disabled = !window.petDemo.stats().onboardingDone;
+    const login = Object.keys(names).find(provider => session.login?.startsWith('@' + provider + '-'));
     status.textContent = message ?? (session.login
-      ? 'Выполнен вход · ' + session.login + (session.revision ? '' : '. В аккаунте пока нет сохранения.')
+      ? 'Выполнен вход · ' + (login ? names[login] : session.login) + (session.revision ? '' : '. В аккаунте пока нет сохранения.')
       : 'Взрослый может сохранить игру в аккаунте и перенести её на другое устройство.');
     find('family-submit').textContent = registering ? 'Создать аккаунт' : 'Войти';
     find('family-mode').textContent = registering ? 'Уже есть аккаунт' : 'Создать аккаунт';
@@ -62,11 +94,12 @@
 
   async function connect() {
     pending = null;
-    form.hidden = review.hidden = signed.hidden = true;
+    form.hidden = review.hidden = signed.hidden = external.hidden = true;
     retry.hidden = false;
     status.textContent = 'Подключение…';
     session = await request('session');
-    paint();
+    paint(entryNotice);
+    entryNotice = undefined;
   }
 
   function task(action) {
@@ -84,7 +117,7 @@
           saveButton.focus();
         } else if (error.code === 'session_changed') {
           pending = null;
-          form.hidden = review.hidden = signed.hidden = true;
+          form.hidden = review.hidden = signed.hidden = external.hidden = true;
           retry.hidden = false;
           status.textContent = error.message;
           retry.focus();
@@ -121,13 +154,14 @@
   });
   find('family-logout').onclick = task(async () => {
     await request('logout', {});
-    session = { login: null, revision: 0 };
+    session = { login: null, revision: 0, providers: session.providers };
     paint();
   });
 
   function confirm(action, message, caption, opener) {
     pending = { action, opener };
     signed.hidden = true;
+    external.hidden = true;
     find('family-comparison').textContent = message;
     find('family-confirm').textContent = caption;
     review.hidden = false;
@@ -204,8 +238,15 @@
     pending = null;
   });
   const entry = new URL(location.href);
+  const notices = {
+    cancelled: 'Вход через провайдера отменён.',
+    failed: 'Не удалось войти через провайдера. Попробуйте ещё раз или войдите по паролю.',
+    linked_elsewhere: 'Не удалось подключить этот аккаунт. Возможно, он уже связан с другой семьёй.',
+  };
+  let entryNotice = Object.hasOwn(notices, entry.searchParams.get('family')) ? notices[entry.searchParams.get('family')] : undefined;
   if (entry.searchParams.get('panel') === 'profile') {
     entry.searchParams.delete('panel');
+    entry.searchParams.delete('family');
     history.replaceState(history.state, '', entry);
     document.querySelector('#park [data-profile]')?.click();
   }

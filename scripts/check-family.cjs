@@ -13,8 +13,9 @@ const folder=path.resolve(__dirname,'..');
   try {
     const {createServer,preview}=await import('vite');
     process.env.ANIMAL_PARK_FAMILY_DIR=db;
+    delete process.env.ANIMAL_PARK_FAMILY_ORIGIN;
     const address={host:'127.0.0.1',port:0};
-    const config={root:folder};
+    const config={root:folder,cacheDir:path.join(db,'vite'),optimizeDeps:{entries:['index.html']}};
     if (process.argv.includes('--preview')) {
       config.preview=address;
       if (process.env.FAMILY_PREVIEW_DIR) config.build={outDir:process.env.FAMILY_PREVIEW_DIR};
@@ -54,6 +55,8 @@ const folder=path.resolve(__dirname,'..');
     const match=async(page,pattern)=>page.locator('#family-status').filter({hasText:pattern}).waitFor({timeout:10000});
     const session=async page=>(await page.request.get(origin+'/api/family/session')).json();
     await open(a);
+    assert.equal(await a.locator('#family-google').isDisabled(),true);
+    assert.equal(await a.locator('#family-apple').isDisabled(),true);
     await a.locator('#family-mode').tap();
     await submit(a,password);
     await match(a,/Выполнен вход/);
