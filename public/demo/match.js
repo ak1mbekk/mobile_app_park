@@ -78,7 +78,7 @@
       b.dataset.cell=i;b.setAttribute('aria-label',names[n]+', ряд '+(1+Math.floor(i/width))+', место '+(1+i%width));
       const img=document.createElement('img');img.alt='';img.draggable=false;img.src='assets/piece-'+n+'.webp';b.append(img);return b;
     }));
-    document.getElementById('matchGoal').textContent='Малина '+Math.min(target,berries)+' / '+target;
+    document.getElementById('matchGoal').textContent='Малина '+Math.min(target,berries)+' из '+target;
     document.getElementById('matchMoves').textContent='Ходы: '+moves;
     document.getElementById('matchEnd').hidden=!finished;
   }

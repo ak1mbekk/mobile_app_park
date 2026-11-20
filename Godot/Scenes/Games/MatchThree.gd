@@ -257,7 +257,7 @@ func _paint() -> void:
         tile.face.modulate = Color.WHITE
         tile.face.scale = Vector2.ONE
         tile.paint(PIECES[piece], description, selected == index)
-    %Goal.text = "Малина %d / %d" % [mini(TARGET, berries), TARGET]
+    %Goal.text = "Малина %d из %d" % [mini(TARGET, berries), TARGET]
     %Counter.text = "Ходы %d" % moves
     %Combo.text = "Бонус +%d" % bonus
     %Combo.visible = bonus > 0

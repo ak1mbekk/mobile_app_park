@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Scenes/Games/MatchThree.gd" id="1"]
 [ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="2"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/piece-0.webp" id="3"]
 
 [node name="MatchThree" type="VBoxContainer"]
 size_flags_vertical = 3
@@ -13,19 +14,31 @@ layout_mode = 2
 
 [node name="Stats" type="HBoxContainer" parent="Status"]
 layout_mode = 2
+theme_override_constants/separation = 14
 
-[node name="Goal" type="Label" parent="Status/Stats"]
-unique_name_in_owner = true
+[node name="Target" type="HBoxContainer" parent="Status/Stats"]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_constants/separation = 7
+
+[node name="Raspberry" type="TextureRect" parent="Status/Stats/Target"]
+custom_minimum_size = Vector2(35, 35)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Goal" type="Label" parent="Status/Stats/Target"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_colors/font_color = Color(0.22, 0.31, 0.19, 1)
-text = "Малина 0 / 9"
+text = "Малина 0 из 9"
 
 [node name="Combo" type="Label" parent="Status/Stats"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.45, 0.24, 0.15, 1)
 text = "Бонус +1"
@@ -42,7 +55,8 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 356)
 layout_mode = 2
 size_flags_vertical = 3
-ratio = 0.89
+ratio = 0.855
+alignment_vertical = 0
 
 [node name="Paper" type="VBoxContainer" parent="Board"]
 layout_mode = 2
@@ -58,7 +72,7 @@ theme_override_constants/v_separation = 6
 
 [node name="Hint" type="Label" parent="Board/Paper"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 54)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 23
 text = "Поменяй соседние плоды местами, чтобы собрать три в ряд."

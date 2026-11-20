@@ -1,13 +1,16 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '19';
+const version = prefix + '21';
 const base = new URL(self.registration.scope);
 const shell = [
   'index.html','base.css','show.css','visitor.css','park-and-chest.css','vendor/park-menu/menu.css','vendor/park-menu/menu.js','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
   'places.js','routing.js','catalog.js','map-projection.js','park-map.js','park-schedule.js','feedings.js',
   'assets/park-survey.webp','map-boundaries.json','map-boundary-geometry.js',
   'guide-offline.js','family.js','meeting.js','home.js','show.js','match.js',
-  'assets/avatar-raccoon.webp','assets/avatar-bison.webp'
+  'assets/avatar-raccoon.webp','assets/avatar-bison.webp','assets/park-wordmark.webp','assets/woven-diamonds.svg','assets/linen-weave.svg','assets/richi-reward.webp',
+  'assets/starter-room.webp','assets/base-bath.webp','assets/sleep-bed-curled.webp','assets/sleep-settee-curled.webp',
+  'assets/pet-kit.webp','assets/pet-young.webp','assets/pet-adult.webp',
+  'assets/pet-mood-sleepy.webp','assets/pet-mood-hungry.webp','assets/pet-mood-dirty.webp','assets/pet-mood-lonely.webp'
 ];
 function validAlignment(value){
   return value?.raster==='enclosures-2064x2369' &&
@@ -56,7 +59,7 @@ self.addEventListener('fetch',event=>{
   if (req.method!=='GET' || url.origin!==base.origin || !url.pathname.startsWith(base.pathname)) return;
   const path=url.pathname.slice(base.pathname.length);
   const page=req.mode==='navigate' && (path===''||path==='index.html');
-  if (!page && !shell.includes(path) && path!=='catalogue.json' && path!=='map-alignment.json' && !/^assets\/(?:species\/)?[a-z0-9_-]+\.webp$/i.test(path)) return;
+  if (!page && !shell.includes(path) && path!=='catalogue.json' && path!=='map-alignment.json' && !/^assets\/(?:(?:species|fallback-wardrobe)\/)?[a-z0-9_-]+\.webp$/i.test(path)) return;
   event.respondWith((async()=>{
     const cache=await caches.open(version);
     const key=page?new URL('index.html',base):req;
@@ -69,6 +72,10 @@ self.addEventListener('fetch',event=>{
       if(response.ok && path==='map-boundaries.json'){
         if(await validBoundariesResponse(response))await cache.put(req,response.clone());
         else return (await cache.match(key)) || response;
+      }
+      if(response.ok && path.startsWith('assets/fallback-wardrobe/') &&
+         response.headers.get('Content-Type')?.startsWith('image/webp')){
+        await cache.put(req,response.clone());
       }
       if (response.ok) return response;
       return (await cache.match(key)) || response;

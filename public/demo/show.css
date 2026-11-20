@@ -15,8 +15,12 @@
 .finish{bottom:76px;background:#fdf2d7;color:#333c27;min-height:44px}
 .toy-chest{background:#483327;color:#fff2cf}.toy-chest h1{font:normal 35px/1.1 Georgia,serif;margin:28px 0 18px}.toylist{display:grid;gap:12px}.toylist button{display:flex;align-items:center;gap:12px;background:#f5e6c6;color:#422e20;padding:10px 15px 10px 9px;text-align:left;border:2px solid #caaf80;border-radius:17px;font:22px Georgia,serif;box-shadow:0 3px 0 #261b15}.toylist img{width:65px;height:70px;object-fit:cover;border-radius:9px}.toylist span{flex:1}.toylist small{display:block;font:14px/1.35 system-ui;margin-top:4px;color:#645744}
 .gameline{display:flex;align-items:center;justify-content:space-between;gap:8px}.gameline span{background:#f9edce;color:#493d28;border-radius:15px;padding:8px 11px;font-size:14px;font-weight:650}
-#matchBoard{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:#81532d;padding:7px;border:3px solid #bb8a53;border-radius:14px;margin:auto 0 16px;touch-action:none}.piece{position:relative;aspect-ratio:1;padding:0;background:#744320;overflow:hidden;border-radius:6px}.piece img{height:100%;width:100%;object-fit:cover;pointer-events:none}.piece.chosen{outline:3px solid #ffe8a3;z-index:1}.piece.pop{animation:burst .23s ease-in forwards}@keyframes burst{50%{transform:scale(1.14);filter:brightness(1.5)}100%{transform:scale(.3);opacity:.1}}
-#match .gameHelp{min-height:48px;margin:0 2px auto}.game-end{display:grid;gap:8px}.secondary{min-height:44px;border-radius:12px;background:#e6dbbd}
+#match .gamepad{gap:12px;padding-inline:clamp(8px,3.5vw,16px)}
+#matchGoal{display:inline-flex;align-items:center;gap:6px}
+#matchGoal::before{content:"";flex:none;width:22px;height:22px;background:url("assets/piece-0.webp") center/contain no-repeat}
+#matchBoard{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;background:#81532d;padding:5px;border:3px solid #bb8a53;border-radius:14px;touch-action:none}
+.piece{position:relative;aspect-ratio:1;padding:0;background:#744320;overflow:hidden;border-radius:6px}.piece img{display:block;height:100%;width:100%;object-fit:cover;pointer-events:none}.piece.chosen{outline:3px solid #ffe8a3;z-index:1}.piece.pop{animation:burst .23s ease-in forwards}@keyframes burst{50%{transform:scale(1.14);filter:brightness(1.5)}100%{transform:scale(.3);opacity:.1}}
+#match .gameHelp{min-height:48px;margin:0 2px}.game-end{display:grid;gap:8px}.secondary{min-height:44px;border-radius:12px;background:#e6dbbd}
 .orchard{background:#829250 url("assets/orchard.webp") center/cover}.orchard .gameline{position:absolute;top:15px;left:15px;right:15px;z-index:2}#catchField{position:absolute;inset:11% 0 1%;overflow:hidden;touch-action:none}#fallFruit{width:12%;position:absolute;transform:translate(-50%,-50%);pointer-events:none}#basket{position:absolute;bottom:1%;left:50%;transform:translateX(-50%);font-size:clamp(50px,15vw,78px);pointer-events:none;line-height:1.12}
 .park-top{position:relative;height:clamp(128px,22vh,180px);padding:17px 20px;background:var(--paper);color:#294c32}.park-top h1{font:650 45px/1.2 Georgia,serif}.park-top button[data-profile]{right:14px!important;top:14px!important}
 .modes{display:flex;gap:4px;padding:3px;background:#ede7d7;border-radius:13px;margin-bottom:15px}.modes button{flex:1;min-height:44px;border-radius:10px}.modes button[aria-pressed=true]{background:#385d3e;color:#fff9e8;font-weight:650}
@@ -161,11 +165,9 @@
 }
 #need-bars label{display:grid;gap:5px}
 #pet-actor{display:block;width:100%;height:auto}
-#pet-hat img{display:block;width:100%}
-#pet-hat{position:absolute;width:35%;left:13%;bottom:55%;transform:rotate(-8deg);pointer-events:none}
-#pet-figure:not([data-mood=content]) #pet-hat{left:17%;bottom:55%;width:38%}
-#home[data-age=young] #pet-hat{left:13%;bottom:76%;width:43%;transform:rotate(5deg)}
-#home[data-age=adult] #pet-hat{left:2%;bottom:75%;width:24%;transform:rotate(-10deg)}
+#home #pet-figure[data-wardrobe]{transform:translateY(10%);animation:none}
+#home:has(#shop-preview:not([hidden])) #pet-figure[data-wardrobe]{left:24%;width:82%}
+#home.night #night-room{background-image:var(--fitted-sleep,none),var(--sleep-scene)}
 #room-decor{position:absolute;inset:0;pointer-events:none}
 #room-decor img{position:absolute;filter:drop-shadow(0 3px 2px #38271d66)}
 #room-decor [data-furnishing=cushion]{left:9%;bottom:16%;width:24%;transform:rotate(-8deg)}

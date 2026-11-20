@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://Art/Wardrobe/cap.glb" id="cap"]
 [ext_resource type="PackedScene" path="res://Art/Wardrobe/ranger.glb" id="ranger"]
 [ext_resource type="PackedScene" path="res://Art/Wardrobe/crown.glb" id="crown"]
+[ext_resource type="PackedScene" path="res://Scenes/Characters/HeadwearClearance.tscn" id="Clearance"]
 
 [sub_resource type="ShaderMaterial" id="EyeMaterial"]
 resource_local_to_scene = true
@@ -56,19 +57,22 @@ actor_mesh = NodePath("../output_unwrapped")
 [node name="Headwear" type="BoneAttachment3D" parent="Модель/SmartRigArmature/Skeleton3D"]
 bone_name = "mixamorig_Head"
 
+[node name="Clearance" parent="Модель/SmartRigArmature/Skeleton3D/Headwear" instance=ExtResource("Clearance")]
+transform = Transform3D(0.981859, -0.135297, 0.132849, 0.132849, 0.990764, 0.027163, -0.135297, -0.009021, 0.990764, -0.07549, 0.53406, 0.00205)
+
 [node name="Seat" type="Node3D" parent="Модель/SmartRigArmature/Skeleton3D/Headwear"]
 transform = Transform3D(0.981859, 0.132849, -0.135297, -0.135297, 0.990764, -0.009021, 0.132849, 0.027163, 0.990764, -0.07549, 0.53406, 0.00205)
 
 [node name="cap" parent="Модель/SmartRigArmature/Skeleton3D/Headwear/Seat" instance=ExtResource("cap")]
-scale = Vector3(0.85, 0.88, 0.91)
+transform = Transform3D(0.649668, -0.215203, 0.233037, 0.180870, 0.850043, -0.010595, -0.187662, 0.074266, 0.796543, 0.025961, 0.021707, 0.110796)
 visible = false
 
 [node name="ranger" parent="Модель/SmartRigArmature/Skeleton3D/Headwear/Seat" instance=ExtResource("ranger")]
-scale = Vector3(0.85, 0.88, 0.91)
+transform = Transform3D(0.491892, -0.215203, 0.218999, 0.136945, 0.850043, -0.009957, -0.142087, 0.074266, 0.748559, 0.032421, 0.023494, 0.134881)
 visible = false
 
 [node name="crown" parent="Модель/SmartRigArmature/Skeleton3D/Headwear/Seat" instance=ExtResource("crown")]
-scale = Vector3(0.85, 0.88, 0.91)
+transform = Transform3D(0.519734, -0.183488, 0.191256, 0.144696, 0.842338, -0.080842, -0.150130, 0.176635, 0.584196, 0.019573, -0.015337, 0.052978)
 visible = false
 
 [editable path="Модель"]

@@ -1,0 +1,96 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scenes/Characters/HeadwearClearance.gd" id="Preview"]
+
+[sub_resource type="SphereMesh" id="Volume"]
+radius = 1.0
+height = 2.0
+radial_segments = 32
+rings = 16
+
+[sub_resource type="Shader" id="Outline"]
+code = "shader_type spatial;
+render_mode unshaded, cull_back, depth_draw_never, depth_test_disabled;
+uniform vec4 color : source_color = vec4(1.0);
+void fragment() {
+    float rim = pow(1.0 - abs(dot(normalize(NORMAL), normalize(VIEW))), 2.5);
+    ALBEDO = color.rgb;
+    ALPHA = 0.045 + 0.60 * rim;
+}
+"
+
+[sub_resource type="ShaderMaterial" id="KeepClear"]
+shader = SubResource("Outline")
+shader_parameter/color = Color(1, 0.36, 0.23, 1)
+
+[sub_resource type="ShaderMaterial" id="Contact"]
+shader = SubResource("Outline")
+shader_parameter/color = Color(0.17, 0.88, 1, 1)
+
+[node name="Clearance" type="Node3D"]
+visible = false
+script = ExtResource("Preview")
+
+[node name="HeadCore" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.168, 0.037)
+scale = Vector3(0.225, 0.125, 0.244)
+cast_shadow = 0
+material_override = SubResource("KeepClear")
+mesh = SubResource("Volume")
+
+[node name="SeatContact" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.015, 0.055)
+scale = Vector3(0.155, 0.057, 0.185)
+cast_shadow = 0
+material_override = SubResource("Contact")
+mesh = SubResource("Volume")
+
+[node name="Baby" type="Node3D" parent="."]
+
+[node name="LeftEar" type="MeshInstance3D" parent="Baby"]
+position = Vector3(-0.237, 0.008, 0.012)
+scale = Vector3(0.073, 0.078, 0.095)
+cast_shadow = 0
+material_override = SubResource("KeepClear")
+mesh = SubResource("Volume")
+
+[node name="RightEar" type="MeshInstance3D" parent="Baby"]
+position = Vector3(0.237, 0.012, 0.015)
+scale = Vector3(0.073, 0.075, 0.092)
+cast_shadow = 0
+material_override = SubResource("KeepClear")
+mesh = SubResource("Volume")
+
+[node name="Juvenile" type="Node3D" parent="."]
+visible = false
+
+[node name="LeftEar" type="MeshInstance3D" parent="Juvenile"]
+position = Vector3(-0.222, -0.004, 0.014)
+scale = Vector3(0.067, 0.064, 0.091)
+cast_shadow = 0
+material_override = SubResource("KeepClear")
+mesh = SubResource("Volume")
+
+[node name="RightEar" type="MeshInstance3D" parent="Juvenile"]
+position = Vector3(0.223, -0.002, 0.016)
+scale = Vector3(0.068, 0.065, 0.091)
+cast_shadow = 0
+material_override = SubResource("KeepClear")
+mesh = SubResource("Volume")
+
+[node name="Adult" type="Node3D" parent="."]
+visible = false
+
+[node name="LeftEar" type="MeshInstance3D" parent="Adult"]
+position = Vector3(-0.213, -0.012, 0.017)
+scale = Vector3(0.065, 0.061, 0.086)
+cast_shadow = 0
+material_override = SubResource("KeepClear")
+mesh = SubResource("Volume")
+
+[node name="RightEar" type="MeshInstance3D" parent="Adult"]
+position = Vector3(0.215, -0.010, 0.019)
+scale = Vector3(0.065, 0.062, 0.086)
+cast_shadow = 0
+material_override = SubResource("KeepClear")
+mesh = SubResource("Volume")

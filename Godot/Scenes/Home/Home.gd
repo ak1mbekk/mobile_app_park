@@ -3,8 +3,9 @@ extends Node3D
 const SAVE_PATH := "user://home.cfg"
 const HOST_PREFIX := "animal-park:"
 const BALL_PRICE := 5
-const BED_PRICE := 5
-const BED_PURCHASE_ERROR := "Не удалось сохранить покупку на устройстве. Попробуй ещё раз."
+const SHOP_CATALOG = preload("res://Scenes/Shop/ShopCatalog.gd")
+const BED_PRICE := SHOP_CATALOG.BED_PRICE
+const SHOP_SAVE_ERROR := "Не удалось сохранить изменение на устройстве. Попробуй ещё раз."
 
 @export var pet_name := "Ричи"
 @export var growth_mesh: ArrayMesh
@@ -50,10 +51,11 @@ var bath_moving := false
 var native_rounds := {}
 var native_leaves := 0
 var native_xp := 0
-var native_bed_owned := false
-var native_bed_placed := false
+var native_owned: Array[String] = []
+var native_placed: Array[String] = []
+var native_hat := ""
 var native_bed_goal_dismissed := false
-var native_shop_selected := false
+var native_shop_selected := ""
 var native_shop_status := ""
 var native_starter_round_rewarded := false
 var hosted_bed_goal := {}
@@ -318,7 +320,7 @@ func _close_games() -> void:
 
 func _open_shop() -> void:
     %Header.hide()
-    shop.open(not hosted)
+    shop.open()
     _refresh_controls()
 
 func _offer_shop() -> void:
@@ -332,80 +334,115 @@ func _close_shop() -> void:
     if hosted:
         _notify_host("shop:closed")
     else:
-        native_shop_selected = false
-        _sync_native_furniture()
+        _show_shop_catalog()
     %Header.show()
     _show_room()
 
 func _select_shop_ware(id: String) -> void:
     if hosted:
         _notify_host("shop:pick:" + id)
-    elif id == "bed":
-        native_shop_selected = true
+    elif shop.visible and not night and SHOP_CATALOG.ITEMS.has(id):
+        native_shop_selected = id
         native_shop_status = ""
-        _sync_native_furniture()
+        _sync_native_shop()
 
 func _show_shop_catalog() -> void:
     if hosted:
         _notify_host("shop:catalog")
     else:
-        native_shop_selected = false
+        native_shop_selected = ""
         native_shop_status = ""
-        _sync_native_furniture()
+        _sync_native_shop()
 
 func _confirm_shop_ware() -> void:
     if hosted:
         _notify_host("shop:confirm")
-    elif shop.visible and native_shop_selected:
-        if not _commit_native_bed(not native_bed_placed):
-            native_shop_status = BED_PURCHASE_ERROR
-            _sync_native_furniture()
+    elif shop.visible and not native_shop_selected.is_empty():
+        if not _commit_native_ware(native_shop_selected):
+            native_shop_status = SHOP_SAVE_ERROR
+            _sync_native_shop()
 
-func _commit_native_bed(put_in_room: bool) -> bool:
-    if night or (not native_bed_owned and native_leaves < BED_PRICE):
+func _commit_native_ware(id: String) -> bool:
+    var ware: Dictionary = SHOP_CATALOG.ITEMS.get(id, {})
+    if night or ware.is_empty():
         return false
-    var owned_before := native_bed_owned
-    var placed_before := native_bed_placed
-    if not owned_before:
-        native_leaves -= BED_PRICE
-    native_bed_owned = true
-    native_bed_placed = put_in_room
+    var purchased := native_owned.has(id)
+    var price: int = ware.price
+    if not purchased and native_leaves < price:
+        return false
+    var leaves_before := native_leaves
+    var owned_before := native_owned.duplicate()
+    var placed_before := native_placed.duplicate()
+    var hat_before := native_hat
+    if not purchased:
+        native_leaves -= price
+        native_owned.append(id)
+    if id in SHOP_CATALOG.HATS:
+        native_hat = "" if native_hat == id else id
+    elif native_placed.has(id):
+        native_placed.erase(id)
+    else:
+        if id == "bed":
+            native_placed.erase("settee")
+        elif id == "settee":
+            native_placed.erase("bed")
+        native_placed.append(id)
     if not _save_home():
-        native_bed_owned = owned_before
-        native_bed_placed = placed_before
-        if not owned_before:
-            native_leaves += BED_PRICE
+        native_leaves = leaves_before
+        native_owned = owned_before
+        native_placed = placed_before
+        native_hat = hat_before
         return false
-    native_shop_selected = false
-    native_shop_status = ""
-    _sync_native_furniture()
+    _show_shop_catalog()
     _update_native_stats()
     return true
 
-func _sync_native_furniture() -> void:
-    var selected := "bed" if native_shop_selected else ""
-    _apply_furniture({"placed": ["bed"] if native_bed_placed else [], "preview": selected})
-    if shop:
-        var action := "Купить лежанку за 5 листиков"
-        if native_bed_owned:
-            action = "Убрать" if native_bed_placed else "Поставить"
-        shop.set_state({
-            "wallet": native_leaves, "selected": selected, "status": native_shop_status,
-            "confirm_label": action, "confirm_enabled": native_bed_owned or native_leaves >= BED_PRICE,
-            "items": {"bed": {"name": "Лежанка", "detail": "Обычная", "price": "Куплено" if native_bed_owned else "5 листьев"}},
-        })
+func _sync_native_shop() -> void:
+    var selected := native_shop_selected
+    richi.wear_hat(selected if selected in SHOP_CATALOG.HATS else native_hat)
+    _apply_furniture({"placed": native_placed, "preview": selected})
+    if not shop:
+        return
+    var items := {}
+    for id: String in SHOP_CATALOG.ITEMS:
+        var ware: Dictionary = SHOP_CATALOG.ITEMS[id]
+        var detail: String = ware.tier
+        if ware.has("replaces"):
+            detail += " · заменяет " + ware.replaces
+        items[id] = {
+            "name": ware.name, "detail": detail,
+            "price": "Куплено" if native_owned.has(id) else SHOP_CATALOG.leaf_price(ware.price),
+        }
+    var confirm_label := ""
+    var confirm_enabled := false
+    if not selected.is_empty():
+        var price: int = SHOP_CATALOG.ITEMS[selected].price
+        var is_hat := selected in SHOP_CATALOG.HATS
+        var installed := native_hat == selected if is_hat else native_placed.has(selected)
+        var purchased := native_owned.has(selected)
+        confirm_enabled = purchased or native_leaves >= price
+        if installed:
+            confirm_label = "Снять" if is_hat else "Убрать"
+        elif purchased:
+            confirm_label = "Надеть" if is_hat else "Поставить"
+        else:
+            confirm_label = "Купить за " + SHOP_CATALOG.leaf_price(price)
+    shop.set_state({
+        "wallet": native_leaves, "selected": selected, "status": native_shop_status,
+        "confirm_label": confirm_label, "confirm_enabled": confirm_enabled, "items": items,
+    })
 
 func _bed_goal() -> Dictionary:
     if hosted:
         return hosted_bed_goal
     if night or has_sleep_furniture or native_bed_goal_dismissed:
         return {}
-    if native_bed_owned:
+    if native_owned.has("bed"):
         return {"message": "Поставь лежанку, чтобы енот мог отдохнуть.", "label": "Поставить лежанку", "play": false}
     var recipient := "Ричи" if pet_name == "Ричи" else "еноту по имени " + pet_name
     var message := "Надо купить лежанку нашему " + recipient + "."
     if native_leaves >= BED_PRICE:
-        return {"message": message, "label": "Купить лежанку за 5 листиков", "play": false}
+        return {"message": message, "label": "Купить лежанку за %d листиков" % BED_PRICE, "play": false}
     return {"message": message + " Давай сыграем в игру и заработаем листики!", "label": "Сыграть", "play": true}
 
 func _take_bed_goal() -> void:
@@ -419,8 +456,8 @@ func _take_bed_goal() -> void:
             _launch_games("pairs")
     elif hosted:
         _notify_host("buy-bed")
-    elif not _commit_native_bed(true):
-        _set_status(BED_PURCHASE_ERROR)
+    elif not _commit_native_ware("bed"):
+        _set_status(SHOP_SAVE_ERROR)
 
 func _dismiss_bed_goal() -> void:
     if hosted:
@@ -747,8 +784,7 @@ func _load_home() -> void:
         native_leaves = int(save.get_value("home", "leaves", 0))
         native_xp = int(save.get_value("home", "xp", 0))
         ball_owned = bool(save.get_value("home", "ball", false))
-        native_bed_owned = bool(save.get_value("home", "bed_owned", false))
-        native_bed_placed = native_bed_owned and bool(save.get_value("home", "bed_placed", false))
+        _load_native_shop(save)
         native_starter_round_rewarded = bool(save.get_value("home", "starter_round_rewarded", false)) or native_rounds.values().any(
             func(round) -> bool: return round is Dictionary and bool(round.get("finished", false))
         )
@@ -759,14 +795,33 @@ func _load_home() -> void:
                 if (value is int or value is float) and is_finite(value):
                     native_needs[key] = clampf(value, 0, 100)
         native_needs_updated = float(save.get_value("home", "needs_updated", 0.0))
-        _sync_native_furniture()
+        _sync_native_shop()
         _set_sleep(bool(save.get_value("home", "night", false)), false)
     else:
-        _sync_native_furniture()
+        _sync_native_shop()
     if game_room:
         game_room.set_rounds(native_rounds)
     _update_native_stats()
     _refresh_native_needs()
+
+func _load_native_shop(save: ConfigFile) -> void:
+    var old_owned := ["bed"] if save.get_value("home", "bed_owned", false) else []
+    var old_placed := ["bed"] if save.get_value("home", "bed_placed", false) else []
+    var owned = save.get_value("home", "owned", old_owned)
+    var placed = save.get_value("home", "placed", old_placed)
+    native_owned.clear()
+    native_placed.clear()
+    if owned is Array:
+        for id: String in SHOP_CATALOG.ITEMS:
+            if owned.has(id):
+                native_owned.append(id)
+    if placed is Array:
+        for id: String in SHOP_CATALOG.FURNITURE:
+            if native_owned.has(id) and placed.has(id):
+                native_placed.append(id)
+    native_hat = str(save.get_value("home", "hat", ""))
+    if native_hat not in SHOP_CATALOG.HATS or not native_owned.has(native_hat):
+        native_hat = ""
 
 func _save_home() -> bool:
     var save := ConfigFile.new()
@@ -775,8 +830,9 @@ func _save_home() -> bool:
     save.set_value("home", "leaves", native_leaves)
     save.set_value("home", "xp", native_xp)
     save.set_value("home", "ball", ball_owned)
-    save.set_value("home", "bed_owned", native_bed_owned)
-    save.set_value("home", "bed_placed", native_bed_placed)
+    save.set_value("home", "owned", native_owned)
+    save.set_value("home", "placed", native_placed)
+    save.set_value("home", "hat", native_hat)
     save.set_value("home", "starter_round_rewarded", native_starter_round_rewarded)
     save.set_value("home", "needs", native_needs)
     save.set_value("home", "needs_updated", native_needs_updated)

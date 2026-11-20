@@ -201,12 +201,7 @@
   function refreshHome() {
     const stage=saved.xp>=270?'adult':saved.xp>=90?'young':'kit';
     $('home').dataset.age=stage;
-    const actor=$('pet-actor');
     const mood=saved.energy<=25?'sleepy':saved.food<=25?'hungry':saved.clean<=25?'dirty':saved.joy<=25?'lonely':'content';
-    const asset='assets/pet-'+(mood!=='content' && stage==='kit'?'mood-'+mood:stage)+'.webp';
-    actor.dataset.mood=mood;
-    const feeling={sleepy:'зевает',hungry:'проголодался',dirty:'испачкался',lonely:'скучает',content:'доволен'};
-    actor.alt=saved.name+' '+feeling[mood];
     $('pet-figure').dataset.mood=mood;
     $('shop-open').hidden=!saved.onboardingDone||saved.night;
     const goal=bedGoal();
@@ -217,7 +212,6 @@
     $('home').classList.toggle('furnished-bed',placed.has('settee'));
     $('home').classList.toggle('furnished-floor-bed',placed.has('bed'));
     $('wash').classList.toggle('furnished-bath',placed.has('bath'));
-    if(actor.getAttribute('src')!==asset)actor.src=asset;
     $('rope-ball').hidden=!saved.ball||saved.night;
     $('ball-price').textContent=saved.ball?'В твоём домике':ballPrice+' листьев · в кошельке '+saved.leaves;
     $('aki-display').textContent = saved.name;
@@ -238,16 +232,39 @@
     document.dispatchEvent(new Event('petprofile'));
   }
   let messageTimer, heartTimer;
+  function paintPet(hat){
+    const home=$('home'),figure=$('pet-figure'),actor=$('pet-actor');
+    const stage=home.dataset.age,mood=figure.dataset.mood;
+    const feeling={sleepy:'зевает',hungry:'проголодался',dirty:'испачкался',lonely:'скучает',content:'доволен'};
+    const bare='assets/pet-'+(mood!=='content'&&stage==='kit'?'mood-'+mood:stage)+'.webp';
+    const portraits='assets/fallback-wardrobe/';
+    const showWardrobe=hat&&!navigator.connection?.saveData;
+    const fitted=showWardrobe&&!saved.night;
+    const portrait=fitted?portraits+stage+'-'+(stage==='kit'?mood:'content')+'-'+hat+'.webp':bare;
+    const baseLabel=saved.name+' '+feeling[mood];
+    if(actor.dataset.frame!==portrait){
+      actor.dataset.frame=portrait;
+      actor.onerror=fitted?()=>{
+        actor.onerror=null;
+        actor.src=bare;
+        actor.alt=baseLabel;
+        figure.removeAttribute('data-wardrobe');
+      }:null;
+      figure.toggleAttribute('data-wardrobe',Boolean(fitted));
+      actor.src=portrait;
+    }
+    const item=figure.hasAttribute('data-wardrobe')&&wares.find(ware=>ware.id===hat);
+    actor.alt=item?baseLabel+' · '+item.name:baseLabel;
+    if(saved.night&&showWardrobe&&canSleep()){
+      const furniture=placed.has('settee')?'settee':'bed';
+      home.style.setProperty('--fitted-sleep','url("'+portraits+'sleep-'+furniture+'-'+stage+'-'+hat+'.webp")');
+    }else{
+      home.style.removeProperty('--fitted-sleep');
+    }
+  }
   function paintOutfit(){
     const hat=preview?.group==='hat'?preview.id:saved.hat;
-    $('pet-hat').hidden=!hat;
-    if(hat){
-      const slot=$('pet-hat');
-      const image=slot.firstElementChild || new Image();
-      const src='assets/shop-'+hat+'.webp';
-      if(image.getAttribute('src')!==src)image.src=src;
-      if(!image.parentElement){image.alt='';slot.append(image);}
-    }
+    paintPet(hat);
     const showSettee=preview?.id==='settee'||(preview?.id!=='bed'&&placed.has('settee'));
     $('starter-bath').hidden=preview?.id==='bath'||placed.has('bath');
     const decor=wares.filter(w=>w.group==='decor'&&(placed.has(w.id)||preview?.id===w.id)&&

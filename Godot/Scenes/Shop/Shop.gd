@@ -5,12 +5,10 @@ signal catalog_requested
 signal item_selected(id: String)
 signal confirm_requested
 
-const HATS := ["cap", "ranger", "crown"]
-const FURNITURE := ["bed", "cushion", "lantern", "chest", "settee", "bath"]
+const CATALOG = preload("res://Scenes/Shop/ShopCatalog.gd")
 
 var state := {}
 var waiting := false
-var furniture_only := false
 
 
 func _ready() -> void:
@@ -20,17 +18,13 @@ func _ready() -> void:
     %Hats.pressed.connect(_show_group.bind(true))
     %Furniture.pressed.connect(_show_group.bind(false))
     %Confirm.pressed.connect(_confirm)
-    for id in HATS + FURNITURE:
+    for id in CATALOG.HATS + CATALOG.FURNITURE:
         get_node("%" + id).pressed.connect(_select.bind(id))
     _show_group(true)
 
 
-func open(local_catalog := false) -> void:
+func open() -> void:
     waiting = false
-    furniture_only = local_catalog
-    %Hats.get_parent().visible = not furniture_only
-    if furniture_only:
-        _show_group(false)
     show()
     _render()
     %Close.grab_focus()
@@ -68,20 +62,23 @@ func _show_group(hats: bool) -> void:
     %FurnitureList.visible = not hats
     %Hats.set_pressed_no_signal(hats)
     %Furniture.set_pressed_no_signal(not hats)
-    %Catalog.offset_top = -170.0 if furniture_only else (-370.0 if hats else -570.0)
+    %Catalog.offset_top = -370.0 if hats else -570.0
 
 
 func _render() -> void:
     var items: Dictionary = state.get("items", {})
-    for id in HATS + FURNITURE:
+    for id in CATALOG.HATS + CATALOG.FURNITURE:
         var row: Button = get_node("%" + id)
         var item: Dictionary = items.get(id, {})
         row.visible = not item.is_empty()
         if item.is_empty():
             continue
-        row.get_node("Name").text = str(item.get("name", row.get_node("Name").text))
-        row.get_node("Price").text = str(item.get("price", ""))
-        row.accessibility_name = row.get_node("Name").text + " · " + row.get_node("Price").text
+        var title := str(item.get("name", ""))
+        var price := str(item.get("price", ""))
+        var rarity := str(item.get("detail", "")).get_slice(" · ", 0)
+        row.get_node("Name").text = title
+        row.get_node("Price").text = price + "\n" + rarity
+        row.accessibility_name = " · ".join([title, price, rarity])
     var wallet := "Листья %d" % int(state.get("wallet", 0))
     %Wallet.text = wallet
     %DetailWallet.text = wallet

@@ -17,7 +17,9 @@ export default defineConfig(({ mode }) => ({
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
   },
   server: {
-    watch: { ignored: ['**/Godot/**'] },
+    // Godot replaces the packed game atomically. Watching that binary can close
+    // the dev server on Windows while the game is being re-exported.
+    watch: { ignored: ['**/Godot/**', '**/public/demo/meeting3d/**'] },
     port: 5173,
     hmr: { overlay: false },
   },
