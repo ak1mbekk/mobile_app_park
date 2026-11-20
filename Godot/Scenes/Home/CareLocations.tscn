@@ -1,0 +1,79 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Home/CareRoomShell.tscn" id="Room"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Furniture/Bench.tscn" id="Bench"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Textiles/FirstRug.tscn" id="SeatMat"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/KitchenDining.tscn" id="Dining"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Care/food-bowl.glb" id="Bowl"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Care/fruit-dish.glb" id="Fruit"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Care/wash-pitcher.glb" id="Pitcher"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/BathRoomShell.tscn" id="Bath"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/KitchenFixtures.tscn" id="Kitchen"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Care/bath-chair-with-towel.glb" id="Chair"]
+[node name="Комнаты ухода" type="Node3D"]
+
+[node name="Кухня" type="Node3D" parent="."]
+position = Vector3(-2.46, 0, 0)
+
+[node name="Архитектура" parent="Кухня" instance=ExtResource("Room")]
+
+[node name="Кухонный уголок" parent="Кухня" instance=ExtResource("Kitchen")]
+
+[node name="Скамья под окном" parent="Кухня" instance=ExtResource("Bench")]
+position = Vector3(-0.470, 0.002, -0.015)
+scale = Vector3(0.635, 0.70, 0.785)
+
+[node name="Блюдо с фруктами" parent="Кухня" instance=ExtResource("Fruit")]
+position = Vector3(-0.38, 0.462, -0.018)
+rotation = Vector3(0, 0.18, 0)
+scale = Vector3(0.74, 0.74, 0.74)
+
+[node name="Керамическая миска" parent="Кухня" instance=ExtResource("Bowl")]
+position = Vector3(-0.19, 0.006, 1.185)
+scale = Vector3(0.82, 0.82, 0.82)
+
+[node name="Метка миски" type="Marker3D" parent="Кухня"]
+position = Vector3(-0.19, 0.061, 1.185)
+
+[node name="Тканый коврик под Ричи" parent="Кухня" instance=ExtResource("SeatMat")]
+position = Vector3(0.22, 0.007, 0.66)
+rotation = Vector3(0, -0.18, 0)
+scale = Vector3(0.69, 1, 0.69)
+
+[node name="Сервировка" parent="Кухня" instance=ExtResource("Dining")]
+
+[node name="Яблоко у миски" type="Marker3D" parent="Кухня"]
+position = Vector3(0.04, 0.006, 1.48)
+
+[node name="Место для Ричи" type="Marker3D" parent="Кухня"]
+position = Vector3(0.245, 0.014, 0.47)
+rotation = Vector3(0, -0.66, 0)
+
+[node name="Камера комнаты" type="Marker3D" parent="Кухня"]
+position = Vector3(0.035, 0.92, 3.92)
+rotation = Vector3(-0.20944, 0, 0)
+
+[node name="Ванная" type="Node3D" parent="."]
+position = Vector3(2.46, 0, 0)
+
+[node name="Архитектура" parent="Ванная" instance=ExtResource("Bath")]
+
+[node name="Стул с льняным полотенцем" parent="Ванная" instance=ExtResource("Chair")]
+position = Vector3(-0.45, 0.003, 0.035)
+rotation = Vector3(0, 0.26, 0)
+scale = Vector3(0.76, 0.76, 0.76)
+
+[node name="Кувшин у купели" parent="Ванная" instance=ExtResource("Pitcher")]
+position = Vector3(0.46, 0.006, 1.39)
+rotation = Vector3(0, -0.50, 0)
+scale = Vector3(0.73, 0.73, 0.73)
+
+[node name="Место для Ричи" type="Marker3D" parent="Ванная"]
+position = Vector3(-0.46, 0.014, 1.15)
+rotation = Vector3(0, 0.27, 0)
+
+[node name="Камера комнаты" type="Marker3D" parent="Ванная"]
+position = Vector3(-0.015, 1.16, 5.24)
+rotation = Vector3(-0.194, 0, 0)
+
+[editable path="Ванная/Стул с льняным полотенцем"]

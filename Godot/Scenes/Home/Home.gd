@@ -3,6 +3,16 @@ extends Node3D
 const SAVE_PATH := "user://home.cfg"
 const HOST_PREFIX := "animal-park:"
 const BALL_PRICE := 5
+const MAIN := &"main"
+const KITCHEN := &"kitchen"
+const BATH := &"bathroom"
+const PREVIEW_ROOMS := {
+    &"bed-preview": MAIN, &"settee-preview": MAIN, &"bath-preview": BATH, &"kitchen-preview": KITCHEN,
+}
+const FURNITURE_PREVIEWS := {
+    "bed": &"bed-preview", "settee": &"settee-preview", "bath": &"bath-preview",
+    "wallpaper": &"kitchen-preview", "kitchen-cabinet": &"kitchen-preview", "bath-tile": &"bath-preview",
+}
 const SHOP_CATALOG = preload("res://Scenes/Shop/ShopCatalog.gd")
 const BED_PRICE := SHOP_CATALOG.BED_PRICE
 const SHOP_SAVE_ERROR := "Не удалось сохранить изменение на устройстве. Попробуй ещё раз."
@@ -16,13 +26,17 @@ const SHOP_SAVE_ERROR := "Не удалось сохранить изменен�
 @onready var sun: DirectionalLight3D = $"Комната/Утреннее солнце"
 @onready var bounce: OmniLight3D = $"Комната/Отражённый свет"
 @onready var ambience: WorldEnvironment = $"Комната/Свет комнаты"
-@onready var window_view: Node3D = $"Комната/Берёзовая тропа"
-@onready var rug: Node3D = $Комната/Коврик
+@onready var window_view: MeshInstance3D = $"Комната/Веранда/Пойма"
+@onready var window_material := window_view.get_active_material(0) as StandardMaterial3D
+@onready var rug: Node3D = $"Комната/Веранда/Ковёр"
 @onready var bedroom: Node3D = $Спальня
 @onready var night_lamp: OmniLight3D = $Спальня/Свет/Ночник
 @onready var bathroom: Node3D = $Купание
 @onready var care: Node3D = $Уход
 @onready var stations: Node3D = $"Станции ухода"
+@onready var kitchen: Node3D = $"Комнаты ухода/Кухня"
+@onready var bath_room: Node3D = $"Комнаты ухода/Ванная"
+@onready var dining: Node3D = $"Комнаты ухода/Кухня/Сервировка"
 @onready var furnishings: Node3D = $Обстановка
 @onready var game_room: Control = get_node_or_null("Интерфейс/GameRoom")
 @onready var shop: Control = get_node_or_null("Интерфейс/Shop")
@@ -36,6 +50,7 @@ const SHOP_SAVE_ERROR := "Не удалось сохранить изменен�
 @onready var day_ambient_color := ambience.environment.ambient_light_color
 @onready var night_lamp_energy := night_lamp.light_energy
 @onready var room_fov := room_camera.fov
+@onready var main_camera := room_camera.global_transform
 
 var active_mode: StringName = &"home"
 var night := false
@@ -45,9 +60,13 @@ var meal_in_progress := false
 var ball_owned := false
 var web_pause_callback: JavaScriptObject
 var web_state_callback: JavaScriptObject
+var web_interaction_callback: JavaScriptObject
 var pose_tween: Tween
 var sleep_moving := false
 var bath_moving := false
+var tableware_moving := false
+var hunger_visit_started := false
+var location: StringName = MAIN
 var native_rounds := {}
 var native_leaves := 0
 var native_xp := 0
@@ -66,6 +85,9 @@ var native_needs_updated := 0.0
 
 func _ready() -> void:
     ambience.environment = ambience.environment.duplicate()
+    apple.global_position = kitchen.get_node("Яблоко у миски").global_position
+    apple.floor_position = apple.global_position
+    dining.bind_actor(richi)
     apple.picked_up.connect(richi.gaze.follow_apple.bind(apple))
     apple.returned_to_floor.connect(richi.gaze.release_apple)
     apple.accepted.connect(_on_accepted)
@@ -76,8 +98,10 @@ func _ready() -> void:
     %Wash.pressed.connect(_start_wash)
     %Sleep.pressed.connect(_toggle_sleep)
     %Play.pressed.connect(_open_games)
-    %Ball.pressed.connect(_play_ball)
     care.play_finished.connect(_on_ball_finished)
+    %MainRoom.pressed.connect(_go_to_room.bind(MAIN))
+    %KitchenRoom.pressed.connect(_go_to_room.bind(KITCHEN))
+    %BathRoom.pressed.connect(_go_to_room.bind(BATH))
     %Shop.pressed.connect(_offer_shop)
     %GoalAction.pressed.connect(_take_bed_goal)
     %GoalLater.pressed.connect(_dismiss_bed_goal)
@@ -92,6 +116,7 @@ func _ready() -> void:
         game_room.round_saved.connect(_store_round)
         game_room.animal_requested.connect(_open_pair_animal)
         game_room.ball_purchase_requested.connect(_buy_ball)
+        game_room.ball_play_requested.connect(_play_ball)
     if shop:
         shop.closed.connect(_close_shop)
         shop.catalog_requested.connect(_show_shop_catalog)
@@ -113,21 +138,42 @@ func _ready() -> void:
         browser.setParkHomeState = web_state_callback
         browser.parkNativeGameRoom = game_room != null
         browser.parkNativeShop = shop != null
+        if JavaScriptBridge.eval("""(() => {
+            try {
+                return parent.location.origin === location.origin &&
+                    new URLSearchParams(parent.location.search).get('test') === 'interaction';
+            } catch (_) { return false; }
+        })()"""):
+            web_interaction_callback = JavaScriptBridge.create_callback(_write_interaction_state)
+            browser.getParkInteractionState = web_interaction_callback
         _notify_host("home-ready")
     else:
         _load_home()
         %NeedsTick.timeout.connect(_refresh_native_needs)
         %NeedsTick.start()
 
-func _show_room() -> void:
-    _set_mode(&"home")
+func _show_room(animate := true) -> void:
+    _set_mode(&"home", animate)
     richi.idle_in_home()
     richi.gaze.point_at(get_viewport().get_visible_rect().size * Vector2(0.50, 0.20))
     _set_status("")
+    _check_hungry_room.call_deferred()
 
 func _offer_apple() -> void:
     if meal_in_progress or night or _moving_between_places():
         return
+    if location != KITCHEN and not _go_to_room(KITCHEN):
+        return
+    _check_hungry_room()
+    if dining.state == &"waiting":
+        tableware_moving = true
+        _refresh_controls()
+        dining.put_down(_start_food)
+        return
+    _start_food()
+
+func _start_food() -> void:
+    tableware_moving = false
     _set_mode(&"feed")
     richi.offer_apple()
     apple.reset_apple()
@@ -144,6 +190,7 @@ func _on_fed() -> void:
     meal_in_progress = false
     _set_mode(&"home")
     richi.idle_in_home()
+    dining.finish_meal()
     _set_status(pet_name + " доел яблоко")
     if not hosted:
         _increase_native_need("food", 32)
@@ -151,7 +198,7 @@ func _on_fed() -> void:
     _notify_host("meal-finished")
 
 func _start_wash() -> void:
-    if meal_in_progress or night or _moving_between_places() or active_mode != &"home":
+    if location != BATH or meal_in_progress or night or _moving_between_places() or active_mode != &"home":
         return
     _move_between_floor_and_bath(true)
 
@@ -164,7 +211,55 @@ func _back_to_room() -> void:
         _show_room()
 
 func _moving_between_places() -> bool:
-    return sleep_moving or bath_moving
+    return sleep_moving or bath_moving or tableware_moving
+
+func _go_to_room(next: StringName) -> bool:
+    if night or meal_in_progress or _moving_between_places() or active_mode != &"home":
+        _refresh_controls()
+        return false
+    if (game_room and game_room.visible) or (shop and shop.visible):
+        _refresh_controls()
+        return false
+    if next == location:
+        _refresh_controls()
+        return true
+    if location == KITCHEN:
+        dining.clear()
+    richi.gaze.reset_attention()
+    location = next
+    room_camera.global_transform = _camera_in(location)
+    _show_room(false)
+    if location == KITCHEN:
+        _check_hungry_room()
+    return true
+
+func _camera_in(place: StringName) -> Transform3D:
+    if place == KITCHEN:
+        return kitchen.get_node("Камера комнаты").global_transform
+    if place == BATH:
+        return bath_room.get_node("Камера комнаты").global_transform
+    return main_camera
+
+func _check_hungry_room() -> void:
+    var hungry: bool = richi._need_is_low("food")
+    if not hungry:
+        hunger_visit_started = false
+    if get_tree().paused or active_mode != &"home" or night or meal_in_progress or _moving_between_places():
+        return
+    if (game_room and game_room.visible) or (shop and shop.visible):
+        return
+    if location == KITCHEN:
+        if hungry:
+            hunger_visit_started = true
+            if dining.state == &"set":
+                dining.clear()
+            dining.wait_for_food()
+        elif dining.state == &"waiting":
+            dining.clear()
+            richi.idle_in_home()
+    elif location == MAIN and hungry and not hunger_visit_started:
+        hunger_visit_started = true
+        _go_to_room(KITCHEN)
 
 func _move_between_floor_and_bath(entering: bool) -> void:
     bath_moving = true
@@ -178,13 +273,11 @@ func _move_between_floor_and_bath(entering: bool) -> void:
     camera_motion.tween_property(room_camera, "fov", room_fov + 7.0, 0.35)
 
     var floor_pose := _day_pose()
-    var outside := Transform3D(floor_pose.basis, bathroom.get_node("Подход к купели").position)
-    var inside: Transform3D = bathroom.get_node("Место для Ричи").transform.scaled_local(awake_pose.basis.get_scale())
+    var outside := Transform3D(floor_pose.basis, bathroom.get_node("Подход к купели").global_position)
+    var inside: Transform3D = bathroom.get_node("Место для Ричи").global_transform.scaled_local(awake_pose.basis.get_scale())
     var toward_bath := _face_point(outside, inside.origin)
     var away_from_bath := _face_point(inside, outside.origin)
     var waypoints: Array[Vector3] = []
-    if has_sleep_furniture and not settee_in_use:
-        waypoints.append(bathroom.get_node("Обход лежанки").position)
     var motion := create_tween()
     if entering:
         motion.tween_callback(_play_travel_animation.bind(&"Sit_to_Stand_Transition_M", 1.05, 2.15, 0.19))
@@ -211,8 +304,10 @@ func _move_between_floor_and_bath(entering: bool) -> void:
 func _walk_on_floor(motion: Tween, start: Transform3D, waypoints: Array[Vector3]) -> void:
     motion.tween_callback(_play_travel_animation.bind(&"Walking", 0.0, 1.22, 0.13))
     for point in waypoints:
-        var heading := _face_point(start, point)
         var step_time := start.origin.distance_to(point) / 0.72
+        if step_time < 0.01:
+            continue
+        var heading := _face_point(start, point)
         motion.tween_property(richi, "transform", heading, 0.18)
         start = Transform3D(heading.basis, point)
         motion.tween_property(richi, "transform", start, step_time)
@@ -255,7 +350,7 @@ func _on_washed() -> void:
     _notify_host("wash-finished")
 
 func _open_games() -> void:
-    if _moving_between_places():
+    if location != MAIN or _moving_between_places():
         return
     if hosted:
         _notify_host("games")
@@ -272,8 +367,9 @@ func _buy_ball() -> void:
         _save_home()
 
 func _play_ball() -> void:
-    if not ball_owned or active_mode != &"home" or not _can_start_play():
+    if location != MAIN or not ball_owned or active_mode != &"home" or not _can_start_play():
         return
+    care.stop_toy()
     _set_mode(&"ball", false)
     _set_status("")
     care.play_toy(richi, richi.age_stage)
@@ -317,6 +413,7 @@ func _close_games() -> void:
     %Header.show()
     $Комната.show()
     _refresh_controls()
+    _check_hungry_room.call_deferred()
 
 func _open_shop() -> void:
     %Header.hide()
@@ -515,7 +612,7 @@ func _store_round(game: String, round: Dictionary) -> void:
     _save_home()
 
 func _toggle_sleep() -> void:
-    if _moving_between_places() or active_mode not in [&"home", &"sleep"]:
+    if location != MAIN or _moving_between_places() or active_mode not in [&"home", &"sleep"]:
         return
     if not night and not has_sleep_furniture:
         if hosted:
@@ -545,6 +642,13 @@ func _set_sleep(value: bool, animate := true) -> void:
         _finish_sleep_movement()
 
 func _day_pose() -> Transform3D:
+    return _pose_in(location)
+
+func _pose_in(place: StringName) -> Transform3D:
+    if place == KITCHEN:
+        return kitchen.get_node("Место для Ричи").global_transform.scaled_local(awake_pose.basis.get_scale())
+    if place == BATH:
+        return bath_room.get_node("Место для Ричи").global_transform.scaled_local(awake_pose.basis.get_scale())
     var pose := idle_pose
     if settee_in_use:
         pose.origin = bedroom.get_node("Место на полу у дивана").position
@@ -647,32 +751,36 @@ func _set_room_light(night_weight: float) -> void:
     bounce.light_color = day_bounce_color.lerp(Color(0.60, 0.72, 0.97), night_weight)
     ambience.environment.ambient_light_color = day_ambient_color.lerp(Color(0.57, 0.69, 0.93), night_weight)
     ambience.environment.ambient_light_energy = lerpf(day_ambient, 0.34, night_weight)
-    window_view.visible = night_weight < 0.5
+    window_material.albedo_color = Color.WHITE.lerp(Color(0.16, 0.22, 0.37), night_weight)
 
 func _set_mode(mode: StringName, animate := true, position_actor := true) -> void:
+    var previous := active_mode
     active_mode = mode
     var sleeping := mode == &"sleep"
-    var previewing := mode in [&"bed-preview", &"settee-preview", &"bath-preview"]
-    bathroom.visible = mode in [&"bath", &"bath-preview"]
-    care.visible = ball_owned and mode in [&"home", &"ball"]
-    if not bathroom.visible:
-        bathroom.close()
-    elif mode == &"bath-preview":
+    var previewing := PREVIEW_ROOMS.has(mode)
+    var visible_room: StringName = PREVIEW_ROOMS.get(mode, location)
+    if previewing or PREVIEW_ROOMS.has(previous):
+        room_camera.global_transform = _camera_in(visible_room)
+    for scenery: Node3D in $Комната.get_children().filter(func(node): return node.is_in_group("Архитектура")):
+        scenery.visible = visible_room == MAIN and scenery.is_in_group("Основа веранды")
+    kitchen.visible = visible_room == KITCHEN
+    bath_room.visible = visible_room == BATH
+    bathroom.visible = bath_room.visible
+    care.visible = ball_owned and mode == &"ball"
+    if mode != &"bath":
         bathroom.preview()
-    if not care.visible:
+    if not care.visible and not (previous == &"ball" and mode == &"home"):
         care.stop_toy()
     apple.set_process_input(false)
     apple.restore_eaten()
-    rug.visible = not (previewing or bathroom.visible)
+    rug.visible = visible_room == MAIN and not previewing
     _set_room_light(1.0 if sleeping else 0.0)
     richi.visible = not previewing
-    var pose := _day_pose() if mode in [&"home", &"ball"] else awake_pose
-    if mode == &"feed" and settee_in_use:
-        pose.origin = _day_pose().origin
+    var pose := _day_pose()
     if sleeping and has_sleep_furniture:
         pose = _sleep_pose()
-    elif bathroom.visible:
-        pose = bathroom.get_node("Место для Ричи").transform.scaled_local(awake_pose.basis.get_scale())
+    elif mode == &"bath":
+        pose = bathroom.get_node("Место для Ричи").global_transform.scaled_local(awake_pose.basis.get_scale())
     if position_actor:
         if pose_tween:
             pose_tween.kill()
@@ -695,30 +803,39 @@ func _set_status(message: String) -> void:
 func _refresh_controls() -> void:
     var playing: bool = game_room and game_room.visible
     var shopping: bool = shop and shop.visible
-    var previewing := active_mode in [&"bed-preview", &"settee-preview", &"bath-preview"]
+    var previewing := PREVIEW_ROOMS.has(active_mode)
     var free := active_mode == &"home"
-    bedroom.visible = not playing and (night or sleep_moving or free or active_mode in [&"feed", &"bed-preview", &"settee-preview"])
-    stations.visible = free and not playing
-    care.visible = ball_owned and active_mode in [&"home", &"ball"] and not playing and not shopping
-    furnishings.visible = not playing and not previewing
+    var in_main := location == MAIN
+    var showing_main := not kitchen.visible and not bath_room.visible
+    bedroom.visible = showing_main and not playing
+    stations.visible = showing_main and not playing and not previewing
+    care.visible = in_main and ball_owned and active_mode == &"ball" and not playing and not shopping
+    furnishings.visible = showing_main and not playing and not previewing
     var moving := _moving_between_places()
     %Actions.visible = (free or night) and not moving and not playing and not shopping
-    %Feed.visible = free
-    %Wash.visible = free
-    %Play.visible = free
-    %Ball.visible = free and ball_owned
-    %Shop.visible = free and shop != null
-    %Sleep.visible = night or free
-    %SleepLabel.text = "Разбудить" if night else ("Спать" if has_sleep_furniture else "Место для сна")
+    %Feed.visible = free and location == KITCHEN
+    %Wash.visible = free and location == BATH
+    %Play.visible = free and in_main
+    %Shop.visible = free and in_main and not moving and shop != null
+    %Sleep.visible = in_main and has_sleep_furniture and (night or free)
+    %SleepLabel.text = "Разбудить" if night else "Спать"
     %Sleep.accessibility_name = %SleepLabel.text
     %Back.visible = not moving and active_mode in [&"feed", &"bath"]
+    %Back.text = "Из купели" if active_mode == &"bath" else "К миске"
+    %MainRoom.set_pressed_no_signal(in_main)
+    %KitchenRoom.set_pressed_no_signal(location == KITCHEN)
+    %BathRoom.set_pressed_no_signal(location == BATH)
+    %RoomNavigation.visible = free and not moving and not playing and not shopping and not night
     var goal := _bed_goal()
-    var show_goal := free and not moving and not shopping and not playing and not goal.is_empty()
+    var show_goal := in_main and free and not moving and not shopping and not playing and not goal.is_empty()
     %GoalText.text = str(goal.get("message", ""))
     %GoalText.visible = show_goal
     %GoalAction.text = str(goal.get("label", ""))
     %GoalButtons.visible = show_goal
     %Dock.visible = not (playing or shopping or previewing) and (status.visible or %Back.visible or %Rinse.visible or show_goal)
+    var dock_edge := -92.0 if %RoomNavigation.visible else 0.0
+    %Dock.offset_top += dock_edge - %Dock.offset_bottom
+    %Dock.offset_bottom = dock_edge
 
 func _position_stations() -> void:
     var camera := get_viewport().get_camera_3d()
@@ -730,12 +847,10 @@ func _position_stations() -> void:
     elif night:
         sleep_target = bedroom.get_node("Метка пробуждения")
     var views := {
-        %Feed: stations.get_node("Миска/Метка"),
-        %Wash: stations.get_node("Купель/Метка"),
+        %Feed: kitchen.get_node("Метка миски"),
+        %Wash: bathroom.get_node("Метка купели"),
         %Sleep: sleep_target,
         %Play: stations.get_node("Сундук с игрушками/Метка"),
-        %Shop: stations.get_node("Крючок для одежды/Метка"),
-        %Ball: care.ball,
     }
     var screen := get_viewport().get_visible_rect().size
     var header_bottom: float = %Header.get_global_rect().end.y + 6.0
@@ -756,22 +871,25 @@ func _apply_furniture(furniture: Dictionary) -> void:
     $Спальня/Диван.visible = settee_in_use
     $Спальня/Лежанка.visible = not settee_in_use and (preview == "bed" or placed.has("bed"))
     bathroom.show_appearance(use_enamel)
-    stations.get_node("Купель/Дубовая").visible = not use_enamel
-    stations.get_node("Купель/Эмалированная").visible = use_enamel
+    kitchen.get_node("Архитектура/Обои").visible = preview == "wallpaper" or placed.has("wallpaper")
+    bath_room.get_node("Архитектура/Плитка").visible = preview == "bath-tile" or placed.has("bath-tile")
+    var mint_cabinet := preview == "kitchen-cabinet" or placed.has("kitchen-cabinet")
+    kitchen.get_node("Кухонный уголок/Шкафчик/Мятные дверцы").visible = mint_cabinet
+    kitchen.get_node("Кухонный уголок/Шкафчик/Деревянные дверцы").visible = not mint_cabinet
     var chest_visible := preview == "chest" or placed.has("chest")
     stations.get_node("Сундук с игрушками/Исходный сундук").visible = not chest_visible
     for item: Node3D in furnishings.get_children():
         item.visible = preview == item.name or placed.has(String(item.name))
     if night:
         return
-    var mode: StringName = {"bed": &"bed-preview", "settee": &"settee-preview", "bath": &"bath-preview"}.get(preview, &"home")
+    var mode: StringName = FURNITURE_PREVIEWS.get(preview, &"home")
     if mode == active_mode:
         if mode == &"home" and had_settee != settee_in_use and not _moving_between_places():
             _set_mode(&"home", false)
         return
     if mode != &"home":
         _set_mode(mode, false)
-    elif active_mode in [&"bed-preview", &"settee-preview", &"bath-preview"]:
+    elif PREVIEW_ROOMS.has(active_mode):
         _show_room()
 
 func _load_home() -> void:
@@ -865,6 +983,7 @@ func _refresh_native_needs() -> void:
     _advance_native_needs()
     %NeedsHud.set_values(native_needs)
     richi.set_needs(native_needs)
+    _check_hungry_room.call_deferred()
 
 
 func _increase_native_need(key: String, amount: float) -> void:
@@ -879,6 +998,8 @@ func _sync_pause(args: Array) -> void:
         if args[0] and is_instance_valid(game_room) and game_room.visible:
             game_room.checkpoint()
         get_tree().paused = args[0]
+        if not args[0]:
+            _check_hungry_room.call_deferred()
 
 func _sync_state(args: Array) -> void:
     if args.size() != 1 or not args[0] is String:
@@ -917,6 +1038,46 @@ func _sync_state(args: Array) -> void:
         _offer_apple()
     _refresh_controls()
     _position_stations()
+    _check_hungry_room.call_deferred()
+
+func _write_interaction_state(args: Array) -> void:
+    if args.size() == 1 and args[0] is JavaScriptObject:
+        args[0].result = _interaction_state([])
+
+func _interaction_state(_args: Array) -> String:
+    var camera := get_viewport().get_camera_3d()
+    var size := get_viewport().get_visible_rect().size
+    var controls := {}
+    var buttons := {
+        "main": %MainRoom, "kitchen": %KitchenRoom, "bath": %BathRoom,
+        "feed": %Feed, "back": %Back, "wash": %Wash, "rinse": %Rinse,
+        "sleep": %Sleep, "profile": %Profile, "chest": %Play, "shop": %Shop,
+        "goalAction": %GoalAction, "goalLater": %GoalLater,
+    }
+    for item in buttons:
+        var button: Button = buttons[item]
+        controls[item] = _interaction_point(button.get_global_rect().get_center(), size) if button.is_visible_in_tree() and not button.disabled else null
+    var fruit: Variant = null
+    var grip: Variant = null
+    if active_mode == &"feed":
+        fruit = _interaction_point(camera.unproject_position(apple.global_position + apple.center_offset()), size) if apple.visible else null
+        grip = _interaction_point(camera.unproject_position(apple.palm_center()), size)
+    var sponge: Variant = null
+    var scrub_center: Variant = null
+    if active_mode == &"bath" and not bath_moving:
+        if bathroom.soap.is_visible_in_tree():
+            sponge = _interaction_point(camera.unproject_position(bathroom.soap.global_position), size)
+        scrub_center = _interaction_point(camera.unproject_position(richi.global_position + Vector3(0, 0.36, 0.05)), size)
+    return JSON.stringify({
+        "location": str(location), "mode": str(active_mode), "moving": _moving_between_places(),
+        "paused": get_tree().paused, "food": richi.needs.get("food", 50), "dining": str(dining.state),
+        "controls": controls, "apple": fruit, "grip": grip, "applePointer": apple.pointer,
+        "appleSettling": apple.settling, "mealInProgress": meal_in_progress, "mealPhase": richi.meal_phase(),
+        "sponge": sponge, "scrubCenter": scrub_center,
+    })
+
+func _interaction_point(point: Vector2, size: Vector2) -> Dictionary:
+    return {"x":point.x / size.x, "y":point.y / size.y}
 
 func _notify_host(event_name: String) -> void:
     if hosted:

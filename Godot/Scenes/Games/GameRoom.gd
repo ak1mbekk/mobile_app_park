@@ -4,6 +4,7 @@ signal closed
 signal round_saved(game: String, round: Dictionary)
 signal animal_requested(species: String)
 signal ball_purchase_requested
+signal ball_play_requested
 
 const GAMES := {
     "pairs": preload("res://Scenes/Games/Pairs.tscn"),
@@ -15,6 +16,7 @@ var rounds := {}
 var active_game := ""
 var board: Control
 var guide_available := false
+var owns_ball := false
 
 
 func _ready() -> void:
@@ -22,17 +24,26 @@ func _ready() -> void:
     %Pairs.pressed.connect(_select.bind("pairs"))
     %Match.pressed.connect(_select.bind("match"))
     %Orchard.pressed.connect(_select.bind("orchard"))
-    %Ball.pressed.connect(func(): ball_purchase_requested.emit())
+    %Ball.pressed.connect(_choose_ball)
 
 
 func set_ball_shop(owned: bool, can_buy: bool) -> void:
-    %Ball.disabled = owned or not can_buy
+    owns_ball = owned
+    %Ball.disabled = not (owned or can_buy)
     if owned:
-        %Ball.text = "Плетёный мяч · В домике"
+        %Ball.text = "Поиграть с плетёным мячом"
     elif can_buy:
         %Ball.text = "Плетёный мяч · 5 листьев"
     else:
         %Ball.text = "Плетёный мяч · Нужно 5 листьев"
+
+func _choose_ball() -> void:
+    if owns_ball:
+        hide()
+        closed.emit()
+        ball_play_requested.emit()
+    else:
+        ball_purchase_requested.emit()
 
 
 func open(game_id := "") -> void:

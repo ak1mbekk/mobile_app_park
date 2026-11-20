@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://Scenes/Home/CareCorner.gd" id="Script"]
+[ext_resource type="AnimationLibrary" path="res://Scenes/Home/CareBallActions.tres" id="Actions"]
 
 [sub_resource type="StandardMaterial3D" id="BallMat"]
 albedo_color = Color(0.62, 0.42, 0.23, 1)
@@ -24,6 +25,7 @@ ring_segments = 10
 
 [node name="Уход" type="Node3D"]
 script = ExtResource("Script")
+toy_actions = ExtResource("Actions")
 
 [node name="Метка" type="Marker3D" parent="."]
 position = Vector3(0.01, 0.065, 1.54)

@@ -1,0 +1,134 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Care/shelf-plants-and-jars.glb" id="Shelf"]
+[ext_resource type="Material" path="res://Materials/OiledWood.tres" id="Wood"]
+[ext_resource type="Material" path="res://Scenes/Home/Art/MintPaint.tres" id="Mint"]
+[ext_resource type="Material" path="res://Scenes/Home/Art/GlazedTile.tres" id="Tile"]
+
+[sub_resource type="StandardMaterial3D" id="CounterStone"]
+albedo_color = Color(0.84, 0.77, 0.62, 1)
+roughness = 0.66
+
+[sub_resource type="StandardMaterial3D" id="Iron"]
+albedo_color = Color(0.28, 0.17, 0.12, 1)
+metallic = 0.38
+roughness = 0.43
+
+[sub_resource type="StandardMaterial3D" id="NewHandle"]
+albedo_color = Color(0.75, 0.64, 0.34, 1)
+metallic = 0.68
+roughness = 0.36
+
+[sub_resource type="BoxMesh" id="Case"]
+material = ExtResource("Wood")
+size = Vector3(0.493, 0.532, 0.33)
+
+[sub_resource type="BoxMesh" id="Counter"]
+material = SubResource("CounterStone")
+size = Vector3(0.556, 0.055, 0.402)
+
+[sub_resource type="BoxMesh" id="WoodenDoor"]
+material = ExtResource("Wood")
+size = Vector3(0.226, 0.428, 0.038)
+
+[sub_resource type="BoxMesh" id="DoorInset"]
+material = ExtResource("Wood")
+size = Vector3(0.175, 0.352, 0.021)
+
+[sub_resource type="SphereMesh" id="Knob"]
+material = SubResource("Iron")
+radius = 0.022
+height = 0.044
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CapsuleMesh" id="BrassHandle"]
+material = SubResource("NewHandle")
+radius = 0.011
+height = 0.077
+radial_segments = 10
+rings = 5
+
+[sub_resource type="BoxMesh" id="Backsplash"]
+material = ExtResource("Tile")
+size = Vector3(0.57, 0.30, 0.025)
+
+[node name="Кухонный уголок" type="Node3D"]
+
+[node name="Шкафчик" type="Node3D" parent="."]
+position = Vector3(0.397, 0.0, -0.194)
+
+[node name="Корпус" type="MeshInstance3D" parent="Шкафчик"]
+position = Vector3(0, 0.286, 0)
+mesh = SubResource("Case")
+
+[node name="Столешница" type="MeshInstance3D" parent="Шкафчик"]
+position = Vector3(0, 0.571, 0.012)
+mesh = SubResource("Counter")
+
+[node name="Деревянные дверцы" type="Node3D" parent="Шкафчик"]
+
+[node name="Левая рама" type="MeshInstance3D" parent="Шкафчик/Деревянные дверцы"]
+position = Vector3(-0.12, 0.303, 0.177)
+mesh = SubResource("WoodenDoor")
+
+[node name="Правая рама" type="MeshInstance3D" parent="Шкафчик/Деревянные дверцы"]
+position = Vector3(0.12, 0.303, 0.177)
+mesh = SubResource("WoodenDoor")
+
+[node name="Левая филёнка" type="MeshInstance3D" parent="Шкафчик/Деревянные дверцы"]
+position = Vector3(-0.12, 0.303, 0.204)
+mesh = SubResource("DoorInset")
+
+[node name="Правая филёнка" type="MeshInstance3D" parent="Шкафчик/Деревянные дверцы"]
+position = Vector3(0.12, 0.303, 0.204)
+mesh = SubResource("DoorInset")
+
+[node name="Левая ручка" type="MeshInstance3D" parent="Шкафчик/Деревянные дверцы"]
+position = Vector3(-0.045, 0.370, 0.236)
+mesh = SubResource("Knob")
+
+[node name="Правая ручка" type="MeshInstance3D" parent="Шкафчик/Деревянные дверцы"]
+position = Vector3(0.045, 0.370, 0.236)
+mesh = SubResource("Knob")
+
+[node name="Мятные дверцы" type="Node3D" parent="Шкафчик"]
+visible = false
+
+[node name="Левая рама" type="MeshInstance3D" parent="Шкафчик/Мятные дверцы"]
+position = Vector3(-0.12, 0.303, 0.177)
+mesh = SubResource("WoodenDoor")
+material_override = ExtResource("Mint")
+
+[node name="Правая рама" type="MeshInstance3D" parent="Шкафчик/Мятные дверцы"]
+position = Vector3(0.12, 0.303, 0.177)
+mesh = SubResource("WoodenDoor")
+material_override = ExtResource("Mint")
+
+[node name="Левая филёнка" type="MeshInstance3D" parent="Шкафчик/Мятные дверцы"]
+position = Vector3(-0.12, 0.303, 0.204)
+mesh = SubResource("DoorInset")
+material_override = ExtResource("Mint")
+
+[node name="Правая филёнка" type="MeshInstance3D" parent="Шкафчик/Мятные дверцы"]
+position = Vector3(0.12, 0.303, 0.204)
+mesh = SubResource("DoorInset")
+material_override = ExtResource("Mint")
+
+[node name="Левая латунная ручка" type="MeshInstance3D" parent="Шкафчик/Мятные дверцы"]
+position = Vector3(-0.047, 0.371, 0.233)
+mesh = SubResource("BrassHandle")
+
+[node name="Правая латунная ручка" type="MeshInstance3D" parent="Шкафчик/Мятные дверцы"]
+position = Vector3(0.047, 0.371, 0.233)
+mesh = SubResource("BrassHandle")
+
+[node name="Керамический фартук" type="MeshInstance3D" parent="."]
+position = Vector3(0.397, 0.716, -0.373)
+mesh = SubResource("Backsplash")
+
+[node name="Полка с банками и растением" parent="." instance=ExtResource("Shelf")]
+position = Vector3(0.397, 0.825, -0.272)
+scale = Vector3(0.602, 0.602, 0.602)
+
+[editable path="Полка с банками и растением"]

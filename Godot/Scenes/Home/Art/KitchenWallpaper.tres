@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://Art/TrailHouse/Care/kitchen-wallpaper.png" id="Paper"]
+
+[resource]
+albedo_texture = ExtResource("Paper")
+roughness = 0.88
+uv1_scale = Vector3(9, 6, 1)

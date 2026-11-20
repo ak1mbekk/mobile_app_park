@@ -3,12 +3,10 @@
 [ext_resource type="Script" path="res://Scenes/Home/Bathroom.gd" id="Script"]
 [ext_resource type="PackedScene" path="res://Scenes/Props/Furniture/EnamelBath.tscn" id="EnamelBath"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Furniture/WoodenWashTub.tscn" id="WoodenWashTub"]
+[ext_resource type="Shader" path="res://Scenes/Home/Art/TubWater.gdshader" id="WaterShader"]
 
-[sub_resource type="StandardMaterial3D" id="Water"]
-albedo_color = Color(0.16, 0.50, 0.47, 0.88)
-transparency = 1
-metallic = 0.12
-roughness = 0.27
+[sub_resource type="ShaderMaterial" id="Water"]
+shader = ExtResource("WaterShader")
 
 [sub_resource type="StandardMaterial3D" id="Golden"]
 albedo_color = Color(0.94, 0.68, 0.16, 1)
@@ -104,6 +102,9 @@ rotation = Vector3(0, -0.32, 0)
 
 [node name="Подход к купели" type="Marker3D" parent="."]
 position = Vector3(0.045, 0.008, 1.235)
+
+[node name="Метка купели" type="Marker3D" parent="."]
+position = Vector3(0.12, 0.23, 0.88)
 
 [node name="Обход лежанки" type="Marker3D" parent="."]
 position = Vector3(0.21, 0.008, 0.97)

@@ -101,7 +101,7 @@ omni_range = 0.64
 
 [node name="chest" type="Node3D" parent="."]
 visible = false
-position = Vector3(0.53, 0.0, 0.13)
+position = Vector3(-0.175, 0, 1.25)
 rotation = Vector3(0, -0.52, 0)
 
 [node name="Корпус" type="MeshInstance3D" parent="chest"]

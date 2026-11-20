@@ -1,129 +1,18 @@
 [gd_scene format=3]
 
-[ext_resource type="Material" path="res://Materials/OiledWood.tres" id="Wood"]
-[ext_resource type="PackedScene" path="res://Scenes/Props/Furniture/EnamelBath.tscn" id="Enamel"]
-[ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Furniture/WoodenWashTub.tscn" id="WoodenWashTub"]
-[ext_resource type="PackedScene" path="res://Art/Wardrobe/cap.glb" id="Cap"]
-
-[sub_resource type="StandardMaterial3D" id="Ceramic"]
-albedo_color = Color(0.37, 0.52, 0.37, 1)
-roughness = 0.53
-
-[sub_resource type="StandardMaterial3D" id="Interior"]
-albedo_color = Color(0.16, 0.27, 0.21, 1)
-roughness = 0.54
-
-[sub_resource type="CylinderMesh" id="Bowl"]
-material = SubResource("Ceramic")
-top_radius = 0.128
-bottom_radius = 0.09
-height = 0.056
-radial_segments = 32
-
-[sub_resource type="CylinderMesh" id="Inside"]
-material = SubResource("Interior")
-top_radius = 0.109
-bottom_radius = 0.106
-height = 0.013
-radial_segments = 32
-
-[sub_resource type="TorusMesh" id="Lip"]
-material = SubResource("Ceramic")
-inner_radius = 0.108
-outer_radius = 0.135
-rings = 32
-ring_segments = 10
-
-[sub_resource type="BoxMesh" id="ToyChest"]
-material = ExtResource("Wood")
-size = Vector3(0.29, 0.165, 0.21)
-
-[sub_resource type="BoxMesh" id="ToyLid"]
-material = ExtResource("Wood")
-size = Vector3(0.305, 0.033, 0.222)
-
-[sub_resource type="StandardMaterial3D" id="Rope"]
-albedo_color = Color(0.73, 0.58, 0.38, 1)
-roughness = 0.89
-
-[sub_resource type="TorusMesh" id="Handle"]
-material = SubResource("Rope")
-inner_radius = 0.025
-outer_radius = 0.042
-rings = 20
-ring_segments = 9
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Care/toy-chest.glb" id="Chest"]
 
 [node name="Станции ухода" type="Node3D"]
 
-[node name="Миска" type="Node3D" parent="."]
-position = Vector3(-0.181, 0.012, 1.294)
-scale = Vector3(0.88, 0.88, 0.88)
-
-[node name="Метка" type="Marker3D" parent="Миска"]
-position = Vector3(0, 0.05, 0)
-
-[node name="Глина" type="MeshInstance3D" parent="Миска"]
-position = Vector3(0, 0.028, 0)
-mesh = SubResource("Bowl")
-
-[node name="Дно" type="MeshInstance3D" parent="Миска"]
-position = Vector3(0, 0.058, 0)
-mesh = SubResource("Inside")
-
-[node name="Край" type="MeshInstance3D" parent="Миска"]
-position = Vector3(0, 0.066, 0)
-mesh = SubResource("Lip")
-
-[node name="Купель" type="Node3D" parent="."]
-position = Vector3(0.17, 0.010, 1.285)
-scale = Vector3(0.86, 0.86, 0.86)
-
-[node name="Метка" type="Marker3D" parent="Купель"]
-position = Vector3(0, 0.065, 0)
-
-[node name="Дубовая" parent="Купель" instance=ExtResource("WoodenWashTub")]
-scale = Vector3(0.26, 0.18, 0.26)
-
-[node name="Эмалированная" parent="Купель" instance=ExtResource("Enamel")]
-visible = false
-scale = Vector3(0.301, 0.348, 0.301)
-
 [node name="Сундук с игрушками" type="Node3D" parent="."]
-position = Vector3(0.385, 0, 0.63)
-rotation = Vector3(0, -0.30, 0)
+position = Vector3(-0.175, 0, 1.25)
+rotation = Vector3(0, -0.23, 0)
 
 [node name="Метка" type="Marker3D" parent="Сундук с игрушками"]
-position = Vector3(0, 0.10, 0.10)
+position = Vector3(0, 0.15, 0.09)
 
-[node name="Исходный сундук" type="Node3D" parent="Сундук с игрушками"]
-
-[node name="Основа" type="MeshInstance3D" parent="Сундук с игрушками/Исходный сундук"]
-position = Vector3(0, 0.087, 0)
-mesh = SubResource("ToyChest")
-
-[node name="Крышка" type="MeshInstance3D" parent="Сундук с игрушками/Исходный сундук"]
-position = Vector3(0, 0.182, 0)
-mesh = SubResource("ToyLid")
-
-[node name="Ручка" type="MeshInstance3D" parent="Сундук с игрушками/Исходный сундук"]
-position = Vector3(0, 0.106, 0.109)
-rotation = Vector3(1.57, 0, 0)
-mesh = SubResource("Handle")
+[node name="Исходный сундук" parent="Сундук с игрушками" instance=ExtResource("Chest")]
+scale = Vector3(0.62, 0.65, 0.62)
 
 [node name="Метка лежанки" type="Marker3D" parent="."]
 position = Vector3(-0.108, 0.12, 0.77)
-
-[node name="Крючок для одежды" type="Node3D" parent="."]
-position = Vector3(0.406, 0.87, -0.17)
-
-[node name="Крючок" type="MeshInstance3D" parent="Крючок для одежды"]
-rotation = Vector3(1.57, 0, 0)
-mesh = SubResource("Handle")
-
-[node name="Головной убор" parent="Крючок для одежды" instance=ExtResource("Cap")]
-position = Vector3(0, -0.045, 0.038)
-rotation = Vector3(-0.33, -0.26, 0.20)
-scale = Vector3(0.37, 0.37, 0.37)
-
-[node name="Метка" type="Marker3D" parent="Крючок для одежды"]
-position = Vector3(0, -0.04, 0.08)

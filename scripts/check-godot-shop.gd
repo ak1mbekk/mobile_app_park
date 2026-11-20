@@ -47,6 +47,8 @@ func _run() -> void:
         var label: Label = cabin.shop.get_node("%" + id).get_node("Price")
         _expect(label.text.contains(ware.tier), "%s shows rarity before selection" % id)
         _expect(label.text.contains("Куплено" if id == "bed" else CATALOG.leaf_price(ware.price)), "%s shows ownership or price before selection" % id)
+        var picture: TextureRect = cabin.shop.get_node("%" + id).get_node("Picture")
+        _expect(picture.texture != null, "%s has a catalog picture" % id)
 
     _press(cabin.shop, "cap")
     _expect(cabin.richi.hat_seat.get_node("cap").visible and cabin.native_leaves == 9, "The hat is tried on without a charge")
@@ -77,7 +79,8 @@ func _run() -> void:
     _expect(cabin.native_leaves == 80 and cabin.native_placed == ["bed"], "The owned bed can replace the settee at no charge")
     _choose("settee")
     _choose("bath")
-    _expect(cabin.native_leaves == 25 and cabin.stations.get_node("Купель/Эмалированная").visible and not cabin.stations.get_node("Купель/Дубовая").visible, "The enamel bath replaces the wooden bath")
+    _expect(cabin.native_leaves == 25 and cabin.bathroom.get_node("Купель/Эмалированная купель").visible
+        and not cabin.bathroom.get_node("Купель/Деревянная купель").visible, "The enamel bath replaces the wooden bath in the bathroom")
     _choose("cushion")
     _expect(cabin.native_leaves == 10 and cabin.furnishings.get_node("cushion").visible, "Decor stays in the room after purchase")
 
@@ -87,18 +90,45 @@ func _run() -> void:
     _press(cabin.shop, "Confirm")
     _expect(cabin.native_leaves == 10 and cabin.native_placed.has("settee") and not cabin.shop.get_node("%Status").text.is_empty(), "Failed save rolls back the furniture change and reports it")
     DirAccess.remove_absolute(blocked_draft)
-    _press(cabin.shop, "DetailClose")
+    _press(cabin.shop, "Back")
+    _press(cabin.shop, "wallpaper")
+    _expect(cabin.active_mode == &"kitchen-preview" and cabin.kitchen.get_node("Архитектура/Обои").visible,
+        "Wallpaper preview shows the upgraded kitchen surface")
+    _expect(cabin.shop.get_node("%Confirm").disabled and cabin.native_leaves == 10, "Wallpaper can be tried without enough leaves to buy it")
+    _press(cabin.shop, "Back")
+    _expect(not cabin.kitchen.get_node("Архитектура/Обои").visible and not cabin.native_owned.has("wallpaper")
+        and not cabin.native_placed.has("wallpaper"), "Cancelled wallpaper preview restores the original surface without a charge")
+    cabin.native_leaves = 90
+    _choose("wallpaper")
+    _choose("bath-tile")
+    _choose("kitchen-cabinet")
+    _expect(cabin.native_leaves == 10, "Wallpaper, tiles and cabinet charge their listed prices once")
+    for upgrade in ["wallpaper", "bath-tile", "kitchen-cabinet"]:
+        _expect(cabin.native_owned.has(upgrade) and cabin.native_placed.has(upgrade), "The room upgrade is owned and installed: " + upgrade)
+    _expect(cabin.native_placed.has("bath") and cabin.native_placed.has("settee") and cabin.native_placed.has("cushion"),
+        "Room upgrades preserve installed furniture and the enamel bath")
+    _press(cabin.shop, "Close")
     cabin.queue_free()
     await process_frame
 
     _open_cabin()
     _expect(cabin.native_leaves == 10 and cabin.native_placed.has("settee") and not cabin.native_placed.has("bed"), "The wallet and replaced furniture survive restart")
     _expect(cabin.native_hat == "cap" and cabin.richi.hat_seat.get_node("cap").visible, "The equipped hat survives restart")
-    _expect(cabin.stations.get_node("Купель/Эмалированная").visible and cabin.furnishings.get_node("cushion").visible, "Purchased bath and decor survive restart")
+    _expect(cabin.bathroom.get_node("Купель/Эмалированная купель").visible and cabin.furnishings.get_node("cushion").visible, "Purchased bath and decor survive restart")
+    for upgrade in ["wallpaper", "bath-tile", "kitchen-cabinet"]:
+        _expect(cabin.native_owned.has(upgrade) and cabin.native_placed.has(upgrade), "Room upgrade survives restart: " + upgrade)
+    _expect(cabin.kitchen.get_node("Архитектура/Обои").visible and cabin.bath_room.get_node("Архитектура/Плитка").visible
+        and cabin.kitchen.get_node("Кухонный уголок/Шкафчик/Мятные дверцы").visible, "All bought finishes and cabinet fronts are installed after restart")
     _press(cabin, "Shop")
     _press(cabin.shop, "Furniture")
+    _choose("wallpaper")
+    _expect(not cabin.kitchen.get_node("Архитектура/Обои").visible and cabin.native_owned.has("wallpaper")
+        and not cabin.native_placed.has("wallpaper") and cabin.native_leaves == 10, "Removing the wallpaper restores the old finish and keeps it owned")
+    _choose("wallpaper")
+    _expect(cabin.native_placed.has("wallpaper") and cabin.native_leaves == 10, "Reinstalling owned wallpaper is free")
     _choose("bath")
-    _expect(cabin.native_owned.has("bath") and cabin.stations.get_node("Купель/Дубовая").visible, "Removing an upgrade restores the basic bath")
+    _expect(cabin.native_owned.has("bath") and cabin.bathroom.get_node("Купель/Деревянная купель").visible, "Removing an upgrade restores the basic bath")
+    _expect(cabin.native_placed.has("bath-tile"), "The wall finish remains when the upgraded bath is removed")
     cabin.hosted = true
     cabin._sync_state([JSON.stringify({
         "leaves": 24, "open_shop": true,

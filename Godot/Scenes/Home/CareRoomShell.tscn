@@ -1,0 +1,155 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Architecture/Floorboards.tscn" id="Floor"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Architecture/BareWindow.tscn" id="Window"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/WindowView.tscn" id="View"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Architecture/Backing.tscn" id="Backing"]
+[ext_resource type="Material" path="res://Scenes/Home/Art/CareLime.tres" id="Lime"]
+[ext_resource type="Material" path="res://Scenes/Home/Art/MintPaint.tres" id="Mint"]
+[ext_resource type="Material" path="res://Scenes/Home/Art/KitchenWallpaper.tres" id="Wallpaper"]
+[ext_resource type="Material" path="res://Materials/OiledWood.tres" id="Wood"]
+
+[sub_resource type="BoxMesh" id="UnderWindow"]
+material = ExtResource("Lime")
+size = Vector3(1.65, 0.55, 0.1)
+
+[sub_resource type="BoxMesh" id="RightWall"]
+material = ExtResource("Lime")
+size = Vector3(1.72, 2.3, 0.1)
+
+[sub_resource type="BoxMesh" id="LeftWall"]
+material = ExtResource("Lime")
+size = Vector3(1.0, 2.3, 0.1)
+
+[sub_resource type="BoxMesh" id="UpperWall"]
+material = ExtResource("Lime")
+size = Vector3(1.62, 0.68, 0.1)
+
+[sub_resource type="BoxMesh" id="WindowSideReturn"]
+material = ExtResource("Lime")
+size = Vector3(0.136, 1.114, 0.25)
+
+[sub_resource type="BoxMesh" id="WindowEndReturn"]
+material = ExtResource("Lime")
+size = Vector3(1.219, 0.086, 0.25)
+
+[sub_resource type="BoxMesh" id="Baseboard"]
+material = ExtResource("Wood")
+size = Vector3(3.4, 0.075, 0.047)
+
+[sub_resource type="BoxMesh" id="PaintedVertical"]
+material = ExtResource("Mint")
+size = Vector3(0.085, 1.015, 0.056)
+
+[sub_resource type="BoxMesh" id="PaintedMullion"]
+material = ExtResource("Mint")
+size = Vector3(0.046, 1.015, 0.052)
+
+[sub_resource type="BoxMesh" id="PaintedCrossbar"]
+material = ExtResource("Mint")
+size = Vector3(1.01, 0.053, 0.052)
+
+[node name="Обстановка комнаты" type="Node3D"]
+
+[node name="Основа пола" parent="." instance=ExtResource("Backing")]
+position = Vector3(0, -0.118, 1.62)
+scale = Vector3(3.20, 0.06, 6.0)
+
+[node name="Доски пола" parent="." instance=ExtResource("Floor")]
+position = Vector3(0, 0.002, 1.47)
+scale = Vector3(2.89, 1, 3.34)
+
+[node name="Стена под окном" type="MeshInstance3D" parent="."]
+position = Vector3(-0.709, 0.258, -0.451)
+mesh = SubResource("UnderWindow")
+
+[node name="Стена справа от окна" type="MeshInstance3D" parent="."]
+position = Vector3(0.973, 1.135, -0.451)
+mesh = SubResource("RightWall")
+
+[node name="Стена слева от окна" type="MeshInstance3D" parent="."]
+position = Vector3(-1.616, 1.135, -0.451)
+mesh = SubResource("LeftWall")
+
+[node name="Верх стены" type="MeshInstance3D" parent="."]
+position = Vector3(-0.694, 1.933, -0.451)
+mesh = SubResource("UpperWall")
+
+[node name="Обои" type="Node3D" parent="."]
+visible = false
+
+[node name="Полотно под окном" type="MeshInstance3D" parent="Обои"]
+position = Vector3(-0.709, 0.258, -0.447)
+mesh = SubResource("UnderWindow")
+material_override = ExtResource("Wallpaper")
+
+[node name="Полотно справа от окна" type="MeshInstance3D" parent="Обои"]
+position = Vector3(0.973, 1.135, -0.447)
+mesh = SubResource("RightWall")
+material_override = ExtResource("Wallpaper")
+
+[node name="Верхнее полотно" type="MeshInstance3D" parent="Обои"]
+position = Vector3(-0.694, 1.933, -0.447)
+mesh = SubResource("UpperWall")
+material_override = ExtResource("Wallpaper")
+
+[node name="Полотно слева от окна" type="MeshInstance3D" parent="Обои"]
+position = Vector3(-1.616, 1.135, -0.447)
+mesh = SubResource("LeftWall")
+material_override = ExtResource("Wallpaper")
+
+[node name="Плинтус" type="MeshInstance3D" parent="."]
+position = Vector3(0.068, 0.045, -0.358)
+mesh = SubResource("Baseboard")
+
+[node name="Окно" parent="." instance=ExtResource("Window")]
+position = Vector3(-0.503, 0.532, -0.261)
+scale = Vector3(1, 0.95, 1)
+
+[node name="Известковые откосы" type="Node3D" parent="."]
+
+[node name="Правый откос" type="MeshInstance3D" parent="Известковые откосы"]
+position = Vector3(0.077, 1.062, -0.333)
+mesh = SubResource("WindowSideReturn")
+
+[node name="Левый откос" type="MeshInstance3D" parent="Известковые откосы"]
+position = Vector3(-1.07, 1.062, -0.333)
+mesh = SubResource("WindowSideReturn")
+
+[node name="Подоконный откос" type="MeshInstance3D" parent="Известковые откосы"]
+position = Vector3(-0.50, 0.518, -0.333)
+mesh = SubResource("WindowEndReturn")
+
+[node name="Верхний откос" type="MeshInstance3D" parent="Известковые откосы"]
+position = Vector3(-0.50, 1.591, -0.333)
+mesh = SubResource("WindowEndReturn")
+
+[node name="Мятная рама" type="Node3D" parent="."]
+position = Vector3(-0.503, 0.532, -0.168)
+scale = Vector3(1, 0.95, 1)
+
+[node name="Левая стойка" type="MeshInstance3D" parent="Мятная рама"]
+position = Vector3(-0.52, 0.586, 0)
+mesh = SubResource("PaintedVertical")
+
+[node name="Правая стойка" type="MeshInstance3D" parent="Мятная рама"]
+position = Vector3(0.52, 0.586, 0)
+mesh = SubResource("PaintedVertical")
+
+[node name="Средник" type="MeshInstance3D" parent="Мятная рама"]
+position = Vector3(0, 0.585, 0)
+mesh = SubResource("PaintedMullion")
+
+[node name="Горизонтальная перекладина" type="MeshInstance3D" parent="Мятная рама"]
+position = Vector3(0, 0.584, 0)
+mesh = SubResource("PaintedCrossbar")
+
+[node name="Берёзовая тропа" parent="." instance=ExtResource("View")]
+position = Vector3(-0.505, 1.092, -0.535)
+scale = Vector3(1.35, 1.22, 1)
+
+[node name="Мягкий свет комнаты" type="OmniLight3D" parent="."]
+position = Vector3(-0.54, 1.45, 1.72)
+light_color = Color(0.93, 0.89, 0.80, 1)
+light_energy = 0.72
+omni_range = 3.3

@@ -12,6 +12,7 @@ var committed := []
 var animal_links := []
 var failures := 0
 var ball_requests := 0
+var ball_play_requests := 0
 var closed_rooms := 0
 
 
@@ -29,6 +30,7 @@ func _run() -> void:
     room.guide_available = true
     room.animal_requested.connect(func(species: String): animal_links.append(species))
     room.ball_purchase_requested.connect(func(): ball_requests += 1)
+    room.ball_play_requested.connect(func(): ball_play_requests += 1)
     room.closed.connect(func(): closed_rooms += 1)
     room.open()
     await process_frame
@@ -55,7 +57,8 @@ func _test_ball() -> void:
     _expect(ball_requests == 1 and not ball.disabled, "The ball button delegates an affordable purchase")
     room.set_ball_shop(true, true)
     _tap(ball)
-    _expect(ball_requests == 1 and ball.disabled and ball.text.contains("В домике"), "The purchased ball cannot be paid for twice")
+    _expect(ball_requests == 1 and ball_play_requests == 1 and not room.visible, "The owned ball starts play without charging for it again")
+    room.open()
 
 func _test_home_play_needs() -> void:
     var home = HOME.instantiate()
@@ -64,14 +67,13 @@ func _test_home_play_needs() -> void:
     home.ball_owned = true
     home._show_room()
     var games: BaseButton = home.get_node("%Play")
-    var ball: BaseButton = home.get_node("%Ball")
     for key in ["food", "energy"]:
         home.native_needs = {"food": 50.0, "clean": 50.0, "energy": 50.0, "joy": 50.0}
         home.native_needs[key] = 25.0
         home.native_needs_updated = 0.0
         games.pressed.emit()
         _expect(not home.game_room.visible, "The native chest refuses play at 25 " + key)
-        ball.pressed.emit()
+        home._play_ball()
         _expect(home.active_mode == &"home", "The native toy refuses play at 25 " + key)
         _expect(home.richi.get_node("Reactions").current_animation == &"refuse", "The pet shows the refusal")
     home.native_needs.food = 25.1
@@ -80,18 +82,18 @@ func _test_home_play_needs() -> void:
     games.pressed.emit()
     _expect(home.game_room.visible, "The chest opens above both need thresholds")
     home.game_room.get_node("%Back").pressed.emit()
-    ball.pressed.emit()
+    home._play_ball()
     _expect(home.active_mode == &"ball", "The toy starts above both need thresholds")
     home.care.stop_toy()
     home._show_room()
     home.hosted = true
     home.richi.set_needs({"food": 25.0, "energy": 50.0})
-    ball.pressed.emit()
+    home._play_ball()
     _expect(home.active_mode == &"home", "The hosted toy honors the latest web needs")
     home.hosted = false
     home._set_sleep(true, false)
     games.pressed.emit()
-    ball.pressed.emit()
+    home._play_ball()
     _expect(not home.game_room.visible and home.active_mode == &"sleep", "Sleep prevents a new game or toy session")
     var murmur: AudioStreamPlayer = home.richi.get_node("SoftMurmur")
     await create_timer(murmur.stream.get_length() + 0.1).timeout

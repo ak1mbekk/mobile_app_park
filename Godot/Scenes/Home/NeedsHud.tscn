@@ -1,51 +1,55 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://Scenes/Home/NeedsHud.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/need-food.svg" id="FoodIcon"]
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/need-clean.svg" id="CleanIcon"]
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/need-energy.svg" id="EnergyIcon"]
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/need-joy.svg" id="JoyIcon"]
 
 [sub_resource type="StyleBoxFlat" id="Track"]
-bg_color = Color(0.32, 0.38, 0.33, 1)
+bg_color = Color(0.81, 0.75, 0.65, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_left = 5
 corner_radius_bottom_right = 5
 
 [sub_resource type="StyleBoxFlat" id="FoodFill"]
-bg_color = Color(0.94, 0.64, 0.35, 1)
+bg_color = Color(0.65, 0.25, 0.20, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_left = 5
 corner_radius_bottom_right = 5
 
 [sub_resource type="StyleBoxFlat" id="CleanFill"]
-bg_color = Color(0.48, 0.81, 0.78, 1)
+bg_color = Color(0.18, 0.44, 0.48, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_left = 5
 corner_radius_bottom_right = 5
 
 [sub_resource type="StyleBoxFlat" id="EnergyFill"]
-bg_color = Color(0.72, 0.82, 0.44, 1)
+bg_color = Color(0.55, 0.36, 0.11, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_left = 5
 corner_radius_bottom_right = 5
 
 [sub_resource type="StyleBoxFlat" id="JoyFill"]
-bg_color = Color(0.85, 0.65, 0.88, 1)
+bg_color = Color(0.31, 0.44, 0.21, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_left = 5
 corner_radius_bottom_right = 5
 
 [sub_resource type="Theme" id="NeedsTheme"]
-Label/colors/font_color = Color(0.98, 0.97, 0.91, 1)
-Label/font_sizes/font_size = 19
+Label/colors/font_color = Color(0.25, 0.19, 0.13, 1)
+Label/font_sizes/font_size = 17
 ProgressBar/styles/background = SubResource("Track")
 
 [node name="NeedsHud" type="HBoxContainer"]
 mouse_filter = 2
 theme = SubResource("NeedsTheme")
-theme_override_constants/separation = 10
+theme_override_constants/separation = 14
 script = ExtResource("Script")
 
 [node name="Food" type="VBoxContainer" parent="."]
@@ -54,7 +58,20 @@ size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="Label" type="Label" parent="Food"]
+[node name="Caption" type="HBoxContainer" parent="Food"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 5
+
+[node name="Motif" type="TextureRect" parent="Food/Caption"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("FoodIcon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="Food/Caption"]
 layout_mode = 2
 text = "Сытость"
 mouse_filter = 2
@@ -75,7 +92,20 @@ size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="Label" type="Label" parent="Clean"]
+[node name="Caption" type="HBoxContainer" parent="Clean"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 5
+
+[node name="Motif" type="TextureRect" parent="Clean/Caption"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("CleanIcon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="Clean/Caption"]
 layout_mode = 2
 text = "Чистота"
 mouse_filter = 2
@@ -96,7 +126,20 @@ size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="Label" type="Label" parent="Energy"]
+[node name="Caption" type="HBoxContainer" parent="Energy"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 5
+
+[node name="Motif" type="TextureRect" parent="Energy/Caption"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("EnergyIcon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="Energy/Caption"]
 layout_mode = 2
 text = "Бодрость"
 mouse_filter = 2
@@ -117,7 +160,20 @@ size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="Label" type="Label" parent="Joy"]
+[node name="Caption" type="HBoxContainer" parent="Joy"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 5
+
+[node name="Motif" type="TextureRect" parent="Joy/Caption"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("JoyIcon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="Joy/Caption"]
 layout_mode = 2
 text = "Настроение"
 mouse_filter = 2

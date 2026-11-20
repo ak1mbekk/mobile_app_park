@@ -2,7 +2,7 @@ extends RefCounted
 
 const BED_PRICE := 5
 const HATS := ["cap", "ranger", "crown"]
-const FURNITURE := ["bed", "cushion", "lantern", "chest", "settee", "bath"]
+const FURNITURE := ["bed", "cushion", "lantern", "chest", "settee", "bath", "wallpaper", "bath-tile", "kitchen-cabinet"]
 
 # The standalone catalog mirrors public/demo/home.js. Hosted play receives its catalog from the browser.
 const ITEMS := {
@@ -15,6 +15,9 @@ const ITEMS := {
     "chest": {"name": "Дубовый сундук", "tier": "Эпический", "price": 75},
     "settee": {"name": "Диван у окна", "tier": "Редкий", "price": 40, "replaces": "лежанку"},
     "bath": {"name": "Эмалированная купель", "tier": "Редкая", "price": 55, "replaces": "ванну"},
+    "wallpaper": {"name": "Обои для кухни", "tier": "Обычные", "price": 20, "replaces": "отделку кухни"},
+    "bath-tile": {"name": "Плитка для ванной", "tier": "Обычная", "price": 25, "replaces": "отделку ванной"},
+    "kitchen-cabinet": {"name": "Мятный кухонный шкаф", "tier": "Обычный", "price": 35, "replaces": "кухонный шкаф"},
 }
 
 

@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/Levels/StarterHomeRoom.tscn" id="Room"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/Bedroom.tscn" id="Bedroom"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/Bathroom.tscn" id="Bathroom"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/CareLocations.tscn" id="CareLocations"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/CareCorner.tscn" id="Care"]
 [ext_resource type="PackedScene" path="res://Scenes/Games/GameRoom.tscn" id="GameRoom"]
 
@@ -67,6 +68,22 @@ PanelContainer/styles/panel = SubResource("Panel")
 
 [sub_resource type="StyleBoxEmpty" id="Invisible"]
 
+[sub_resource type="StyleBoxFlat" id="LinenPanel"]
+bg_color = Color(0.94, 0.89, 0.79, 0.97)
+border_color = Color(0.63, 0.52, 0.37, 1)
+border_width_bottom = 2
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+content_margin_left = 18.0
+content_margin_right = 18.0
+content_margin_top = 9.0
+content_margin_bottom = 12.0
+shadow_color = Color(0.19, 0.13, 0.07, 0.18)
+shadow_size = 3
+shadow_offset = Vector2(0, 2)
+
 [sub_resource type="StyleBoxFlat" id="Chip"]
 bg_color = Color(0.12, 0.17, 0.125, 0.96)
 content_margin_left = 12.0
@@ -97,10 +114,13 @@ growth_mesh = ExtResource("RichiGrowth")
 
 [node name="Обстановка" parent="." instance=ExtResource("Decor")]
 
+[node name="Комнаты ухода" parent="." instance=ExtResource("CareLocations")]
+
 [node name="Спальня" parent="." instance=ExtResource("Bedroom")]
 visible = false
 
 [node name="Купание" parent="." instance=ExtResource("Bathroom")]
+position = Vector3(2.46, 0, 0)
 visible = false
 
 [node name="Уход" parent="." instance=ExtResource("Care")]
@@ -117,7 +137,7 @@ theme = SubResource("Hotspots")
 
 [node name="Feed" type="Button" parent="Интерфейс/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(114, 78)
+custom_minimum_size = Vector2(173, 92)
 accessibility_name = "Кормить Ричи"
 
 [node name="Label" type="Label" parent="Интерфейс/Actions/Feed"]
@@ -132,7 +152,7 @@ text = "Кормить"
 
 [node name="Wash" type="Button" parent="Интерфейс/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 78)
+custom_minimum_size = Vector2(350, 165)
 accessibility_name = "Купать Ричи"
 
 [node name="Label" type="Label" parent="Интерфейс/Actions/Wash"]
@@ -163,7 +183,7 @@ text = "Спать"
 
 [node name="Play" type="Button" parent="Интерфейс/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(97, 78)
+custom_minimum_size = Vector2(175, 90)
 accessibility_name = "Сундук с играми"
 
 [node name="Label" type="Label" parent="Интерфейс/Actions/Play"]
@@ -176,41 +196,14 @@ grow_vertical = 0
 mouse_filter = 2
 text = "Игры"
 
-[node name="Ball" type="Button" parent="Интерфейс/Actions"]
-unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(100, 78)
-accessibility_name = "Играть с мячом"
-
-[node name="Label" type="Label" parent="Интерфейс/Actions/Ball"]
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_top = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-text = "Мяч"
-
-[node name="Shop" type="Button" parent="Интерфейс/Actions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(101, 78)
-accessibility_name = "Лесная лавка"
-
-[node name="Label" type="Label" parent="Интерфейс/Actions/Shop"]
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_top = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-text = "Лавка"
-
 [node name="Header" type="PanelContainer" parent="Интерфейс"]
 unique_name_in_owner = true
 anchor_right = 1.0
+offset_left = 10.0
+offset_top = 8.0
+offset_right = -10.0
 theme = SubResource("HomeTheme")
+theme_override_styles/panel = SubResource("LinenPanel")
 
 [node name="Contents" type="VBoxContainer" parent="Интерфейс/Header"]
 theme_override_constants/separation = 8
@@ -226,22 +219,31 @@ theme_override_constants/separation = 0
 unique_name_in_owner = true
 text = "Ричи"
 text_overrun_behavior = 3
+theme_override_colors/font_color = Color(0.22, 0.16, 0.10, 1)
 theme_override_font_sizes/font_size = 29
 
 [node name="Stats" type="Label" parent="Интерфейс/Header/Contents/Row/PetIdentity"]
 unique_name_in_owner = true
-theme_override_colors/font_color = Color(0.76, 0.83, 0.70, 1)
+theme_override_colors/font_color = Color(0.32, 0.26, 0.19, 1)
 theme_override_font_sizes/font_size = 18
+
+[node name="Shop" type="Button" parent="Интерфейс/Header/Contents/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(94, 58)
+size_flags_vertical = 4
+text = "Лавка"
+accessibility_name = "Лесная лавка"
+script = ExtResource("TouchButton")
 
 [node name="Profile" type="Button" parent="Интерфейс/Header/Contents/Row"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(76, 76)
+custom_minimum_size = Vector2(64, 64)
 size_flags_vertical = 4
 icon = ExtResource("ProfileIcon")
 expand_icon = true
 icon_alignment = 1
 accessibility_name = "Открыть профиль"
-theme_override_constants/icon_max_width = 54
+theme_override_constants/icon_max_width = 46
 
 [node name="ProfileHint" type="Label" parent="Интерфейс/Header/Contents/Row/Profile"]
 unique_name_in_owner = true
@@ -268,6 +270,8 @@ unique_name_in_owner = true
 anchor_right = 1.0
 anchor_top = 1.0
 anchor_bottom = 1.0
+offset_top = -92.0
+offset_bottom = -92.0
 grow_vertical = 0
 theme = SubResource("HomeTheme")
 
@@ -318,6 +322,43 @@ unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 58)
 text = "В комнату"
+
+[node name="RoomNavigation" type="HBoxContainer" parent="Интерфейс"]
+unique_name_in_owner = true
+anchors_preset = 12
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -86.0
+offset_right = -12.0
+offset_bottom = -10.0
+theme = SubResource("HomeTheme")
+theme_override_constants/separation = 6
+
+[node name="MainRoom" type="Button" parent="Интерфейс/RoomNavigation"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 76)
+size_flags_horizontal = 3
+text = "Веранда"
+toggle_mode = true
+accessibility_name = "Перейти в главную комнату"
+
+[node name="KitchenRoom" type="Button" parent="Интерфейс/RoomNavigation"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 76)
+size_flags_horizontal = 3
+text = "Кухня"
+toggle_mode = true
+accessibility_name = "Перейти на кухню"
+
+[node name="BathRoom" type="Button" parent="Интерфейс/RoomNavigation"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 76)
+size_flags_horizontal = 3
+text = "Ванная"
+toggle_mode = true
+accessibility_name = "Перейти в ванную"
 
 [node name="GameRoom" parent="Интерфейс" instance=ExtResource("GameRoom")]
 visible = false

@@ -1,0 +1,37 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scenes/Home/KitchenDining.gd" id="Control"]
+[ext_resource type="AnimationLibrary" path="res://Art/Characters/FirstMeeting/SittingOfferEat.tres" id="Seated"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Dining/bib.glb" id="Bib"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Dining/spoon.glb" id="Spoon"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Dining/fork.glb" id="Fork"]
+
+[node name="Сервировка" type="Node3D"]
+script = ExtResource("Control")
+seated = ExtResource("Seated")
+
+[node name="Mounts" type="Node3D" parent="."]
+visible = false
+
+[node name="Bib" parent="Mounts" instance=ExtResource("Bib")]
+position = Vector3(0.003, 0.579, 0.740)
+rotation = Vector3(0.53, 0, 0)
+scale = Vector3(1.52, 1.50, 1.61)
+
+[node name="Spoon" parent="Mounts" instance=ExtResource("Spoon")]
+position = Vector3(-0.225, 0.425, 0.992)
+rotation = Vector3(0.20, 0, -0.10)
+scale = Vector3(1.53, 1.53, 1.53)
+
+[node name="Fork" parent="Mounts" instance=ExtResource("Fork")]
+position = Vector3(0.225, 0.336, 0.947)
+rotation = Vector3(0.10, 0, -0.57)
+scale = Vector3(1.51, 1.51, 1.51)
+
+[node name="SpoonRest" type="Marker3D" parent="."]
+position = Vector3(-0.060, 0.014, 1.01)
+rotation = Vector3(-1.570796, 3.141593, -0.25)
+
+[node name="ForkRest" type="Marker3D" parent="."]
+position = Vector3(0.055, 0.017, 1.035)
+rotation = Vector3(-1.570796, 3.141593, 0.10)

@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://Art/Textures/Limewash.jpg" id="Grain"]
+
+[resource]
+albedo_color = Color(0.91, 0.88, 0.80, 1)
+roughness = 0.96
+roughness_texture = ExtResource("Grain")
+uv1_scale = Vector3(2.3, 1.6, 1)

@@ -62,7 +62,7 @@ func _show_group(hats: bool) -> void:
     %FurnitureList.visible = not hats
     %Hats.set_pressed_no_signal(hats)
     %Furniture.set_pressed_no_signal(not hats)
-    %Catalog.offset_top = -370.0 if hats else -570.0
+    %Catalog.offset_top = -370.0 if hats else -771.0
 
 
 func _render() -> void:
