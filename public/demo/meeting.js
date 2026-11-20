@@ -16,8 +16,6 @@
   let progressObserver;
   let ready = false;
   let available = false;
-  let probingEngine = location.protocol !== 'file:' && preference !== '2d';
-  let roomArtDecoded = false;
   let lighter = false;
   let offerOnLoad = false;
   const coveredControls = new Set();
@@ -57,7 +55,7 @@
     container.hidden = true;
     coverRoom(null);
     if (room?.classList.contains('current')) {
-      (room.id === 'intro' ? open : document.querySelector('#aki-feed')).focus({preventScroll:true});
+      document.querySelector(room.id === 'intro' ? '#apple-hotspot' : '#aki-feed')?.focus({preventScroll:true});
     }
     room = null;
   }
@@ -140,12 +138,11 @@
     current.append(container);
     container.hidden = false;
     coverRoom(current);
-    close.hidden = !(probingEngine && shouldStart3d());
+    close.hidden = true;
     const art = new Image();
     art.src = imageUrl;
     const showRoom = () => {
-      roomArtDecoded = true;
-      if (!frame && !(probingEngine && shouldStart3d())) { container.hidden = true; coverRoom(null); }
+      if (!frame) { container.hidden = true; coverRoom(null); }
     };
     art.decode().then(showRoom, showRoom);
   }
@@ -169,19 +166,16 @@
     startCurrentRoom();
   }
 
-  if (probingEngine) {
-    fetch('meeting3d/index.wasm', {method:'HEAD', signal:AbortSignal.timeout(12000)}).then(response => {
-      if (!response.ok || !response.headers.get('content-type')?.includes('wasm')) return;
-      const gl = document.createElement('canvas').getContext('webgl2');
-      if (!gl) return;
+  if (location.protocol !== 'file:' && preference !== '2d') {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    if (gl) {
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       available = true;
-      open.hidden = offer.hidden = false;
-    }).catch(() => {}).finally(() => {
-      probingEngine = false;
-      startCurrentRoom();
-      if (!frame && roomArtDecoded) { container.hidden = true; coverRoom(null); }
-    });
+    }
+  }
+
+  function updateEngineOptions() {
+    open.hidden = offer.hidden = !available || navigator.onLine === false;
   }
 
   open.onclick = () => enter('intro');
@@ -192,13 +186,9 @@
     enter('home', true);
   };
   close.onclick = () => {
-    const duringProbe = !frame && probingEngine;
     lighter = true;
     try { sessionStorage.setItem('park-light-meeting', '1'); } catch {}
     leave();
-    if (duringProbe) {
-      document.querySelector('#intro.current #apple-hotspot, #home.current #aki-feed')?.focus({preventScroll:true});
-    }
   };
 
   window.addEventListener('message', event => {
@@ -286,6 +276,12 @@
   document.addEventListener('conceptscreen', syncRoom);
   document.addEventListener('visibilitychange', syncRoom);
   document.addEventListener('petprofile', () => syncHome());
-  window.addEventListener('online', startCurrentRoom);
+  window.addEventListener('online', () => {
+    updateEngineOptions();
+    startCurrentRoom();
+  });
+  window.addEventListener('offline', updateEngineOptions);
+  updateEngineOptions();
+  startCurrentRoom();
   showOpeningWhileRoomDecodes();
 })();

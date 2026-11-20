@@ -1,0 +1,56 @@
+const assert = require('node:assert/strict');
+const { chromium } = require('playwright');
+
+const root = new URL(process.argv[2] || 'http://127.0.0.1:8168/');
+const demoTitle = 'Домик у тропы и парк животных';
+
+(async () => {
+  const browser = await chromium.launch({ executablePath: process.env.BROWSER_EXE });
+  try {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    await page.route('https://tile.openstreetmap.org/**', route => route.abort());
+    const go = entry => page.goto(new URL(entry, root).href, { waitUntil: 'domcontentloaded' });
+    const demo = page.frameLocator('iframe[title="' + demoTitle + '"]');
+    await go('?view=2d#map/2/11');
+    await demo.locator('#map.current .place-info h2').filter({ hasText: 'Зубр' }).waitFor();
+    const frame = await (await page.locator('iframe[title="' + demoTitle + '"]').elementHandle()).contentFrame();
+    assert.equal(new URL(frame.url()).searchParams.get('view'), '2d');
+    await frame.evaluate(() => { window.mobileEntryTestMarker = true; });
+
+    await page.evaluate(() => { location.hash = '#park'; });
+    await demo.locator('#park.current').waitFor();
+    assert.equal(await frame.evaluate(() => window.mobileEntryTestMarker), true);
+    await page.goBack();
+    await demo.locator('#map.current .place-info h2').filter({ hasText: 'Зубр' }).waitFor();
+    assert.equal(await frame.evaluate(() => window.mobileEntryTestMarker), true);
+    await page.goForward();
+    await demo.locator('#park.current').waitFor();
+
+    await demo.locator('#park [data-go="map"]').first().tap();
+    await demo.locator('#map.current').waitFor();
+    assert.equal(new URL(page.url()).hash, '#park');
+    assert.equal(await frame.evaluate(() => window.mobileEntryTestMarker), true);
+    await page.evaluate(() => history.back());
+    await demo.locator('#park.current').waitFor();
+
+    await go('?view=2d');
+    await demo.locator('#intro.current').waitFor();
+    await demo.locator('#scene3d').waitFor({ state: 'hidden' });
+    await go('?view=2d#/map/2/11');
+    await demo.locator('#map.current .place-info h2').filter({ hasText: 'Зубр' }).waitFor();
+    await go('map#map/2/11');
+    await page.frameLocator('iframe[title="Карта парка животных"]').locator('#map.current .place-info h2').filter({ hasText: 'Зубр' }).waitFor();
+
+    await go('profile?view=2d');
+    await demo.locator('#profileDialog[open]').waitFor();
+    await demo.locator('#park.current').waitFor();
+    const profile = await (await page.locator('iframe[title="' + demoTitle + '"]').elementHandle()).contentFrame();
+    assert.equal(new URL(profile.url()).searchParams.get('view'), '2d');
+    console.log('PASS mobile root entry, external and internal Back, stable frame, legacy /map, lightweight view and profile');
+  } finally {
+    await browser.close();
+  }
+})().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});

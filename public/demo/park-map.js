@@ -6,6 +6,14 @@
   const search = host.querySelector('#map-search');
   const searchToggle = host.querySelector('.map-search-toggle');
   const result = host.querySelector('.map-result');
+  const surface = host.querySelector('.park-surface');
+  const picker = host.querySelector('.place-picker select');
+  const card = result.querySelector('.place-info');
+  const serviceField = search.querySelector('.service-picker');
+  const serviceSelect = serviceField.querySelector('select');
+  const status = host.querySelector('.map-status');
+  const zoneButtons = host.querySelectorAll('[data-zone]');
+  const kindButtons = search.querySelectorAll('[data-kind]');
   const serviceNames = {
     cafe: 'Кафе', rest: 'Места отдыха', feed: 'Корм для животных', wc: 'Туалеты',
     wash: 'Где вымыть руки', parking: 'Парковка', entrance: 'Вход', gift: 'Сувениры'
@@ -13,13 +21,15 @@
   const places = [...guide.places, ...guide.geoFacilities];
   const views = new Map();
   const state = { zone: 1, id: '', kind: 'all', service: '' };
-  let surface, map, layer, picker, card, serviceField, status, calibration, hitChooser, tiles;
+  let map, layer, calibration, hitChooser, tiles;
   let boundaryData;
   let refreshing, redrawSurvey;
   let loading = false, mapReady = false, drawing = false, surveyFailed = false;
+  let framing = 'zone';
   const markers = new Map();
   const failedTiles = new Set();
   const local = () => places.filter(point => point.zone === state.zone);
+  const selectedPlace = () => local().find(point => point.id === state.id);
   const label = point => point.service ? point.name : '№ ' + point.badge + ' · ' + point.name;
   const serviceKeys = point => point.services || [point.service];
   const visible = point =>
@@ -51,7 +61,7 @@
   function setSearch(open, returnFocus = false) {
     search.hidden = !open;
     searchToggle.setAttribute('aria-expanded', String(open));
-    result.hidden = open || card?.hidden !== false;
+    result.hidden = open || card.hidden;
     hitChooser?.dismiss();
     if (open) search.querySelector('h2').focus({ preventScroll: true });
     else if (returnFocus) searchToggle.focus({ preventScroll: true });
@@ -188,28 +198,81 @@
   function saveView() {
     if (drawing || !mapReady || !document.getElementById('map').classList.contains('current')) return;
     const { lat, lng } = map.getCenter();
-    const view = { zone: state.zone, id: state.id, geographic: Boolean(calibration), lat, lng, zoom: map.getZoom() };
+    const view = { zone: state.zone, id: state.id, geographic: Boolean(calibration), lat, lng, zoom: map.getZoom(), framing };
     views.set(state.zone, view);
     history.replaceState({ ...history.state, parkMapView: view }, '');
+  }
+
+  // The overlay, markers and camera use different units. Keep the calibration intact
+  // and frame confirmed places in the part of the viewport available to the visitor.
+  function frameZone() {
+    framing = 'zone';
+    const rim = 23; // Half of a 44 px touch target, including its border.
+    const extent = L.latLngBounds(local().map(position).filter(Boolean));
+    for (const item of local()) {
+      const ring = boundary(item);
+      if (ring) extent.extend(L.latLngBounds(ring));
+    }
+    const header = host.querySelector('.visitor-map-head').getBoundingClientRect();
+    map.fitBounds(extent, { paddingTopLeft: [rim, header.bottom - surface.getBoundingClientRect().top + rim],
+      paddingBottomRight: [rim, rim], maxZoom: calibration ? 19 : 2, animate: false });
+  }
+
+  function framePlace(point, zoom) {
+    framing = 'place';
+    const rect = surface.getBoundingClientRect();
+    const head = host.querySelector('.visitor-map-head').getBoundingClientRect();
+    const sheet = result.getBoundingClientRect();
+    let left = 0, bottom = rect.height;
+    if (!result.hidden) {
+      if (sheet.right < rect.left + rect.width * .5) left = sheet.right - rect.left;
+      else bottom = sheet.top - rect.top;
+    }
+    const anchor = L.point((left + rect.width) / 2, (head.bottom - rect.top + bottom) / 2);
+    const center = map.unproject(map.project(point, zoom).add(map.getSize().divideBy(2)).subtract(anchor), zoom);
+    map.setView(center, zoom, { animate: false });
+  }
+
+  function zoomSelectedPlace(event) {
+    if (framing !== 'place' || result.hidden) return;
+    const button = event.target.closest('.leaflet-control-zoom-in,.leaflet-control-zoom-out');
+    const selected = selectedPlace();
+    const point = selected && position(selected);
+    if (!button || !point) return;
+
+    // Capture the toolbar click before Leaflet can zoom about the viewport center.
+    // A visitor who has panned the map keeps Leaflet's usual free camera instead.
+    event.preventDefault();
+    event.stopPropagation();
+    if (button.getAttribute('aria-disabled') === 'true') return;
+    const direction = button.classList.contains('leaflet-control-zoom-in') ? 1 : -1;
+    const delta = direction * map.options.zoomDelta * (event.shiftKey ? 3 : 1);
+    const zoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), map.getZoom() + delta));
+    drawing = true;
+    framePlace(point, zoom);
+    drawing = false;
+    saveView();
+    if (event.screenX > 0 && event.screenY > 0) surface.focus({ preventScroll: true });
   }
 
   function restoreCamera(point) {
     const previous = history.state?.parkMapView;
     const saved = previous?.zone === state.zone ? previous : views.get(state.zone);
     if (saved?.geographic === Boolean(calibration) && [saved.lat, saved.lng, saved.zoom].every(Number.isFinite)) {
-      const center = L.latLng(saved.lat, saved.lng);
-      if (!mapReady || !map.getCenter().equals(center) || map.getZoom() !== saved.zoom) {
-        map.setView(center, saved.zoom, { animate: false });
-      }
-      if (point && saved.id !== state.id && !map.getBounds().pad(-0.14).contains(point)) {
-        map.panTo(point, { animate: false });
+      if (point && (saved.id !== state.id || saved.framing === 'place')) {
+        framePlace(point, saved.zoom);
+      } else if (saved.framing === 'zone') {
+        frameZone();
+      } else {
+        framing = 'free';
+        const center = L.latLng(saved.lat, saved.lng);
+        if (!mapReady || !map.getCenter().equals(center) || map.getZoom() !== saved.zoom)
+          map.setView(center, saved.zoom, { animate: false });
       }
     } else if (point) {
-      map.setView(point, calibration ? 17 : 0, { animate: false });
+      framePlace(point, calibration ? 17 : 0);
     } else {
-      // Use all located places so hiding categories never changes the overview or presents an empty viewport.
-      const bounds = L.latLngBounds(local().map(position).filter(Boolean));
-      map.fitBounds(bounds, { padding: [30, 32], maxZoom: calibration ? 17 : 0, animate: false });
+      frameZone();
     }
   }
 
@@ -226,7 +289,7 @@
   }
 
   function draw() {
-    const point = local().find(item => item.id === state.id);
+    const point = selectedPlace();
     drawing = true;
     map.invalidateSize({ pan: false });
     hitChooser.dismiss();
@@ -278,6 +341,7 @@
     }
     if (point && !visible(point)) picker.append(new Option(label(point), point.id));
     picker.value = point?.id || '';
+    picker.disabled = false;
     renderCard(point);
     restoreCamera(point && position(point));
     redrawSurvey?.();
@@ -287,24 +351,17 @@
   }
 
   function mount() {
-    surface = host.querySelector('.park-surface');
-    picker = host.querySelector('.place-picker select');
-    card = host.querySelector('.place-info');
-    serviceField = host.querySelector('.service-picker');
-    status = host.querySelector('.map-status');
-    const serviceSelect = serviceField.querySelector('select');
-    for (const [key, name] of Object.entries(serviceNames)) serviceSelect.add(new Option(name, key));
-
     map = L.map(surface, {
       crs: calibration ? L.CRS.EPSG3857 : L.CRS.Simple,
       minZoom: calibration ? 14 : -4, maxZoom: calibration ? 19 : 2,
-      zoomSnap: calibration ? 1 : 0.125, zoomDelta: calibration ? 1 : 0.5,
+      zoomSnap: 0.125, zoomDelta: calibration ? 1 : 0.5, trackResize: false,
       attributionControl: Boolean(calibration), zoomControl: false, zoomAnimation: false
     });
     map.createPane('visitor-areas').style.zIndex = '620';
     map.createPane('visitor-services').style.zIndex = '630';
     map.attributionControl?.setPrefix(false).setPosition('bottomleft');
-    L.control.zoom({ position: 'topright', zoomInTitle: 'Увеличить', zoomOutTitle: 'Уменьшить' }).addTo(map);
+    const zoomControl = L.control.zoom({ position: 'topright', zoomInTitle: 'Увеличить', zoomOutTitle: 'Уменьшить' }).addTo(map);
+    zoomControl.getContainer().addEventListener('click', zoomSelectedPlace, true);
     if (calibration) {
       tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -320,27 +377,12 @@
       pointFor: id => local().find(point => point.id === id),
       open: point => navigate({ id: point.id })
     });
-    map.on('movestart', () => hitChooser.dismiss());
+    map.on('movestart', () => {
+      if (!drawing) framing = 'free';
+      hitChooser.dismiss();
+    });
     map.on('moveend', saveView);
     map.on('click', () => hitChooser.dismiss());
-    host.querySelectorAll('[data-zone]').forEach(button => {
-      button.onclick = () => {
-        const zone = Number(button.dataset.zone);
-        if (zone !== state.zone) navigate({ zone, id: '' });
-      };
-    });
-    host.querySelectorAll('[data-kind]').forEach(button => {
-      button.onclick = () => {
-        const kind = button.dataset.kind;
-        if (kind !== state.kind) navigate({ id: '', kind, service: '' });
-      };
-    });
-    picker.onchange = () => {
-      const id = picker.value;
-      navigate({ id });
-      if (id) card.querySelector('h2')?.focus({ preventScroll: true });
-    };
-    serviceSelect.onchange = () => navigate({ id: '', kind: 'service', service: serviceSelect.value });
   }
 
   function validAlignment(value) {
@@ -380,6 +422,17 @@
 
   function show() {
     if (!document.getElementById('map').classList.contains('current')) return;
+    Object.assign(state, parseRoute());
+    try { localStorage.setItem('park-map-zone', String(state.zone)); } catch {}
+    zoneButtons.forEach(button => {
+      button.setAttribute('aria-pressed', String(Number(button.dataset.zone) === state.zone));
+    });
+    kindButtons.forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.kind === state.kind));
+    });
+    serviceField.hidden = state.kind !== 'service';
+    serviceSelect.value = state.service;
+    searchToggle.toggleAttribute('data-filtered', state.kind !== 'all');
     if (calibration === undefined) {
       if (!loading) {
         loading = true;
@@ -391,18 +444,7 @@
       }
       return;
     }
-    Object.assign(state, parseRoute());
-    try { localStorage.setItem('park-map-zone', String(state.zone)); } catch {}
     if (!map) mount();
-    host.querySelectorAll('[data-zone]').forEach(button => {
-      button.setAttribute('aria-pressed', String(Number(button.dataset.zone) === state.zone));
-    });
-    host.querySelectorAll('[data-kind]').forEach(button => {
-      button.setAttribute('aria-pressed', String(button.dataset.kind === state.kind));
-    });
-    serviceField.hidden = state.kind !== 'service';
-    serviceField.querySelector('select').value = state.service;
-    searchToggle.toggleAttribute('data-filtered', state.kind !== 'all');
     updateStatus();
     draw();
   }
@@ -428,6 +470,22 @@
     }).finally(() => { refreshing = null; });
   }
 
+  new ResizeObserver(() => {
+    if (!mapReady || !surface.clientWidth || !surface.clientHeight) return;
+    const size = L.point(surface.clientWidth, surface.clientHeight);
+    if (map.getSize().equals(size)) return;
+    drawing = true;
+    map.invalidateSize({ animate: false });
+    if (framing === 'zone') frameZone();
+    else if (framing === 'place') {
+      const selected = selectedPlace();
+      if (selected && position(selected)) framePlace(position(selected), map.getZoom());
+    }
+    redrawSurvey?.();
+    drawing = false;
+    saveView();
+  }).observe(surface);
+
   document.addEventListener('conceptscreen', event => {
     if (event.detail === 'map') show();
     else setSearch(false);
@@ -442,6 +500,27 @@
     refreshAlignment();
   });
   window.addEventListener('offline', () => { if (map) updateStatus(); });
+  picker.replaceChildren(new Option('Загружаем места…', ''));
+  picker.disabled = true;
+  for (const [key, name] of Object.entries(serviceNames)) serviceSelect.add(new Option(name, key));
+  zoneButtons.forEach(button => {
+    button.onclick = () => {
+      const zone = Number(button.dataset.zone);
+      if (zone !== state.zone) navigate({ zone, id: '' });
+    };
+  });
+  kindButtons.forEach(button => {
+    button.onclick = () => {
+      const kind = button.dataset.kind;
+      if (kind !== state.kind) navigate({ id: '', kind, service: '' });
+    };
+  });
+  picker.onchange = () => {
+    const id = picker.value;
+    navigate({ id });
+    if (id) card.querySelector('h2')?.focus({ preventScroll: true });
+  };
+  serviceSelect.onchange = () => navigate({ id: '', kind: 'service', service: serviceSelect.value });
   searchToggle.onclick = () => setSearch(search.hidden, true);
   search.querySelector('.map-search-close').onclick = () => setSearch(false, true);
   search.onkeydown = event => {

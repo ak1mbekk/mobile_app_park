@@ -11,19 +11,61 @@ async function openMapSearch(map){
   if(await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
 }
 
+async function coldCafeEntry(browser){
+  const page=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+  let releaseAlignment;
+  const alignmentPending=new Promise(resolve=>{releaseAlignment=resolve;});
+  try{
+    await page.route('https://tile.openstreetmap.org/**',route=>route.abort());
+    await page.route('**/map-alignment.json',async route=>{
+      await alignmentPending;
+      await route.continue();
+    });
+    await page.goto(root+'#park');
+    await page.getByRole('link',{name:'Для посетителей',exact:true}).tap();
+    const section=page.locator('#visitor details').filter({hasText:'Где перекусить'});
+    await section.locator('summary').tap();
+    await section.getByRole('button',{name:'Кафе на карте →'}).tap();
+    const map=page.locator('#map.current');
+    const zone=map.getByRole('button',{name:'Лясныя таямніцы'});
+    const picker=map.locator('.place-picker select');
+    await zone.tap();
+    assert.equal(new URL(page.url()).hash,'#map/2/service/cafe');
+    assert.equal(await zone.getAttribute('aria-pressed'),'true');
+    await openMapSearch(map);
+    assert.equal(await map.locator('.service-picker select').inputValue(),'cafe');
+    assert.ok(await picker.isDisabled(),'The place list waits for geometry');
+    releaseAlignment();
+    await picker.selectOption('osm-9868296561');
+    await map.getByRole('heading',{name:'Точка перекуса в южной части зоны'}).waitFor();
+    await map.locator('.p-back').tap();
+    await section.getByRole('button',{name:'Кафе на карте →'}).waitFor();
+  }finally{
+    releaseAlignment();
+    await page.close();
+  }
+}
+
 async function fullScreenMap(browser){
   const page=await browser.newPage({viewport:{width:320,height:844},hasTouch:true,isMobile:true});
   try{
     await page.route('https://tile.openstreetmap.org/**',route=>route.abort());
-    for(const width of [320,390,554]){
-      await page.setViewportSize({width,height:844});
+    for(const [width,height] of [[320,568],[360,780],[390,844],[430,932],[554,668],[844,390]]){
+      await page.setViewportSize({width,height});
       await page.goto(root+'#map/1');
       const map=page.locator('#map.current');
       await map.locator('.visitor-survey').evaluate(image=>image.decode());
       const surface=map.locator('.park-surface');
       const frame=await surface.boundingBox();
-      const tabs=await page.locator('.tabs').boundingBox();
-      assert.deepEqual(frame,{x:0,y:0,width,height:tabs.y});
+      assert.equal(await page.locator('.tabs').isVisible(),false);
+      assert.deepEqual(frame,{x:0,y:0,width,height});
+      if(width===320){
+        const centres=await map.locator('.place-marker').evaluateAll(items=>items.map(el=>{
+          const {x,width}=el.getBoundingClientRect();
+          return x+width/2;
+        }));
+        assert.ok(Math.max(...centres)-Math.min(...centres)>width*.70,'Zone uses the phone width');
+      }
       assert.ok(await map.locator('.leaflet-control-attribution').isVisible());
       assert.ok(await map.locator('.map-filters').isHidden());
       assert.ok(await map.locator('#save-guide').isHidden());
@@ -34,6 +76,58 @@ async function fullScreenMap(browser){
       assert.ok(await map.locator('.map-filters').isHidden());
       assert.equal(await map.locator('.map-search-toggle').evaluate(button=>button===document.activeElement),true);
     }
+    const map=page.locator('#map.current');
+    await openMapSearch(map);
+    const picker=map.locator('.place-picker select');
+    const id=await map.locator('.place-marker.service').first().getAttribute('data-place-id');
+    await picker.selectOption(id);
+    for(const [width,height] of [[844,390],[390,844],[667,375]]){
+      await page.setViewportSize({width,height});
+      await page.waitForFunction(()=>{
+        const pin=document.querySelector('.place-marker.picked');
+        if(!pin)return false;
+        const r=pin.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;
+        const card=document.querySelector('.map-result').getBoundingClientRect();
+        return y>document.querySelector('.visitor-map-head').getBoundingClientRect().bottom
+          && x>0 && x<innerWidth && y<innerHeight
+          && (x>card.right||x<card.left||y<card.top||y>card.bottom);
+      });
+    }
+  }finally{await page.close();}
+}
+
+async function zoomSelectedPlace(browser){
+  const page=await browser.newPage({viewport:{width:320,height:568},hasTouch:true,isMobile:true});
+  try{
+    await page.route('https://tile.openstreetmap.org/**',route=>route.abort());
+    await page.goto(root+'#map/2/service/cafe');
+    const map=page.locator('#map.current');
+    const pin=map.locator('.place-marker[data-place-id="osm-9868296561"]');
+    await pin.tap();
+    await map.getByRole('heading',{name:'Точка перекуса в южной части зоны'}).waitFor();
+    const view=()=>page.evaluate(()=>history.state.parkMapView);
+    const assertExposed=async()=>{
+      assert.equal((await view()).framing,'place');
+      await page.waitForFunction(()=>{
+        const selected=document.querySelector('#map .place-marker.picked');
+        if(!selected)return false;
+        const box=selected.getBoundingClientRect();
+        return selected.contains(document.elementFromPoint(box.left+box.width/2,box.top+box.height/2));
+      });
+    };
+    const initial=(await view()).zoom;
+    const plus=map.getByRole('button',{name:'Увеличить'});
+    await plus.tap();
+    assert.equal((await view()).zoom,initial+1);
+    await page.setViewportSize({width:568,height:320});
+    await assertExposed();
+    await page.setViewportSize({width:320,height:568});
+    await plus.tap();
+    assert.equal((await view()).zoom,initial+2);
+    await assertExposed();
+    await map.getByRole('button',{name:'Уменьшить'}).tap();
+    assert.equal((await view()).zoom,initial+1);
+    await assertExposed();
   }finally{await page.close();}
 }
 
@@ -147,6 +241,7 @@ async function cartography(browser){
     }
     const camera=await view();
     assert.ok(camera.lng>centerBeforePan.lng+.001);
+    assert.equal(camera.framing,'free');
     await map.locator('[data-go="animal"]').click();
     await p.locator('#animal.current .p-back').click();
     await p.waitForURL('**#map/1/36',{waitUntil:'commit'});
@@ -251,7 +346,7 @@ async function cartography(browser){
         assert.equal(await picker.inputValue(),id);
         assert.equal(await service.inputValue(),kind);
       }
-      await p.locator('[data-tab="park"]').click();
+      await map.locator('.p-back').click();
       await p.goBack();
       await title.getByText(expected,{exact:true}).waitFor();
       assert.equal(await picker.inputValue(),id);
@@ -526,7 +621,7 @@ async function mapShell(browser,appRoot){
 (async()=>{
   if(output)fs.mkdirSync(output,{recursive:true});
   const b=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
-  try{await fullScreenMap(b);await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await nestedMapBack(b);await availability(b);await offline(b);
+  try{await coldCafeEntry(b);await fullScreenMap(b);await zoomSelectedPlace(b);await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await nestedMapBack(b);await availability(b);await offline(b);
     if(process.argv[4]){await calendarShell(b,process.argv[4]);await mapShell(b,process.argv[4]);console.log('PASS calendar and canonical map shells, exact Back and editor link');}
     console.log('PASS visitor themes, 3 widths, zone destinations, canonical map and touch targets, programme retries, cancellation, empty day, restored offline guide');}
   finally{await b.close()}

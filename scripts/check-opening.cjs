@@ -52,27 +52,26 @@ async function main() {
         await page.close();
       }
     }
-    const slowProbe = await browser.newPage({viewport:{width:390,height:844}, isMobile:true, hasTouch:true});
-    let releaseProbe;
-    const held = new Promise(resolve => { releaseProbe = resolve; });
+    const slowStart = await browser.newPage({viewport:{width:390,height:844}, isMobile:true, hasTouch:true});
+    let releaseStart;
+    const held = new Promise(resolve => { releaseStart = resolve; });
     try {
-      await slowProbe.route('**/meeting3d/index.wasm', async route => {
-        if (route.request().method() !== 'HEAD') return route.continue();
+      await slowStart.route('**/meeting3d/index.html?*', async route => {
         await held;
         await route.abort().catch(() => {});
       });
-      const request = slowProbe.waitForRequest(r => r.method() === 'HEAD' && r.url().endsWith('index.wasm'));
-      await slowProbe.goto(url.href, {waitUntil:'domcontentloaded'});
+      const request = slowStart.waitForRequest(r => new URL(r.url()).pathname.endsWith('/meeting3d/index.html'));
+      await slowStart.goto(url.href, {waitUntil:'domcontentloaded'});
       await request;
-      await slowProbe.locator('#loading3d').waitFor();
-      await slowProbe.getByRole('button',{name:'Лёгкая версия',exact:true}).click();
-      releaseProbe();
-      await slowProbe.locator('#scene3d').waitFor({state:'hidden'});
-      assert.equal(await slowProbe.locator('#apple-hotspot').evaluate(el => el === document.activeElement), true);
-      assert.equal(await slowProbe.locator('#scene3d iframe').count(), 0);
+      await slowStart.locator('#loading3d').waitFor();
+      await slowStart.getByRole('button',{name:'Лёгкая версия',exact:true}).click();
+      releaseStart();
+      await slowStart.locator('#scene3d').waitFor({state:'hidden'});
+      assert.equal(await slowStart.locator('#apple-hotspot').evaluate(el => el === document.activeElement), true);
+      assert.equal(await slowStart.locator('#scene3d iframe').count(), 0);
     } finally {
-      releaseProbe();
-      await slowProbe.close();
+      releaseStart();
+      await slowStart.close();
     }
     const denied = await browser.newPage({viewport:{width:390,height:844}, isMobile:true, hasTouch:true});
     try {
