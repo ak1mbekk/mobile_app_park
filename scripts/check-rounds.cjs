@@ -117,7 +117,7 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
       return record;
     },key);
     await page.reload();
-    await page.locator('#catch.current').waitFor();
+    await page.locator('#home.current').waitFor();
     assert.equal(await page.evaluate(key=>localStorage.getItem(key),key),replacement);
     assert.deepEqual(errors,[]);
     console.log('PASS interrupted matching move, shared-cell win, round replay, last catch/miss, saved reward, starter gift, park pause and updated profile on reload');
