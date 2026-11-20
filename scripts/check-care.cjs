@@ -30,6 +30,13 @@ const { chromium } = require('playwright');
     for(const [field,mood] of Object.entries({food:'hungry',energy:'sleepy',joy:'lonely',clean:'dirty'})){
       await restore({onboardingDone:true,[field]:10},'home');
       assert.match(await page.locator('#pet-actor').getAttribute('src'),new RegExp(mood));
+      if(field==='food'){
+        await page.locator('#aki-feed').click();
+        await page.locator('#home.in-kitchen.has-kitchen-hungry-art').waitFor();
+        assert.match(await page.locator('#home').evaluate(e=>getComputedStyle(e,'::before').backgroundImage),/kitchen-hungry\.webp/);
+        assert.ok(await page.locator('#pet-figure').isHidden());
+        await page.locator('#kitchen-back').click();
+      }
       if(field==='food'||field==='energy'){
         await page.locator('#home [data-go="chest"]').click();
         await page.locator('#chest [data-go="game"]').click();
@@ -70,18 +77,30 @@ const { chromium } = require('playwright');
     await page.locator('[data-shop-group="decor"]').click();
     await ware('Фонарь лесника').click();
     await page.locator('#shop-confirm').click();
-    await page.reload();await page.locator('[data-furnishing="lantern"]').waitFor();
+    await page.reload();
+    assert.equal(await page.locator('#room-decor img').count(),0);
     assert.equal((await stats()).leaves,0);
+    await page.locator('#shop-open').click();
+    await page.locator('[data-shop-group="decor"]').click();
+    assert.match(await ware('Фонарь лесника').textContent(),/Куплено/);
     await restore({onboardingDone:true,leaves:95},'home');
     for(const [label,slot] of [['Диван у окна','settee'],['Эмалированная купель','bath']]){
       await page.locator('#shop-open').click();await page.locator('[data-shop-group="decor"]').click();
-      await ware(label).click();await page.locator('#shop-confirm').click();
-      await page.locator('[data-furnishing="'+slot+'"]').evaluate(image=>image.decode());
+      await ware(label).click();
+      if(slot==='bath')await page.locator('#bath-preview-room').waitFor();
+      await page.locator('#shop-confirm').click();
+      if(slot==='settee')await page.locator('#room-decor [data-furnishing="settee"]').evaluate(image=>image.decode());
     }
     assert.equal((await stats()).leaves,0);
-    await page.reload();assert.equal(await page.locator('#room-decor img').count(),2);
+    await page.reload();assert.equal(await page.locator('#room-decor img').count(),1);
+    assert.ok(await page.locator('#bath-preview-room').isHidden());
     await page.locator('#aki-sleep').click();assert.equal(await page.locator('#home').evaluate(e=>getComputedStyle(e).getPropertyValue('--scene').includes('sleep-settee')),true);
     await page.locator('#aki-sleep').click();await page.locator('#home [data-go="wash"]').click();
+    const vessel=page.locator('#wash-vessel[data-furnishing="bath"]');
+    await vessel.waitFor();await vessel.evaluate(image=>image.decode());
+    assert.equal(await vessel.getAttribute('alt'),'Эмалированная купель');
+    assert.ok(await page.locator('#soap-area').isHidden());
+    await page.locator('#wash-start').click();
     assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/wash-bath/);
     await page.locator('#soap-area').focus();for(let i=0;i<5;i++)await page.keyboard.press('Enter');
     await page.locator('#rinse').click();assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/clean-bath/);

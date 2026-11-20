@@ -1,6 +1,6 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '21';
+const version = prefix + '23';
 const base = new URL(self.registration.scope);
 const shell = [
   'index.html','base.css','show.css','visitor.css','park-and-chest.css','vendor/park-menu/menu.css','vendor/park-menu/menu.js','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
@@ -8,7 +8,11 @@ const shell = [
   'assets/park-survey.webp','map-boundaries.json','map-boundary-geometry.js',
   'guide-offline.js','family.js','meeting.js','home.js','show.js','match.js',
   'assets/avatar-raccoon.webp','assets/avatar-bison.webp','assets/park-wordmark.webp','assets/woven-diamonds.svg','assets/linen-weave.svg','assets/richi-reward.webp',
-  'assets/starter-room.webp','assets/base-bath.webp','assets/sleep-bed-curled.webp','assets/sleep-settee-curled.webp',
+  'assets/intro.webp','assets/fruit.webp','assets/home.webp','assets/threshold-morning.webp',
+  'assets/starter-room.webp','assets/kitchen-room.webp','assets/kitchen-hungry.webp','assets/wash-room.webp',
+  'assets/base-bath.webp','assets/room-bath.webp','assets/wash.webp','assets/wash-bath.webp','assets/clean.webp','assets/clean-bath.webp',
+  'assets/shop-chest.webp','assets/shop-bed.webp','assets/room-settee.webp','assets/rope-ball.webp','assets/piece-0.webp','assets/piece-1.webp',
+  'assets/sleep-bed-curled.webp','assets/sleep-settee-curled.webp',
   'assets/pet-kit.webp','assets/pet-young.webp','assets/pet-adult.webp',
   'assets/pet-mood-sleepy.webp','assets/pet-mood-hungry.webp','assets/pet-mood-dirty.webp','assets/pet-mood-lonely.webp'
 ];

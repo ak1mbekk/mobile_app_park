@@ -28,7 +28,7 @@ const folder = 'assets/fallback-wardrobe/';
       }, save);
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.locator('#home.current').waitFor();
-      assert.ok(await page.locator('#scene3d').isHidden());
+      await page.locator('#scene3d').waitFor({ state: 'hidden' });
     }
     async function fitted(name) {
       await actor.evaluate(image => image.decode());
@@ -114,7 +114,7 @@ const folder = 'assets/fallback-wardrobe/';
       assert.match(response.headers()['content-type'], /image\/webp/, name);
     }
     await checkOffline(browser, mobile);
-    console.log('PASS 2D wardrobe preview, cancel, persistence, age, fitted sleep, missing-frame fallback, data saver, offline and all ' + names.length + ' frames');
+    console.log('PASS offline first meeting, 2D wardrobe, fitted sleep, missing-frame fallback, data saver and all ' + names.length + ' frames');
   } finally {
     await browser.close();
   }
@@ -123,6 +123,7 @@ const folder = 'assets/fallback-wardrobe/';
 async function checkOffline(browser, mobile) {
   const page = await browser.newPage(mobile);
   const map = new URL(url);
+  map.searchParams.delete('view');
   map.hash = 'map/2';
   await page.route('https://tile.openstreetmap.org/**', route => route.abort());
   await page.goto(map.href, { waitUntil: 'domcontentloaded' });
@@ -138,6 +139,7 @@ async function checkOffline(browser, mobile) {
   }, warmPortrait);
   await page.waitForFunction(async src => !!(await caches.match(new URL(src, location.href))), warmPortrait);
   await page.context().setOffline(true);
+  await checkOfflineMeeting(page);
   const seed = save => page.evaluate(save => {
     localStorage.setItem('aki-concept-demo', JSON.stringify({
       name: 'Ричи', onboardingDone: true, updated: Date.now(), ...save,
@@ -167,4 +169,51 @@ async function checkOffline(browser, mobile) {
     await image.decode();
   });
   await page.context().close();
+}
+
+async function checkOfflineMeeting(page) {
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  assert.equal(await page.evaluate(() => window.petDemo.stats().onboardingDone), false);
+  await page.evaluate(async () => {
+    for (const name of ['intro', 'threshold-morning', 'fruit', 'home']) {
+      const asset = new URL('assets/' + name + '.webp', location.href);
+      if (!await caches.match(asset)) throw new Error(name + ' is missing from the saved walk');
+    }
+  });
+  await page.locator('#map.current .p-back').tap();
+  await page.locator('[data-tab="home"]').tap();
+  const intro = page.locator('#intro.current');
+  await intro.waitFor();
+  await page.locator('#scene3d').waitFor({ state: 'hidden' });
+  const apple = intro.locator('#apple-hotspot');
+  await apple.locator('img').evaluate(image => image.decode());
+  await decodeBackground(intro);
+  await apple.tap();
+  assert.ok(await intro.isVisible());
+
+  const start = await apple.boundingBox();
+  const target = await intro.boundingBox();
+  await page.mouse.move(start.x + start.width * .5, start.y + start.height * .5);
+  await page.mouse.down();
+  await page.mouse.move(target.x + target.width * .48, target.y + target.height * .58, { steps: 12 });
+  await page.mouse.up();
+  const naming = page.locator('#name.current');
+  await naming.waitFor();
+  await decodeBackground(naming);
+  await naming.locator('#aki-name-input').fill('Аки');
+  await naming.locator('#aki-name-form button').tap();
+  await page.locator('#home.current').waitFor();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('#home.current #aki-display').filter({ hasText: 'Аки' }).waitFor();
+  assert.equal(await page.evaluate(() => window.petDemo.stats().name), 'Аки');
+}
+
+async function decodeBackground(screen) {
+  await screen.evaluate(async element => {
+    const src = /url\("([^"]+)"\)/.exec(getComputedStyle(element, '::before').backgroundImage)?.[1];
+    if (!src) throw new Error(element.id + ' has no scene image');
+    const image = new Image();
+    image.src = src;
+    await image.decode();
+  });
 }

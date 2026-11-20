@@ -28,10 +28,12 @@
 <form id="aki-name-form"><input id="aki-name-input" value="Ричи" aria-label="Имя енота" maxlength="24" required autocomplete="off"><button class="primary" type="submit">Готово</button></form><p id="name-save-error" role="alert" hidden>Не удалось сохранить имя на устройстве. Проверь свободное место и нажми «Готово» ещё раз.</p></div></section>
 <section id="home" class="screen cabin" aria-labelledby="aki-display">
 <div id="night-room" aria-hidden="true"></div>
-<img id="starter-bath" src="assets/base-bath.webp" alt="" loading="lazy">
 <div id="room-decor" aria-hidden="true"></div>
+<div id="bath-preview-room" class="wash-room-art" hidden aria-hidden="true">
+  <img class="wash-vessel upgraded" src="assets/room-bath.webp" alt="" loading="lazy">
+</div>
 <div id="pet-figure"><img id="pet-actor" src="assets/pet-kit.webp" alt="" draggable="false"><span id="pet-hat" hidden></span></div>
-<button id="rope-ball" aria-label="Покатить мяч еноту" hidden><img src="assets/rope-ball.webp" alt=""></button>
+<img id="rope-ball" src="assets/rope-ball.webp" alt="" draggable="false" hidden>
 <div class="pet-status"><span id="aki-display">Ричи</span><span id="aki-level">Уровень 1</span><span class="xptrack"><i id="aki-meter"></i></span><span id="aki-balance" aria-label="Листья">0</span></div>
 <button id="home-profile" data-profile type="button" aria-label="Открыть профиль" aria-haspopup="dialog"><img src="assets/avatar-raccoon.webp" width="36" height="36" alt=""></button>
 <button id="shop-open" type="button" hidden>Лавка</button>
@@ -50,13 +52,26 @@
 <button class="pet" id="aki-pet" aria-label="Погладить енота"></button><span aria-hidden="true" class="pet-heart" id="aki-heart">♥</span>
 <p class="homemsg" id="aki-feedback" aria-live="polite" hidden></p>
 <aside id="bed-goal" hidden><p id="bed-goal-text" aria-live="polite"></p><div><button id="bed-goal-action" class="primary" type="button"></button><button id="bed-goal-later" type="button">Позже</button></div></aside>
-<button id="snack-piece" aria-label="Поднести угощение к еноту" hidden><img src="assets/piece-1.webp" draggable="false" alt=""></button>
 <div class="room-objects">
-<button class="object bowl" id="aki-feed" aria-label="Угостить из миски"><span>Кормить</span></button>
-<button class="object bed" id="aki-sleep" aria-label="Уложить спать"><span>Уложить</span></button>
-<button class="object tub" data-go="wash" aria-label="Вымыть Ричи"><span>Купать</span></button>
-<button class="object chest" data-go="chest" aria-label="Открыть сундук с играми"><span>Игры</span></button></div>
-<div class="sheet" id="aki-pantry" hidden><div class="sheet-header"><h2>Чем угостить?</h2><button class="iconbtn" type="button" id="close-pantry" aria-label="Закрыть">×</button></div><div class="foodlist"><button type="button" id="offer-apple" hidden>Яблоко<small>Из сада</small></button><button type="button" data-snack="грушей" data-cost="0">Груша<small>В кладовой</small></button><button type="button" data-snack="ягодами" data-cost="2">Ягоды<small>2 листочка</small></button></div></div>
+<button class="object bed" id="aki-sleep" aria-label="Уложить спать" type="button" hidden><span>Уложить</span></button>
+<button class="object chest" data-go="chest" aria-label="Открыть сундук с играми" type="button"><img id="starter-chest" src="assets/shop-chest.webp" alt="" draggable="false"><span>Игры</span></button></div>
+<nav class="care-room-links" aria-label="Комнаты">
+  <button id="aki-feed" type="button" data-go="home/kitchen">Кухня</button>
+  <button type="button" data-go="wash">Умывальная</button>
+</nav>
+<section id="kitchen-room" aria-labelledby="kitchen-title" hidden>
+  <header class="care-room-heading">
+    <button class="backbtn" id="kitchen-back" data-go="home" type="button" aria-label="В домик"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+    <h2 id="kitchen-title">Кухня</h2>
+  </header>
+  <button id="snack-piece" type="button" aria-label="Поднести яблоко к еноту" hidden><img src="assets/fruit.webp" draggable="false" alt=""></button>
+  <div class="kitchen-actions">
+    <p id="kitchen-hint" aria-live="polite">Перетащи яблоко к лапам</p>
+    <button id="kitchen-another" type="button" hidden>Взять яблоко</button>
+    <button id="kitchen-pantry-toggle" type="button" aria-controls="aki-pantry" aria-expanded="false">Другие угощения</button>
+  </div>
+  <div class="sheet" id="aki-pantry" hidden><div class="sheet-header"><h2>Чем угостить?</h2><button class="iconbtn" type="button" id="close-pantry" aria-label="Закрыть">×</button></div><div class="foodlist"><button type="button" id="offer-apple" hidden>Кормить в 3D</button><button type="button" data-snack="грушей" data-cost="0">Груша<small>Бесплатно</small></button><button type="button" data-snack="ягодами" data-cost="2">Ягоды<small>2 листочка</small></button></div></div>
+</section>
 </section>
 <section id="game" class="screen felt" aria-labelledby="pairs-title">
 <div class="gamepad"><header class="gamebar"><button class="backbtn" data-go="home" type="button" aria-label="В домик"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button><span class="pairprogress" id="aki-pairs" aria-live="polite">0 из 6 пар</span></header>
@@ -183,7 +198,14 @@
 
 <section class="screen visitor-screen" id="species"><div class="p-content"><button class="p-back" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="species-name" class="p-title">Карточка животного</h1><p id="species-group" class="p-lead"></p><figure class="p-animal-photo" id="species-photo" hidden></figure><p id="species-latin"></p><p id="species-description" class="p-bio" hidden></p><button class="p-primary" id="species-place" hidden>Показать место на карте →</button><a id="species-source" class="p-link" href="https://animal-park.by/galereya/" target="_blank" rel="noopener">Подробнее на сайте парка ↗</a></div></section><section id="wash" class="screen bath-scene">
 
-<button class="corner" data-go="home" aria-label="В домик">‹</button>
+<header class="care-room-heading">
+  <button class="backbtn corner" data-go="home" type="button" aria-label="В домик"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+  <h1 id="wash-title">Умывальная</h1>
+</header>
+<div id="wash-entry">
+  <img id="wash-vessel" class="wash-vessel" src="assets/base-bath.webp" alt="Деревянная купель">
+  <button id="wash-start" type="button" class="primary">Купать</button>
+</div>
 <div id="soap-area" role="button" tabindex="0" aria-label="Намылить шерсть губкой"><span class="foam" aria-hidden="true"></span></div>
 <div class="wash-status"><p id="washHint" aria-live="polite">Потри шерсть губкой</p><progress id="scrub" max="100" value="0"></progress></div>
 <button id="rinse" class="jug" aria-label="Смыть пену кувшином" hidden></button>

@@ -37,6 +37,7 @@
   ];
   const owned=new Set(wares.filter(w=>Array.isArray(saved.owned)&&saved.owned.includes(w.id)).map(w=>w.id));
   const placed=new Set(wares.filter(w=>w.group==='decor'&&owned.has(w.id)&&Array.isArray(saved.placed)&&saved.placed.includes(w.id)).map(w=>w.id));
+  const collectibles=new Set(['cushion','lantern']);
   const canSleep=()=>placed.has('bed')||placed.has('settee');
   saved.starterRoundRewarded=saved.starterRoundRewarded===true||
     ['pairs','match','orchard'].some(game=>saved[game]?.finished===true);
@@ -212,13 +213,13 @@
     $('home').classList.toggle('furnished-bed',placed.has('settee'));
     $('home').classList.toggle('furnished-floor-bed',placed.has('bed'));
     $('wash').classList.toggle('furnished-bath',placed.has('bath'));
-    $('rope-ball').hidden=!saved.ball||saved.night;
-    $('ball-price').textContent=saved.ball?'В твоём домике':ballPrice+' листьев · в кошельке '+saved.leaves;
+    $('ball-price').textContent=saved.ball?'Поиграть с Ричи':ballPrice+' листьев · в кошельке '+saved.leaves;
     $('aki-display').textContent = saved.name;
     $('aki-balance').textContent = String(saved.leaves);
     $('aki-level').textContent = 'Уровень '+(1 + Math.floor(saved.xp/30));
     $('aki-meter').style.width = Math.max(7,saved.xp%30/30*100)+'%';
     $('home').classList.toggle('night',saved.night);
+    refreshKitchenMood();
     $('need-bars').hidden=!saved.onboardingDone;
     for(const meter of $('need-bars').querySelectorAll('meter')){
       const value=Math.round(saved[meter.dataset.need]);
@@ -226,9 +227,10 @@
       meter.setAttribute('aria-valuetext',value<=25?'Мало':value>=75?'Хорошо':'Средне');
     }
     const sleep=$('aki-sleep');
-    const needsBed=!saved.night&&!canSleep();
-    sleep.setAttribute('aria-label',saved.night?'Разбудить':needsBed?'Место для сна':'Уложить спать');
-    sleep.lastElementChild.textContent=saved.night?'Разбудить':needsBed?'Место для сна':'Уложить';
+    sleep.hidden=!saved.night&&!canSleep();
+    sleep.setAttribute('aria-label',saved.night?'Разбудить':'Уложить спать');
+    sleep.lastElementChild.textContent=saved.night?'Разбудить':'Уложить';
+    $('wash-start').disabled=saved.night;
     document.dispatchEvent(new Event('petprofile'));
   }
   let messageTimer, heartTimer;
@@ -266,8 +268,17 @@
     const hat=preview?.group==='hat'?preview.id:saved.hat;
     paintPet(hat);
     const showSettee=preview?.id==='settee'||(preview?.id!=='bed'&&placed.has('settee'));
-    $('starter-bath').hidden=preview?.id==='bath'||placed.has('bath');
-    const decor=wares.filter(w=>w.group==='decor'&&(placed.has(w.id)||preview?.id===w.id)&&
+    const showUpgradedChest=preview?.id==='chest'||placed.has('chest');
+    $('starter-chest').classList.toggle('upgraded',showUpgradedChest);
+    $('bath-preview-room').hidden=preview?.id!=='bath';
+    const vessel=$('wash-vessel'), upgraded=placed.has('bath');
+    const source=upgraded?'assets/room-bath.webp':'assets/base-bath.webp';
+    if(vessel.getAttribute('src')!==source)vessel.src=source;
+    vessel.alt=upgraded?'Эмалированная купель':'Деревянная купель';
+    vessel.classList.toggle('upgraded',upgraded);
+    vessel.dataset.furnishing=upgraded?'bath':'base-bath';
+    const decor=wares.filter(w=>(w.id==='bed'||w.id==='settee')&&
+      (placed.has(w.id)||preview?.id===w.id)&&
       (w.id!=='bed'||!showSettee)&&(w.id!=='settee'||showSettee));
     $('room-decor').replaceChildren(...decor.map(w=>{
       const img=new Image();img.src='assets/'+(w.replaces?'room-':'shop-')+w.id+'.webp';img.alt='';img.dataset.furnishing=w.id;return img;
@@ -315,8 +326,9 @@
     $('cottage-shop').close();setShopPreview(w);$('shop-preview').hidden=false;
     $('preview-name').textContent=w.name;
     $('preview-price').textContent=owned.has(w.id)?w.tier:w.tier+' · В кошельке '+saved.leaves+' '+leafWord(saved.leaves);
-    $('shop-confirm').disabled=!owned.has(w.id)&&saved.leaves<w.price;
-    $('shop-confirm').textContent=confirmLabel(w);
+    const collected=collectibles.has(w.id)&&owned.has(w.id);
+    $('shop-confirm').disabled=collected||(!owned.has(w.id)&&saved.leaves<w.price);
+    $('shop-confirm').textContent=collected?'В коллекции':confirmLabel(w);
     $('shop-cancel').focus();
   }
   $('shop-open').onclick=openShop;
@@ -365,15 +377,16 @@
   }
   $('aki-pet').onclick=()=>{heart();petMotion('nuzzle');feedback(saved.night?'Тихо, '+saved.name+' спит':saved.name+' довольно урчит');};
   $('buy-ball').onclick=()=>{
+    if(saved.ball&&!saved.night){route('home');rollBall();return;}
     const refusal=buyBall();
-    if(refusal)$('toy-notice').textContent=refusal;
-    else route('home');
+    $('toy-notice').textContent=refusal||'Мяч в сундуке. Можно поиграть!';
   };
   let rolling=false;
-  $('rope-ball').onclick=async()=>{
+  async function rollBall(){
     if(rolling||saved.night||!saved.ball)return;
     rolling=true;
     const ball=$('rope-ball'),age=$('home').dataset.age;
+    ball.hidden=false;
     const start=ball.getBoundingClientRect(),pet=$('aki-pet').getBoundingClientRect();
     const dx=pet.x+pet.width*.4-start.x,dy=pet.y+pet.height*.8-start.y;
     const near='translate('+dx+'px,'+dy+'px) rotate(280deg) scale(.73)';
@@ -381,40 +394,99 @@
     const frames=age==='kit'?['none',near,near]:['none',near,near,'none'];
     petMotion(age==='adult'?'bring':'reach');
     try { await ball.animate({transform:frames},{duration:slow?150:age==='kit'?900:1550,easing:'ease-in-out'}).finished; }
-    finally { rolling=false; }
+    finally { ball.hidden=true;rolling=false; }
     if(active==='home'&&!saved.night){
       heart();feedback(saved.name+(age==='kit'?' поймал мяч!':age==='young'?' вернул тебе мяч':' принёс любимый мяч'));
     }
-  };
-  $('aki-feed').onclick=()=>{if(saved.night) {feedback('Сначала разбуди енота');return;} $('aki-pantry').hidden=false;};
-  $('close-pantry').onclick=()=>{$('aki-pantry').hidden=true;$('aki-feed').focus();};
+  }
+  const kitchen=$('kitchen-room'), pantry=$('aki-pantry'), pantryToggle=$('kitchen-pantry-toggle');
+  const kitchenArt=new Image();
+  kitchenArt.onload=()=>$('home').classList.add('has-kitchen-art');
+  const hungryArt=new Image();
+  hungryArt.onload=()=>$('home').classList.add('has-kitchen-hungry-art');
   const snack=$('snack-piece');
+  const apple={name:'яблоком',cost:0,source:'assets/fruit.webp'};
   let serving=null,grip=null;
   function returnSnack(){
     grip=null;
+    $('home').classList.remove('kitchen-dragging');
     snack.style.removeProperty('left');snack.style.removeProperty('top');
   }
-  function eatSnack(){
-    if(!serving || saved.leaves<serving.cost)return;
-    saved.leaves-=serving.cost;care('food',32);petMotion('reach');heart();feedback(saved.name+' лакомится '+serving.name);
-    serving=null;snack.hidden=true;returnSnack();
+  function refreshKitchenMood(){
+    const hungry=saved.food<=25;
+    $('home').classList.toggle('kitchen-hungry',hungry);
+    if(hungry&&!kitchen.hidden&&!hungryArt.hasAttribute('src'))hungryArt.src='assets/kitchen-hungry.webp';
   }
+  function setPantry(open){
+    pantry.hidden=!open;
+    pantryToggle.setAttribute('aria-expanded',String(open));
+    if(open)$('close-pantry').focus({preventScroll:true});
+  }
+  function serveSnack(food){
+    serving=food;
+    snack.querySelector('img').src=food.source;
+    snack.setAttribute('aria-label',food===apple?'Поднести яблоко к еноту':'Поднести угощение к еноту');
+    snack.hidden=false;
+    snack.classList.toggle('fruit-cutout',food===apple);
+    $('kitchen-another').hidden=true;
+    $('kitchen-hint').textContent=food===apple?'Перетащи яблоко к лапам':'Поднеси угощение к лапам';
+    returnSnack();
+  }
+  function setKitchen(open){
+    if(kitchen.hidden===!open)return;
+    kitchen.hidden=!open;
+    $('home').classList.toggle('in-kitchen',open);
+    setPantry(false);
+    if(open){
+      if(preview)setShopPreview(null);
+      $('shop-preview').hidden=true;
+      if(!kitchenArt.hasAttribute('src'))kitchenArt.src='assets/kitchen-room.webp';
+      serveSnack(apple);
+      refreshKitchenMood();
+      $('kitchen-back').focus({preventScroll:true});
+    }else{
+      serving=null;
+      snack.hidden=true;
+      returnSnack();
+    }
+  }
+  function eatSnack(){
+    if(kitchen.hidden||saved.night||!serving||saved.leaves<serving.cost)return;
+    const food=serving;
+    const restoreFocus=document.activeElement===snack;
+    serving=null;
+    snack.hidden=true;
+    returnSnack();
+    saved.leaves-=food.cost;
+    care('food',32);
+    petMotion('reach');
+    heart();
+    $('kitchen-hint').textContent=food===apple?saved.name+' доел яблоко':saved.name+' лакомится '+food.name;
+    $('kitchen-another').hidden=false;
+    if(restoreFocus)$('kitchen-another').focus({preventScroll:true});
+  }
+  pantryToggle.onclick=()=>setPantry(pantry.hidden);
+  $('close-pantry').onclick=()=>{setPantry(false);pantryToggle.focus({preventScroll:true});};
+  $('kitchen-another').onclick=()=>{serveSnack(apple);snack.focus({preventScroll:true});};
   document.querySelectorAll('[data-snack]').forEach(b=>b.onclick=()=>{
     const cost=Number(b.dataset.cost)||0;
-    $('aki-pantry').hidden=true;
-    if(saved.leaves<cost){feedback('Для ягод нужны 2 листочка');return;}
-    serving={name:b.dataset.snack,cost};
-    snack.querySelector('img').src=cost?'assets/piece-0.webp':'assets/piece-1.webp';
-    snack.hidden=false;returnSnack();feedback('Поднеси угощение к еноту');
+    setPantry(false);
+    if(saved.leaves<cost){$('kitchen-hint').textContent='Для ягод нужны 2 листочка';return;}
+    serveSnack({name:b.dataset.snack,cost,source:cost?'assets/piece-0.webp':'assets/piece-1.webp'});
+    snack.focus({preventScroll:true});
   });
   snack.onpointerdown=e=>{
     if(grip||e.button!==0)return;
-    grip={id:e.pointerId,x:e.clientX,y:e.clientY};snack.setPointerCapture(e.pointerId);
+    const piece=snack.getBoundingClientRect();
+    grip={id:e.pointerId,x:e.clientX,y:e.clientY,offsetX:piece.left+piece.width/2-e.clientX,offsetY:piece.top+piece.height/2-e.clientY};
+    snack.setPointerCapture(e.pointerId);
   };
   snack.onpointermove=e=>{
     if(grip?.id!==e.pointerId)return;
-    const r=$('home').getBoundingClientRect();
-    snack.style.left=(e.clientX-r.left)+'px';snack.style.top=(e.clientY-r.top)+'px';
+    if(Math.hypot(e.clientX-grip.x,e.clientY-grip.y)<=8&&!snack.style.left)return;
+    const r=kitchen.getBoundingClientRect();
+    $('home').classList.add('kitchen-dragging');
+    snack.style.left=(e.clientX-r.left+grip.offsetX)+'px';snack.style.top=(e.clientY-r.top+grip.offsetY)+'px';
   };
   snack.onpointerup=e=>{
     if(grip?.id!==e.pointerId)return;
@@ -424,7 +496,17 @@
     else returnSnack();
   };
   snack.onpointercancel=returnSnack;
+  snack.onlostpointercapture=returnSnack;
   snack.onclick=e=>{if(e.detail===0)eatSnack();};
+  function setWashing(started){
+    $('wash').classList.toggle('washing',started);
+    $('wash-entry').hidden=started;
+  }
+  $('wash-start').onclick=()=>{
+    if(saved.night)return;
+    setWashing(true);
+    $('soap-area').focus({preventScroll:true});
+  };
   function setResting(resting){
     advanceNeeds();
     if(resting===saved.night)return '';
@@ -562,11 +644,17 @@
   }
   $('aki-replay').onclick=()=>{cards=[];route('game');};
   function enter(id) {
+    const kitchenRoute=id==='home'&&location.hash==='#home/kitchen';
+    if(kitchenRoute&&saved.night){window.conceptReplace('home');return;}
+    const wasInKitchen=!kitchen.hidden;
+    setKitchen(kitchenRoute);
+    if(wasInKitchen&&!kitchenRoute&&id==='home')$('aki-feed').focus({preventScroll:true});
     if(id===active)return;
     if(active==='intro'&&!eating)resetFruit();
     if(active==='game')clearTimeout(gameTimer);
-    if(active==='home'){snack.hidden=true;serving=null;returnSnack();preview=null;$('shop-preview').hidden=true;$('cottage-shop').close();}
-    $('aki-pantry').hidden=true;$('aki-feedback').hidden=true;active=id;
+    if(active==='home'){preview=null;$('shop-preview').hidden=true;$('cottage-shop').close();}
+    if(id==='wash')setWashing(false);
+    $('aki-feedback').hidden=true;active=id;
     if(id==='intro'&&!eating)resetFruit();
     if(id==='game'){if(!cards.length||(paired.size===cards.length/2&&winShown))newGame();else resumeGame();}
     if(id==='win'&&cards.length&&paired.size===cards.length/2){$('pair-xp').textContent='+'+(saved.pairs.rewardXp??saved.lastGameXp??0)+' опыта';winShown=true;storeRound();}

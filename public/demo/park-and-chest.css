@@ -17,7 +17,6 @@ html, body { overflow-x: clip; }
 #park .park-top { padding: 16px var(--guide-gutter) 8px; background: transparent; }
 .park-mast { flex: 1; min-width: 0; }
 #park .park-top h1 { margin: 0; font-size: clamp(24px, 7vw, 31px); overflow-wrap: break-word; }
-.park-mast p { font: 500 14px/1.4 var(--zk-font); color: var(--muted); }
 #park .p-content { padding: 6px var(--guide-gutter) 24px; }
 #park .modes {
   display:inline-flex; max-width:100%; gap:2px; margin:12px 0 0;
@@ -30,7 +29,11 @@ html, body { overflow-x: clip; }
 .park-mast h1 { line-height: 1; }
 .park-signature { display: block; width: clamp(110px, 31vw, 148px); height: auto; }
 html.dark .park-signature { filter: brightness(1.65) saturate(.77); }
-.park-mast p { margin: 4px 0 0; }
+.park-mast p {
+  width: clamp(110px, 31vw, 148px); margin: 4px 0 0;
+  text-align: center; font: 400 12px/1.25 var(--heading-face);
+  letter-spacing: .055em; color: color-mix(in srgb, var(--muted) 80%, var(--green));
+}
 #park.visitor-screen {
   background-image: url("assets/linen-weave.svg");
 }
@@ -78,7 +81,7 @@ html.dark #park .park-reward { --ticket-fabric: #843641; }
 @media(max-height: 600px) and (max-width: 400px) {
   #park .park-top { padding-block: 5px 0; }
   #park .park-signature { width: 78px; }
-  #park .park-mast p { margin-top: 1px; font-size: 12px; }
+  #park .park-mast p { width: 78px; margin-top: 2px; }
   #park .modes { margin-top: 1px; }
   #park .menu-vertical { gap: 0; padding-block: 4px 0; }
   #park .menu-vertical-link { min-height: 44px; }
