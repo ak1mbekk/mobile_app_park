@@ -36,9 +36,9 @@ const {chromium}=require('playwright');
       await touchAt('touchStart',point(room,x,y));
       await touchAt('touchEnd');
     }
-    async function feed(){
+    async function feed(targetX,targetY){
       const room=await box();
-      const start=point(room,.18,.782),end=point(room,.56,.49);
+      const start=point(room,.189,.782),end=point(room,targetX,targetY);
       await touchAt('touchStart',start);
       for(let i=1;i<=12;i++){
         const t=i/12;
@@ -53,11 +53,15 @@ const {chromium}=require('playwright');
     await page.goto(root.href);
     await ready('intro');
     assert.equal(new URL(page.url()).hash,'#intro');
+    if(process.env.PARK_CAPTURE_INTRO){
+      await page.locator('#intro #loading3d[data-finished]').waitFor({state:'attached'});
+      await page.screenshot({path:process.env.PARK_CAPTURE_INTRO});
+    }
     console.log('First playable Godot frame, browser launch excluded:',(Date.now()-started)/1000,'s');
     await press(.18,.782);
     assert.equal((await stats()).mealFinished,false);
     await page.waitForTimeout(500);
-    await feed();
+    await feed(.49,.56);
     await page.locator('#name.current').waitFor({timeout:45000});
     assert.equal(await page.locator('#aki-name-input').inputValue(),'Ричи');
     await page.locator('#aki-name-input').fill('Аки');
@@ -77,7 +81,7 @@ const {chromium}=require('playwright');
     await page.locator('[data-tab="home"]').click();
     await ready('home');
     await page.waitForTimeout(350);
-    await feed();
+    await feed(.63,.455);
     await page.waitForFunction(xp=>window.petDemo.stats().xp>xp,before.xp,{timeout:45000});
     const after=await stats();
     assert.equal(after.name,'Аки');
