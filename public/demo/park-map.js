@@ -3,6 +3,9 @@
   const guide = window.parkGuide;
   const projection = window.parkProjection;
   const host = document.querySelector('#map .map-mount');
+  const search = host.querySelector('#map-search');
+  const searchToggle = host.querySelector('.map-search-toggle');
+  const result = host.querySelector('.map-result');
   const serviceNames = {
     cafe: 'Кафе', rest: 'Места отдыха', feed: 'Корм для животных', wc: 'Туалеты',
     wash: 'Где вымыть руки', parking: 'Парковка', entrance: 'Вход', gift: 'Сувениры'
@@ -37,11 +40,21 @@
 
   function navigate(next) {
     const value = { ...state, ...next };
+    if (next.id) setSearch(false);
     const route = ['map', value.zone];
     if (value.id) route.push(value.id);
     if (value.kind !== 'all') route.push(value.kind);
     if (value.kind === 'service' && value.service) route.push(value.service);
     window.conceptReplace(route.join('/'));
+  }
+
+  function setSearch(open, returnFocus = false) {
+    search.hidden = !open;
+    searchToggle.setAttribute('aria-expanded', String(open));
+    result.hidden = open || card?.hidden !== false;
+    hitChooser?.dismiss();
+    if (open) search.querySelector('h2').focus({ preventScroll: true });
+    else if (returnFocus) searchToggle.focus({ preventScroll: true });
   }
 
   function position(point) {
@@ -107,14 +120,16 @@
   function renderCard(point) {
     card.replaceChildren();
     card.hidden = !point;
+    result.hidden = !point || !search.hidden;
     if (!point) return;
     const close = document.createElement('button');
     close.type = 'button';
     close.className = 'map-sheet-close';
-    close.textContent = '×';
+    close.innerHTML = '<svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
     close.setAttribute('aria-label', 'Закрыть карточку места');
-    close.onclick = () => { navigate({ id: '' }); picker.focus({ preventScroll: true }); };
+    close.onclick = () => { navigate({ id: '' }); searchToggle.focus({ preventScroll: true }); };
     const title = document.createElement('h2');
+    title.tabIndex = -1;
     title.textContent = point.name;
     const detail = document.createElement('p');
     detail.textContent = point.detail || (point.service || 'Вольер № ' + point.badge) + ' · ' + guide.zones[point.zone].name;
@@ -301,7 +316,7 @@
     addSurvey();
     layer = L.layerGroup().addTo(map);
     hitChooser = guide.bindMarkerHitChooser({
-      container: surface, markers,
+      container: host, markers,
       pointFor: id => local().find(point => point.id === id),
       open: point => navigate({ id: point.id })
     });
@@ -320,7 +335,11 @@
         if (kind !== state.kind) navigate({ id: '', kind, service: '' });
       };
     });
-    picker.onchange = () => navigate({ id: picker.value });
+    picker.onchange = () => {
+      const id = picker.value;
+      navigate({ id });
+      if (id) card.querySelector('h2')?.focus({ preventScroll: true });
+    };
     serviceSelect.onchange = () => navigate({ id: '', kind: 'service', service: serviceSelect.value });
   }
 
@@ -383,6 +402,7 @@
     });
     serviceField.hidden = state.kind !== 'service';
     serviceField.querySelector('select').value = state.service;
+    searchToggle.toggleAttribute('data-filtered', state.kind !== 'all');
     updateStatus();
     draw();
   }
@@ -410,7 +430,7 @@
 
   document.addEventListener('conceptscreen', event => {
     if (event.detail === 'map') show();
-    else hitChooser?.dismiss();
+    else setSearch(false);
   });
   document.addEventListener('parkcatalogready', () => {
     if (map && document.getElementById('map').classList.contains('current')) draw();
@@ -422,4 +442,11 @@
     refreshAlignment();
   });
   window.addEventListener('offline', () => { if (map) updateStatus(); });
+  searchToggle.onclick = () => setSearch(search.hidden, true);
+  search.querySelector('.map-search-close').onclick = () => setSearch(false, true);
+  search.onkeydown = event => {
+    if (event.key !== 'Escape') return;
+    event.stopPropagation();
+    setSearch(false, true);
+  };
 })();

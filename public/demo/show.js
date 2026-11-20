@@ -39,7 +39,9 @@
   function ticketView(){
     const pet=window.petDemo.stats(),order=pet.demoOrder;
     const eligible=pet.level>=10&&!pet.couponUsed;
-    id('couponStatus').textContent=pet.couponUsed?'Купон использован':eligible?'Купон доступен':'Откроется на уровне 10 · сейчас '+pet.level;
+    const status=pet.couponUsed?'Купон использован':eligible?'Купон доступен':'Откроется на уровне 10';
+    id('parkRewardState').textContent=status;
+    id('couponStatus').textContent=eligible||pet.couponUsed?status:status+' · сейчас '+pet.level;
     id('coupon-progress').value=Math.min(10,pet.level);
     if(order){children.value=String(order.children);adults.value=String(order.adults);}
     const subtotal=Number(children.value)*10+Number(adults.value)*15;
@@ -136,6 +138,6 @@
     if(active==='catch'&&!orchardId)restoreOrchard();
     resume();
     if(active==='wash'&&washed)resetBath();
-    if(active==='pass')ticketView();
+    if(active==='pass'||active==='park')ticketView();
   });
 })();

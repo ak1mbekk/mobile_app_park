@@ -183,6 +183,7 @@ async function verifyMaps(){
     await outline.evaluate(im=>im.decode());
     assert.ok((await outline.evaluate(im=>im.style.transform)).startsWith('matrix('));
 
+    await map.getByRole('button',{name:'Поиск и фильтры'}).click();
     await map.locator('[data-kind="service"]').click();
     await services.selectOption('wc');
     assert.equal(await pins.count(),3);
@@ -210,6 +211,7 @@ async function verifyMaps(){
     assert.equal(walkURL.searchParams.get('rtext'),'~'+fixturePoint.join(','));
     assert.equal(walkURL.searchParams.get('rtt'),'pd');
 
+    await map.getByRole('button',{name:'Поиск и фильтры'}).click();
     await map.locator('[data-kind="service"]').click();
     await services.selectOption('wc');
     await picker.selectOption('osm-9868296562');

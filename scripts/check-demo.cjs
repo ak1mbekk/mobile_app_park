@@ -54,12 +54,15 @@ async function check(page, url, output) {
   await tab('park'); await go('park','map'); await visible('map');
   await tab('park'); await click('#beforeVisit'); await go('park','map');await click('#map [data-zone="2"]');
   await click('#map .leaflet-control-zoom-in');
+  await click('#map .map-search-toggle');
   await el('#map .place-picker select').selectOption('11');assert.match(await el('#map .place-info h2').textContent(),/Зубр/);
   assert.ok(page.url().endsWith('#map/2/11'));await page.reload();await visible('map');
   await page.locator('#map .place-info h2').filter({hasText:'Зубр'}).waitFor();
   assert.equal(await el('#map .place-picker select').inputValue(),'11');
   await go('map','species/zubr');await visible('species');await click('#species .p-back');await visible('map');
+  await click('#map .map-search-toggle');
   await el('#map .place-picker select').selectOption('36');assert.match(await el('#map .place-info h2').textContent(),/козы/);
+  await click('#map .map-search-toggle');
   await click('#map [data-kind=service]');assert.ok(await el('#map .place-info').isHidden());
   assert.ok(await page.locator('#map .place-picker option[value]:not([value=""])').count()>=22);
   await el('#map .service-picker select').selectOption('feed');

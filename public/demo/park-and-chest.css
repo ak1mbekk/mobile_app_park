@@ -14,7 +14,7 @@
   --heading-face: Georgia, 'Times New Roman', serif;
 }
 html, body { overflow-x: clip; }
-#park .park-top { padding: 16px var(--guide-gutter) 8px; }
+#park .park-top { padding: 16px var(--guide-gutter) 8px; background: transparent; }
 .park-mast { flex: 1; min-width: 0; }
 #park .park-top h1 { margin: 0; font-size: clamp(24px, 7vw, 31px); overflow-wrap: break-word; }
 .park-mast p { font: 500 14px/1.4 var(--zk-font); color: var(--muted); }
@@ -26,7 +26,93 @@ html, body { overflow-x: clip; }
 #park .modes button { flex:1 1 auto; border:0; border-radius:11px; padding:0 16px; min-height:44px; color:var(--muted); background:transparent; font:600 15px var(--zk-font); }
 #park .modes button[aria-pressed=true] { color:var(--ink); background:var(--surface); box-shadow:var(--zk-shadow-control); }
 #park .menu-vertical { padding-block:clamp(20px,4vh,36px) 12px; gap:clamp(4px,1.35vh,12px); }
-#park .p-content .pass { min-height: 48px; padding: 9px 14px; margin-top: 16px; }
+
+.park-mast h1 { line-height: 1; }
+.park-signature { display: block; width: clamp(110px, 31vw, 148px); height: auto; }
+html.dark .park-signature { filter: brightness(1.65) saturate(.77); }
+.park-mast p { margin: 4px 0 0; }
+#park.visitor-screen {
+  background-image: url("assets/linen-weave.svg");
+}
+#park .menu-vertical-link { padding-inline-end: 0; }
+#park .park-reward {
+  --ticket-fabric: #8c353b;
+  --ticket-thread: #f1c8a4;
+  --pet-width: clamp(86px, 23vw, 118px);
+  --peek-space: clamp(66px, 17.7vw, 91px);
+  position: relative; display: block; width: 100%; margin: 0;
+  padding: var(--peek-space) 0 0; border: 0; background: transparent;
+  color: #fff7e8; text-align: start; font-family: var(--zk-font);
+  touch-action: manipulation;
+}
+#park .reward-ticket {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  position: relative; padding: 15px 16px 22px; min-height: 86px;
+  overflow: hidden; border-radius: 12px;
+  background: var(--ticket-fabric) url("assets/linen-weave.svg");
+}
+#park .reward-ticket::after {
+  content: ""; position: absolute; inset: auto 0 5px; height: 7px;
+  opacity: .86;
+  background: url("assets/woven-diamonds.svg") left bottom / 25px 7px repeat-x;
+}
+#park .reward-ticket-copy { display: grid; gap: 3px; max-width: calc(100% - var(--pet-width) + 8px); }
+#park .reward-ticket-copy strong { font: 650 clamp(17px, 4.5vw, 21px)/1.15 var(--zk-font); letter-spacing: -.016em; }
+#park .reward-ticket-copy span { color: #f7dfcf; font: 450 13px/1.35 var(--zk-font); }
+#park .reward-ticket-arrow { flex: 0 0 20px; align-self: flex-end; margin-bottom: 1px; color: var(--ticket-thread); }
+#park .reward-pet {
+  position: absolute; right: 18px; top: var(--peek-space);
+  width: var(--pet-width); height: auto; transform: translateY(-73.84%); pointer-events: none;
+  transform-origin: center 74%;
+}
+#park .park-reward:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; border-radius: 13px; }
+#park .park-reward:active .reward-ticket { background-color: #762d36; }
+html.dark #park .park-reward { --ticket-fabric: #843641; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  #park .reward-pet { transition: transform .2s ease-out; }
+  #park .park-reward:hover .reward-pet { transform: translateY(-73.84%) rotate(-2deg); }
+}
+@media(max-height: 740px) {
+  #park .menu-vertical { gap: 2px; padding-block: 14px 0; }
+}
+@media(max-height: 600px) and (max-width: 400px) {
+  #park .park-top { padding-block: 5px 0; }
+  #park .park-signature { width: 78px; }
+  #park .park-mast p { margin-top: 1px; font-size: 12px; }
+  #park .modes { margin-top: 1px; }
+  #park .menu-vertical { gap: 0; padding-block: 4px 0; }
+  #park .menu-vertical-link { min-height: 44px; }
+  #park .park-reward { --pet-width: 76px; --peek-space: 58px; }
+  #park .reward-ticket { min-height: 70px; padding-block: 9px 14px; }
+}
+
+#tours .tour-page { display: flex; flex-direction: column; align-items: stretch; gap: 24px; padding: 12px var(--guide-gutter) 24px; font: 400 16px/1.5 var(--zk-font); }
+#tours .p-back { align-self: center; justify-content: center; width: 44px; height: 44px; margin: 0; }
+.tour-intro { display: grid; grid-template-columns: 44px minmax(0,1fr); align-items: center; gap: 12px 4px; }
+.tour-intro p { grid-column: 1/-1; }
+#tours .p-title { margin: 0; font: 600 clamp(28px, 7vw, 36px)/1.12 var(--zk-font); letter-spacing: -.025em; }
+.tour-page p, .tour-page dl, .tour-page dd { margin: 0; }
+#tours .tour-intro p, #tours .tour-booking p { color: var(--muted); max-width: 40ch; font: inherit; }
+#tours .p-facts { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; padding: 15px 0; }
+#tours .p-facts dt { font: 400 14px/1.35 var(--zk-font); }
+#tours .p-facts dd { margin-top: 3px; font: 550 17px/1.4 var(--zk-font); }
+.tour-booking { display: grid; gap: 12px; }
+#tours .p-primary { justify-content: space-between; min-height: 48px; font: 600 16px/1.4 var(--zk-font); margin: 0; padding: 10px 16px; }
+.tour-links { display: grid; }
+#tours .tour-links .p-link { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; border-block-start: 1px solid var(--line); margin: 0; padding: 6px 0; font: 500 15px/1.4 var(--zk-font); text-decoration: none; }
+#tours .tour-links a:hover { text-decoration: underline; text-underline-offset: .18em; }
+
+.catalog-classes { display: flex; flex-wrap: wrap; gap: 2px; margin: 8px 0 0; border-bottom: 1px solid var(--line); }
+.catalog-classes[hidden], .catalog-group-heading[hidden] { display: none; }
+.catalog-classes button { flex: 1 0 auto; min-width: 44px; min-height: 44px; background: transparent; border: none; border-bottom: 2px solid transparent; border-radius: 0; padding: 5px; color: var(--muted); font: 500 14px/1.3 var(--zk-font); }
+.catalog-classes button[aria-pressed=true] { border-bottom-color: var(--green); color: var(--ink); font-weight: 650; }
+#animals .catalog-group-heading { grid-column: 1/-1; display: flex; align-items: baseline; gap: 8px; margin: 12px 0 2px; font: 600 21px/1.2 var(--zk-font); color: var(--ink); letter-spacing: -.015em; }
+#animals .catalog-group-heading[hidden] { display: none; }
+.catalog-group-heading span { font: 400 14px/1.35 var(--zk-font); color: var(--muted); }
+#animals .animalcard { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
+#animals .animalcard[hidden] { display: none; }
+#animals .animalcard b { margin: 9px 3px 4px; font: 600 16px/1.25 var(--zk-font); overflow-wrap: anywhere; }
+#animals .animalcard small { margin: 0 3px 3px; color: var(--muted); font: 400 13px/1.35 var(--zk-font); }
 
 #chest {
   color: var(--linen); font-family: var(--zk-font);

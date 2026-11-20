@@ -6,6 +6,37 @@ const root=process.argv[2]||'http://127.0.0.1:8138/';
 const output=process.argv[3];
 const sample=JSON.parse(fs.readFileSync(path.join(__dirname,'../public/demo/feeding-programme.json'),'utf8'));
 
+async function openMapSearch(map){
+  const toggle=map.getByRole('button',{name:'Поиск и фильтры'});
+  if(await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
+}
+
+async function fullScreenMap(browser){
+  const page=await browser.newPage({viewport:{width:320,height:844},hasTouch:true,isMobile:true});
+  try{
+    await page.route('https://tile.openstreetmap.org/**',route=>route.abort());
+    for(const width of [320,390,554]){
+      await page.setViewportSize({width,height:844});
+      await page.goto(root+'#map/1');
+      const map=page.locator('#map.current');
+      await map.locator('.visitor-survey').evaluate(image=>image.decode());
+      const surface=map.locator('.park-surface');
+      const frame=await surface.boundingBox();
+      const tabs=await page.locator('.tabs').boundingBox();
+      assert.deepEqual(frame,{x:0,y:0,width,height:tabs.y});
+      assert.ok(await map.locator('.leaflet-control-attribution').isVisible());
+      assert.ok(await map.locator('.map-filters').isHidden());
+      assert.ok(await map.locator('#save-guide').isHidden());
+      await openMapSearch(map);
+      assert.ok(await map.locator('#save-guide').isVisible());
+      assert.deepEqual(await surface.boundingBox(),frame);
+      await page.keyboard.press('Escape');
+      assert.ok(await map.locator('.map-filters').isHidden());
+      assert.equal(await map.locator('.map-search-toggle').evaluate(button=>button===document.activeElement),true);
+    }
+  }finally{await page.close();}
+}
+
 async function appearance(browser){
   for(const colorScheme of ['light','dark']){
     const context=await browser.newContext({colorScheme,viewport:{width:390,height:844},locale:'ru-RU'});
@@ -98,8 +129,10 @@ async function cartography(browser){
     assert.match(await yandex.textContent(),/^Примерное место/);
     assert.equal(await map.locator('.place-info a[href*="rtext="]').count(),0);
     await map.locator('[data-zone="1"]').tap();
+    await openMapSearch(map);
     await map.locator('[data-kind="all"]').tap();
     assert.equal(await picker.inputValue(),'36');
+    await map.getByRole('button',{name:'Закрыть поиск'}).tap();
 
     const oldZoom=(await view()).zoom;
     await map.getByRole('button',{name:'Увеличить'}).click();
@@ -179,14 +212,17 @@ async function cartography(browser){
     }),'Service markers keep their hit target when they overlap a traced area');
 
     await map.getByRole('button',{name:'Закрыть карточку места'}).click();
+    await openMapSearch(map);
     await picker.selectOption('36');
     await title.getByText('Домашние козы',{exact:true}).waitFor();
+    await openMapSearch(map);
     await map.locator('[data-kind="service"]').click();
     for(const [kind,id,expected,geo] of [
       ['cafe','osm-9868296561','Точка перекуса в южной части зоны',true],
       ['rest','osm-9847947117','Беседка для отдыха',true],
       ['feed','food-entry','Корм рядом с вольером № 4',false]
     ]){
+      await openMapSearch(map);
       await service.selectOption(kind);
       await picker.selectOption(id);
       await p.waitForURL('**#map/2/'+id+'/service/'+kind,{waitUntil:'commit'});
@@ -237,6 +273,7 @@ async function cartography(browser){
     assert.equal(await service.inputValue(),'cafe');
     await map.locator('[data-zone="2"]').tap();
     assert.equal(await service.inputValue(),'cafe');
+    await openMapSearch(map);
     await picker.selectOption('osm-9868296561');
     await title.getByText('Точка перекуса в южной части зоны',{exact:true}).waitFor();
     if(output)await p.screenshot({path:path.join(output,'visitor-cafe-zone-2.png')});
@@ -323,6 +360,7 @@ async function nestedMapBack(browser){
     await page.locator('#animals [data-go="species/zubr"]').click();
     await page.locator('#species-place').click();
     const map=page.locator('#map.current');
+    await openMapSearch(map);
     await map.locator('.place-picker select').selectOption('24');
     const zoomBefore=await page.evaluate(()=>history.state.parkMapView.zoom);
     await map.getByRole('button',{name:'Увеличить'}).click();
@@ -373,19 +411,22 @@ async function offline(browser){
   const p=await context.newPage();
   await p.route('https://tile.openstreetmap.org/**',route=>route.abort());
   await p.goto(root+'#map/2');
+  const map=p.locator('#map');
+  await openMapSearch(map);
   await p.locator('#save-guide').click();
   await p.getByText('Карта и фотографии животных сохранены для этого браузера.').waitFor({timeout:30000});
   await p.waitForFunction(()=>!!navigator.serviceWorker.controller);
   await context.setOffline(true);
   await p.reload();
-  const map=p.locator('#map');
   await map.locator('.visitor-survey').evaluate(img=>img.decode());
+  await openMapSearch(map);
   await map.locator('[data-kind="service"]').click();
   await map.locator('.service-picker select').selectOption('rest');
   await map.locator('.place-picker select').selectOption('osm-9847947117');
   await p.reload();
   await map.locator('.place-marker.picked.service').waitFor();
   assert.equal(await map.locator('.place-info h2').innerText(),'Беседка для отдыха');
+  await openMapSearch(map);
   await map.locator('[data-kind="all"]').click();
   await map.locator('.place-picker select').selectOption('11');
   await map.locator('[data-go="species/zubr"]').click();
@@ -485,7 +526,7 @@ async function mapShell(browser,appRoot){
 (async()=>{
   if(output)fs.mkdirSync(output,{recursive:true});
   const b=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
-  try{await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await nestedMapBack(b);await availability(b);await offline(b);
+  try{await fullScreenMap(b);await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await nestedMapBack(b);await availability(b);await offline(b);
     if(process.argv[4]){await calendarShell(b,process.argv[4]);await mapShell(b,process.argv[4]);console.log('PASS calendar and canonical map shells, exact Back and editor link');}
     console.log('PASS visitor themes, 3 widths, zone destinations, canonical map and touch targets, programme retries, cancellation, empty day, restored offline guide');}
   finally{await b.close()}

@@ -3,25 +3,72 @@
   const grid = section.querySelector('.animalgrid');
   const search = document.getElementById('animalSearch');
   const empty = document.getElementById('animalEmpty');
+  const classes = document.getElementById('animalClasses');
+  const groupOrder = ['Млекопитающие','Птицы','Рыбы','Другие'];
+  const groupOfCategory = new Map([
+    ...['Млекопитающие','Парнокопытные','Парнокопытное','Приматы','Грызуны','Хищные'].map(name=>[name,'Млекопитающие']),
+    ...['Другие птицы','Хищные птицы','Экзотические птицы'].map(name=>[name,'Птицы']),
+    ['Рыбы','Рыбы']
+  ]);
   const normalize = text => text.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[^а-яa-z0-9]+/g,' ').trim();
   const bySlug = new Map();
   window.parkGuide.speciesName=slug=>bySlug.get(slug)?.name;
   window.parkGuide.speciesPhoto=slug=>bySlug.get(slug)?.thumbnail;
   let entries = [];
+  let selectedGroup = 'Все';
+  const headings = new Map();
 
   function indexCards() {
-    entries = [...grid.children].map(card => ({card, text:normalize(card.textContent+' '+(card.dataset.scientific||''))}));
+    entries = [...grid.querySelectorAll('.animalcard')].map(card => {
+      const category=card.dataset.category || card.querySelector('small')?.textContent || '';
+      const group=groupOfCategory.get(category) || 'Другие';
+      return {card,group,text:normalize([card.textContent,category,group,card.dataset.scientific||''].join(' '))};
+    });
+    const groups=groupOrder.filter(group=>entries.some(entry=>entry.group===group));
+    const fragment=document.createDocumentFragment();
+    headings.clear();
+    for(const group of groups){
+      const heading=document.createElement('h2');
+      heading.className='catalog-group-heading';
+      const total=document.createElement('span');
+      heading.append(group,' ',total);
+      headings.set(group,{heading,total});
+      fragment.append(heading,...entries.filter(entry=>entry.group===group).map(entry=>entry.card));
+    }
+    grid.replaceChildren(fragment);
+    if(!groups.includes(selectedGroup)) selectedGroup='Все';
+    classes.replaceChildren(...['Все',...groups].map(group=>{
+      const control=document.createElement('button');
+      control.type='button';control.textContent=group;
+      control.dataset.group=group;control.setAttribute('aria-controls',grid.id);
+      return control;
+    }));
+    classes.hidden=groups.length<2;
     filter();
   }
   function filter() {
     const words = normalize(search.value).split(' ').filter(Boolean);
     let found = 0;
-    for (const {card,text} of entries) {
-      card.hidden = !words.every(word=>text.includes(word));
-      if (!card.hidden) found++;
+    const totals = new Map();
+    for (const {card,text,group} of entries) {
+      card.hidden = (selectedGroup!=='Все' && group!==selectedGroup) || !words.every(word=>text.includes(word));
+      if (!card.hidden) {
+        found++;
+        totals.set(group,(totals.get(group)||0)+1);
+      }
     }
+    for(const [group,{heading,total}] of headings){
+      heading.hidden=!totals.has(group);
+      total.textContent=String(totals.get(group)||0);
+    }
+    for(const button of classes.children)button.setAttribute('aria-pressed',String(button.dataset.group===selectedGroup));
     empty.hidden = found > 0;
   }
+  classes.addEventListener('click',event=>{
+    const button=event.target.closest('button[data-group]');
+    if(!button)return;
+    selectedGroup=button.dataset.group;filter();
+  });
   function detail() {
     const entry = bySlug.get(location.hash.slice('#species/'.length));
     const photo = document.getElementById('species-photo');
@@ -58,6 +105,7 @@
     const button = document.createElement('button');
     button.type='button';button.className='animalcard';
     button.dataset.scientific=entry.scientific||'';
+    button.dataset.category=entry.category;
     if(entry.slug==='kapibara') button.dataset.go='animal';
     else button.dataset.go='species/'+entry.slug;
     if(entry.thumbnail){
@@ -72,12 +120,17 @@
       tag.append('№ '+place.badge);tag.setAttribute('aria-label','Вольер № '+place.badge);button.append(tag);
     }
     const group=document.createElement('small'), name=document.createElement('b');
-    group.textContent=entry.category;name.textContent=entry.name;
-    button.append(group,name);
+    const subgroup=entry.category==='Парнокопытное'?'Парнокопытные':entry.category;
+    name.textContent=entry.name;
+    button.append(name);
+    if (subgroup==='Приматы' || subgroup==='Парнокопытные') {
+      group.textContent=subgroup;
+      button.append(group);
+    }
     return button;
   }
   search.addEventListener('input', filter);
-  document.getElementById('animalReset').onclick=()=>{search.value='';filter();search.focus();};
+  document.getElementById('animalReset').onclick=()=>{search.value='';selectedGroup='Все';filter();search.focus();};
   document.addEventListener('conceptscreen',e=>{if(e.detail==='species')detail();});
   indexCards();
   if (location.protocol==='file:') return;
