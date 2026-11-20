@@ -57,7 +57,8 @@ async function fullScreenMap(browser){
       await map.locator('.visitor-survey').evaluate(image=>image.decode());
       const surface=map.locator('.park-surface');
       const frame=await surface.boundingBox();
-      assert.equal(await page.locator('.tabs').isVisible(),false);
+      assert.equal(await page.locator('.game-wayfinding').isVisible(),false);
+      assert.equal(await page.locator('.room-switcher').isVisible(),false);
       assert.deepEqual(frame,{x:0,y:0,width,height});
       if(width===320){
         const centres=await map.locator('.place-marker').evaluateAll(items=>items.map(el=>{
@@ -560,7 +561,7 @@ async function calendarShell(browser,appRoot){
     await p.goto(new URL('calendar',appRoot).href);
     const calendar=p.frameLocator('iframe[title="Календарь кормлений парка"]');
     await calendar.locator('#feed.current [data-event="raccoons"]').waitFor();
-    assert.equal(await calendar.locator('.tabs').isVisible(),false);
+    assert.equal(await calendar.locator('.game-wayfinding').isVisible(),false);
     assert.ok(await p.locator('nav a[href="/animals"]').isVisible());
     await calendar.locator('#visit-date').fill(sampleDay);
     await calendar.locator('#visit-date').press('Tab');
@@ -601,7 +602,7 @@ async function mapShell(browser,appRoot){
     await page.waitForURL('**/map',{waitUntil:'commit'});
     const guide=page.frameLocator('iframe[title="Карта парка животных"]');
     await guide.locator('#map.current .visitor-survey').evaluate(image=>image.decode());
-    assert.equal(await guide.locator('.tabs').isVisible(),false);
+    assert.equal(await guide.locator('.game-wayfinding').isVisible(),false);
     await guide.locator('#map .p-back').click();
     await page.waitForURL('**/guide',{waitUntil:'commit'});
 

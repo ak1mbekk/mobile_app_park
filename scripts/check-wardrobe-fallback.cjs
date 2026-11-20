@@ -148,7 +148,7 @@ async function checkOffline(browser, mobile) {
   const actor = page.locator('#pet-actor');
   await seed({ owned: ['cap'], hat: 'cap' });
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.locator('[data-tab="home"]').tap();
+  await page.locator('#home.current').waitFor();
   await actor.evaluate(image => image.decode());
   assert.equal(await actor.getAttribute('src'), warmPortrait);
 
@@ -175,7 +175,7 @@ async function checkOfflineMeeting(page) {
   await page.reload({ waitUntil: 'domcontentloaded' });
   assert.equal(await page.evaluate(() => window.petDemo.stats().onboardingDone), false);
   await page.evaluate(async () => {
-    for (const name of ['intro', 'threshold-morning', 'fruit', 'home']) {
+    for (const name of ['intro', 'threshold-morning', 'fruit', 'home', 'veranda-room']) {
       const asset = new URL('assets/' + name + '.webp', location.href);
       if (!await caches.match(asset)) throw new Error(name + ' is missing from the saved walk');
     }
@@ -202,7 +202,10 @@ async function checkOfflineMeeting(page) {
   await decodeBackground(naming);
   await naming.locator('#aki-name-input').fill('Аки');
   await naming.locator('#aki-name-form button').tap();
-  await page.locator('#home.current').waitFor();
+  const home = page.locator('#home.current');
+  await home.waitFor();
+  assert.match(await home.evaluate(room => getComputedStyle(room, '::before').backgroundImage), /veranda-room\.webp/);
+  await decodeBackground(home);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('#home.current #aki-display').filter({ hasText: 'Аки' }).waitFor();
   assert.equal(await page.evaluate(() => window.petDemo.stats().name), 'Аки');

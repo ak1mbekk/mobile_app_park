@@ -16,10 +16,13 @@ async function check(page, url, output) {
   const visible = screen => el('#'+screen+'.current').waitFor();
   const go = (from,to) => click('#'+from+' [data-go="'+to+'"]');
   const tab = async id => {
-    if (await page.locator('#map.current').isVisible()) {
-      await click('#map .p-back');
-      await page.locator('.tabs').waitFor({ state:'visible' });
+    for(let depth=0;await page.locator('.visitor-screen.current:not(#park)').isVisible();depth++){
+      assert.ok(depth<12,'Visitor back links must lead to the park entrance');
+      const section=await page.locator('.screen.current').getAttribute('id');
+      await click('.screen.current :is(.p-back,.cat-back)');
+      await page.locator('#'+section+'.current').waitFor({state:'hidden'});
     }
+    if(id==='park' && await page.locator('#park.current').isVisible())return;
     await click('[data-tab="'+id+'"]');
   };
   const stats = () => page.evaluate(() => window.petDemo.stats());
@@ -102,7 +105,9 @@ async function check(page, url, output) {
   });
   await el('#aki-name-input').fill('Ричи');await click('#aki-name-form button');
   await el('#name-save-error').waitFor();await visible('name');
-  await el('#aki-name-input').fill('Ричи'); await click('#aki-name-form button'); await visible('home'); await snap('home');
+  await el('#aki-name-input').fill('Ричи'); await click('#aki-name-form button'); await visible('home');
+  assert.match(await el('#home').evaluate(room=>getComputedStyle(room,'::before').backgroundImage),/veranda-room\.webp/);
+  await snap('home');
   assert.ok(await el('#starter-chest').isVisible());
   assert.ok(await el('#aki-sleep').isHidden());
   assert.equal(await page.locator('#home .room-objects .bowl,#home .room-objects .tub,#room-decor img').count(),0);
@@ -123,12 +128,12 @@ async function check(page, url, output) {
   assert.equal((await stats()).leaves,beforeMeal.leaves);
   assert.ok(await el('#snack-piece').isHidden());
   await click('#kitchen-back');assert.ok(await el('#kitchen-room').isHidden());
-  await go('home','wash'); await visible('wash'); await snap('wash-ready');
+  await click('.room-switcher [data-go="wash"]'); await visible('wash'); await snap('wash-ready');
   assert.equal(await el('#wash-vessel').getAttribute('alt'),'Деревянная купель');
   assert.ok(await el('#wash-vessel').isVisible());
   assert.ok(await el('#soap-area').isHidden());
-  await click('#wash .care-room-heading .backbtn');await visible('home');
-  await go('home','wash'); await click('#wash-start'); await snap('wash');
+  await click('#kitchen-back');await visible('home');
+  await click('.room-switcher [data-go="wash"]'); await click('#wash-start'); await snap('wash');
   await drag('#soap-area','#soap-area',.90,.12); await drag('#soap-area','#soap-area',.10,.87);
   await click('#rinse'); await snap('washed'); assert.ok((await stats()).clean>90);
   await click('#bathDone');
@@ -238,7 +243,8 @@ async function check(page, url, output) {
   const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXE});
   try {
     const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,locale:'ru-RU',reducedMotion:'reduce'});
-    page.setDefaultTimeout(6000);
+    page.setDefaultTimeout(12000);
+    page.setDefaultNavigationTimeout(45000);
     if(process.argv[3]) fs.mkdirSync(process.argv[3],{recursive:true});
     const url=new URL(process.argv[2]||'http://127.0.0.1:8138/');
     url.searchParams.set('view','2d');

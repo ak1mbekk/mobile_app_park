@@ -14,6 +14,45 @@
   --heading-face: Georgia, 'Times New Roman', serif;
 }
 html, body { overflow-x: clip; }
+.shell { grid-template-rows: minmax(0,1fr); }
+.shell:has(> .game-wayfinding:not([hidden])) { grid-template-rows: auto minmax(0,1fr); }
+.game-wayfinding {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: env(safe-area-inset-top,0px) max(10px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));
+  background: #263e34; color: #fcf2dc;
+}
+.game-wayfinding[hidden], .guide-embed .game-wayfinding { display: none; }
+.game-wordmark { font: 500 17px/1.2 Georgia, serif; letter-spacing: .005em; }
+.park-entrance, #park .back-to-game {
+  min-height: 44px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; border: 0; background: transparent; font: 600 14px/1.2 var(--zk-font);
+}
+.park-entrance { color: inherit; padding: 0 9px; }
+.park-entrance .ic, .back-to-game .ic { height: 18px; width: 18px; }
+#park .back-to-game { position: static; color: var(--green); padding: 0 5px; white-space: nowrap; }
+.park-entrance:focus-visible { outline-offset: -3px; }
+.room-switcher[hidden] { display:none; }
+.room-switcher {
+  display:flex; gap:3px; padding:4px max(8px,env(safe-area-inset-right)) max(5px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+  background:#263e34; color:#f6edd7;
+}
+.room-switcher button {
+  flex:1; min-width:0; min-height:44px; border:0; border-radius:9px;
+  font:600 14px/1.15 var(--zk-font); background:transparent; color:inherit;
+}
+.room-switcher button[aria-current] { background:#f3e8cd; color:#324137; }
+.shell:has(> .room-switcher:not([hidden])) { grid-template-rows:auto minmax(0,1fr) auto; }
+.shell:has(#home.current :is(#scene3d,#shop-preview,#bath-preview-room):not([hidden]), #home.current.night) > .room-switcher { display:none; }
+.shell:has(#home.current :is(#scene3d,#shop-preview,#bath-preview-room):not([hidden]), #home.current.night) { grid-template-rows:auto minmax(0,1fr); }
+.guide-embed .room-switcher { display:none; }
+.care-room-heading :is(#kitchen-title,#wash-title) { clip-path:inset(50%); width:1px; height:1px; overflow:hidden; }
+.back-to-game:focus-visible { outline-offset: 0; }
+#park .park-top { padding-top: max(12px,env(safe-area-inset-top)); }
+@media (max-width:350px) {
+  #park .park-top { gap: 4px; }
+  #park .park-signature { width: 96px; }
+  #park .park-mast p { width: 96px; }
+}
 #park .park-top { padding: 16px var(--guide-gutter) 8px; background: transparent; }
 .park-mast { flex: 1; min-width: 0; }
 #park .park-top h1 { margin: 0; font-size: clamp(24px, 7vw, 31px); overflow-wrap: break-word; }

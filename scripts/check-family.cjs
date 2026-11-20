@@ -102,7 +102,7 @@ const folder=path.resolve(__dirname,'..');
     assert.equal(await b.evaluate(()=>window.petDemo.stats().name),local.name);
     console.log('Second-device login, restore preview, cancel, confirmed restore and reload passed');
     async function parkProfile(page) {
-      await page.locator('[data-tab="park"]').tap();
+      if (!await page.locator('#park.current').isVisible()) await page.locator('[data-tab="park"]').tap();
       await page.locator('#park.current').waitFor();
       await open(page);
     }

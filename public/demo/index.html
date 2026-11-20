@@ -1,4 +1,9 @@
-<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>Домик у тропы · Парк животных</title><link rel="stylesheet" href="vendor/leaflet/leaflet.css"><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="show.css"><link rel="stylesheet" href="visitor.css"><link rel="stylesheet" href="park-and-chest.css"><link rel="stylesheet" href="vendor/park-menu/menu.css"><script defer src="vendor/park-menu/menu.js"></script><script src="visitor-theme.js" defer></script></head><body><div class="shell"><main><svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>Домик у тропы · Парк животных</title><link rel="stylesheet" href="vendor/leaflet/leaflet.css"><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="show.css"><link rel="stylesheet" href="visitor.css"><link rel="stylesheet" href="park-and-chest.css"><link rel="stylesheet" href="vendor/park-menu/menu.css"><script defer src="vendor/park-menu/menu.js"></script><script src="visitor-theme.js" defer></script></head><body><div class="shell">
+<nav class="game-wayfinding" aria-label="Переход в путеводитель" hidden>
+  <span class="game-wordmark">Домик у тропы</span>
+  <button type="button" class="park-entrance" data-tab="park" aria-label="Парк · открыть путеводитель"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21V3m0 2H4l-2 3 2 3h7m0-3h8l3 3-3 3h-8"/></svg>Парк</button>
+</nav>
+<main><svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
 <symbol id="aki-leaf" viewBox="0 0 24 24"><path d="M4.7 16.8C1.9 7.5 10.3 4.3 20 3.5c-.2 9.9-4.3 17.5-12.2 14.7M3.5 21l12-12"/></symbol>
 <symbol id="aki-paw" viewBox="0 0 24 24"><path d="M6.3 15.4C8 13.4 9.1 10.3 12 10.3s4 3 5.6 5.1c2.2 3 .5 5.5-2.5 4.8-2-.7-3.8-.7-6.1 0-3 .7-4.7-1.7-2.7-4.8Z"/><ellipse cx="4.7" cy="9.6" rx="1.6" ry="2.5" transform="rotate(-25 4.7 9.6)"/><ellipse cx="9.4" cy="5.8" rx="1.7" ry="2.5"/><ellipse cx="15.1" cy="5.9" rx="1.7" ry="2.5"/><ellipse cx="19.7" cy="9.5" rx="1.6" ry="2.5" transform="rotate(25 19.7 9.5)"/></symbol>
 <symbol id="aki-bowl" viewBox="0 0 24 24"><path d="M3 12h18c-.5 4.9-3.7 8-9 8s-8.5-3.1-9-8ZM7.5 20h9M15.2 10c-2.8-3.5-.2-7.1 4.9-7.5-.3 4.6-1.8 6.5-4.9 7.5ZM8 9.4C4.5 9.7 3.2 7.1 3 4.5c3.2 0 5.7 1.1 5 4.9Z"/></symbol>
@@ -30,7 +35,7 @@
 <div id="night-room" aria-hidden="true"></div>
 <div id="room-decor" aria-hidden="true"></div>
 <div id="bath-preview-room" class="wash-room-art" hidden aria-hidden="true">
-  <img class="wash-vessel upgraded" src="assets/room-bath.webp" alt="" loading="lazy">
+  <img id="bath-preview-vessel" class="wash-vessel" src="assets/base-bath.webp" alt="" loading="lazy">
 </div>
 <div id="pet-figure"><img id="pet-actor" src="assets/pet-kit.webp" alt="" draggable="false"><span id="pet-hat" hidden></span></div>
 <img id="rope-ball" src="assets/rope-ball.webp" alt="" draggable="false" hidden>
@@ -55,14 +60,9 @@
 <div class="room-objects">
 <button class="object bed" id="aki-sleep" aria-label="Уложить спать" type="button" hidden><span>Уложить</span></button>
 <button class="object chest" data-go="chest" aria-label="Открыть сундук с играми" type="button"><img id="starter-chest" src="assets/shop-chest.webp" alt="" draggable="false"><span>Игры</span></button></div>
-<nav class="care-room-links" aria-label="Комнаты">
-  <button id="aki-feed" type="button" data-go="home/kitchen">Кухня</button>
-  <button type="button" data-go="wash">Умывальная</button>
-</nav>
 <section id="kitchen-room" aria-labelledby="kitchen-title" hidden>
   <header class="care-room-heading">
-    <button class="backbtn" id="kitchen-back" data-go="home" type="button" aria-label="В домик"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
-    <h2 id="kitchen-title">Кухня</h2>
+    <h2 id="kitchen-title" tabindex="-1">Кухня</h2>
   </header>
   <button id="snack-piece" type="button" aria-label="Поднести яблоко к еноту" hidden><img src="assets/fruit.webp" draggable="false" alt=""></button>
   <div class="kitchen-actions">
@@ -82,7 +82,7 @@
 <h1 class="gameTitle" id="aki-win-title">Все пары найдены!</h1><div class="reward"><b><svg class="ic" aria-hidden="true"><use href="#aki-leaf"/></svg>+5 листочков</b><b id="pair-xp"></b></div>
 <img class="win-photo" src="assets/capybara.webp" alt="Капибара сидит в траве"><h2>Капибара</h2><button type="button" class="rewardlink" data-go="animal">Познакомиться в разделе «Парк»</button>
 <div class="win-actions"><button type="button" id="aki-replay">Сыграть ещё</button><button type="button" data-go="home">Вернуться в домик</button></div></div></section>
-<section class="screen visitor-screen" id="park"><div class="park-top"><div class="park-mast"><h1><img class="park-signature" src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"></h1><p>Барановичи</p></div><button type="button" id="visitor-theme" class="zk-circle" aria-label="Тёмная тема" aria-pressed="false"><svg class="p-icon moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.4A8.4 8.4 0 0 1 9.6 3.5a8.6 8.6 0 1 0 10.9 10.9Z"/></svg><svg class="p-icon sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button type="button" data-profile class="zk-circle" aria-label="Открыть профиль"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.3"/><path d="M5.5 20v-2a6.5 6.5 0 0 1 13 0v2"/></svg></button></div><div class="p-content"><div id="parkMenu"></div><button type="button" class="park-reward" data-go="pass">
+<section class="screen visitor-screen" id="park"><div class="park-top"><div class="park-mast"><h1><img class="park-signature" src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"></h1><p>Барановичи</p></div><button type="button" class="back-to-game" data-tab="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg><span>К Ричи</span></button><button type="button" id="visitor-theme" class="zk-circle" aria-label="Тёмная тема" aria-pressed="false"><svg class="p-icon moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.4A8.4 8.4 0 0 1 9.6 3.5a8.6 8.6 0 1 0 10.9 10.9Z"/></svg><svg class="p-icon sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button type="button" data-profile class="zk-circle" aria-label="Открыть профиль"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.3"/><path d="M5.5 20v-2a6.5 6.5 0 0 1 13 0v2"/></svg></button></div><div class="p-content"><div id="parkMenu"></div><button type="button" class="park-reward" data-go="pass">
   <span class="reward-ticket">
     <span class="reward-ticket-copy"><strong>Награда за уровень</strong><span id="parkRewardState">Откроется на уровне 10</span></span>
     <svg class="reward-ticket-arrow p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg>
@@ -199,8 +199,7 @@
 <section class="screen visitor-screen" id="species"><div class="p-content"><button class="p-back" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="species-name" class="p-title">Карточка животного</h1><p id="species-group" class="p-lead"></p><figure class="p-animal-photo" id="species-photo" hidden></figure><p id="species-latin"></p><p id="species-description" class="p-bio" hidden></p><button class="p-primary" id="species-place" hidden>Показать место на карте →</button><a id="species-source" class="p-link" href="https://animal-park.by/galereya/" target="_blank" rel="noopener">Подробнее на сайте парка ↗</a></div></section><section id="wash" class="screen bath-scene">
 
 <header class="care-room-heading">
-  <button class="backbtn corner" data-go="home" type="button" aria-label="В домик"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
-  <h1 id="wash-title">Умывальная</h1>
+  <h1 id="wash-title">Ванная</h1>
 </header>
 <div id="wash-entry">
   <img id="wash-vessel" class="wash-vessel" src="assets/base-bath.webp" alt="Деревянная купель">
@@ -228,7 +227,13 @@
 <figcaption><strong id="coupon-title">Детский билет</strong><p id="couponStatus"></p>
 <progress id="coupon-progress" value="1" max="10" aria-label="Прогресс до награды"></progress></figcaption>
 </figure>
-<p>Тестовая касса. Оплата не списывается.</p><label class="count">Детских билетов <select id="ticketCount"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></label><label class="count">Взрослых билетов <select id="adultCount"><option selected>0</option><option>1</option><option>2</option><option>3</option></select></label><small>Демо-тарифы · детский 10 BYN, взрослый 15 BYN</small><p id="ticketTotal"></p><button id="testBuy" class="primary">Подтвердить тестовый заказ</button> <button class="secondary" id="newOrder" hidden>Новый расчёт</button></div></section></main><nav class="tabs" aria-label="Разделы приложения"><button type="button" data-tab="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z"/></svg>Дом</button><button type="button" data-tab="park"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 2-5 7h3l-4 6h12l-4-6h3Zm0 13v6m9-17-3 5 3 5h-2l-1 3h8l-4-6h3Zm1 13v4"/></svg>Парк</button></nav><dialog id="profileDialog"><form method="dialog"><header><h2>Профиль</h2><button aria-label="Закрыть">×</button></header><div class="profile-line">Питомец на устройстве<strong id="pr-name">Ричи</strong></div></form>
+<p>Тестовая касса. Оплата не списывается.</p><label class="count">Детских билетов <select id="ticketCount"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></label><label class="count">Взрослых билетов <select id="adultCount"><option selected>0</option><option>1</option><option>2</option><option>3</option></select></label><small>Демо-тарифы · детский 10 BYN, взрослый 15 BYN</small><p id="ticketTotal"></p><button id="testBuy" class="primary">Подтвердить тестовый заказ</button> <button class="secondary" id="newOrder" hidden>Новый расчёт</button></div></section></main>
+<nav class="room-switcher" aria-label="Комнаты домика" hidden>
+  <button id="kitchen-back" type="button" data-go="home">Веранда</button>
+  <button id="aki-feed" type="button" data-go="home/kitchen">Кухня</button>
+  <button type="button" data-go="wash">Ванная</button>
+</nav>
+<dialog id="profileDialog"><form method="dialog"><header><h2>Профиль</h2><button aria-label="Закрыть">×</button></header><div class="profile-line">Питомец на устройстве<strong id="pr-name">Ричи</strong></div></form>
 <section id="family-account" aria-labelledby="family-title"><h3 id="family-title">Семейный аккаунт</h3>
 <p id="family-status" role="status"></p>
 <form id="family-access" hidden>

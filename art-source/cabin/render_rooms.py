@@ -1,6 +1,11 @@
 """Render the three mobile room studies from the project's actual textured GLBs.
 
 blender -b -P art-source/cabin/render_rooms.py -- OUTPUT_DIRECTORY [home|kitchen|wash] [draft]
+blender -b -t 8 -P art-source/cabin/render_rooms.py -- OUTPUT_DIRECTORY finishes
+
+The finishes preset writes the nine browser backgrounds as 540 × 960 PNGs.
+To render only a named frame, append its filename without the extension.
+The web copies use RGB WebP (Pillow quality=85, method=6).
 """
 import math
 import sys
@@ -114,11 +119,101 @@ def window_view(x, y, z, width, height):
     pane.data.materials.append(mat)
 
 
-def stage(room):
+def close_window_joint(side):
+    jamb = bpy.data.objects[side + " jamb"]
+    bpy.context.view_layer.update()
+    corners = [jamb.matrix_world @ Vector(point) for point in jamb.bound_box]
+    low = Vector([min(point[i] for point in corners) for i in range(3)])
+    high = Vector([max(point[i] for point in corners) for i in range(3)])
+    edge_x = high.x + .014 if side == "Right" else low.x - .014
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(edge_x, low.y + .049, (low.z + high.z) / 2))
+    trim = bpy.context.object
+    trim.name = side + " · дубовый наличник"
+    trim.scale = (.057, .100, high.z - low.z + .037)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    bevel = trim.modifiers.new("Кромка наличника", "BEVEL")
+    bevel.width, bevel.segments = .009, 3
+    trim.modifiers.new("Нормали", "WEIGHTED_NORMAL")
+    trim.data.materials.append(jamb.data.materials[0])
+
+
+def solid_material(name, color, roughness, metallic=0):
+    material = bpy.data.materials.new(name)
+    material.use_nodes = True
+    shader = material.node_tree.nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = (*color, 1)
+    shader.inputs["Roughness"].default_value = roughness
+    shader.inputs["Metallic"].default_value = metallic
+    return material
+
+
+def wall_plane(name, center, width, height):
+    bpy.ops.mesh.primitive_plane_add(location=center, rotation=(math.pi / 2, 0, 0))
+    panel = bpy.context.object
+    panel.name = name
+    panel.scale = (width / 2, height / 2, 1)
+    return panel
+
+
+def kitchen_timber_backing():
+    backing = wall_plane("Деревянная подложка за венцами", (0, 1.548, 1.62), 4.96, 3.28)
+    backing.data.materials.append(solid_material("Натуральная древесина в стыке", (.21, .088, .036), .88))
+
+
+def finish_plane(texture, name, center, dimensions, repeat, roughness):
+    panel = wall_plane(name, center, *dimensions)
+    material = bpy.data.materials.new(name)
+    material.use_nodes = True
+    nodes, links = material.node_tree.nodes, material.node_tree.links
+    texture_node = nodes.new("ShaderNodeTexImage")
+    texture_node.image = bpy.data.images.load(str(project / "Godot/Art/TrailHouse/Care" / texture), check_existing=True)
+    uv = nodes.new("ShaderNodeTexCoord")
+    tiling = nodes.new("ShaderNodeVectorMath")
+    tiling.operation = "MULTIPLY"
+    tiling.inputs[1].default_value = (*repeat, 1)
+    links.new(uv.outputs["UV"], tiling.inputs[0])
+    links.new(tiling.outputs[0], texture_node.inputs["Vector"])
+    shader = nodes["Principled BSDF"]
+    links.new(texture_node.outputs["Color"], shader.inputs["Base Color"])
+    shader.inputs["Roughness"].default_value = roughness
+    panel.data.materials.append(material)
+
+
+def mint_cabinet():
+    # Preserve the proportions and finishes of KitchenFixtures.tscn at the web camera's scale.
+    corner_x, corner_y, scale = .53, 1.05, .80
+    oak = solid_material("Натёртый дуб", (.25, .12, .051), .64)
+    counter = solid_material("Каменная столешница", (.84, .77, .62), .66)
+    mint = solid_material("Мятная краска", (.42, .62, .51), .80)
+    brass = solid_material("Латунь", (.75, .64, .34), .36, .68)
+
+    def part(name, position, size, material, bevel_width=.012):
+        x, z, depth = position
+        width, height, thickness = size
+        location = (corner_x + x * scale, corner_y - depth * scale, z * scale)
+        bpy.ops.mesh.primitive_cube_add(size=1, location=location)
+        piece = bpy.context.object
+        piece.name = name
+        piece.scale = (width * scale, thickness * scale, height * scale)
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+        bevel = piece.modifiers.new("Скругление кромки", "BEVEL")
+        bevel.width, bevel.segments = bevel_width, 3
+        piece.modifiers.new("Нормали", "WEIGHTED_NORMAL")
+        piece.data.materials.append(material)
+
+    part("Корпус", (0, .286, 0), (.493, .532, .33), oak)
+    part("Столешница", (0, .571, .012), (.556, .055, .402), counter)
+    for side in (-1, 1):
+        part("Рама", (side * .12, .303, .177), (.226, .428, .038), mint)
+        part("Филёнка", (side * .12, .303, .204), (.175, .352, .021), mint, .006)
+        part("Ручка", (side * .047, .371, .233), (.021, .073, .020), brass, .008)
+
+
+def stage(room, *, clean_scene=clean, finish="plain", filename=None, samples=24):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
-    scene.cycles.samples = 5 if draft else 24
+    scene.cycles.samples = 5 if draft else samples
     scene.cycles.use_denoising = True
     scene.cycles.max_bounces = 4
     scene.render.resolution_x, scene.render.resolution_y = (324,576) if draft else (540,960)
@@ -152,25 +247,37 @@ def stage(room):
     else:
         for x in (-1.62,0,1.62):
             prop("timber-wall",(x,1.48),0,dims=(1.62,.09,3.25))
+    if room == "kitchen":
+        if finish in ("wallpaper", "furnished"):
+            finish_plane("kitchen-wallpaper.png", "Обои кухни", (0, 1.424, 1.57), (4.65, 3.18), (14, 9), .88)
+        else:
+            kitchen_timber_backing()
+    elif room == "wash" and finish == "tile":
+        finish_plane("bath-tiles.png", "Плитка ванной", (0, 1.368, .435), (4.65, .87), (17, 3), .31)
     window_x = {"home":-.57,"kitchen":-.43,"wash":.48}[room]
     prop("window-with-curtains",(window_x,1.22),1.03,dims=(1.61,.21,1.35))
     window_view(window_x,1.335,1.70,1.43,1.19)
+    if room == "kitchen":
+        close_window_joint("Right")
+        close_window_joint("Left")
     if room == "home":
         prop("fleece-bed",(-.43,.53),.002,width=.72,angle=12)
         prop("toy-chest",(.51,.53),.002,width=.54,angle=-12)
-        if not clean:prop("richi",(-.02,-.34),.004,height=.89,angle=-9,pose="Idle")
+        if not clean_scene:prop("richi",(-.02,-.34),.004,height=.89,angle=-9,pose="Idle")
     elif room == "kitchen":
+        if finish in ("cabinet", "furnished"):
+            mint_cabinet()
         top = prop("bench",(-.44,.85),.002,width=1.18)
         prop("fruit-dish",(-.46,.84),top-.001,width=.47)
         prop("shelf-plants-and-jars",(.57,1.15),1.00,width=.69)
         prop("first-rug",(.13,-.13),.002,width=1.26,angle=-8)
         prop("bench",(.084,.062),.021,dims=(.47,.30,.134),angle=-9)
         prop("food-bowl",(-.10,-.54),.022,width=.34)
-        if not clean:prop("richi",(.08,-.08),.024,height=1.0,angle=-9,pose="Eat_Apple")
+        if not clean_scene:prop("richi",(.08,-.08),.024,height=1.0,angle=-9,pose="Eat_Apple")
     else:
         prop("bath-chair-with-towel",(-.62,.61),.003,width=.48,angle=10)
         prop("wash-pitcher",(-.49,.68),.003,height=.29,angle=15)
-        if not clean:
+        if not clean_scene:
             bath_tub()
             prop("richi",(-.35,-.42),.003,height=.85,angle=20,pose="Idle")
     loc = {"home":(.14,-4.05,1.42),"kitchen":(.16,-3.63,1.27),"wash":(-.24,-3.98,1.61)}[room]
@@ -185,7 +292,7 @@ def stage(room):
     light("Свет от окна",(-1.6,.44,2.38),(0,-.42,.16),155,1.28,(1,.86,.68))
     light("Отражение пола",(.55,-2.4,2.0),(0,.27,.65),108,3.2,(.91,.93,1))
     light("Свет сквозь занавеску",(1.30,.42,2.65),(0,.12,.40),70,1.85,(1,.92,.80))
-    scene.render.filepath=str(destination/(room+".png"))
+    scene.render.filepath=str(destination / ((filename or room) + ".png"))
     bpy.ops.render.render(write_still=True)
 
 
@@ -205,6 +312,26 @@ def bath_tub():
         prop("golden-sponge",(.51,.32),top-.08,width=.12)
 
 
-for room in ("home","kitchen","wash"):
-    if len(args)==1 or room in args or not any(name in args for name in ("home","kitchen","wash")):
-        stage(room)
+if "finishes" in args:
+    kitchen_variants = {
+        "plain": ("kitchen-room", "kitchen-hungry"),
+        "wallpaper": ("kitchen-wallpaper", "kitchen-wallpaper-hungry"),
+        "cabinet": ("kitchen-cabinet", "kitchen-cabinet-hungry"),
+        "furnished": ("kitchen-furnished", "kitchen-furnished-hungry"),
+    }
+    frames = {
+        name: ("kitchen", finish, index == 0)
+        for finish, names in kitchen_variants.items()
+        for index, name in enumerate(names)
+    }
+    frames["wash-tile-room"] = ("wash", "tile", True)
+    requested = set(args[1:]) - {"finishes", "draft"}
+    if requested - frames.keys():
+        raise ValueError("Unknown finish frame: " + ", ".join(sorted(requested - frames.keys())))
+    for name, (room, finish, clean_scene) in frames.items():
+        if not requested or name in requested:
+            stage(room, clean_scene=clean_scene, finish=finish, filename=name, samples=10)
+else:
+    for room in ("home", "kitchen", "wash"):
+        if len(args) == 1 or room in args or not any(name in args for name in ("home", "kitchen", "wash")):
+            stage(room)

@@ -33,7 +33,10 @@
     {id:'lantern',name:'Фонарь лесника',tier:'Редкий',group:'decor',price:35},
     {id:'chest',name:'Дубовый сундук',tier:'Эпический',group:'decor',price:75},
     {id:'settee',name:'Диван у окна',tier:'Редкий',group:'decor',price:40,replaces:'лежанку'},
-    {id:'bath',name:'Эмалированная купель',tier:'Редкая',group:'decor',price:55,replaces:'ванну'}
+    {id:'bath',name:'Эмалированная купель',tier:'Редкая',group:'decor',price:55,replaces:'ванну'},
+    {id:'wallpaper',name:'Обои для кухни',tier:'Обычные',group:'decor',price:20,replaces:'отделку кухни',room:'kitchen'},
+    {id:'bath-tile',name:'Плитка для ванной',tier:'Обычная',group:'decor',price:25,replaces:'отделку ванной',room:'bathroom'},
+    {id:'kitchen-cabinet',name:'Мятный кухонный шкаф',tier:'Обычный',group:'decor',price:35,replaces:'кухонный шкаф',room:'kitchen'}
   ];
   const owned=new Set(wares.filter(w=>Array.isArray(saved.owned)&&saved.owned.includes(w.id)).map(w=>w.id));
   const placed=new Set(wares.filter(w=>w.group==='decor'&&owned.has(w.id)&&Array.isArray(saved.placed)&&saved.placed.includes(w.id)).map(w=>w.id));
@@ -267,17 +270,28 @@
   function paintOutfit(){
     const hat=preview?.group==='hat'?preview.id:saved.hat;
     paintPet(hat);
+    const home=$('home'), bathPreview=$('bath-preview-room');
+    const shown=id=>placed.has(id)||preview?.id===id;
+    const wallpaper=shown('wallpaper'), cabinet=shown('kitchen-cabinet');
+    home.dataset.kitchenFinish=wallpaper?(cabinet?'furnished':'wallpaper'):(cabinet?'cabinet':'plain');
+    home.classList.toggle('preview-kitchen',preview?.room==='kitchen');
+    refreshKitchenArtwork();
     const showSettee=preview?.id==='settee'||(preview?.id!=='bed'&&placed.has('settee'));
-    const showUpgradedChest=preview?.id==='chest'||placed.has('chest');
-    $('starter-chest').classList.toggle('upgraded',showUpgradedChest);
-    $('bath-preview-room').hidden=preview?.id!=='bath';
+    $('starter-chest').classList.toggle('upgraded',shown('chest'));
+    bathPreview.hidden=preview?.id!=='bath'&&preview?.room!=='bathroom';
+    bathPreview.classList.toggle('has-bath-tile',shown('bath-tile'));
+    $('wash').classList.toggle('has-bath-tile',placed.has('bath-tile'));
+    const previewVessel=$('bath-preview-vessel'), previewEnamel=shown('bath');
+    const previewSource=previewEnamel?'assets/room-bath.webp':'assets/base-bath.webp';
+    if(previewVessel.getAttribute('src')!==previewSource)previewVessel.src=previewSource;
+    previewVessel.classList.toggle('upgraded',previewEnamel);
     const vessel=$('wash-vessel'), upgraded=placed.has('bath');
     const source=upgraded?'assets/room-bath.webp':'assets/base-bath.webp';
     if(vessel.getAttribute('src')!==source)vessel.src=source;
     vessel.alt=upgraded?'Эмалированная купель':'Деревянная купель';
     vessel.classList.toggle('upgraded',upgraded);
     vessel.dataset.furnishing=upgraded?'bath':'base-bath';
-    const decor=wares.filter(w=>(w.id==='bed'||w.id==='settee')&&
+    const decor=wares.filter(w=>!w.room&&(w.id==='bed'||w.id==='settee')&&
       (placed.has(w.id)||preview?.id===w.id)&&
       (w.id!=='bed'||!showSettee)&&(w.id!=='settee'||showSettee));
     $('room-decor').replaceChildren(...decor.map(w=>{
@@ -357,8 +371,12 @@
     return true;
   }
   $('shop-confirm').onclick=()=>{
+    const room=preview?.room;
     if(!purchasePreview()){$('preview-price').textContent=shopStatus;return;}
-    $('shop-preview').hidden=true;$('shop-open').focus();
+    $('shop-preview').hidden=true;
+    if(room==='kitchen')route('home/kitchen');
+    else if(room==='bathroom')route('wash');
+    else $('shop-open').focus();
   };
   function feedback(text) {
     const output=$('aki-feedback');
@@ -400,10 +418,21 @@
     }
   }
   const kitchen=$('kitchen-room'), pantry=$('aki-pantry'), pantryToggle=$('kitchen-pantry-toggle');
+  const kitchenArtwork={
+    plain:['kitchen-room','kitchen-hungry'],
+    wallpaper:['kitchen-wallpaper','kitchen-wallpaper-hungry'],
+    cabinet:['kitchen-cabinet','kitchen-cabinet-hungry'],
+    furnished:['kitchen-furnished','kitchen-furnished-hungry']
+  };
   const kitchenArt=new Image();
-  kitchenArt.onload=()=>$('home').classList.add('has-kitchen-art');
   const hungryArt=new Image();
-  hungryArt.onload=()=>$('home').classList.add('has-kitchen-hungry-art');
+  function applyKitchenFrame(image,property,readyClass){
+    const home=$('home');
+    home.style.setProperty(property,'url("'+image.getAttribute('src')+'")');
+    home.classList.add(readyClass);
+  }
+  kitchenArt.onload=()=>applyKitchenFrame(kitchenArt,'--kitchen-art','has-kitchen-art');
+  hungryArt.onload=()=>applyKitchenFrame(hungryArt,'--kitchen-hungry-art','has-kitchen-hungry-art');
   const snack=$('snack-piece');
   const apple={name:'яблоком',cost:0,source:'assets/fruit.webp'};
   let serving=null,grip=null;
@@ -415,7 +444,17 @@
   function refreshKitchenMood(){
     const hungry=saved.food<=25;
     $('home').classList.toggle('kitchen-hungry',hungry);
-    if(hungry&&!kitchen.hidden&&!hungryArt.hasAttribute('src'))hungryArt.src='assets/kitchen-hungry.webp';
+    refreshKitchenArtwork();
+  }
+  function refreshKitchenArtwork(){
+    const home=$('home');
+    if(kitchen.hidden&&!home.classList.contains('preview-kitchen'))return;
+    const [room,hungry]=kitchenArtwork[home.dataset.kitchenFinish];
+    const source='assets/'+room+'.webp';
+    if(kitchenArt.getAttribute('src')!==source)kitchenArt.src=source;
+    if(kitchen.hidden||saved.food>25)return;
+    const hungrySource='assets/'+hungry+'.webp';
+    if(hungryArt.getAttribute('src')!==hungrySource)hungryArt.src=hungrySource;
   }
   function setPantry(open){
     pantry.hidden=!open;
@@ -440,10 +479,9 @@
     if(open){
       if(preview)setShopPreview(null);
       $('shop-preview').hidden=true;
-      if(!kitchenArt.hasAttribute('src'))kitchenArt.src='assets/kitchen-room.webp';
       serveSnack(apple);
       refreshKitchenMood();
-      $('kitchen-back').focus({preventScroll:true});
+      $('kitchen-title').focus({preventScroll:true});
     }else{
       serving=null;
       snack.hidden=true;
@@ -649,10 +687,11 @@
     const wasInKitchen=!kitchen.hidden;
     setKitchen(kitchenRoute);
     if(wasInKitchen&&!kitchenRoute&&id==='home')$('aki-feed').focus({preventScroll:true});
+    if(id==='home'&&!kitchenRoute&&preview){setShopPreview(null);$('shop-preview').hidden=true;}
     if(id===active)return;
     if(active==='intro'&&!eating)resetFruit();
     if(active==='game')clearTimeout(gameTimer);
-    if(active==='home'){preview=null;$('shop-preview').hidden=true;$('cottage-shop').close();}
+    if(active==='home'){if(preview)setShopPreview(null);$('shop-preview').hidden=true;$('cottage-shop').close();}
     if(id==='wash')setWashing(false);
     $('aki-feedback').hidden=true;active=id;
     if(id==='intro'&&!eating)resetFruit();

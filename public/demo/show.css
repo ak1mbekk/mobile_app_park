@@ -1,6 +1,6 @@
 .sr,#aki-display{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .shell{max-height:100dvh}.tabs{min-height:58px}.tabs button{min-height:44px}
-#home::before,#wash{background-size:100% 100%}
+#wash{background-size:100% 100%}
 #home::after{background:linear-gradient(180deg,#33210d38,transparent 15%,transparent 91%,#32271b30)}
 .pet-status{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:18px;background:#362c21df;color:#fff4d8;font-size:13px;font-weight:600}
 .pet-status #aki-balance{border-left:1px solid #c5ba9866;padding-left:9px}.pet-status #aki-balance::after{content:" ☘";color:#cadeae}
@@ -112,8 +112,8 @@
 #snack-piece.fruit-cutout{background:none;box-shadow:none;overflow:visible}
 #snack-piece img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
 #snack-piece.fruit-cutout img{filter:drop-shadow(1px 4px 3px #38271d99)}
-#home{--scene:url("assets/starter-room.webp");--sleep-scene:linear-gradient(#101c38a8,#18120391)}
-#home::before{background-image:url("assets/starter-room.webp")}
+#home{--veranda-scene:url("assets/veranda-room.webp");--scene:var(--veranda-scene);--sleep-scene:linear-gradient(#101c38a8,#18120391);background-color:#c9d4c8}
+#home::before{background-image:var(--veranda-scene);background-size:cover}
 #home.night::before{filter:none}
 #night-room{position:absolute;inset:0;background:var(--sleep-scene) center/100% 100% no-repeat;pointer-events:none;opacity:0;transition:opacity .7s ease}
 #home.night #night-room{opacity:1}
@@ -237,11 +237,11 @@
 #kitchen-room{position:absolute;inset:0;pointer-events:none}
 #kitchen-room :is(button,#aki-pantry){pointer-events:auto}
 #home.in-kitchen{container-type:size;--kitchen-art-width:max(100cqw,56.25cqh);--kitchen-art-height:max(100cqh,177.7778cqw)}
-#home.in-kitchen::before{background-size:cover}
-#home.in-kitchen.has-kitchen-art::before{background-image:url("assets/kitchen-room.webp")}
-#home.in-kitchen.kitchen-hungry.has-kitchen-hungry-art:not(.kitchen-dragging)::before{background-image:url("assets/kitchen-hungry.webp")}
+#home:is(.in-kitchen,.preview-kitchen).has-kitchen-art::before{background-image:var(--kitchen-art)}
+#home.in-kitchen.kitchen-hungry.has-kitchen-hungry-art:not(.kitchen-dragging)::before{background-image:var(--kitchen-hungry-art)}
 #home.in-kitchen.kitchen-hungry.has-kitchen-hungry-art:not(.kitchen-dragging) #pet-figure{visibility:hidden}
-#home.in-kitchen > :is(#room-decor,.pet-status,#home-profile,#shop-open,#rope-ball,#need-bars,#bed-goal,.room-objects,.care-room-links,#aki-feedback){display:none}
+#home:is(.in-kitchen,.preview-kitchen) > :is(#room-decor,.pet-status,#home-profile,#shop-open,#rope-ball,#need-bars,#bed-goal,.room-objects,.care-room-links,#aki-feedback),
+#home.preview-kitchen > :is(#pet-figure,#aki-pet,#aki-heart){display:none}
 #home.in-kitchen #pet-figure{left:50.5%;translate:-50% 0;bottom:calc(50% - .26 * var(--kitchen-art-height));width:min(62%,.56 * var(--kitchen-art-width))}
 #home.in-kitchen #pet-figure[data-wardrobe]{transform:none}
 #home.in-kitchen #aki-pet{left:calc(50% - .195 * var(--kitchen-art-width));top:calc(50% + .02 * var(--kitchen-art-height));width:calc(.4 * var(--kitchen-art-width));height:calc(.20 * var(--kitchen-art-height))}
@@ -253,7 +253,43 @@
 #wash:not(.washing) :is(#soap-area,.wash-status){display:none}
 #wash-entry,.wash-room-art{position:absolute;inset:0}
 .wash-room-art{background-image:url("assets/wash-room.webp"),url("assets/starter-room.webp");pointer-events:none}
+#wash.has-bath-tile:not(.washing),.wash-room-art.has-bath-tile{
+  background-image:url("assets/wash-tile-room.webp"),url("assets/wash-room.webp");
+}
 .wash-vessel{position:absolute;left:17%;bottom:16%;width:78%;height:auto;pointer-events:none;filter:drop-shadow(0 5px 4px #38271d66)}
 .wash-vessel.upgraded{left:11%;width:86%;clip-path:polygon(8% 32%,31% 29%,36% 25%,42% 20%,49% 20%,56% 29%,87% 32%,100% 44%,94% 58%,88% 86%,77% 88%,72% 81%,39% 82%,33% 89%,20% 85%,16% 76%,10% 60%)}
 #wash-start{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);min-width:134px}
-#home:has(#bath-preview-room:not([hidden])) > :is(#room-decor,#pet-figure,#aki-pet,#aki-heart,#rope-ball,.room-objects,.care-room-links){visibility:hidden}
+#home:has(#bath-preview-room:not([hidden])) > :is(#room-decor,#pet-figure,#aki-pet,#aki-heart,#rope-ball,.room-objects,.care-room-links,.pet-status,#home-profile,#shop-open,#need-bars,#bed-goal){visibility:hidden}
+
+#home:not(.night,.in-kitchen){--veranda-paper:#fff7e7;--veranda-ink:#31453b;--veranda-shadow:0 2px 6px #32433428}
+#home:not(.night,.in-kitchen)::after{background:linear-gradient(180deg,#243d3317,transparent 30%)}
+#home:not(.night,.in-kitchen) .pet-status{
+  top:10px;right:146px;min-height:42px;gap:7px;padding:8px 11px;border-radius:12px;
+  background:var(--veranda-paper);color:var(--veranda-ink);box-shadow:var(--veranda-shadow);white-space:nowrap;
+}
+#home:not(.night,.in-kitchen) .pet-status #aki-balance{border-color:#c8d3c4;padding-left:7px}
+#home:not(.night,.in-kitchen) .pet-status #aki-balance::after{color:#3d664f}
+#home:not(.night,.in-kitchen) .pet-status .xptrack{flex:1;min-width:0;width:auto;background:#d8dece}
+#home:not(.night,.in-kitchen) .pet-status .xptrack i{background:#4f785a}
+#home:not(.night,.in-kitchen) #need-bars{
+  top:60px;max-width:none;padding:8px 11px 9px;background:var(--veranda-paper);color:var(--veranda-ink);box-shadow:var(--veranda-shadow);
+}
+#home:not(.night,.in-kitchen) #need-bars meter{--fill:#a35d30;background:#dedfd1}
+#home:not(.night,.in-kitchen) #need-bars [data-need=clean]{--fill:#417c86}
+#home:not(.night,.in-kitchen) #need-bars [data-need=energy]{--fill:#7663a0}
+#home:not(.night,.in-kitchen) #need-bars [data-need=joy]{--fill:#57784b}
+#home:not(.night,.in-kitchen) #need-bars meter::-webkit-meter-bar{background:#dedfd1}
+#home:not(.night,.in-kitchen) :is(#home-profile,#shop-open,.care-room-links button){
+  background:var(--veranda-paper);color:var(--veranda-ink);box-shadow:var(--veranda-shadow);
+}
+#home:not(.night,.in-kitchen) #bed-goal{background:#293f35f5}
+#home:not(.night,.in-kitchen) #pet-figure{left:52%;bottom:max(101px,17%);translate:-50% 0}
+#home:not(.night,.in-kitchen):has(#shop-preview:not([hidden])) #pet-figure[data-wardrobe]{left:50%}
+#home:not(.night,.in-kitchen) #aki-pet{left:27%;top:auto;bottom:max(101px,17%);width:50%;height:27%}
+#home:not(.night,.in-kitchen) #aki-heart{left:53%;top:50%}
+#home:not(.night,.in-kitchen) .chest{right:5%;bottom:max(121px,19%);width:clamp(76px,25%,108px)}
+#home:not(.night,.in-kitchen) #room-decor [data-furnishing=bed]{left:4%;bottom:22%;width:33%}
+#home:not(.night,.in-kitchen) #room-decor [data-furnishing=settee]{top:auto;left:1%;bottom:19%;width:38%}
+#home:not(.night,.in-kitchen) #aki-sleep{left:8%;top:auto;bottom:20%;display:grid;align-items:center}
+#home:not(.night,.in-kitchen) #aki-sleep[hidden]{display:none}
+#home:not(.night,.in-kitchen) #rope-ball{left:14%;top:auto;bottom:24%}

@@ -95,7 +95,7 @@ const { chromium } = require('playwright');
     await page.reload();assert.equal(await page.locator('#room-decor img').count(),1);
     assert.ok(await page.locator('#bath-preview-room').isHidden());
     await page.locator('#aki-sleep').click();assert.equal(await page.locator('#home').evaluate(e=>getComputedStyle(e).getPropertyValue('--scene').includes('sleep-settee')),true);
-    await page.locator('#aki-sleep').click();await page.locator('#home [data-go="wash"]').click();
+    await page.locator('#aki-sleep').click();await page.locator('.room-switcher [data-go="wash"]').click();
     const vessel=page.locator('#wash-vessel[data-furnishing="bath"]');
     await vessel.waitFor();await vessel.evaluate(image=>image.decode());
     assert.equal(await vessel.getAttribute('alt'),'Эмалированная купель');
@@ -104,6 +104,37 @@ const { chromium } = require('playwright');
     assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/wash-bath/);
     await page.locator('#soap-area').focus();for(let i=0;i<5;i++)await page.keyboard.press('Enter');
     await page.locator('#rinse').click();assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/clean-bath/);
+    await restore({onboardingDone:true,leaves:80},'home');
+    async function previewRenovation(label){
+      await page.locator('#shop-open').click();
+      await page.locator('[data-shop-group="decor"]').click();
+      await ware(label).click();
+    }
+    function waitForBackdrop(id,file,pseudo=null){
+      return page.waitForFunction(({id,file,pseudo})=>{
+        const room=document.getElementById(id);
+        return getComputedStyle(room,pseudo).backgroundImage.includes(file);
+      },{id,file,pseudo});
+    }
+    await previewRenovation('Обои для кухни');
+    await waitForBackdrop('home','kitchen-wallpaper.webp','::before');
+    assert.equal((await stats()).leaves,80);
+    await page.locator('#shop-confirm').click();
+    await page.locator('#kitchen-back').click();
+    await previewRenovation('Мятный кухонный шкаф');
+    await waitForBackdrop('home','kitchen-furnished.webp','::before');
+    await page.locator('#shop-confirm').click();
+    await page.reload();
+    await waitForBackdrop('home','kitchen-furnished.webp','::before');
+    await page.locator('#kitchen-back').click();
+    await previewRenovation('Плитка для ванной');
+    await waitForBackdrop('bath-preview-room','wash-tile-room.webp');
+    await page.locator('#shop-confirm').click();
+    await page.reload();
+    await waitForBackdrop('wash','wash-tile-room.webp');
+    assert.equal((await stats()).leaves,0);
+    await page.locator('#kitchen-back').click();
+    assert.equal(await page.locator('#room-decor img').count(),0);
     console.log('PASS needs, game locks, capped XP, shop preview, wallet, equipping and persistent furniture');
   }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

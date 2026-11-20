@@ -15,6 +15,11 @@ function visitorMapRoute(route){
   return route;
 }
 function present(id){
+  if(!id){
+    const pet=window.petDemo?.stats();
+    id=pet?.onboardingDone?'home':pet?.mealFinished?'name':'intro';
+    history.replaceState(history.state,'','#'+id);
+  }
   const canonical=visitorMapRoute(id);
   if(canonical!==id){id=canonical;history.replaceState(history.state,'','#'+id);}
   const pet=window.petDemo?.stats();
@@ -54,12 +59,18 @@ function present(id){
   else history.replaceState({...history.state,parkOrigins:{...previousScreens}},'');
   currentScreen=id;
   for(const el of document.querySelectorAll('.screen')) el.classList.toggle('current',el.id===id);
-  if(domestic.has(id)) lastHome=id;
-  document.querySelectorAll('.tabs button').forEach(el=>{
-    let on=(el.dataset.tab==='home')===domestic.has(id);
-    el.classList.toggle('sel',on);
-    if(on) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current');
-  });
+  const inGame=domestic.has(id);
+  if(inGame) lastHome=currentRoute;
+  else if(domestic.has(history.state?.gameReturn?.split('/')[0])) lastHome=history.state.gameReturn;
+  document.querySelector('.game-wayfinding').hidden=!inGame;
+  const rooms=document.querySelector('.room-switcher');
+  rooms.hidden=id!=='home' && id!=='wash';
+  for(const button of rooms.querySelectorAll('[data-go]')){
+    if(button.dataset.go===currentRoute)button.setAttribute('aria-current','location');
+    else button.removeAttribute('aria-current');
+  }
+  const returnLabel=byId('park').querySelector('[data-tab="home"] span');
+  returnLabel.textContent=pet?.name && pet.name!=='Ричи'?'В игру':'К Ричи';
   let backLink=byId(id).querySelector('.p-back,.cat-back');
   if(backLink && ['map','animal','species','tours'].includes(id)){
     const fallback={map:'park',animal:'map/1/36',species:'animals',tours:'park'};
@@ -80,7 +91,7 @@ window.conceptGo=function(id,keepOrigin=false){
   if(location.hash!=='#'+id){
     const origin=!keepOrigin && currentScreen && screen!==currentScreen ? currentRoute : '';
     const origins=origin?{...previousScreens,[screen]:origin}:previousScreens;
-    history.pushState({parkOrigins:origins,parkReturnRoute:origin},'','#'+id);
+    history.pushState({parkOrigins:origins,parkReturnRoute:origin,gameReturn:lastHome},'','#'+id);
   }
   present(id);
 };
@@ -92,7 +103,17 @@ window.addEventListener('hashchange',()=>present(location.hash.slice(1)));
 document.addEventListener('petmeal',()=>{if(lastHome==='intro')lastHome='name';});
 document.addEventListener('click',e=>{
   const tab=e.target.closest('[data-tab]');
-  if(tab){conceptGo(tab.dataset.tab==='home'?lastHome:'park',true);return;}
+  if(tab){
+    if(tab.dataset.tab==='park'){
+      conceptGo('park');
+      byId('park').querySelector('[data-tab="home"]').focus({preventScroll:true});
+    }else if(history.state?.parkReturnRoute===lastHome){
+      history.back();
+    }else{
+      conceptGo(lastHome,true);
+    }
+    return;
+  }
   const profile=e.target.closest('[data-profile]');
   if(profile){
     let name=byId('home')?.querySelector('h1')?.textContent?.trim();
@@ -118,6 +139,5 @@ function conceptStart(){
   const pet=window.petDemo?.stats();
   if(pet?.onboardingDone)lastHome='home';
   else if(pet?.mealFinished)lastHome='name';
-  let entry=location.hash.slice(1)||lastHome;
-  present(entry);
+  present(location.hash.slice(1));
 }
