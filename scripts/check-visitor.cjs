@@ -450,6 +450,49 @@ async function markerHitTesting(browser){
     assert.match(await map.locator('.place-info h2').textContent(),/Туалет/);
   }finally{await context.close();}
 }
+
+async function closeServiceMarkers(browser) {
+  const context = await browser.newContext({ viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true });
+  const services = [
+    ['osm-9868277715', 'Туалет в северной части зоны', '26.0130966,53.0979380'],
+    ['osm-9868296518', 'Точка перекуса в северной части зоны', '26.0133625,53.0978163'],
+  ];
+  try {
+    await context.route('https://tile.openstreetmap.org/**', route => route.abort());
+    for (const zoomIn of [false, true]) {
+      for (const [id, name, coordinates] of services) {
+        const page = await context.newPage();
+        try {
+          await page.goto(root + '#map/1');
+          const map = page.locator('#map.current');
+          await map.locator('.visitor-survey').evaluate(image => image.decode());
+          await page.waitForFunction(() => Number.isFinite(history.state?.parkMapView?.zoom));
+          if (zoomIn) {
+            const zoom = await page.evaluate(() => history.state.parkMapView.zoom);
+            await map.locator('.leaflet-control-zoom-in').tap();
+            await page.waitForFunction(previous => history.state.parkMapView.zoom > previous, zoom);
+          }
+          const pins = services.map(([placeId]) => map.locator(`.place-marker[data-place-id="${placeId}"]`));
+          const [first, second] = await Promise.all(pins.map(pin => pin.boundingBox()));
+          assert.ok(first && second, 'The neighboring service pins stay in view');
+          assert.ok(first.x + first.width <= second.x || second.x + second.width <= first.x ||
+            first.y + first.height <= second.y || second.y + second.height <= first.y, 'The service touch targets are separate');
+          if (output && id === services[0][0]) {
+            await page.screenshot({ path: path.join(output, `service-pins-320${zoomIn ? '-zoom' : ''}.png`) });
+          }
+          const target = await map.locator(`.place-marker[data-place-id="${id}"]`).boundingBox();
+          await page.touchscreen.tap(target.x + target.width / 2, target.y + target.height / 2);
+          const card = map.locator('.place-info');
+          await card.getByRole('heading', { name, exact: true }).waitFor();
+          assert.ok(await map.locator('.map-hit-chooser').isHidden());
+          const destination = await card.getByRole('link', { name: 'Открыть место в Яндекс Картах ↗' }).getAttribute('href');
+          assert.equal(new URL(destination).searchParams.get('ll'), coordinates);
+        } finally { await page.close(); }
+      }
+    }
+  } finally { await context.close(); }
+}
+
 async function parkEntry(browser){
   const page=await browser.newPage();
   try{
@@ -656,7 +699,7 @@ async function mapShell(browser,appRoot){
 (async()=>{
   if(output)fs.mkdirSync(output,{recursive:true});
   const b=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
-  try{await firstVisitScripts(b);await coldCafeEntry(b);await fullScreenMap(b);await zoomSelectedPlace(b);await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await nestedMapBack(b);await availability(b);await offline(b);
+  try{await firstVisitScripts(b);await coldCafeEntry(b);await fullScreenMap(b);await zoomSelectedPlace(b);await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await closeServiceMarkers(b);await nestedMapBack(b);await availability(b);await offline(b);
     if(process.argv[4]){await calendarShell(b,process.argv[4]);await mapShell(b,process.argv[4]);console.log('PASS calendar and canonical map shells, exact Back and editor link');}
     console.log('PASS visitor themes, 3 widths, zone destinations, canonical map and touch targets, programme retries, cancellation, empty day, restored offline guide');}
   finally{await b.close()}

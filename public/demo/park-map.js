@@ -21,6 +21,16 @@
   const places = [...guide.places, ...guide.geoFacilities];
   const views = new Map();
   const state = { zone: 1, id: '', kind: 'all', service: '' };
+  const markerSize = 44;
+  const markerRadius = markerSize / 2;
+  const serviceGap = markerSize + 2;
+  const serviceOffsets = [L.point(0, 0)];
+  for (const distance of [12, 24, 36, 48]) {
+    for (const [x, y] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+      serviceOffsets.push(L.point(x * distance, y * distance));
+    }
+  }
+  serviceOffsets.sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
   let map, layer, calibration, hitChooser, tiles;
   let boundaryData;
   let refreshing, redrawSurvey;
@@ -288,6 +298,39 @@
     });
   }
 
+  function layoutServices() {
+    const services = [];
+    const otherTargets = [];
+    for (const [id, marker] of markers) {
+      const element = marker.getElement();
+      if (!element) continue;
+      const anchor = map.latLngToContainerPoint(marker.getLatLng());
+      if (marker.options.pane === 'visitor-services') services.push({ id, anchor, element });
+      else otherTargets.push(anchor);
+    }
+    // Keep the selected pin on the camera's geographic anchor.
+    services.sort((a, b) => Number(b.id === state.id) - Number(a.id === state.id));
+    const occupied = [];
+    const size = map.getSize();
+    const overlaps = (a, b, distance) => Math.abs(a.x - b.x) < distance && Math.abs(a.y - b.y) < distance;
+    for (const { anchor, element } of services) {
+      const shift = serviceOffsets.find(offset => {
+        const center = anchor.add(offset);
+        if (occupied.some(target => overlaps(target, center, serviceGap))) return false;
+        if (!offset.x && !offset.y) return true;
+        return center.x >= markerRadius && center.y >= markerRadius &&
+          center.x <= size.x - markerRadius && center.y <= size.y - markerRadius &&
+          !otherTargets.some(target => overlaps(target, center, markerRadius + 1));
+      }) || serviceOffsets[0];
+      occupied.push(anchor.add(shift));
+      element.classList.toggle('service-offset', Boolean(shift.x || shift.y));
+      element.style.setProperty('--service-shift-x', `${shift.x}px`);
+      element.style.setProperty('--service-shift-y', `${shift.y}px`);
+      element.style.setProperty('--service-line-length', `${Math.hypot(shift.x, shift.y)}px`);
+      element.style.setProperty('--service-line-angle', `${Math.atan2(-shift.y, -shift.x)}rad`);
+    }
+  }
+
   function draw() {
     const point = selectedPlace();
     drawing = true;
@@ -327,7 +370,7 @@
       const face = item.service ? guide.markerFace(item) : '';
       const icon = L.divIcon({
         className: 'place-marker ' + (item.service ? 'service' : 'place-point') + (picked ? ' picked' : ''),
-        html: face, iconSize: [44, 44], iconAnchor: [22, 22]
+        html: face, iconSize: [markerSize, markerSize], iconAnchor: [markerRadius, markerRadius]
       });
       const marker = L.marker(ll, {
         icon, pane: item.service ? 'visitor-services' : 'markerPane',
@@ -344,6 +387,7 @@
     picker.disabled = false;
     renderCard(point);
     restoreCamera(point && position(point));
+    layoutServices();
     redrawSurvey?.();
     mapReady = true;
     drawing = false;
@@ -382,6 +426,7 @@
       hitChooser.dismiss();
     });
     map.on('moveend', saveView);
+    map.on('moveend zoomend', layoutServices);
     map.on('click', () => hitChooser.dismiss());
   }
 

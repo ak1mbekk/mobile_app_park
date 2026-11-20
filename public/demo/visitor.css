@@ -251,6 +251,13 @@ html.dark #visitor-theme .sun-icon {display:block}
 #map .place-area{fill:#397951;fill-opacity:.18;stroke:#25543d;stroke-opacity:.95;stroke-width:2;cursor:pointer}
 #map .place-area.picked,#map .place-area:hover,#map .place-area:focus-visible{fill-opacity:.44;stroke:#123d2b;stroke-width:3}
 #map .place-marker.service .map-wc-label{font:700 11px/1 var(--zk-font);letter-spacing:.02em}
+#map .place-marker.service-offset{translate:var(--service-shift-x) var(--service-shift-y)}
+#map .place-marker.service-offset::before{
+  content:'';position:absolute;left:50%;top:50%;width:var(--service-line-length);height:2px;
+  background:#72462a;box-shadow:0 0 0 1px #fff7e8;transform-origin:left center;
+  transform:rotate(var(--service-line-angle));pointer-events:none;
+}
+#map .place-marker.service-offset span{position:relative}
 #map .map-place-heading{display:flex;align-items:center;gap:9px;min-width:0}
 #map .map-place-heading>div{min-width:0}
 #map .map-place-portrait{flex:none;display:block;width:46px;height:46px;object-fit:cover;border:1px solid var(--line);border-radius:10px;background:var(--inset)}
