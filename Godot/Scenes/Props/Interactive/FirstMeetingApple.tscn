@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Props/Interactive/Apple.tscn" id="Apple"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Interactive/drag-apple.glb" id="Visual"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/Lighting/GroundContact.tscn" id="Contact"]
+
+[node name="Яблоко" node_paths=PackedStringArray("whole_apple_visual") instance=ExtResource("Apple")]
+layers = 0
+cast_shadow = 0
+whole_apple_visual = NodePath("TexturedApple")
+
+[node name="TexturedApple" parent="." instance=ExtResource("Visual")]
+
+[node name="FloorShade" parent="." instance=ExtResource("Contact")]
+position = Vector3(0.008, 0.0007, 0.001)
+scale = Vector3(0.143, 1, 0.109)
+
+[connection signal="picked_up" from="." to="FloorShade" method="hide"]
+[connection signal="returned_to_floor" from="." to="FloorShade" method="show"]

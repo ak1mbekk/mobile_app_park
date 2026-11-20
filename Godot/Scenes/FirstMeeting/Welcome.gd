@@ -5,6 +5,7 @@ const DEFAULT_NAME := "Ричи"
 
 @export var aki: Node3D
 @export var apple: MeshInstance3D
+@export var introduction_enabled := true
 @onready var hint: Label = %Hint
 @onready var panel: PanelContainer = %NamePanel
 @onready var field: LineEdit = %PetName
@@ -13,8 +14,14 @@ const DEFAULT_NAME := "Ричи"
 var confirmed := false
 var pet_name := DEFAULT_NAME
 var web_pause_callback: JavaScriptObject
+var web_home_callback: JavaScriptObject
+const HOME_SCENE := "res://Scenes/Levels/Home.tscn"
 
 func _ready() -> void:
+    if not introduction_enabled:
+        hide()
+        set_process(false)
+        return
     if not aki or not apple:
         return
     aki.meal_finished.connect(_after_meal)
@@ -30,11 +37,14 @@ func _ready() -> void:
     get_viewport().size_changed.connect(_layout)
     _layout()
     if _has_web_host():
-        var worn = JavaScriptBridge.eval("new URLSearchParams(location.search).get('hat')")
-        if worn is String:
-            aki.wear_hat(worn)
+        if JavaScriptBridge.eval("new URLSearchParams(location.search).get('scene') === 'home'"):
+            _complete()
+            return
         web_pause_callback = JavaScriptBridge.create_callback(_sync_pause)
-        JavaScriptBridge.get_interface("window").setParkScenePaused = web_pause_callback
+        web_home_callback = JavaScriptBridge.create_callback(_enter_home)
+        var browser := JavaScriptBridge.get_interface("window")
+        browser.setParkScenePaused = web_pause_callback
+        browser.setParkEnterHome = web_home_callback
         _notify_host("scene-ready")
         return
     var save := ConfigFile.new()
@@ -75,6 +85,10 @@ func _sync_pause(args: Array) -> void:
     if args.size() == 1 and args[0] is bool:
         get_tree().paused = args[0]
 
+func _enter_home(_args: Array) -> void:
+    get_tree().paused = false
+    _complete()
+
 func _notify_host(event_name: String) -> void:
     var browser := JavaScriptBridge.get_interface("window")
     browser.parent.postMessage("animal-park:" + event_name, str(browser.location.origin))
@@ -108,9 +122,8 @@ func _confirm_name(value: String) -> void:
 func _complete() -> void:
     confirmed = true
     panel.hide()
-    hint.text = pet_name
-    hint.show()
-    _layout()
+    hint.hide()
+    get_tree().change_scene_to_file.call_deferred(HOME_SCENE)
 
 func _process(_delta: float) -> void:
     if panel.visible:

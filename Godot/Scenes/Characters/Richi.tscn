@@ -5,6 +5,8 @@
 [ext_resource type="Script" path="res://Scenes/Characters/Gaze.gd" id="Gaze"]
 [ext_resource type="Shader" path="res://Materials/RichiEyes.gdshader" id="EyeShader"]
 [ext_resource type="Texture2D" path="res://Art/Characters/EyesProjection.png" id="EyeProjection"]
+[ext_resource type="Texture2D" path="res://Art/Characters/TailRings.png" id="TailRings"]
+[ext_resource type="AudioStream" path="res://Art/Audio/SoftMurmur.wav" id="SoftMurmur"]
 
 [ext_resource type="PackedScene" path="res://Art/Wardrobe/cap.glb" id="cap"]
 [ext_resource type="PackedScene" path="res://Art/Wardrobe/ranger.glb" id="ranger"]
@@ -14,9 +16,33 @@
 resource_local_to_scene = true
 shader = ExtResource("EyeShader")
 shader_parameter/eye_projection = ExtResource("EyeProjection")
+shader_parameter/tail_rings = ExtResource("TailRings")
+
+[sub_resource type="Animation" id="Refusal"]
+resource_name = "refuse"
+length = 0.62
+tracks/0/type = "value"
+tracks/0/path = NodePath("Модель/SmartRigArmature/Skeleton3D/Взгляд:reaction_yaw")
+tracks/0/interp = 2
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.135, 0.288, 0.43, 0.62),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.0, -12.5, 14.0, -5.7, 0.0]
+}
+
+[sub_resource type="AnimationLibrary" id="Reactions"]
+_data = {&"refuse": SubResource("Refusal")}
 
 [node name="Аки" type="Node3D"]
 script = ExtResource("Behaviour")
+
+[node name="Reactions" type="AnimationPlayer" parent="."]
+libraries = {&"": SubResource("Reactions")}
+
+[node name="SoftMurmur" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("SoftMurmur")
+volume_db = -11.0
 
 [node name="Модель" parent="." instance=ExtResource("Rig")]
 scale = Vector3(0.36, 0.36, 0.36)

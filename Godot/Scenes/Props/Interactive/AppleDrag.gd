@@ -8,6 +8,7 @@ signal accepted
 @export var second_bite: ArrayMesh
 @export var raccoon: Node3D
 @export_range(0.03, 0.16, 0.005) var drop_radius := 0.09
+@export var whole_apple_visual: Node3D
 
 const NO_POINTER := -2
 const MOUSE := -1
@@ -21,6 +22,7 @@ var settling := false
 var settle_from: Vector3
 var settle_time := 0.0
 @onready var initial_scale := scale
+@onready var whole_apple := mesh
 
 func _ready() -> void:
     floor_position = global_position
@@ -110,6 +112,7 @@ func _process(delta: float) -> void:
         if stage != bite_stage:
             bite_stage = stage
             mesh = first_bite if stage == 1 else second_bite
+            _show_whole_apple_visual(false)
         var remaining := 1.0 - 0.16 * smoothstep(0.45, 0.49, phase) - 0.22 * smoothstep(0.59, 0.63, phase)
         scale = initial_scale * remaining
         global_position = palm_center() - center_offset()
@@ -131,7 +134,29 @@ func _notification(what: int) -> void:
         release(false)
 
 func restore_eaten() -> void:
+    pointer = NO_POINTER
     delivered = true
     settling = false
     set_process(false)
     hide()
+
+func _show_whole_apple_visual(visible_whole: bool) -> void:
+    if whole_apple_visual == null:
+        return
+    whole_apple_visual.visible = visible_whole
+    layers = 0 if visible_whole else 1
+    cast_shadow = SHADOW_CASTING_SETTING_OFF if visible_whole else SHADOW_CASTING_SETTING_ON
+
+func reset_apple() -> void:
+    pointer = NO_POINTER
+    delivered = false
+    bite_stage = 0
+    settling = false
+    scale = initial_scale
+    mesh = whole_apple
+    _show_whole_apple_visual(true)
+    global_position = floor_position
+    var shade := get_node_or_null("FloorShade") as Node3D
+    if shade: shade.show()
+    set_process(false)
+    show()

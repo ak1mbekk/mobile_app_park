@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scenes/Home/CareCorner.gd" id="Script"]
+
+[sub_resource type="StandardMaterial3D" id="BallMat"]
+albedo_color = Color(0.62, 0.42, 0.23, 1)
+roughness = 0.91
+
+[sub_resource type="StandardMaterial3D" id="RopeMat"]
+albedo_color = Color(0.79, 0.62, 0.37, 1)
+roughness = 0.92
+
+[sub_resource type="SphereMesh" id="BallMesh"]
+material = SubResource("BallMat")
+radius = 0.099
+height = 0.198
+
+[sub_resource type="TorusMesh" id="RopeMesh"]
+material = SubResource("RopeMat")
+inner_radius = 0.087
+outer_radius = 0.104
+rings = 26
+ring_segments = 10
+
+[node name="Уход" type="Node3D"]
+script = ExtResource("Script")
+
+[node name="Метка" type="Marker3D" parent="."]
+position = Vector3(0.01, 0.065, 1.54)
+
+[node name="Мяч" type="MeshInstance3D" parent="."]
+position = Vector3(0.01, 0.065, 1.54)
+scale = Vector3(0.60, 0.60, 0.60)
+mesh = SubResource("BallMesh")
+
+[node name="Виток 1" type="MeshInstance3D" parent="Мяч"]
+position = Vector3(0, 0.036, 0)
+rotation = Vector3(0.09, 0, 0.16)
+scale = Vector3(0.92, 0.92, 0.92)
+mesh = SubResource("RopeMesh")
+
+[node name="Виток 2" type="MeshInstance3D" parent="Мяч"]
+rotation = Vector3(0.09, 0, 0.16)
+mesh = SubResource("RopeMesh")
+
+[node name="Виток 3" type="MeshInstance3D" parent="Мяч"]
+position = Vector3(0, -0.036, 0)
+rotation = Vector3(0.09, 0, 0.16)
+scale = Vector3(0.92, 0.92, 0.92)
+mesh = SubResource("RopeMesh")
+
+[node name="Виток 4" type="MeshInstance3D" parent="Мяч"]
+rotation = Vector3(1.04, 0, 1.17)
+mesh = SubResource("RopeMesh")

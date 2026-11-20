@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Architecture/floorboards.glb" id="1_model"]
+
+[node name="Floorboards" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+position = Vector3(0, -0.0705, 0)

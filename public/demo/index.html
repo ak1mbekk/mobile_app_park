@@ -9,7 +9,16 @@
 </defs></svg>
 <section id="intro" class="screen cabin" aria-label="Первая встреча">
 <button type="button" id="open3d" class="scene-switch" hidden>Войти в 3D</button>
-<div id="scene3d" hidden><button type="button" id="close3d" class="scene-switch">Вернуться</button><p id="loading3d" role="status">Загружаем домик…</p></div>
+<div id="scene3d" hidden>
+  <div id="loading3d" aria-label="Загрузка игры">
+    <img class="opening-mark" src="assets/park-wordmark.webp" alt="Парк животных" width="200" height="84">
+    <div class="opening-status">
+      <p id="opening-caption" role="status">Загружаем домик…</p>
+      <progress id="opening-progress" aria-labelledby="opening-caption"></progress>
+    </div>
+  </div>
+  <button type="button" id="close3d" class="scene-switch">Лёгкая версия</button>
+</div>
 <button class="fruit" id="apple-hotspot" type="button" aria-label="Протянуть яблоко еноту"><img src="assets/fruit.webp" draggable="false" alt=""></button>
 <p class="instruction" id="intro-hint" aria-live="polite">Перетащи яблоко к лапам</p>
 <script src="meeting.js" defer></script>
@@ -18,6 +27,8 @@
 <div class="sheet"><h2 id="naming-title">Как назовём енота?</h2>
 <form id="aki-name-form"><input id="aki-name-input" value="Ричи" aria-label="Имя енота" maxlength="24" required autocomplete="off"><button class="primary" type="submit">Готово</button></form><p id="name-save-error" role="alert" hidden>Не удалось сохранить имя на устройстве. Проверь свободное место и нажми «Готово» ещё раз.</p></div></section>
 <section id="home" class="screen cabin" aria-labelledby="aki-display">
+<div id="night-room" aria-hidden="true"></div>
+<img id="starter-bath" src="assets/base-bath.webp" alt="" loading="lazy">
 <div id="room-decor" aria-hidden="true"></div>
 <div id="pet-figure"><img id="pet-actor" src="assets/pet-kit.webp" alt="" draggable="false"><span id="pet-hat" hidden></span></div>
 <button id="rope-ball" aria-label="Покатить мяч еноту" hidden><img src="assets/rope-ball.webp" alt=""></button>
@@ -37,18 +48,19 @@
 </div>
 <button class="pet" id="aki-pet" aria-label="Погладить енота"></button><span aria-hidden="true" class="pet-heart" id="aki-heart">♥</span>
 <p class="homemsg" id="aki-feedback" aria-live="polite" hidden></p>
+<aside id="bed-goal" hidden><p id="bed-goal-text" aria-live="polite"></p><div><button id="bed-goal-action" class="primary" type="button"></button><button id="bed-goal-later" type="button">Позже</button></div></aside>
 <button id="snack-piece" aria-label="Поднести угощение к еноту" hidden><img src="assets/piece-1.webp" draggable="false" alt=""></button>
 <div class="room-objects">
-<button class="object bowl" id="aki-feed" aria-label="Угостить из миски"></button>
-<button class="object bed" id="aki-sleep" aria-label="Уложить спать"><span class="sr">Уложить</span></button>
-<button class="object tub" data-go="wash" aria-label="Вымыть Ричи"></button>
-<button class="object chest" data-go="chest" aria-label="Открыть сундук с играми"></button></div>
+<button class="object bowl" id="aki-feed" aria-label="Угостить из миски"><span>Кормить</span></button>
+<button class="object bed" id="aki-sleep" aria-label="Уложить спать"><span>Уложить</span></button>
+<button class="object tub" data-go="wash" aria-label="Вымыть Ричи"><span>Купать</span></button>
+<button class="object chest" data-go="chest" aria-label="Открыть сундук с играми"><span>Игры</span></button></div>
 <div class="sheet" id="aki-pantry" hidden><div class="sheet-header"><h2>Чем угостить?</h2><button class="iconbtn" type="button" id="close-pantry" aria-label="Закрыть">×</button></div><div class="foodlist"><button type="button" id="offer-apple" hidden>Яблоко<small>Из сада</small></button><button type="button" data-snack="грушей" data-cost="0">Груша<small>В кладовой</small></button><button type="button" data-snack="ягодами" data-cost="2">Ягоды<small>2 листочка</small></button></div></div>
 </section>
 <section id="game" class="screen felt" aria-labelledby="pairs-title">
 <div class="gamepad"><header class="gamebar"><button class="backbtn" data-go="home" type="button" aria-label="В домик"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button><span class="pairprogress" id="aki-pairs" aria-live="polite">0 из 6 пар</span></header>
 <h1 class="gameTitle" id="pairs-title">Лесные пары</h1><p class="gameHelp">Открой две карточки с одинаковым животным.</p><div class="boardBox"><div class="tiles" id="aki-board" aria-label="Карточки животных"></div></div>
-<div class="gamefoot"><span id="aki-moves">Ходов: 0</span><b><svg class="ic" aria-hidden="true"><use href="#aki-leaf"/></svg>+5 листочков</b><b id="pair-xp"></b></div></div></section>
+<div class="gamefoot"><span id="aki-moves">Ходов: 0</span></div></div></section>
 <section id="win" class="screen felt" aria-labelledby="aki-win-title"><div class="win-pad">
 <header class="gamebar" style="align-self:stretch"><button class="backbtn" data-go="home" aria-label="В домик" type="button"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button></header>
 <h1 class="gameTitle" id="aki-win-title">Все пары найдены!</h1><div class="reward"><b><svg class="ic" aria-hidden="true"><use href="#aki-leaf"/></svg>+5 листочков</b><b id="pair-xp"></b></div>

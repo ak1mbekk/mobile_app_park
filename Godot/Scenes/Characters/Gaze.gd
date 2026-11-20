@@ -28,6 +28,8 @@ var head_wait := 0.0
 var last_direction := Vector2.ZERO
 var head: int
 var rest_eye: Vector3
+var mood_angles := Vector2.ZERO
+var reaction_yaw := 0.0
 
 func _ready() -> void:
     var painted := actor_mesh.get_active_material(0) as StandardMaterial3D
@@ -137,13 +139,14 @@ func _process(delta: float) -> void:
     surface.set_shader_parameter("gaze", angles)
 
 func _process_modification_with_delta(_delta: float) -> void:
-    if not enabled or head_angles.is_zero_approx() or not is_instance_valid(skeleton):
+    var turn_angles := head_angles + mood_angles + Vector2(reaction_yaw, 0.0)
+    if not enabled or turn_angles.is_zero_approx() or not is_instance_valid(skeleton):
         return
     var camera := get_viewport().get_camera_3d()
     if not camera:
         return
     var camera_axes := skeleton.global_basis.orthonormalized().inverse() * camera.global_basis.orthonormalized()
-    var turn := Basis(camera_axes.y.normalized(), deg_to_rad(head_angles.x)) * Basis(camera_axes.x.normalized(), deg_to_rad(head_angles.y))
+    var turn := Basis(camera_axes.y.normalized(), deg_to_rad(turn_angles.x)) * Basis(camera_axes.x.normalized(), deg_to_rad(turn_angles.y))
     var pose := skeleton.get_bone_global_pose(head)
     pose.basis = turn * pose.basis
     skeleton.set_bone_global_pose(head, pose)

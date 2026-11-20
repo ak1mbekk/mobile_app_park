@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Characters/Richi.tscn" id="1_richi"]
+[ext_resource type="AnimationLibrary" path="res://Art/Characters/FirstMeeting/SittingOfferEat.tres" id="2_clips"]
+
+[node name="FirstMeetingRichi" instance=ExtResource("1_richi")]
+animation_player_path = NodePath("SeatedMeeting")
+
+[node name="SeatedMeeting" type="AnimationPlayer" parent="."]
+root_node = NodePath("../Модель")
+libraries = {&"": ExtResource("2_clips")}

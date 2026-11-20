@@ -33,7 +33,7 @@ const { chromium } = require('playwright');
         await page.locator('#home.current').waitFor();
       }
     }
-    await restore({onboardingDone:true,energy:80},'home');
+    await restore({onboardingDone:true,energy:80,owned:['bed'],placed:['bed']},'home');
     await page.locator('#aki-sleep').click();
     assert.equal((await stats()).night,false);
     assert.match(await page.locator('#aki-feedback').textContent(),/М-м/);

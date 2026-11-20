@@ -1,0 +1,75 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scenes/Games/MatchThree.gd" id="1"]
+[ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="2"]
+
+[node name="MatchThree" type="VBoxContainer"]
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+script = ExtResource("1")
+
+[node name="Status" type="PanelContainer" parent="."]
+layout_mode = 2
+
+[node name="Stats" type="HBoxContainer" parent="Status"]
+layout_mode = 2
+
+[node name="Goal" type="Label" parent="Status/Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.22, 0.31, 0.19, 1)
+text = "Малина 0 / 9"
+
+[node name="Combo" type="Label" parent="Status/Stats"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.45, 0.24, 0.15, 1)
+text = "Бонус +1"
+horizontal_alignment = 1
+
+[node name="Counter" type="Label" parent="Status/Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ходы 12"
+horizontal_alignment = 2
+
+[node name="Board" type="AspectRatioContainer" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 356)
+layout_mode = 2
+size_flags_vertical = 3
+ratio = 0.89
+
+[node name="Paper" type="VBoxContainer" parent="Board"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Grid" type="GridContainer" parent="Board/Paper"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+columns = 6
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="Hint" type="Label" parent="Board/Paper"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+theme_override_font_sizes/font_size = 23
+text = "Поменяй соседние плоды местами, чтобы собрать три в ряд."
+autowrap_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Again" type="Button" parent="."]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 74)
+layout_mode = 2
+text = "Ещё раз"
+script = ExtResource("2")

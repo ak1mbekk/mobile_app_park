@@ -112,7 +112,7 @@ theme_override_colors/font_color = Color(0.17, 0.15, 0.12, 1)
 theme_override_colors/caret_color = Color(0.18, 0.26, 0.18, 1)
 theme_override_font_sizes/font_size = 24
 max_length = 24
-text = "Аки"
+text = "Ричи"
 accessibility_name = "Имя енота"
 select_all_on_focus = true
 

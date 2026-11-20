@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Levels/FirstMeeting.tscn" id="Room"]
+
+[node name="Комната" instance=ExtResource("Room")]
+
+[node name="Аки" parent="."]
+animation_player_path = NodePath("Модель/AnimationPlayer")
+
+[node name="Тень на коврике" parent="."]
+visible = false
+
+[node name="Знакомство" parent="."]
+introduction_enabled = false
+visible = false

@@ -17,6 +17,11 @@ async function check(page, url, output) {
   const go = (from,to) => click('#'+from+' [data-go="'+to+'"]');
   const tab = id => click('[data-tab="'+id+'"]');
   const stats = () => page.evaluate(() => window.petDemo.stats());
+  async function pairsOnBoard() {
+    const cards = await page.locator('#aki-board img').evaluateAll(imgs=>imgs.map(i=>i.src));
+    assert.equal(cards.length,12);
+    return [...new Set(cards)].map(s=>cards.flatMap((a,i)=>a===s?[i]:[]));
+  }
   const snap = async name => {
     if (output) await page.screenshot({path:path.join(output,name+'.png')});
   };
@@ -95,13 +100,10 @@ async function check(page, url, output) {
   await go('home','wash'); await visible('wash'); await snap('wash');
   await drag('#soap-area','#soap-area',.90,.12); await drag('#soap-area','#soap-area',.10,.87);
   await click('#rinse'); await snap('washed'); assert.ok((await stats()).clean>90);
-  await click('#bathDone'); await click('#aki-sleep'); await snap('sleep');
-  await page.goto(url); await visible('home'); assert.ok((await stats()).night); await click('#aki-sleep');
+  await click('#bathDone');
   await go('home','chest'); await snap('chest'); await go('chest','game'); await visible('game');
-  const cards = await page.locator('#aki-board img').evaluateAll(imgs=>imgs.map(i=>i.src));
-  assert.equal(cards.length,12);
+  const pairs = await pairsOnBoard();
   await page.waitForTimeout(1800);assert.equal(await page.locator("#aki-board .face").count(),0);
-  const pairs = [...new Set(cards)].map(s=>cards.flatMap((a,i)=>a===s?[i]:[]));
   const beforeWin = await stats();
   for(const [n,pair] of pairs.entries()){
     for (const i of pair) await click('#aki-board [data-index="'+i+'"]');
@@ -113,7 +115,13 @@ async function check(page, url, output) {
   }
   await visible('win'); assert.equal((await stats()).leaves,beforeWin.leaves+5);
   await page.reload(); await visible('win'); assert.equal((await stats()).leaves,beforeWin.leaves+5);
-  await go('win','home'); await go('home','chest'); await go('chest','match'); await visible('match'); await snap('match');
+  await go('win','home');
+  assert.equal(await el('#bed-goal-action').textContent(),'Купить лежанку за 5 листиков');
+  await click('#bed-goal-action'); assert.equal((await stats()).leaves,beforeWin.leaves);
+  await el('[data-furnishing="bed"]').waitFor();
+  await click('#aki-sleep'); await snap('sleep');
+  await page.goto(url); await visible('home'); assert.ok((await stats()).night); await click('#aki-sleep');
+  await go('home','chest'); await go('chest','match'); await visible('match'); await snap('match');
   const swap = await page.locator('#matchBoard img').evaluateAll(imgs=>{
     const cells=imgs.map(i=>i.src);
     function line(){
@@ -146,8 +154,13 @@ async function check(page, url, output) {
   }
   await page.mouse.up();assert.match(await el('#catchTitle').textContent(),/Урожай собран/);
   const afterHarvest=await stats();assert.equal(afterHarvest.orchard.errors,3);assert.equal(afterHarvest.orchard.reward.leaves,1);
-  await go('catch','chest');await click('#buy-ball');await visible('home');
-  assert.equal((await stats()).leaves,afterHarvest.leaves-5);await click('#rope-ball');
+  await go('catch','chest');await click('#buy-ball');
+  assert.match(await el('#toy-notice').textContent(),/Нужно 5 листьев/);
+  await go('chest','game');await visible('game');
+  for(const pair of await pairsOnBoard()) for(const i of pair) await click('#aki-board [data-index="'+i+'"]');
+  await visible('win');assert.equal((await stats()).leaves,afterHarvest.leaves+5);
+  await go('win','home');await go('home','chest');await click('#buy-ball');await visible('home');
+  assert.equal((await stats()).leaves,afterHarvest.leaves);await click('#rope-ball');
   await page.locator('#aki-feedback').filter({hasText:/поймал мяч|вернул тебе мяч|принёс любимый мяч/}).waitFor();
   await page.reload();assert.equal((await stats()).ball,true);
   await tab('park'); await go('park','pass'); await el('#ticketCount').selectOption('0');

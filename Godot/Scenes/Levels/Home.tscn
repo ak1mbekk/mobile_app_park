@@ -1,0 +1,353 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scenes/Home/Home.gd" id="HomeScript"]
+[ext_resource type="PackedScene" path="res://Scenes/Levels/StarterHomeRoom.tscn" id="Room"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/Bedroom.tscn" id="Bedroom"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/Bathroom.tscn" id="Bathroom"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/CareCorner.tscn" id="Care"]
+[ext_resource type="PackedScene" path="res://Scenes/Games/GameRoom.tscn" id="GameRoom"]
+
+[ext_resource type="PackedScene" path="res://Scenes/Home/Stations.tscn" id="Stations"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/RoomFurnishings.tscn" id="Decor"]
+[ext_resource type="PackedScene" path="res://Scenes/Shop/Shop.tscn" id="Shop"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/NeedsHud.tscn" id="NeedsHud"]
+[ext_resource type="ArrayMesh" path="res://Art/Characters/RichiGrowth.res" id="RichiGrowth"]
+[ext_resource type="Texture2D" path="res://Art/Brand/profile-raccoon.webp" id="ProfileIcon"]
+[ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="TouchButton"]
+
+[sub_resource type="StyleBoxFlat" id="Panel"]
+bg_color = Color(0.105, 0.15, 0.108, 0.96)
+content_margin_left = 16.0
+content_margin_right = 16.0
+content_margin_top = 10.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="Action"]
+bg_color = Color(0.22, 0.31, 0.23, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[sub_resource type="StyleBoxFlat" id="ActionHover"]
+bg_color = Color(0.30, 0.40, 0.28, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[sub_resource type="StyleBoxFlat" id="ActionPressed"]
+bg_color = Color(0.17, 0.24, 0.18, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[sub_resource type="StyleBoxFlat" id="Focus"]
+draw_center = false
+border_color = Color(0.94, 0.81, 0.48, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[sub_resource type="Theme" id="HomeTheme"]
+default_font_size = 20
+Button/colors/font_color = Color(0.99, 0.97, 0.9, 1)
+Button/colors/font_disabled_color = Color(0.77, 0.79, 0.72, 1)
+Button/styles/normal = SubResource("Action")
+Button/styles/hover = SubResource("ActionHover")
+Button/styles/pressed = SubResource("ActionPressed")
+Button/styles/focus = SubResource("Focus")
+PanelContainer/styles/panel = SubResource("Panel")
+
+[sub_resource type="StyleBoxEmpty" id="Invisible"]
+
+[sub_resource type="StyleBoxFlat" id="Chip"]
+bg_color = Color(0.12, 0.17, 0.125, 0.96)
+content_margin_left = 12.0
+content_margin_right = 12.0
+content_margin_top = 4.0
+content_margin_bottom = 5.0
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_left = 9
+corner_radius_bottom_right = 9
+
+[sub_resource type="Theme" id="Hotspots"]
+Label/font_sizes/font_size = 20
+Label/colors/font_color = Color(1, 0.98, 0.93, 1)
+Label/styles/normal = SubResource("Chip")
+Button/styles/normal = SubResource("Invisible")
+Button/styles/hover = SubResource("Invisible")
+Button/styles/pressed = SubResource("Focus")
+Button/styles/focus = SubResource("Focus")
+
+[node name="Домик" type="Node3D"]
+script = ExtResource("HomeScript")
+growth_mesh = ExtResource("RichiGrowth")
+
+[node name="Комната" parent="." instance=ExtResource("Room")]
+
+[node name="Станции ухода" parent="." instance=ExtResource("Stations")]
+
+[node name="Обстановка" parent="." instance=ExtResource("Decor")]
+
+[node name="Спальня" parent="." instance=ExtResource("Bedroom")]
+visible = false
+
+[node name="Купание" parent="." instance=ExtResource("Bathroom")]
+visible = false
+
+[node name="Уход" parent="." instance=ExtResource("Care")]
+visible = false
+
+[node name="Интерфейс" type="CanvasLayer" parent="."]
+
+[node name="Actions" type="Control" parent="Интерфейс"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme = SubResource("Hotspots")
+
+[node name="Feed" type="Button" parent="Интерфейс/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(114, 78)
+accessibility_name = "Кормить Ричи"
+
+[node name="Label" type="Label" parent="Интерфейс/Actions/Feed"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+text = "Кормить"
+
+[node name="Wash" type="Button" parent="Интерфейс/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 78)
+accessibility_name = "Купать Ричи"
+
+[node name="Label" type="Label" parent="Интерфейс/Actions/Wash"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+text = "Купать"
+
+[node name="Sleep" type="Button" parent="Интерфейс/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(146, 78)
+accessibility_name = "Спать"
+
+[node name="SleepLabel" type="Label" parent="Интерфейс/Actions/Sleep"]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+text = "Спать"
+
+[node name="Play" type="Button" parent="Интерфейс/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(97, 78)
+accessibility_name = "Сундук с играми"
+
+[node name="Label" type="Label" parent="Интерфейс/Actions/Play"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+text = "Игры"
+
+[node name="Ball" type="Button" parent="Интерфейс/Actions"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(100, 78)
+accessibility_name = "Играть с мячом"
+
+[node name="Label" type="Label" parent="Интерфейс/Actions/Ball"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+text = "Мяч"
+
+[node name="Shop" type="Button" parent="Интерфейс/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(101, 78)
+accessibility_name = "Лесная лавка"
+
+[node name="Label" type="Label" parent="Интерфейс/Actions/Shop"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+text = "Лавка"
+
+[node name="Header" type="PanelContainer" parent="Интерфейс"]
+unique_name_in_owner = true
+anchor_right = 1.0
+theme = SubResource("HomeTheme")
+
+[node name="Contents" type="VBoxContainer" parent="Интерфейс/Header"]
+theme_override_constants/separation = 8
+
+[node name="Row" type="HBoxContainer" parent="Интерфейс/Header/Contents"]
+theme_override_constants/separation = 12
+
+[node name="PetIdentity" type="VBoxContainer" parent="Интерфейс/Header/Contents/Row"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="PetName" type="Label" parent="Интерфейс/Header/Contents/Row/PetIdentity"]
+unique_name_in_owner = true
+text = "Ричи"
+text_overrun_behavior = 3
+theme_override_font_sizes/font_size = 29
+
+[node name="Stats" type="Label" parent="Интерфейс/Header/Contents/Row/PetIdentity"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.76, 0.83, 0.70, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="Profile" type="Button" parent="Интерфейс/Header/Contents/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(76, 76)
+size_flags_vertical = 4
+icon = ExtResource("ProfileIcon")
+expand_icon = true
+icon_alignment = 1
+accessibility_name = "Открыть профиль"
+theme_override_constants/icon_max_width = 54
+
+[node name="ProfileHint" type="Label" parent="Интерфейс/Header/Contents/Row/Profile"]
+unique_name_in_owner = true
+visible = false
+offset_left = -126.0
+offset_top = 20.0
+offset_right = -9.0
+offset_bottom = 53.0
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+theme = SubResource("Hotspots")
+text = "Профиль"
+
+[node name="NeedsHud" parent="Интерфейс/Header/Contents" instance=ExtResource("NeedsHud")]
+unique_name_in_owner = true
+
+[node name="NeedsTick" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 30.0
+
+[node name="Dock" type="PanelContainer" parent="Интерфейс"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_vertical = 0
+theme = SubResource("HomeTheme")
+
+[node name="Content" type="VBoxContainer" parent="Интерфейс/Dock"]
+theme_override_constants/separation = 8
+
+[node name="Status" type="Label" parent="Интерфейс/Dock/Content"]
+unique_name_in_owner = true
+visible = false
+text = ""
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.91, 0.93, 0.84, 1)
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 2
+
+[node name="GoalText" type="Label" parent="Интерфейс/Dock/Content"]
+unique_name_in_owner = true
+visible = false
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 2
+
+[node name="GoalButtons" type="HBoxContainer" parent="Интерфейс/Dock/Content"]
+unique_name_in_owner = true
+visible = false
+theme_override_constants/separation = 8
+
+[node name="GoalAction" type="Button" parent="Интерфейс/Dock/Content/GoalButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+size_flags_horizontal = 3
+script = ExtResource("TouchButton")
+
+[node name="GoalLater" type="Button" parent="Интерфейс/Dock/Content/GoalButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 54)
+text = "Позже"
+script = ExtResource("TouchButton")
+
+[node name="Rinse" type="Button" parent="Интерфейс/Dock/Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 58)
+text = "Смыть пену"
+
+[node name="Back" type="Button" parent="Интерфейс/Dock/Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 58)
+text = "В комнату"
+
+[node name="GameRoom" parent="Интерфейс" instance=ExtResource("GameRoom")]
+visible = false
+
+[node name="LocalProfile" type="PopupPanel" parent="Интерфейс"]
+unique_name_in_owner = true
+initial_position = 1
+size = Vector2i(360, 168)
+
+[node name="LocalContent" type="VBoxContainer" parent="Интерфейс/LocalProfile"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+theme_override_constants/separation = 10
+
+[node name="LocalName" type="Label" parent="Интерфейс/LocalProfile/LocalContent"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 24
+
+[node name="LocalStats" type="Label" parent="Интерфейс/LocalProfile/LocalContent"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 19
+
+[node name="LocalClose" type="Button" parent="Интерфейс/LocalProfile/LocalContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+text = "Закрыть"
+
+[node name="Shop" parent="Интерфейс" instance=ExtResource("Shop")]
+visible = false
