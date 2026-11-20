@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://Scenes/Games/Orchard.gd" id="1"]
 [ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="2"]
 [ext_resource type="Script" path="res://Scenes/Games/OrchardField.gd" id="3"]
 [ext_resource type="Texture2D" path="res://Scenes/Games/Art/orchard.webp" id="4"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/harvest-basket.webp" id="5"]
 
 [sub_resource type="StyleBoxFlat" id="Frame"]
 content_margin_left = 5.0
@@ -91,6 +92,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("3")
+basket_atlas = ExtResource("5")
 
 [node name="Hint" type="Label" parent="."]
 unique_name_in_owner = true

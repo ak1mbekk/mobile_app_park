@@ -158,6 +158,7 @@ func _draw_field() -> void:
     %Field.fruit_x = spot
     %Field.basket_x = basket_position
     %Field.basket_tilt = basket_tilt
+    %Field.harvest = caught
     %Field.fall = fall
     %Field.cone = kind == "cone"
     %Field.fruit_visible = running

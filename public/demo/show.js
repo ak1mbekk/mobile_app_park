@@ -144,6 +144,7 @@
     landed.src=fruitUrl(kind);
   }
   function orchardProgress(){
+    basket.style.backgroundPositionX = (Math.min(caught, 3) * 100 / 3) + '%';
     id('catchScore').textContent='Яблоки '+caught;
     lives.setAttribute('aria-label','Жизни: '+(3-errors)+' из 3');
     Array.from(lives.children).forEach((heart,index)=>{heart.textContent=index<3-errors?'♥':'♡';});

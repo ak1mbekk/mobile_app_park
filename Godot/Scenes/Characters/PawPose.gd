@@ -1,3 +1,4 @@
+@tool
 extends SkeletonModifier3D
 
 var player: AnimationPlayer
@@ -17,10 +18,17 @@ func _process_modification_with_delta(_delta: float) -> void:
     var left := rig.get_bone_global_pose(left_palm).origin
     var right := rig.get_bone_global_pose(right_palm).origin
     if player.current_animation == &"Idle":
-        _aim_arm(left_arm, left, left + Vector3(0.025, 0.06, 0.13), 0.75)
-        _aim_arm(right_arm, right, right + Vector3(-0.025, 0.06, 0.13), 0.75)
+        _relax_arm(left_arm, left_forearm, left_palm, left, 1.0)
+        _relax_arm(right_arm, right_forearm, right_palm, right, -1.0)
     elif clapping and player.current_animation == &"Stand_Clap_and_Sit_Down":
         _clap(left, right)
+
+func _relax_arm(arm: int, forearm: int, palm: int, resting_palm: Vector3, side: float) -> void:
+    var elbow := rig.get_bone_global_pose(forearm).origin
+    var relaxed_elbow := elbow + Vector3(0.065 * side, 0.035, 0.11)
+    var relaxed_palm := resting_palm + Vector3(0.06 * side, 0.14, 0.25)
+    _aim_arm(arm, elbow, relaxed_elbow, 0.9)
+    _aim_arm(forearm, rig.get_bone_global_pose(palm).origin, relaxed_palm, 0.91)
 
 func _clap(left: Vector3, right: Vector3) -> void:
     var gap := left - right
@@ -28,12 +36,12 @@ func _clap(left: Vector3, right: Vector3) -> void:
     var weight := 1.0 - smoothstep(0.24, 0.43, gap.length())
     if is_zero_approx(weight):
         return
-    var contact := left.lerp(right, 0.5) + Vector3(0.0, -0.08, 0.10)
-    var spacing := gap.normalized() * 0.04
+    var contact := left.lerp(right, 0.5) + Vector3(0.0, -0.08, 0.08)
+    var spacing := gap.normalized() * 0.034
     _aim_arm(left_arm, left, contact + spacing, weight)
     _aim_arm(right_arm, right, contact - spacing, weight)
-    _aim_arm(left_forearm, rig.get_bone_global_pose(left_palm).origin, contact + spacing, weight * 0.8)
-    _aim_arm(right_forearm, rig.get_bone_global_pose(right_palm).origin, contact - spacing, weight * 0.8)
+    _aim_arm(left_forearm, rig.get_bone_global_pose(left_palm).origin, contact + spacing, weight * 0.84)
+    _aim_arm(right_forearm, rig.get_bone_global_pose(right_palm).origin, contact - spacing, weight * 0.84)
 
 func _aim_arm(arm: int, palm: Vector3, contact: Vector3, weight: float) -> void:
     var pose := rig.get_bone_global_pose(arm)

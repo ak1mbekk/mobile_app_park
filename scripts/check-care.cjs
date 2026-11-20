@@ -83,7 +83,7 @@ const { chromium } = require('playwright');
     await page.locator('#shop-open').click();
     await page.locator('[data-shop-group="decor"]').click();
     assert.match(await ware('Фонарь лесника').textContent(),/Куплено/);
-    await restore({onboardingDone:true,leaves:95},'home');
+    await restore({onboardingDone:true,leaves:95,owned:['bed'],placed:['bed']},'home');
     for(const [label,slot] of [['Диван у окна','settee'],['Эмалированная купель','bath']]){
       await page.locator('#shop-open').click();await page.locator('[data-shop-group="decor"]').click();
       await ware(label).click();
@@ -92,6 +92,8 @@ const { chromium } = require('playwright');
       if(slot==='settee')await page.locator('#room-decor [data-furnishing="settee"]').evaluate(image=>image.decode());
     }
     assert.equal((await stats()).leaves,0);
+    assert.deepEqual((await stats()).placed.sort(),['bath','settee']);
+    assert.ok((await stats()).owned.includes('bed'));
     await page.reload();assert.equal(await page.locator('#room-decor img').count(),1);
     assert.ok(await page.locator('#bath-preview-room').isHidden());
     await page.locator('#aki-sleep').click();assert.equal(await page.locator('#home').evaluate(e=>getComputedStyle(e).getPropertyValue('--scene').includes('sleep-settee')),true);
@@ -104,12 +106,24 @@ const { chromium } = require('playwright');
     assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/wash-bath/);
     await page.locator('#soap-area').focus();for(let i=0;i<5;i++)await page.keyboard.press('Enter');
     await page.locator('#rinse').click();assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/clean-bath/);
-    await restore({onboardingDone:true,leaves:80},'home');
     async function previewRenovation(label){
       await page.locator('#shop-open').click();
       await page.locator('[data-shop-group="decor"]').click();
       await ware(label).click();
     }
+    await restore({onboardingDone:true,leaves:0,owned:['bed','settee','bath'],placed:['bed','settee','bath']},'home');
+    await previewRenovation('Лежанка');
+    assert.equal(await page.locator('#shop-confirm').textContent(),'Поставить');
+    await page.locator('#shop-cancel').click();
+    await page.locator('#shop-close').click();
+    assert.deepEqual((await stats()).placed.sort(),['bath','settee']);
+    await previewRenovation('Лежанка');
+    await page.locator('#shop-confirm').click();
+    await page.reload();
+    assert.deepEqual((await stats()).placed.sort(),['bath','bed']);
+    assert.equal((await stats()).leaves,0);
+    assert.ok(await page.locator('#room-decor [data-furnishing="bed"]').isVisible());
+    await restore({onboardingDone:true,leaves:80},'home');
     function waitForBackdrop(id,file,pseudo=null){
       return page.waitForFunction(({id,file,pseudo})=>{
         const room=document.getElementById(id);

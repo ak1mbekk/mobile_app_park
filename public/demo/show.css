@@ -371,30 +371,14 @@
   filter: drop-shadow(1px 3px 3px #3e2f184f);
 }
 #catchField #basket {
-  bottom: 4%;
-  width: clamp(57px, 16vw, 82px);
-  height: 25px;
+  bottom: 1%;
+  width: clamp(68px, 23%, 112px);
+  aspect-ratio: 1;
   z-index: 3;
-  border-radius: 8% 8% 29% 29% / 15% 15% 55% 55%;
-  border-top: 4px solid #efbb78;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 7px, #542d1a63 7px 9px),
-    repeating-linear-gradient(0deg, #8b512e 0 3px, #c4874c 3px 6px, #dda365 6px 7px);
-  box-shadow: inset 0 -3px 0 #60381f, 0 5px 7px #3b2b1996;
+  background: url("assets/harvest-basket.webp") left center / 400% 100% no-repeat;
+  filter: drop-shadow(0 3px 2px #3b2b1959);
   transform: translate(-50%, var(--hop, 0px)) rotate(var(--tilt, 0deg)) scaleY(var(--squash, 1));
   pointer-events: none;
-}
-#catchField #basket::before {
-  content: "";
-  position: absolute;
-  bottom: calc(100% + 1px);
-  left: 14%;
-  width: 72%;
-  height: 22px;
-  border: 4px solid #a96e36;
-  border-bottom: 0;
-  border-radius: 50% 50% 0 0 / 86% 86% 0 0;
-  box-shadow: inset 0 2px 0 #f0b773, 0 -1px 0 #6a401f;
 }
 #catchField .orchard-impact {
   position: absolute;

@@ -80,12 +80,14 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
       await page.clock.runFor(100);
       const state=(await stats()).orchard;
       assert.equal(state.attempt,8);
+      assert.equal(await page.locator('#basket').evaluate(el=>el.style.backgroundPositionX),'100%');
       assert.equal(state.errors,expectedErrors);assert.equal(state.caught,kind==='apple'&&grabbed?7:6);
       if(state.finished){
         await page.clock.runFor(450);
         await page.getByText('Урожай собран',{exact:true}).waitFor();
         assert.equal(state.reward.leaves,2);await page.reload();assert.equal((await stats()).leaves,4);
         await page.locator('#catchStart').click();
+        assert.equal(await page.locator('#basket').evaluate(el=>el.style.backgroundPositionX),'0%');
       }
       await page.locator('[data-tab="park"]').click();await page.locator('#park.current').waitFor();
       const paused=(await stats()).orchard;

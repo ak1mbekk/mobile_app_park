@@ -3,10 +3,12 @@ extends Control
 const APPLE = preload("res://Scenes/Games/Art/fruit.webp")
 const CONE = preload("res://Scenes/Games/Art/pine-cone.webp")
 const RELEASE := 0.23
+@export var basket_atlas: Texture2D
 
 var fruit_x := 0.5
 var basket_x := 0.5
 var basket_tilt := 0.0
+var harvest := 0
 var fall := 0.0
 var cone := false
 var fruit_visible := false
@@ -17,7 +19,8 @@ var landing_basket_x := 0.5
 
 
 func _draw() -> void:
-    var basket := Vector2(basket_x * size.x, size.y * 0.928)
+    var basket_width := minf(size.y * 0.24, clampf(size.x * 0.24, 82, 156))
+    var basket := Vector2(basket_x * size.x, size.y - basket_width * 0.67)
     var pulse := 1.0 - flash
     var tilt := basket_tilt if fruit_visible else basket_tilt * flash
     var squash := Vector2.ONE
@@ -37,7 +40,11 @@ func _draw() -> void:
         var center := anchor.lerp(Vector2(anchor.x, basket.y - 12), fall_phase * fall_phase)
         var angle := sin(fall * 27.0) * 0.12 if fall < RELEASE else (1.0 if fruit_x < 0.5 else -1.0) * fall_phase * TAU * 0.86
         _draw_fruit(texture, center, width, angle, 1.0)
-    _draw_basket(basket, tilt, squash)
+    var tile := float(basket_atlas.get_height())
+    var source := Rect2(mini(harvest, 3) * tile, 0, tile, tile)
+    draw_set_transform(basket, tilt, squash)
+    draw_texture_rect_region(basket_atlas, Rect2(-basket_width * 0.5, -basket_width * 0.32, basket_width, basket_width), source)
+    draw_set_transform(Vector2.ZERO)
 
 
 func _draw_twig(anchor: Vector2, width: float) -> void:
@@ -53,23 +60,6 @@ func _draw_twig(anchor: Vector2, width: float) -> void:
             joint + Vector2(side * 12.0, 2.0),
         ]), Color("#718141") if side < 0 else Color("#a6a34d"))
         draw_line(joint, leaf, Color("#b4a970"), 1.2, true)
-
-
-func _draw_basket(basket: Vector2, tilt: float, squash: Vector2) -> void:
-    draw_set_transform(basket, tilt, squash)
-    draw_arc(Vector2(0, -6), 27, PI, TAU, 28, Color("#59391d"), 8, true)
-    draw_arc(Vector2(0, -7), 27, PI, TAU, 28, Color("#d79b5b"), 4, true)
-    var outline := PackedVector2Array([Vector2(-38, -7), Vector2(38, -7), Vector2(27, 25), Vector2(-27, 25)])
-    draw_colored_polygon(outline, Color("#a66e38"))
-    for strand in range(-3, 4):
-        var x := strand * 9.0
-        draw_line(Vector2(x, -6), Vector2(x * 0.76, 23), Color("#704726"), 2.0, true)
-    for row in 4:
-        var half_width := 33.0 - row * 2.0
-        var y := row * 7.0
-        draw_line(Vector2(-half_width, y), Vector2(half_width, y), Color("#dfad65"), 3, true)
-    draw_line(Vector2(-37, -7), Vector2(37, -7), Color("#f0bf7b"), 6, true)
-    draw_set_transform(Vector2.ZERO)
 
 
 func _draw_landing(basket: Vector2, pulse: float) -> void:

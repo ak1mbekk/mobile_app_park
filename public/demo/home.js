@@ -40,6 +40,8 @@
   ];
   const owned=new Set(wares.filter(w=>Array.isArray(saved.owned)&&saved.owned.includes(w.id)).map(w=>w.id));
   const placed=new Set(wares.filter(w=>w.group==='decor'&&owned.has(w.id)&&Array.isArray(saved.placed)&&saved.placed.includes(w.id)).map(w=>w.id));
+  // Earlier saves could have both beds installed. Those rooms showed the settee.
+  if(placed.has('settee')&&placed.delete('bed'))saved.placed=[...placed];
   const collectibles=new Set(['cushion','lantern']);
   const canSleep=()=>placed.has('bed')||placed.has('settee');
   saved.starterRoundRewarded=saved.starterRoundRewarded===true||
@@ -360,7 +362,12 @@
     const purchased=!owned.has(w.id);
     if(purchased){saved.leaves-=w.price;owned.add(w.id);}
     if(w.group==='hat')saved.hat=saved.hat===w.id?null:w.id;
-    else if(placed.has(w.id))placed.delete(w.id);else placed.add(w.id);
+    else if(placed.has(w.id))placed.delete(w.id);
+    else {
+      if(w.id==='bed')placed.delete('settee');
+      if(w.id==='settee')placed.delete('bed');
+      placed.add(w.id);
+    }
     saved.owned=[...owned];saved.placed=[...placed];
     if(!save()){
       Object.assign(saved,previous);owned.clear();previous.owned.forEach(id=>owned.add(id));placed.clear();previous.placed.forEach(id=>placed.add(id));
