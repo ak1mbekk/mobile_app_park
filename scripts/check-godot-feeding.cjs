@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
+const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
 
 (async()=>{
   const browser=await chromium.launch({executablePath:process.env.BROWSER_EXE,
@@ -7,6 +8,15 @@ const {chromium}=require('playwright');
   try{
     const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
     await page.addInitScript(()=>{
+      Object.defineProperty(Element.prototype,'moveBefore',{configurable:true,value:undefined});
+      if(location.pathname.includes('/meeting3d/')){
+        window.testDrawCount=0;
+        for(const operation of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced','clear']){
+          const prototype=WebGL2RenderingContext.prototype;
+          const draw=prototype[operation];
+          prototype[operation]=function(...args){window.testDrawCount++;return draw.apply(this,args);};
+        }
+      }
       window.parkTestEvents=[];
       window.addEventListener('message',event=>{
         if(event.origin===location.origin && typeof event.data==='string')window.parkTestEvents.push(event.data);
@@ -14,6 +24,11 @@ const {chromium}=require('playwright');
     });
     const touch=await page.context().newCDPSession(page);
     const errors=[];
+    const loads=[];
+    page.on('request',request=>{
+      const asset=engineAsset.exec(new URL(request.url()).pathname);
+      if(asset)loads.push(asset[1]);
+    });
     page.on('pageerror',e=>errors.push(e.message));
     page.on('console',message=>{
       if (/^(SCRIPT ERROR|ERROR):/.test(message.text())) errors.push(message.text());
@@ -22,9 +37,10 @@ const {chromium}=require('playwright');
     if(root.pathname.endsWith('/'))root.pathname+=root.pathname.endsWith('/demo/')?'index.html':'demo/index.html';
     const roomSelector='#scene3d iframe';
     const ready=async(scene)=>{
-      await page.locator('#'+scene+'.current '+roomSelector+':not([inert])').waitFor({timeout:90000});
+      await page.locator('#'+scene+'.current').waitFor({timeout:90000});
+      await page.locator('#scene3d:not([hidden]) iframe:not([inert])').waitFor({timeout:90000});
       await page.waitForFunction(scene=>{
-        const iframe=document.querySelector('#'+scene+'.current #scene3d iframe');
+        const iframe=document.querySelector('#scene3d iframe');
         return scene==='home'?typeof iframe?.contentWindow.setParkHomeState==='function':
           typeof iframe?.contentWindow.setParkScenePaused==='function';
       },scene,{timeout:90000});
@@ -122,8 +138,11 @@ const {chromium}=require('playwright');
     await page.goto(root.href);
     await ready('intro');
     assert.equal(new URL(page.url()).hash,'#intro');
+    await page.locator(roomSelector).evaluate(iframe=>{iframe.contentWindow.testMeetingEngine=true;});
+    const introLoads=loads.slice();
+    assert.equal(introLoads.filter(type=>type==='html').length,1);
     if(process.env.PARK_CAPTURE_INTRO){
-      await page.locator('#intro #loading3d[data-finished]').waitFor({state:'attached'});
+      await page.locator('#loading3d[data-finished]').waitFor({state:'attached'});
       await page.screenshot({path:process.env.PARK_CAPTURE_INTRO});
     }
     console.log('First playable Godot frame, browser launch excluded:',(Date.now()-started)/1000,'s');
@@ -132,14 +151,47 @@ const {chromium}=require('playwright');
     await page.waitForTimeout(500);
     await feed(firstPaws);
     await page.locator('#name.current').waitFor({timeout:45000});
-    assert.equal(await page.locator('#intro[data-naming-backdrop][inert] iframe').count(),1);
+    assert.equal(await page.locator('#intro[data-naming-backdrop][inert]').count(),1);
+    assert.equal(await page.locator('#scene3d[inert] iframe').count(),1);
     assert.equal(await page.locator('#aki-name-input').inputValue(),'Ричи');
     await page.locator('#aki-name-input').fill('Аки');
     await page.locator('#aki-name-form button').click();
     await ready('home');
+    async function sameEngine(){
+      assert.equal(await page.locator(roomSelector).evaluate(iframe=>iframe.contentWindow.testMeetingEngine),true);
+      assert.deepEqual(loads,introLoads,'The original engine document and binaries are reused');
+    }
+    await sameEngine();
+    assert.equal((await stats()).name,'Аки');
+    console.log('PASS first meeting and playable 3D home in one engine without moveBefore',loads);
     if(process.env.PARK_FEEDING_INTRO_ONLY==='1'){
-      assert.equal((await stats()).name,'Аки');
-      console.log('PASS first meeting, naming and playable 3D home');
+      await enterRoom('kitchen','kitchen');
+      await page.waitForFunction(()=>document.querySelector('#scene3d iframe').contentWindow.testDrawCount>0);
+      await pressControl('park');
+      await page.locator('#park.current').waitFor();
+      await page.locator('#scene3d').waitFor({state:'hidden'});
+      await interaction({paused:true,location:'kitchen'});
+      const draws=()=>page.locator(roomSelector).evaluate(iframe=>iframe.contentWindow.testDrawCount);
+      await page.waitForTimeout(200);
+      const hiddenDraws=await draws();
+      await page.waitForTimeout(700);
+      assert.equal(await draws(),hiddenDraws,'The hidden engine issues no WebGL draw calls');
+      await page.locator('#park.current [data-tab="home"]').tap();
+      await ready('home');
+      await interaction({paused:false,location:'kitchen'});
+      await sameEngine();
+      const parkTab=await page.context().newPage();
+      const directLoads=[];
+      parkTab.on('request',request=>{if(engineAsset.test(new URL(request.url()).pathname))directLoads.push(request.url());});
+      const parkUrl=new URL(root);
+      parkUrl.hash='park';
+      await parkTab.goto(parkUrl.href,{waitUntil:'domcontentloaded'});
+      await parkTab.locator('#park.current').waitFor();
+      assert.equal(await parkTab.locator(roomSelector).count(),0);
+      assert.deepEqual(directLoads,[],'A new tab opened directly on the guide does not start Godot');
+      await parkTab.close();
+      assert.deepEqual(errors,[]);
+      console.log('PASS parked kitchen pauses rendering, resumes the same scene and does not start in a new Park tab');
       return;
     }
 

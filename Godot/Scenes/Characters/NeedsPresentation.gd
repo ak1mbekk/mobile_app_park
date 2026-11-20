@@ -86,8 +86,8 @@ func _process(delta: float) -> void:
     var sleepy: bool = showing and actor.need_amount("energy") < 30.0
     var joy: float = actor.need_amount("joy")
     var almost_crying := showing and joy < 30.0
-    var sad := showing and (joy < 50.0 or hungry)
-    var happy := showing and joy > 80.0 and not hungry and not sleepy
+    var happy := showing and joy > 80.0
+    var sad := showing and (joy < 50.0 or (hungry and not happy))
     var expressive_idle := idle and available and not observing and reaction.is_empty()
 
     clock += delta
@@ -118,6 +118,9 @@ func _process(delta: float) -> void:
         rest_bias.y -= 13.0 * yawn + 6.0 * pose.full + 7.6 * pose.mood
     actor.gaze.face_camera = showing and (idle or hungry)
     actor.gaze.mood_angles = rest_bias
+    var since_rumble := clock - rumble_started_at
+    var search := _envelope(since_rumble, 0.02, 0.20, 0.96, 1.40) if hungry else 0.0
+    actor.gaze.resting_angles = Vector2(4.5 * sin(since_rumble * 4.8), -0.6) * search
 
     expression = move_toward(expression, -1.0 if almost_crying else -0.65 if sad else 1.0 if happy else 0.0, delta * 3.8)
     eyelid_weight = move_toward(eyelid_weight, maxf(0.40 if sleepy and not observing else 0.0, 0.65 * yawn), delta * 3.3)

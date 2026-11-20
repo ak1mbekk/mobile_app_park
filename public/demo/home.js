@@ -137,8 +137,11 @@
   }
   function care(key,amount){
     advanceNeeds();
+    const before=saved[key];
     replenish(key,amount,3);
+    const reachedMaximum=before<100&&saved[key]===100;
     save();refreshHome();
+    return reachedMaximum;
   }
   function addGameReward(leaves=5,won=true){
     advanceNeeds();
@@ -189,8 +192,10 @@
       if(active==='intro')route('name');
     },
     finishAppleSnack(){
-      if(!saved.onboardingDone||saved.night)return;
-      care('food',32);heart();
+      if(!saved.onboardingDone||saved.night)return false;
+      const reachedMaximum=care('food',32);
+      heart();
+      return reachedMaximum;
     },
     stats(){advanceNeeds();return {...saved,level:1+Math.floor(saved.xp/30)};},
     wash(){if(!saved.night)care('clean',55);},gameReward,buyBall,

@@ -74,6 +74,24 @@ async function main() {
       releaseStart();
       await slowStart.close();
     }
+    const stages = await browser.newPage({viewport:{width:390,height:844}, isMobile:true, hasTouch:true});
+    try {
+      await stages.route('**/meeting3d/index.html?*', route => route.fulfill({
+        contentType:'text/html',
+        body:'<progress id="status-progress" max="100" value="25"></progress><div id="status-notice"></div>',
+      }));
+      await stages.goto(url.href, {waitUntil:'domcontentloaded'});
+      const stage = stages.frameLocator('#scene3d iframe').locator('#status-progress');
+      await stages.waitForFunction(() => document.querySelector('#opening-progress')?.value === 25);
+      await stage.evaluate(element => { element.value = element.max; });
+      await stages.getByText('Готовим 3D-сцену…', {exact:true}).waitFor();
+      assert.equal(await stages.locator('#opening-progress').getAttribute('value'), null);
+      assert.ok(await stages.getByRole('button',{name:'Лёгкая версия',exact:true}).isVisible());
+      await stages.frameLocator('#scene3d iframe').locator('#status-notice').evaluate(el => { el.textContent = 'Startup failed'; });
+      await stages.getByText('Не удалось загрузить 3D.', {exact:false}).waitFor();
+    } finally {
+      await stages.close();
+    }
     const denied = await browser.newPage({viewport:{width:390,height:844}, isMobile:true, hasTouch:true});
     try {
       await denied.route(pack, route => route.fulfill({status:403,body:'Unavailable'}));

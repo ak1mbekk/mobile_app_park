@@ -35,6 +35,11 @@ var rest_forward: Vector3
 var face_camera := false
 var mood_angles := Vector2.ZERO
 var reaction_yaw := 0.0
+var resting_angles := Vector2.ZERO:
+    set(value):
+        if not resting_angles.is_equal_approx(value):
+            resting_angles = value
+            set_process(true)
 
 func _ready() -> void:
     var painted := actor_mesh.get_active_material(0) as StandardMaterial3D
@@ -120,7 +125,7 @@ func _process(delta: float) -> void:
     if tap_look_left > 0.0:
         tap_look_left -= delta
         pointing = tap_look_left > 0.0
-    var desired := Vector2.ZERO
+    var desired := resting_angles if enabled and not suspended else Vector2.ZERO
     var head_target := Vector2.ZERO
     var following := enabled and not suspended and (pointing or is_instance_valid(fruit))
     if following:

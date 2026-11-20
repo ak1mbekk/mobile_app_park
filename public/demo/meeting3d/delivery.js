@@ -4,9 +4,12 @@
   const paths = new Map([['index.pck', pack], ['index.wasm', wasm]]);
   const download = window.fetch.bind(window);
   let cache;
-  try {
-    cache = window.caches?.open('animal-park-godot:' + base.href).catch(() => null);
-  } catch {}
+  // Capacitor already ships both binaries in the installed application.
+  if (new URLSearchParams(location.search).get('bundled') !== '1') {
+    try {
+      cache = window.caches?.open('animal-park-godot:' + base.href).catch(() => null);
+    } catch {}
+  }
   const controller = new AbortController();
   window.addEventListener('pagehide', event => {
     if (!event.persisted) controller.abort();

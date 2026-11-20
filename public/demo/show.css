@@ -28,9 +28,14 @@
 @media(prefers-reduced-motion:reduce){.object,.piece{animation-duration:0s!important}}
 
 .scene-switch{position:absolute;top:12px;right:12px;z-index:6;border:1px solid #edddbd80;border-radius:22px;background:#443627e8;color:#fff3db;min-height:44px;padding:0 15px;font:600 14px/1 system-ui}
-#intro #open3d,#intro #scene3d:has(#loading3d[data-finished]) #close3d{top:max(10px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));right:auto}
+#intro #open3d,#home[data-intro-3d] #scene3d:has(#loading3d[data-finished]) #close3d{top:max(10px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));right:auto}
 #scene3d{position:absolute;inset:0;z-index:8;background:#2b231c}
 #scene3d iframe{width:100%;height:100%;border:0;display:block}
+#home[data-intro-3d]{display:block;z-index:1}
+#home[data-intro-3d] > :not(#scene3d),#home[data-intro-3d]::before,#home[data-intro-3d]::after{display:none}
+#intro[data-naming-backdrop]:not(.current){display:none}
+#intro[data-naming-backdrop]+#name.current{z-index:2}
+#scene3d[inert] #close3d{visibility:hidden}
 #home:not([data-age="kit"]) #offer-apple{display:none}
 #loading3d {
   position: absolute;

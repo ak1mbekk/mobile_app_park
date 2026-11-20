@@ -214,15 +214,14 @@ func _on_fed() -> void:
     richi.idle_in_home()
     dining.finish_meal()
     _set_status("")
-    awaiting_meal_result = float(richi.needs.get("food", 50)) < 99.99
+    awaiting_meal_result = true
     if not hosted:
-        _increase_native_need("food", 32)
-        _finish_meal_reaction(native_needs)
+        _finish_meal_reaction(_increase_native_need("food", 32))
         _save_home()
     _notify_host("meal-finished")
 
-func _finish_meal_reaction(needs: Dictionary) -> void:
-    if awaiting_meal_result and float(needs.get("food", 0)) >= 99.99:
+func _finish_meal_reaction(reached_full: bool) -> void:
+    if awaiting_meal_result and reached_full:
         richi.react_to_full_meal()
     awaiting_meal_result = false
 
@@ -1050,11 +1049,13 @@ func _refresh_native_needs() -> void:
     _check_hungry_room.call_deferred()
 
 
-func _increase_native_need(key: String, amount: float) -> void:
+func _increase_native_need(key: String, amount: float) -> bool:
     _advance_native_needs()
-    native_needs[key] = minf(native_needs[key] + amount, 100)
+    var previous: float = native_needs[key]
+    native_needs[key] = minf(previous + amount, 100)
     %NeedsHud.set_values(native_needs)
     richi.set_needs(native_needs)
+    return previous < 100.0 and native_needs[key] == 100.0
 
 
 func _sync_pause(args: Array) -> void:
@@ -1080,8 +1081,9 @@ func _sync_state(args: Array) -> void:
     richi.set_age_level(level, growth_mesh)
     %NeedsHud.set_values(data.get("needs", {}))
     richi.set_needs(data.get("needs", {}))
-    if awaiting_meal_result:
-        _finish_meal_reaction(data.get("needs", {}))
+    var meal_reached_full = data.get("meal_reached_full")
+    if awaiting_meal_result and meal_reached_full is bool:
+        _finish_meal_reaction(meal_reached_full)
     richi.wear_hat(str(data.get("hat", "")))
     var goal = data.get("bed_goal")
     hosted_bed_goal = goal if goal is Dictionary else {}
