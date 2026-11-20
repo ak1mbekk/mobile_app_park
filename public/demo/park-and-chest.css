@@ -29,7 +29,7 @@ html, body { overflow-x: clip; }
 .shell:has(#home.current:not(.in-kitchen)):not(:has(#scene3d:not([hidden]))) .game-wayfinding {
   top:calc(max(9px,env(safe-area-inset-top)) + 98px);
 }
-.shell:has(#home.current #scene3d:not([hidden]) #loading3d[data-finished]) .game-wayfinding { display:none; }
+body:not([data-game-overlay]) .shell:has(#home.current #scene3d:not([hidden]) #loading3d[data-finished]) .game-wayfinding { display:none; }
 body[data-game-overlay] .shell:has(#home.current #scene3d:not([hidden])) .game-wayfinding {
   display:block; inset:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) auto auto;
 }
