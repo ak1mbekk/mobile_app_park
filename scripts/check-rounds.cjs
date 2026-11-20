@@ -106,7 +106,20 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
     await page.reload();
     await page.getByText('Урожай собран',{exact:true}).waitFor();
     assert.equal((await stats()).leaves,5);
+
+    await loadRound('orchard',{
+      id:4,revision:10,attempt:3,caught:2,errors:1,kind:'apple',position:.5,spot:.4,fall:.4,finished:false,won:false,
+    },'catch');
+    const replacement=await page.evaluate(key=>{
+      const profile=JSON.parse(localStorage.getItem(key));
+      const record=JSON.stringify({...profile,food:22,updated:Date.now()});
+      localStorage.setItem(key,record);
+      return record;
+    },key);
+    await page.reload();
+    await page.locator('#catch.current').waitFor();
+    assert.equal(await page.evaluate(key=>localStorage.getItem(key),key),replacement);
     assert.deepEqual(errors,[]);
-    console.log('PASS interrupted matching move, shared-cell win, round replay, last catch/miss, saved reward, starter gift and park pause');
+    console.log('PASS interrupted matching move, shared-cell win, round replay, last catch/miss, saved reward, starter gift, park pause and updated profile on reload');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -92,14 +92,18 @@ window.conceptGo=function(id,keepOrigin=false){
   const screen=id.split('/')[0];
   if(!byId(screen)?.matches('.screen'))return;
   if(location.hash!=='#'+id){
+    if(domestic.has(currentScreen)&&!domestic.has(screen))window.captureParkGameNavigation?.();
     const origin=!keepOrigin && currentScreen && screen!==currentScreen ? currentRoute : '';
     const origins=origin?{...previousScreens,[screen]:origin}:previousScreens;
-    history.pushState({parkOrigins:origins,parkReturnRoute:origin,gameReturn:lastHome},'','#'+id);
+    const nativeReturn=history.state?.nativeReturn;
+    history.pushState({parkOrigins:origins,parkReturnRoute:origin,gameReturn:lastHome,nativeReturn},'','#'+id);
   }
   present(id);
 };
 window.conceptReplace=function(id){
-  history.replaceState(history.state,'','#'+id);
+  const leavingGame=domestic.has(currentScreen)&&!domestic.has(visitorMapRoute(id).split('/')[0]);
+  if(leavingGame)window.captureParkGameNavigation?.();
+  history.replaceState(leavingGame?{...history.state,gameReturn:lastHome}:history.state,'','#'+id);
   present(id);
 };
 window.addEventListener('hashchange',()=>present(location.hash.slice(1)));
@@ -143,9 +147,19 @@ function conceptStart(){
   const initialGuide=frame?.getAttribute('data-guide-navigation');
   if(initialGuide){
     frame.removeAttribute('data-guide-navigation');
-    const {hash,gameReturn,parkOrigins}=JSON.parse(initialGuide);
+    const {hash,gameReturn,parkOrigins,nativeReturn}=JSON.parse(initialGuide);
     // Only the guide route, not its previous iframe history entry, survived the reload.
-    if(hash===location.hash)history.replaceState({gameReturn,parkOrigins},'');
+    if(hash===location.hash)history.replaceState({gameReturn,parkOrigins,nativeReturn},'');
+  }
+  if(window.parent===window){
+    try{
+      const loaded=performance.getEntriesByType('navigation')[0];
+      const checkpoint=JSON.parse(sessionStorage.getItem('animal-park-native-reload')||'null');
+      sessionStorage.removeItem('animal-park-native-reload');
+      if(loaded?.type==='reload'&&checkpoint?.hostUrl===location.href&&location.hash==='#home'){
+        history.replaceState({...history.state,nativeReturn:checkpoint.nativeReturn},'');
+      }
+    }catch{}
   }
   const pet=window.petDemo?.stats();
   if(pet?.onboardingDone)lastHome='home';

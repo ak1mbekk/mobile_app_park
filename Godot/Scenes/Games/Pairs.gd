@@ -35,7 +35,7 @@ func restore(record: Dictionary) -> void:
         return
     cards = old_cards.duplicate()
     paired = old_paired.duplicate()
-    opened = old_opened.duplicate()
+    opened = old_opened.map(func(index): return int(index))
     moves = maxi(0, int(record.get("moves", 0)))
     finished = paired.size() * 2 == cards.size()
     if finished and reward.is_empty() and record.has("rewardXp"):
@@ -60,12 +60,14 @@ func _valid_board(old_cards: Variant, old_paired: Variant, old_opened: Variant) 
     for animal in old_paired:
         if not old_cards.has(animal) or old_paired.count(animal) != 1:
             return false
+    var indices: Array[int] = []
     for value in old_opened:
         if not (value is int or value is float) or value != int(value):
             return false
         var index := int(value)
-        if index < 0 or index >= old_cards.size() or old_opened.count(value) != 1:
+        if index < 0 or index >= old_cards.size() or indices.has(index):
             return false
+        indices.append(index)
         if old_paired.has(old_cards[index]):
             return false
     return true

@@ -141,6 +141,17 @@ func _test_pairs() -> void:
     _expect(room.board.opened == [0, mismatch] and grid.get_child(3).face.texture == null, "A third touch is ignored while comparing")
     await create_timer(0.74).timeout
     _expect(room.board.opened.is_empty() and grid.get_child(0).face.texture == null, "Mismatched cards turn back over")
+
+    var checkpoint: Dictionary = room.rounds.pairs.duplicate(true)
+    checkpoint.opened = [0]
+    room.set_rounds({"pairs": JSON.parse_string(JSON.stringify(checkpoint))})
+    room.open("pairs")
+    await process_frame
+    var opened_tile = room.board.get_node("%Grid").get_child(0)
+    _expect(opened_tile.face.texture != null, "An open card is visible after JSON round recovery")
+    var before_tap := committed.size()
+    _tap(opened_tile)
+    _expect(committed.size() == before_tap and room.board.opened == [0], "The restored card cannot match itself")
     await _return_home()
 
 
@@ -205,6 +216,7 @@ func _test_orchard() -> void:
         room.board._process(0.05)
         var result: Dictionary = room.rounds.orchard
         _expect(result.errors == scenario[2] and result.caught == scenario[3], "Orchard collision and lives case %d" % index)
+        _expect(room.board.get_node("%Field").harvest == result.caught, "The basket shows the saved harvest after landing")
         _expect(result.finished == (scenario[2] == 3), "Orchard stops at three errors")
         var hearts: HBoxContainer = room.board.get_node("%Lives")
         var full := 0
@@ -228,6 +240,7 @@ func _test_orchard() -> void:
     var round_id: int = room.rounds.orchard.id
     _tap(room.board.get_node("%Again"))
     _expect(room.rounds.orchard.id == round_id + 1 and room.rounds.orchard.errors == 0, "Orchard replay restores all three lives")
+    _expect(room.board.get_node("%Field").harvest == 0, "The new round begins with an empty basket")
     var field: Rect2 = room.board.get_node("%Field").get_global_rect()
     var first := field.get_center()
     _touch(first, true)

@@ -61,6 +61,7 @@ var ball_owned := false
 var web_pause_callback: JavaScriptObject
 var web_state_callback: JavaScriptObject
 var web_interaction_callback: JavaScriptObject
+var web_navigation_callback: JavaScriptObject
 var pose_tween: Tween
 var sleep_moving := false
 var bath_moving := false
@@ -134,8 +135,10 @@ func _ready() -> void:
         var browser := JavaScriptBridge.get_interface("window")
         web_pause_callback = JavaScriptBridge.create_callback(_sync_pause)
         web_state_callback = JavaScriptBridge.create_callback(_sync_state)
+        web_navigation_callback = JavaScriptBridge.create_callback(_write_navigation_state)
         browser.setParkScenePaused = web_pause_callback
         browser.setParkHomeState = web_state_callback
+        browser.getParkNavigationState = web_navigation_callback
         browser.parkNativeGameRoom = game_room != null
         browser.parkNativeShop = shop != null
         if JavaScriptBridge.eval("""(() => {
@@ -1035,6 +1038,7 @@ func _sync_state(args: Array) -> void:
     var goal = data.get("bed_goal")
     hosted_bed_goal = goal if goal is Dictionary else {}
     _apply_furniture(data.get("furniture", {}))
+    var navigation = data.get("navigation") if not has_host_state else null
     _set_sleep(bool(data.get("night", false)), has_host_state)
     has_host_state = true
     if game_room:
@@ -1042,6 +1046,8 @@ func _sync_state(args: Array) -> void:
         game_room.set_ball_shop(ball_owned, leaves >= BALL_PRICE)
         if data.get("open_games", false):
             _launch_games(str(data.get("game", "")))
+    if navigation is Dictionary:
+        _restore_navigation(navigation)
     if shop:
         shop.set_state(data.get("shop", {}))
         if data.get("open_shop", false):
@@ -1056,6 +1062,44 @@ func _sync_state(args: Array) -> void:
     _refresh_controls()
     _position_stations()
     _check_hungry_room.call_deferred()
+
+func _navigation_state() -> Dictionary:
+    var state := {"location": str(location), "mode": "home", "game": null}
+    if active_mode == &"feed":
+        state.mode = "feed"
+    elif active_mode == &"bath" and not bath_moving:
+        state.mode = "bath"
+        state.bath = bathroom.navigation_checkpoint()
+    if game_room and game_room.visible:
+        state.game = game_room.active_game
+        state.round = game_room.rounds.get(game_room.active_game)
+    return state
+
+func _write_navigation_state(args: Array) -> void:
+    if args.size() == 1 and args[0] is JavaScriptObject:
+        args[0].result = JSON.stringify(_navigation_state())
+
+func _restore_navigation(state: Dictionary) -> void:
+    var target := StringName(str(state.get("location", MAIN)))
+    if night or target not in [MAIN, KITCHEN, BATH] or not _go_to_room(target):
+        return
+    var game = state.get("game")
+    if target == MAIN and game is String and game in ["", "pairs", "match", "orchard"]:
+        _launch_games(game)
+    elif target == KITCHEN and state.get("mode") == "feed":
+        _offer_apple()
+    elif target == BATH and state.get("mode") == "bath":
+        _set_mode(&"bath", false)
+        _finish_bath_movement(true)
+        var checkpoint = state.get("bath")
+        if checkpoint is Dictionary:
+            var phase: String = bathroom.restore_navigation(checkpoint)
+            if phase == "ready":
+                _on_rinse_available()
+            elif phase == "done":
+                _set_status("Шёрстка чистая")
+    elif target == MAIN and richi._need_is_low("food"):
+        hunger_visit_started = true
 
 func _write_interaction_state(args: Array) -> void:
     if args.size() == 1 and args[0] is JavaScriptObject:
@@ -1074,6 +1118,14 @@ func _interaction_state(_args: Array) -> String:
     for item in buttons:
         var button: Button = buttons[item]
         controls[item] = _interaction_point(button.get_global_rect().get_center(), size) if button.is_visible_in_tree() and not button.disabled else null
+    var tiles: Array[Dictionary] = []
+    if game_room and game_room.visible:
+        var pairs_button: Button = game_room.get_node("%Pairs")
+        if pairs_button.is_visible_in_tree():
+            controls["pairs"] = _interaction_point(pairs_button.get_global_rect().get_center(), size)
+        if game_room.active_game == "pairs" and game_room.board:
+            for tile: Button in game_room.board.get_node("%Grid").get_children():
+                tiles.append(_interaction_point(tile.get_global_rect().get_center(), size))
     var fruit: Variant = null
     var grip: Variant = null
     if active_mode == &"feed":
@@ -1091,6 +1143,7 @@ func _interaction_state(_args: Array) -> String:
         "controls": controls, "apple": fruit, "grip": grip, "applePointer": apple.pointer,
         "appleSettling": apple.settling, "mealInProgress": meal_in_progress, "mealPhase": richi.meal_phase(),
         "sponge": sponge, "scrubCenter": scrub_center,
+        "navigation": _navigation_state(), "gameTiles": tiles,
     })
 
 func _interaction_point(point: Vector2, size: Vector2) -> Dictionary:

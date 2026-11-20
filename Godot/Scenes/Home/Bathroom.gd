@@ -52,6 +52,25 @@ func rinse() -> void:
     soap.hide()
     animation.play("rinse")
 
+func navigation_checkpoint() -> Dictionary:
+    var width := get_viewport().get_visible_rect().size.x
+    var phase := "scrub"
+    if ready_to_rinse or animation.current_animation == &"rinse":
+        phase = "ready"
+    elif not soap.visible:
+        phase = "done"
+    return {"phase": phase, "scrub": scrub_distance / maxf(1.0, width)}
+
+func restore_navigation(checkpoint: Dictionary) -> String:
+    var phase := str(checkpoint.get("phase", "scrub"))
+    var scrub := clampf(float(checkpoint.get("scrub", 0.0)), 0.0, 0.51)
+    scrub_distance = scrub * get_viewport().get_visible_rect().size.x
+    ready_to_rinse = phase == "ready"
+    foam.visible = phase != "done" and (ready_to_rinse or scrub >= 0.12)
+    soap.visible = phase != "done"
+    set_process_unhandled_input(not ready_to_rinse and phase != "done")
+    return phase
+
 func _on_animation_finished(clip: StringName) -> void:
     if clip == &"rinse":
         foam.hide()

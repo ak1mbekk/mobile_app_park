@@ -2,12 +2,15 @@
 extends EditorPlugin
 
 var web_export := WebExport.new()
+var scene_export := preload("res://addons/park_web_export/scene_export.gd").new()
 
 func _enter_tree() -> void:
     add_export_plugin(web_export)
+    add_export_plugin(scene_export)
 
 func _exit_tree() -> void:
     remove_export_plugin(web_export)
+    remove_export_plugin(scene_export)
 
 
 class WebExport extends EditorExportPlugin:

@@ -16,6 +16,7 @@
   let progressObserver;
   let ready = false;
   let available;
+  let pauseCallback, scenePaused;
   let lighter = false;
   let offerOnLoad = false;
   const coveredControls = new Set();
@@ -31,11 +32,50 @@
     }
   }
 
+  function setScenePaused(paused) {
+    const callback = frame?.contentWindow?.setParkScenePaused;
+    if (typeof callback !== 'function' || (callback === pauseCallback && scenePaused === paused)) return;
+    callback(paused);
+    pauseCallback = callback;
+    scenePaused = paused;
+  }
+
   function syncPause() {
-    frame?.contentWindow?.setParkScenePaused?.(document.hidden || !room?.classList.contains('current'));
+    setScenePaused(document.hidden || !room?.classList.contains('current'));
     const naming = ready && room?.id === 'intro' && document.querySelector('#name.current') !== null;
     document.getElementById('intro').toggleAttribute('data-naming-backdrop', naming);
     document.getElementById('intro').inert = naming;
+  }
+
+  function storeRound(game, round) {
+    if (!['pairs','match','orchard'].includes(game)) return;
+    const previous = window.petDemo.stats()[game];
+    if (previous && round && previous.id === round.id &&
+        Number.isSafeInteger(round.revision) && previous.revision >= round.revision) return;
+    window.petDemo.storeGame(game, round);
+  }
+
+  function checkpointNavigation(forReload = false) {
+    if (!ready || room?.id !== 'home' || !frame?.contentWindow?.getParkNavigationState) return;
+    setScenePaused(true);
+    const output = {};
+    frame.contentWindow.getParkNavigationState(output);
+    let snapshot;
+    try { snapshot = JSON.parse(output.result); } catch { return; }
+    if (!snapshot || !['main','kitchen','bathroom'].includes(snapshot.location)) return;
+    const { round, ...navigation } = snapshot;
+    storeRound(navigation.game, round);
+    const idleVeranda = navigation.location === 'main' && navigation.mode === 'home' && navigation.game === null;
+    const nativeReturn = forReload && idleVeranda ? null : navigation;
+    try { history.replaceState({ ...history.state, nativeReturn }, ''); } catch {}
+    return nativeReturn;
+  }
+
+  function takeNavigation() {
+    const { nativeReturn, ...state } = history.state ?? {};
+    if (!nativeReturn) return {};
+    history.replaceState(state, '');
+    return { navigation:nativeReturn };
   }
 
   function syncHome(extra = {}) {
@@ -54,6 +94,8 @@
     frame?.remove();
     frame = null;
     ready = false;
+    pauseCallback = undefined;
+    scenePaused = undefined;
     offerOnLoad = false;
     container.hidden = true;
     coverRoom(null);
@@ -206,13 +248,14 @@
     if (event.origin !== location.origin || !frame || event.source !== frame.contentWindow) return;
     if (event.data === (room.id === 'intro' ? 'animal-park:scene-ready' : 'animal-park:home-ready')) {
       clearTimeout(timeout);
+      const resume = room.id === 'home' ? takeNavigation() : {};
       ready = true;
       frame.inert = false;
       progressObserver?.disconnect();
       loading.setAttribute('data-finished','');
       loading.setAttribute('aria-hidden','true');
       close.hidden = room.id === 'home';
-      syncHome({offer_apple:offerOnLoad});
+      syncHome({offer_apple:offerOnLoad, ...resume});
       offerOnLoad = false;
       syncPause();
       if (room.classList.contains('current')) frame.focus();
@@ -274,12 +317,15 @@
     if (typeof event.data === 'string' && event.data.startsWith('animal-park:round:')) {
       let payload;
       try { payload = JSON.parse(event.data.slice('animal-park:round:'.length)); } catch { return; }
-      window.petDemo.storeGame(payload?.game,payload?.round);
+      storeRound(payload?.game,payload?.round);
     }
   });
 
   function syncRoom() {
-    if (frame && !ready && document.querySelector('.visitor-screen.current')) leave();
+    if (frame && document.querySelector('.visitor-screen.current')) {
+      if (!ready) leave();
+      else if (!scenePaused || !history.state?.nativeReturn) checkpointNavigation();
+    }
     moveToHome();
     syncPause();
     syncHome();
@@ -287,6 +333,18 @@
   }
   document.addEventListener('conceptscreen', syncRoom);
   document.addEventListener('visibilitychange', syncRoom);
+  window.captureParkGameNavigation = (forReload = false) => {
+    if (room?.id !== 'home' || !room.classList.contains('current')) return;
+    const nativeReturn = checkpointNavigation(forReload);
+    if (!forReload || nativeReturn === undefined || location.hash !== '#home') return;
+    try {
+      sessionStorage.setItem('animal-park-native-reload', JSON.stringify({
+        hostUrl:window.parent.location.href, hash:'#home', nativeReturn
+      }));
+    } catch {}
+  };
+  window.addEventListener('pagehide', () => window.captureParkGameNavigation(true));
+  window.addEventListener('pageshow', syncRoom);
   document.addEventListener('petprofile', () => syncHome());
   document.addEventListener('parkpurchase', () => syncHome({celebrate_purchase:true}));
   window.addEventListener('online', () => {

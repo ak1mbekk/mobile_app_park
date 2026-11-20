@@ -6,11 +6,13 @@
   const defaults = {name: 'Ричи', leaves: 0, xp: 0, night: false, onboardingDone: false,
     food:50, clean:50, energy:50, joy:50, ball:false, updated:Date.now(), couponUsed:false, mealFinished:false};
   const profileKey='aki-concept-demo';
+  let storedProfile=null;
   function readProfile(){
     for(const key of [profileKey,profileKey+'.backup']){
       let raw;
       try{
         raw=localStorage.getItem(key);
+        if(key===profileKey)storedProfile=raw;
         if(raw===null)continue;
         const profile=JSON.parse(raw);
         if(!profile || typeof profile!=='object' || Array.isArray(profile))throw Error('Invalid profile');
@@ -60,7 +62,10 @@
   function save(){
     saved.version=1;
     const record=JSON.stringify(saved);
-    try{localStorage.setItem(profileKey,record);}catch{return false;}
+    try{
+      localStorage.setItem(profileKey,record);
+      storedProfile=record;
+    }catch{return false;}
     try{localStorage.setItem(profileKey+'.backup',record);}catch{}
     return true;
   }
@@ -155,6 +160,8 @@
     setResting,
     storeGame(game,round){
       if(!['pairs','match','orchard'].includes(game)||!Number.isSafeInteger(round?.id)||round.id<1)return;
+      // A queued or pagehide round must not overwrite a profile restored in the meantime.
+      try{if(localStorage.getItem(profileKey)!==storedProfile)return;}catch{return;}
       const previous=saved[game];
       if(previous?.id===round.id && previous.finished)return;
       if(previous && previous.id>round.id)return;

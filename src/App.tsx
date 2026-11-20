@@ -15,6 +15,7 @@ import SettingsPage from './pages/SettingsPage';
 type DemoWindow = Window & {
   conceptReplace?: (route: string) => void;
   conceptStart?: () => void;
+  captureParkGameNavigation?: (forReload?: boolean) => void;
 };
 
 type GuideNavigation = {
@@ -22,7 +23,19 @@ type GuideNavigation = {
   hash: string;
   gameReturn?: string;
   parkOrigins?: Record<string, string>;
+  nativeReturn?: { location: string } | null;
 };
+
+const nativeReloadKey = 'animal-park-native-reload';
+
+function nativeReloadNavigation(): GuideNavigation | undefined {
+  const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  if (navigation?.type !== 'reload') return;
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(nativeReloadKey) ?? 'null');
+    return saved?.hash === '#home' && saved?.hostUrl === window.location.href ? saved : undefined;
+  } catch {}
+}
 
 function demoHash(hash: string, profile: boolean) {
   const route = hash.replace(/^#\//, '#');
@@ -34,9 +47,9 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
   const requested = useRef(hash);
   const pending = useRef(false);
   const [startup] = useState(() => {
-    const saved = window.history.state?.animalParkGuide as GuideNavigation | undefined;
+    const saved = nativeReloadNavigation() ?? (window.history.state?.animalParkGuide as GuideNavigation | undefined);
     const resume = !profile && saved?.hostUrl === window.location.href &&
-      typeof saved.hash === 'string' && demoHash(saved.hash, false)
+      typeof saved.hash === 'string' && (demoHash(saved.hash, false) || saved.hash === '#home')
       ? saved : undefined;
     return { source: import.meta.env.BASE_URL + 'demo/index.html' + search + (resume?.hash ?? hash), resume };
   });
@@ -62,14 +75,14 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
   const saveGuideNavigation = useCallback(() => {
     const child = frame.current?.contentWindow;
     if (!child || pending.current || window.location.protocol === 'file:' || profile) return;
-    const hash = demoHash(child.location.hash, false);
+    const { gameReturn, parkOrigins, nativeReturn } = child.history.state ?? {};
+    const hash = demoHash(child.location.hash, false) || (child.location.hash === '#home' && nativeReturn ? '#home' : '');
     const { animalParkGuide, ...rest } = window.history.state ?? {};
     if (!hash) {
       if (animalParkGuide) window.history.replaceState(rest, '');
       return;
     }
-    const { gameReturn, parkOrigins } = child.history.state ?? {};
-    const snapshot: GuideNavigation = { hostUrl: window.location.href, hash, gameReturn, parkOrigins };
+    const snapshot: GuideNavigation = { hostUrl: window.location.href, hash, gameReturn, parkOrigins, nativeReturn };
     window.history.replaceState({ ...rest, animalParkGuide: snapshot }, '');
   }, [profile]);
 
@@ -79,14 +92,25 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
   }
 
   useEffect(() => {
+    try { sessionStorage.removeItem(nativeReloadKey); } catch {}
     function onGuideNavigation(event: MessageEvent) {
       if (event.origin === window.location.origin && event.source === frame.current?.contentWindow &&
           event.data === 'animal-park:guide-navigation') {
         saveGuideNavigation();
       }
     }
+    function onPageHide() {
+      if (!frame.current?.contentDocument) return;
+      const child = frame.current.contentWindow as DemoWindow | null;
+      child?.captureParkGameNavigation?.(true);
+      saveGuideNavigation();
+    }
     window.addEventListener('message', onGuideNavigation);
-    return () => window.removeEventListener('message', onGuideNavigation);
+    window.addEventListener('pagehide', onPageHide);
+    return () => {
+      window.removeEventListener('message', onGuideNavigation);
+      window.removeEventListener('pagehide', onPageHide);
+    };
   }, [saveGuideNavigation]);
 
   useEffect(() => {

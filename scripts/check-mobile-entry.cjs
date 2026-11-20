@@ -36,6 +36,9 @@ const demoTitle = 'Домик у тропы и парк животных';
     await go('?view=2d');
     await demo.locator('#intro.current').waitFor();
     await demo.locator('#scene3d').waitFor({ state: 'hidden' });
+    await demo.locator('.park-entrance').tap();
+    await demo.locator('#park.current .back-to-game').tap();
+    await demo.locator('#intro.current').waitFor();
     await go('?view=2d#/map/2/11');
     await demo.locator('#map.current .place-info h2').filter({ hasText: 'Зубр' }).waitFor();
     await go('map#map/2/11');
@@ -76,7 +79,16 @@ const demoTitle = 'Домик у тропы и парк животных';
     }
     const resumed = await (await page.locator('iframe[title="' + demoTitle + '"]').elementHandle()).contentFrame();
     assert.equal(await resumed.evaluate(() => window.petDemo.stats().leaves),37);
-    console.log('PASS mobile root entry, external and internal Back, stable frame, legacy /map, lightweight view, profile and reload back to the same room');
+    await demo.locator('.room-switcher [data-go="wash"]').tap();
+    await demo.locator('#wash.current').waitFor();
+    await demo.locator('.park-entrance').tap();
+    await demo.locator('#park.current').waitFor();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await demo.locator('#park.current .back-to-game').tap();
+    await demo.locator('#wash.current').waitFor();
+    const bath = await (await page.locator('iframe[title="' + demoTitle + '"]').elementHandle()).contentFrame();
+    assert.equal(await bath.evaluate(() => window.petDemo.stats().leaves),37);
+    console.log('PASS mobile root entry, external and internal Back, stable frame, legacy /map, profile, park before naming and light-mode kitchen and bath after reload');
   } finally {
     await browser.close();
   }
