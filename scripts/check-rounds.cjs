@@ -72,22 +72,30 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
       assert.equal(game.finished,true);assert.equal(game.bonus,example.bonus);
       assert.equal(game.reward.leaves,5+example.bonus);
     }
+    const orchardTime=new Date();
+    await page.clock.install({time:orchardTime});
+    await page.clock.pauseAt(new Date(orchardTime.getTime()+60000));
     for(const [kind,grabbed,expectedErrors] of [['apple',false,3],['cone',true,3],['apple',true,2],['cone',false,2]]){
       await loadRound('orchard',{id:3,attempt:7,caught:6,errors:2,kind,position:grabbed?.5:.09,spot:.5,fall:.97,finished:false,won:false},'catch');
-      await page.waitForFunction(()=>window.petDemo.stats().orchard.attempt>=8);
+      await page.clock.runFor(100);
       const state=(await stats()).orchard;
+      assert.equal(state.attempt,8);
       assert.equal(state.errors,expectedErrors);assert.equal(state.caught,kind==='apple'&&grabbed?7:6);
       if(state.finished){
+        await page.clock.runFor(450);
         await page.getByText('Урожай собран',{exact:true}).waitFor();
         assert.equal(state.reward.leaves,2);await page.reload();assert.equal((await stats()).leaves,4);
         await page.locator('#catchStart').click();
       }
       await page.locator('[data-tab="park"]').click();await page.locator('#park.current').waitFor();
-      const paused=(await stats()).orchard;await page.waitForTimeout(400);assert.deepEqual((await stats()).orchard,paused);
+      const paused=(await stats()).orchard;
+      await page.clock.runFor(1200);
+      assert.deepEqual((await stats()).orchard,paused);
     }
     await loadRound('orchard',{
       id:3,attempt:2,caught:0,errors:2,kind:'apple',position:.09,spot:.5,fall:.97,finished:false,won:false,
     },'catch',false);
+    await page.clock.runFor(550);
     await page.getByText('Урожай собран',{exact:true}).waitFor();
     const starter=await stats();
     assert.equal(starter.orchard.won,false);
