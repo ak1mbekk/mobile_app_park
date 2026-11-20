@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://models/home/fleece-bed.glb" id="1"]
+[ext_resource type="PackedScene" path="res://models/home/gingham-cushion.glb" id="2"]
+
+[node name="BedWithCushion" type="Node3D"]
+
+[node name="Bed" parent="." instance=ExtResource("1")]
+
+[node name="Cushion" parent="." instance=ExtResource("2")]
+position = Vector3(0, 0.092, 0)

@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://models/structure/first-rug.glb" id="1"]
+[ext_resource type="PackedScene" path="res://models/home/embroidered-rug.glb" id="2"]
+
+[node name="RugSlot" type="Node3D"]
+
+[node name="FirstMeetingRug" parent="." instance=ExtResource("1")]
+
+[node name="HomeRug" parent="." instance=ExtResource("2")]
+visible = false
