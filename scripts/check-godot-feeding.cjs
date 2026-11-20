@@ -47,9 +47,12 @@ const {chromium}=require('playwright');
       await touchAt('touchStart',point(room,x,y));
       await touchAt('touchEnd');
     }
-    async function feed(targetX,targetY){
+    // Visible centres in the opening shot at this test's 390 × 844 viewport.
+    const firstApple = {x:.190, y:.834};
+    const firstPaws = {x:.369, y:.575};
+    async function feed(target){
       const room=await box();
-      const start=point(room,.223,.731),end=point(room,targetX,targetY);
+      const start=point(room,firstApple.x,firstApple.y),end=point(room,target.x,target.y);
       await touchAt('touchStart',start);
       for(let i=1;i<=12;i++){
         const t=i/12;
@@ -124,10 +127,10 @@ const {chromium}=require('playwright');
       await page.screenshot({path:process.env.PARK_CAPTURE_INTRO});
     }
     console.log('First playable Godot frame, browser launch excluded:',(Date.now()-started)/1000,'s');
-    await press(.223,.731);
+    await press(firstApple.x,firstApple.y);
     assert.equal((await stats()).mealFinished,false);
     await page.waitForTimeout(500);
-    await feed(.41,.537);
+    await feed(firstPaws);
     await page.locator('#name.current').waitFor({timeout:45000});
     assert.equal(await page.locator('#intro[data-naming-backdrop][inert] iframe').count(),1);
     assert.equal(await page.locator('#aki-name-input').inputValue(),'Ричи');

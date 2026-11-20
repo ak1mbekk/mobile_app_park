@@ -55,14 +55,14 @@ rotation = Vector3(0, -0.84, 0)
 scale = Vector3(0.42, 1, 0.35)
 
 [node name="Яблоко" parent="." node_paths=PackedStringArray("raccoon") groups=["Интерактивные предметы"] instance=ExtResource("Apple")]
-position = Vector3(-0.112, 0.002, 1.399)
+position = Vector3(-0.076, 0.002, 1.545)
 rotation = Vector3(0, -0.12, 0)
 scale = Vector3(1.58, 1.58, 1.58)
 raccoon = NodePath("../Аки")
 
 [node name="Игровая камера" parent="." groups=["Камера и свет"] instance=ExtResource("Camera")]
-position = Vector3(0.070, 0.84, 3.38)
-rotation = Vector3(-0.20944, 0, 0)
+position = Vector3(0.10, 0.83, 3.24)
+rotation = Vector3(-0.192, 0, 0)
 
 [node name="Утреннее солнце" parent="." groups=["Камера и свет"] instance=ExtResource("Sun")]
 position = Vector3(-1.25, 1.9, -1.25)

@@ -7,7 +7,8 @@ func _initialize() -> void:
     for resource in [
         "res://Scenes/Levels/FirstMeeting.tscn", "res://Scenes/Levels/Home.tscn",
         "res://Scenes/Characters/IdleFacing.tres", "res://Scenes/Games/Pairs.gd",
-        "res://Scenes/Characters/Richi.gd", "res://Scenes/Home/Bathroom.gd"
+        "res://Scenes/Characters/Richi.gd", "res://Scenes/Home/Bathroom.gd",
+        "res://Scenes/Home/Art/SoapFilm.gdshader"
     ]:
         var loaded := load(resource)
         if loaded == null or (loaded is Script and not loaded.can_instantiate()):

@@ -8,11 +8,13 @@ const SCRUB_DISTANCE := 0.51
 const POUR_SECONDS := 1.65
 const CLEAN_SECONDS := 1.15
 const FULL_WATER_Y := 0.244
+const POUR_TILT := 0.94
 
 @onready var soap: MeshInstance3D = $Губка
 @onready var jug: Node3D = $Кувшин
 @onready var jug_water: MeshInstance3D = $Кувшин/Вода
 @onready var jug_spout: Marker3D = $Кувшин/Носик
+@onready var jug_handle: Marker3D = $Кувшин/Ручка
 @onready var effects = $Эффекты
 @onready var animation: AnimationPlayer = $AnimationPlayer
 @onready var indicator: Control = $Отклик/ХодКупания
@@ -96,10 +98,13 @@ func chest_point() -> Vector3:
     return skeleton.to_global(chest) + actor.global_basis.z.normalized() * 0.15 + Vector3.DOWN * 0.035
 
 func jug_point() -> Vector3:
-    return jug.to_global(Vector3(0.0, 0.13, 0.0))
+    return jug_handle.global_position
 
 func pour_target(camera: Camera3D) -> Vector2:
-    return camera.unproject_position(chest_point()) + Vector2(0.245, -0.24) * _screen_width()
+    var width := _screen_width()
+    var target := camera.unproject_position(chest_point()) + Vector2(0.35, -0.19) * width
+    target.x = minf(target.x, get_viewport().get_visible_rect().size.x - width * 0.10)
+    return target
 
 func _refill_jug() -> void:
     jug.transform = jug_rest
@@ -157,24 +162,31 @@ func _move_tools(camera: Camera3D, chest: Vector3, speed: float, delta: float) -
         var target := to_local(camera.project_position(previous, maxf(0.1, depth - 0.28))) if held else soap_rest
         soap.position = soap.position.lerp(target, speed)
         return
-    var target := to_local(camera.project_position(previous, maxf(0.1, depth - 0.20))) - Vector3.UP * 0.13 if held else jug_rest.origin
-    jug.position = jug.position.lerp(target, speed)
+    var width := _screen_width()
+    var hand_depth := maxf(0.1, depth - 0.20)
     var aim_point := pour_target(camera)
-    var aimed := held and previous.distance_to(aim_point) <= _screen_width() * 0.13
+    # Leave room for the body of the tilted pitcher to the left of the handle.
+    var aimed := held and previous.x >= aim_point.x - width * 0.035 and previous.distance_to(aim_point) <= width * 0.105
     if held and not aimed:
         guide.show()
-        guide.global_position = camera.project_position(aim_point, depth - 0.24)
+        guide.global_position = camera.project_position(aim_point, hand_depth)
         guide.rotation.x = PI * 0.5 + camera.rotation.x
         guide.scale *= 0.72
-    var impact := chest + camera.global_basis.x * 0.105 + Vector3.DOWN * 0.02
-    var toward := to_local(impact) - jug.position
-    var yaw := atan2(toward.x, toward.z) + 0.53 if aimed else jug_rest.basis.get_euler().y
+    var impact := chest + camera.global_basis.x * 0.105 + Vector3.DOWN * 0.035
+    var grip := to_local(camera.project_position(previous, hand_depth)) if held else Vector3.ZERO
+    var handle_before_turn := to_local(jug_point())
+    var toward := to_local(impact) - grip
+    var yaw := atan2(toward.x, toward.z) + 0.34 if aimed else jug_rest.basis.get_euler().y
     jug.rotation.y = lerp_angle(jug.rotation.y, yaw, speed)
-    jug.rotation.x = lerpf(jug.rotation.x, 0.94 if aimed else 0.0, speed)
+    jug.rotation.x = lerpf(jug.rotation.x, POUR_TILT if aimed else 0.0, speed)
+    if held:
+        jug.position = handle_before_turn.lerp(grip, speed) - jug.basis * jug_handle.position
+    else:
+        jug.position = jug.position.lerp(jug_rest.origin, speed)
     jug_water.position.y = lerpf(FULL_WATER_Y, 0.069, rinse_progress)
     var water_radius := lerpf(0.075, 0.093, sin(rinse_progress * PI))
     jug_water.scale = Vector3(water_radius / 0.075, 1.0, water_radius / 0.075)
-    pouring = aimed and jug.position.distance_to(target) < 0.15 and jug.rotation.x > 0.38
+    pouring = aimed and to_local(jug_point()).distance_to(grip) < 0.11 and jug.rotation.x > 0.38
     if pouring:
         effects.show_stream(jug_spout.global_position, impact, effect_time)
         rinse_progress = minf(1.0, rinse_progress + delta / POUR_SECONDS)
@@ -213,7 +225,11 @@ func _grab(point: Vector2, id: int) -> void:
     if pointer != NO_POINTER or phase == &"done" or not camera:
         return
     var tool := soap.global_position if phase == &"scrub" else jug_point()
-    if camera.unproject_position(tool).distance_to(point) <= maxf(28.0, _screen_width() * 0.079):
+    var radius := maxf(28.0, _screen_width() * 0.079)
+    var on_tool := camera.unproject_position(tool).distance_to(point) <= radius
+    if phase == &"ready" and not on_tool:
+        on_tool = camera.unproject_position(jug.to_global(Vector3.UP * 0.13)).distance_to(point) <= radius
+    if on_tool:
         pointer = id
         previous = point
         get_viewport().set_input_as_handled()

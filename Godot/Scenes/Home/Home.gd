@@ -35,6 +35,7 @@ const SHOP_SAVE_ERROR := "Не удалось сохранить изменен�
 @onready var bedroom: Node3D = $Спальня
 @onready var night_lamp: OmniLight3D = $Спальня/Свет/Ночник
 @onready var bathroom: Node3D = $Купание
+@onready var bathing_camera: Marker3D = bathroom.get_node("Камера купания")
 @onready var care: Node3D = $Уход
 @onready var stations: Node3D = $"Станции ухода"
 @onready var kitchen: Node3D = $"Комнаты ухода/Кухня"
@@ -52,7 +53,6 @@ const SHOP_SAVE_ERROR := "Не удалось сохранить изменен�
 @onready var day_ambient := ambience.environment.ambient_light_energy
 @onready var day_ambient_color := ambience.environment.ambient_light_color
 @onready var night_lamp_energy := night_lamp.light_energy
-@onready var room_fov := room_camera.fov
 @onready var main_camera := room_camera.global_transform
 
 var active_mode: StringName = &"home"
@@ -300,8 +300,6 @@ func _move_between_floor_and_bath(entering: bool) -> void:
     richi.gaze.suspended = true
     bathroom.preview()
     _set_status("")
-    var camera_motion := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-    camera_motion.tween_property(room_camera, "fov", room_fov + 3.5, 0.35)
 
     var floor_pose := _day_pose()
     var outside := Transform3D(floor_pose.basis, bathroom.get_node("Подход к купели").global_position)
@@ -315,12 +313,14 @@ func _move_between_floor_and_bath(entering: bool) -> void:
         waypoints.append(outside.origin)
         _walk_on_floor(motion, floor_pose, waypoints)
         motion.tween_callback(_set_mode.bind(&"bath", false, false))
+        motion.tween_callback(_move_bath_camera.bind(true))
         motion.tween_property(richi, "transform", toward_bath, 0.29)
         _step_over_bath_edge(motion, toward_bath, Transform3D(toward_bath.basis, standing.origin))
         motion.tween_callback(_play_travel_animation.bind(&"Idle_Step_Turn_Left", 0.0, 1.7, 0.12))
         motion.tween_property(richi, "transform", standing, 0.29)
         _change_bath_pose(motion, &"Stand_to_Sit_Transition_M", 4.3, inside)
     else:
+        _move_bath_camera(false)
         _change_bath_pose(motion, &"Sit_to_Stand_Transition_M", 5.7, standing)
         motion.tween_callback(_play_travel_animation.bind(&"Idle_Step_Turn_Left", 0.0, 1.7, 0.12))
         motion.tween_property(richi, "transform", away_from_bath, 0.29)
@@ -330,8 +330,12 @@ func _move_between_floor_and_bath(entering: bool) -> void:
         waypoints.append(floor_pose.origin)
         _walk_on_floor(motion, landing, waypoints)
         motion.tween_property(richi, "transform", floor_pose, 0.23)
-    motion.tween_property(room_camera, "fov", room_fov, 0.32).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
     motion.tween_callback(_finish_bath_movement.bind(entering))
+
+func _move_bath_camera(active: bool) -> void:
+    var view := bathing_camera.global_transform if active else _camera_in(BATH)
+    var motion := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    motion.tween_property(room_camera, "global_transform", view, 1.25)
 
 func _change_bath_pose(motion: Tween, clip: StringName, speed: float, target: Transform3D) -> void:
     motion.tween_callback(_play_travel_animation.bind(clip, 0.0, speed, 0.16))
@@ -362,6 +366,7 @@ func _finish_bath_movement(entering: bool, restored: bool = false) -> void:
         richi.resting_at_home = false
         richi.player.play(&"Sit_Cross_Legged", 0.0 if restored else 0.18)
         if restored:
+            room_camera.global_transform = bathing_camera.global_transform
             richi.player.advance(0.0)
         bathroom.start(richi)
         _refresh_controls()

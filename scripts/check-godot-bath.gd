@@ -28,7 +28,7 @@ func _run() -> void:
     var args := OS.get_cmdline_user_args()
     if not args.is_empty():
         output = args[0]
-    root.size = Vector2i(390, 844)
+    root.size = Vector2i(args[1].to_int(), args[2].to_int()) if args.size() >= 3 else Vector2i(390, 844)
     room = HOME.instantiate()
     var growth_mesh: ArrayMesh = room.growth_mesh
     room.set_script(IsolatedHome)
@@ -88,6 +88,11 @@ func _run() -> void:
 
     var jug := _point(_state().jug)
     var target := _point(_state().pourTarget)
+    var width := root.get_visible_rect().size.x
+    var old_grip := root.get_camera_3d().unproject_position(bath.jug.to_global(Vector3.UP * 0.13))
+    _touch(old_grip, true)
+    _expect(bath.pointer == 0, "The body of the pitcher still accepts a grab")
+    _touch(old_grip, false)
     _touch(jug, true)
     _touch(jug, false)
     await create_timer(0.22).timeout
@@ -95,24 +100,37 @@ func _run() -> void:
     _touch(jug, true)
     _drag(target + Vector2(-146.0, 0.0))
     await create_timer(0.30).timeout
-    _expect(bath.rinse_progress == 0.0 and not bath.pouring, "Holding the pitcher away from Richi releases no stream")
+    _expect(bath.rinse_progress == 0.0 and not bath.pouring and not bath.effects.water.visible, "Holding the pitcher outside the target releases no stream")
+    _drag(target - Vector2(width * 0.055, 0.0))
+    await create_timer(0.24).timeout
+    _expect(bath.rinse_progress == 0.0 and bath.guide.visible and not bath.pouring, "Moving the pitcher toward Richi's face does not start rinsing")
+    await _capture("04a-missed-pour")
     _drag(target)
     await create_timer(0.62).timeout
     _expect(bath.pouring and bath.effects.water.visible and bath.rinse_progress > 0.17 and bath.rinse_progress < 0.75, "A held pitcher over Richi creates an arc and advances rinse gradually")
+    _expect_pour_clearance(target)
     await _capture("04-stream-and-rinse-progress")
+    var edge := target + Vector2(-0.03, -0.09) * width
+    _drag(edge)
+    await create_timer(0.25).timeout
+    _expect(bath.pouring and bath.effects.water.visible, "The pitcher still pours near the upper inside edge of the target")
+    _expect_pour_clearance(edge)
+    await _capture("04b-rinse-at-edge")
     var rinse_snapshot: float = bath.rinse_progress
-    _touch(target, false)
+    _touch(edge, false)
     await create_timer(0.24).timeout
     _expect(not bath.pouring and is_equal_approx(bath.rinse_progress, rinse_snapshot), "Releasing stops the stream and keeps progress")
 
     _touch(_point(_state().jug), true)
     _drag(target)
-    await create_timer(0.12).timeout
+    if not await _until(func(): return bath.pouring, 1.0, "active stream before pause"):
+        quit(1)
+        return
     room._sync_pause([true])
     await process_frame
     var paused_snapshot: float = bath.rinse_progress
     await create_timer(0.30).timeout
-    _expect(not bath.pouring and bath.pointer == -2 and is_equal_approx(bath.rinse_progress, paused_snapshot), "Parking pauses the rinse and releases the held prop")
+    _expect(not bath.pouring and not bath.effects.water.visible and bath.pointer == -2 and is_equal_approx(bath.rinse_progress, paused_snapshot), "Parking pauses an active rinse and releases the held prop")
     room._sync_pause([false])
     await create_timer(0.26).timeout
     _expect(is_equal_approx(bath.rinse_progress, paused_snapshot), "Returning alone does not resume pouring")
@@ -129,8 +147,24 @@ func _run() -> void:
     _expect(washes == 1 and room.location == &"bathroom" and room.native_needs.clean > before + 54.0, "After the clean reaction, Richi exits and receives exactly one gain")
     await _capture("06-back-on-the-mat")
     if failures == 0:
-        print("PASS seated wash, visible jug/foam/stream/sparkle, incremental rinse, cancel/pause/restore, one care reward, and automatic exit")
+        print("PASS seated wash, handle and face clearance, misses, pause of an active stream, one care reward, and automatic exit at ", root.size)
     quit(0 if failures == 0 else 1)
+
+func _expect_pour_clearance(finger: Vector2) -> void:
+    var camera := root.get_camera_3d()
+    var width := root.get_visible_rect().size.x
+    var handle: Vector2 = camera.unproject_position(bath.jug_point())
+    _expect(handle.distance_to(finger) < width * 0.03, "The handle stays under the finger while tilting")
+    var actor = room.richi
+    var eyes: Vector3 = actor.skeleton.to_global(actor.skeleton.get_bone_global_pose(actor.gaze.head) * actor.gaze.rest_eye)
+    var face_right := camera.unproject_position(eyes).x + width * 0.10
+    for mesh: MeshInstance3D in bath.jug.find_children("*", "MeshInstance3D", true, false):
+        var bounds := mesh.get_aabb()
+        for corner in 8:
+            var screen_corner := camera.unproject_position(mesh.to_global(bounds.get_endpoint(corner)))
+            _expect(screen_corner.x > face_right, "The tilted pitcher clears the face")
+    _expect(bath.jug_spout.global_position.y > bath.chest_point().y + 0.05, "The lip stays high enough for water to fall onto the fur")
+
 
 func _hips() -> Vector3:
     var skeleton: Skeleton3D = room.richi.skeleton

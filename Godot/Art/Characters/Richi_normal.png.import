@@ -3,11 +3,9 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dchyby86j4men"
-path.s3tc="res://.godot/imported/Richi_normal.png-d80f5674772d04b4b2d82bc435e51cb0.s3tc.ctex"
-path.etc2="res://.godot/imported/Richi_normal.png-d80f5674772d04b4b2d82bc435e51cb0.etc2.ctex"
+path="res://.godot/imported/Richi_normal.png-d80f5674772d04b4b2d82bc435e51cb0.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={
 "md5": "99bd1a1efe3b0ddf4cbe88440f9474bf"
@@ -16,14 +14,14 @@ generator_parameters={
 [deps]
 
 source_file="res://Art/Characters/Richi_normal.png"
-dest_files=["res://.godot/imported/Richi_normal.png-d80f5674772d04b4b2d82bc435e51cb0.s3tc.ctex", "res://.godot/imported/Richi_normal.png-d80f5674772d04b4b2d82bc435e51cb0.etc2.ctex"]
+dest_files=["res://.godot/imported/Richi_normal.png-d80f5674772d04b4b2d82bc435e51cb0.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=4
 compress/high_quality=false
 compress/lossy_quality=0.7
-compress/uastc_level=0
+compress/uastc_level=4
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
 compress/normal_map=1

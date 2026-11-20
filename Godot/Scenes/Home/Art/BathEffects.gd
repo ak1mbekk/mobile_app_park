@@ -18,32 +18,35 @@ func _ready() -> void:
     bubble.height = 2.0
     bubble.radial_segments = 10
     bubble.rings = 5
-    var pearl := StandardMaterial3D.new()
-    pearl.albedo_color = Color(0.94, 0.99, 0.98)
-    pearl.roughness = 0.31
+    var pearl := ShaderMaterial.new()
+    pearl.shader = preload("res://Scenes/Home/Art/SoapFilm.gdshader")
     bubble.material = pearl
     foam.multimesh = MultiMesh.new()
     foam.multimesh.transform_format = MultiMesh.TRANSFORM_3D
+    foam.multimesh.use_custom_data = true
     foam.multimesh.mesh = bubble
     foam.multimesh.instance_count = BUBBLES
     foam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     add_child(foam)
     var random := RandomNumberGenerator.new()
     random.seed = 782
+    var cluster := Vector3.ZERO
     for index in range(BUBBLES):
-        var angle := index * 2.399963
-        var radius := sqrt(float(index + 1) / BUBBLES)
-        foam_offsets.append(Vector3(cos(angle) * radius * 0.24, random.randf_range(-0.11, 0.08), sin(angle) * radius * 0.11))
-        foam_radii.append(random.randf_range(0.018, 0.045))
+        if index % 3 == 0:
+            var angle := (index / 3.0) * 2.399963
+            var radius := sqrt(float(index + 1) / BUBBLES)
+            cluster = Vector3(cos(angle) * radius * 0.20, random.randf_range(-0.10, 0.06), sin(angle) * radius * 0.09)
+        var offset := Vector3(random.randf_range(-0.023, 0.023), random.randf_range(-0.019, 0.019), random.randf_range(-0.015, 0.015))
+        foam_offsets.append(cluster + offset)
+        var large := index % 3 == 0
+        foam_radii.append(random.randf_range(0.022, 0.033) if large else random.randf_range(0.009, 0.021))
+        foam.multimesh.set_instance_custom_data(index, Color(0.12 if large else 0.9, 0.0, 0.0))
     foam.hide()
 
     var blue := StandardMaterial3D.new()
-    blue.albedo_color = Color(0.39, 0.83, 0.94, 0.88)
-    blue.emission_enabled = true
-    blue.emission = Color(0.25, 0.49, 0.61)
-    blue.emission_energy_multiplier = 0.32
+    blue.albedo_color = Color(0.68, 0.89, 0.94, 0.59)
     blue.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-    blue.roughness = 0.21
+    blue.roughness = 0.13
     water.mesh = stream
     water.material_override = blue
     water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -101,7 +104,7 @@ func _stream_vertex(source: Vector3, arc: Vector3, impact: Vector3, side: Vector
     var curve := source.lerp(arc, t).lerp(arc.lerp(impact, t), t)
     var tangent := (arc - source).lerp(impact - arc, t).normalized()
     var normal := (side * cos(angle) + tangent.cross(side).normalized() * sin(angle)).normalized()
-    var radius := lerpf(0.027, 0.014, t) * (0.91 + 0.09 * sin(time * 33.0 - t * 37.0))
+    var radius := lerpf(0.020, 0.011, t) * (0.91 + 0.09 * sin(time * 33.0 - t * 37.0))
     stream.surface_set_normal(normal)
     stream.surface_add_vertex(curve + normal * radius)
 

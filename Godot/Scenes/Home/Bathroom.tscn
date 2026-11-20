@@ -129,6 +129,10 @@ _data = {&"float": SubResource("Float")}
 [node name="Купание" type="Node3D"]
 script = ExtResource("Script")
 
+[node name="Камера купания" type="Marker3D" parent="."]
+position = Vector3(0.135, 0.91, 4.25)
+rotation = Vector3(-0.10, 0, 0)
+
 [node name="Место для Ричи" type="Marker3D" parent="."]
 position = Vector3(0.12, 0.136, 0.47)
 rotation = Vector3(0, -0.32, 0)
@@ -205,6 +209,9 @@ cast_shadow = 0
 
 [node name="Носик" type="Marker3D" parent="Кувшин"]
 position = Vector3(-0.050, 0.265, 0.125)
+
+[node name="Ручка" type="Marker3D" parent="Кувшин"]
+position = Vector3(0.155, 0.176, -0.013)
 
 [node name="Подсказка" type="MeshInstance3D" parent="."]
 visible = false

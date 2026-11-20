@@ -6,7 +6,6 @@ const DEFAULT_NAME := "Ричи"
 @export var aki: Node3D
 @export var apple: MeshInstance3D
 @export var introduction_enabled := true
-@onready var hint: Label = %Hint
 @onready var panel: PanelContainer = %NamePanel
 @onready var field: LineEdit = %PetName
 @onready var confirm: Button = %Confirm
@@ -25,12 +24,10 @@ func _ready() -> void:
     if not aki or not apple:
         return
     aki.meal_finished.connect(_after_meal)
-    apple.picked_up.connect(hint.hide)
     var gaze = aki.gaze
     apple.picked_up.connect(gaze.follow_apple.bind(apple))
     apple.returned_to_floor.connect(gaze.release_apple)
     apple.accepted.connect(gaze.finish_tracking)
-    apple.returned_to_floor.connect(hint.show)
     field.text_changed.connect(_validate)
     field.text_submitted.connect(_confirm_name)
     confirm.pressed.connect(func(): _confirm_name(field.text))
@@ -54,7 +51,6 @@ func _ready() -> void:
             gaze.finish_tracking()
             apple.restore_eaten()
             aki.rest_after_meal()
-            hint.hide()
             if stage == "name":
                 _open_name_panel()
             else:
@@ -95,7 +91,6 @@ func _notify_host(event_name: String) -> void:
     browser.parent.postMessage("animal-park:" + event_name, str(browser.location.origin))
 
 func _open_name_panel() -> void:
-    hint.hide()
     field.text = DEFAULT_NAME
     panel.show()
     panel.modulate.a = 0.0
@@ -123,7 +118,6 @@ func _confirm_name(value: String) -> void:
 func _complete() -> void:
     confirmed = true
     panel.hide()
-    hint.hide()
     get_tree().change_scene_to_file.call_deferred(HOME_SCENE)
 
 func _process(_delta: float) -> void:
@@ -144,5 +138,3 @@ func _layout() -> void:
     var inset := maxf(bottom, keyboard * viewport_height / screen_height + 8.0)
     panel.offset_bottom = -inset
     panel.offset_top = -inset - panel.get_combined_minimum_size().y
-    hint.offset_bottom = -bottom
-    hint.offset_top = -bottom - hint.get_combined_minimum_size().y
