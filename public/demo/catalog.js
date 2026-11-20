@@ -12,6 +12,8 @@
   ]);
   const normalize = text => text.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[^а-яa-z0-9]+/g,' ').trim();
   const bySlug = new Map();
+  let catalogRequest;
+  let cardsReady = false;
   window.parkGuide.speciesName=slug=>bySlug.get(slug)?.name;
   window.parkGuide.speciesPhoto=slug=>bySlug.get(slug)?.thumbnail;
   let entries = [];
@@ -69,10 +71,10 @@
     if(!button)return;
     selectedGroup=button.dataset.group;filter();
   });
-  function detail() {
+  function detail(loading = false) {
     const entry = bySlug.get(location.hash.slice('#species/'.length));
     const photo = document.getElementById('species-photo');
-    document.getElementById('species-name').textContent = entry?.name || 'Карточка недоступна';
+    document.getElementById('species-name').textContent = entry?.name || (loading ? 'Загружаем карточку…' : 'Карточка недоступна');
     document.getElementById('species-group').textContent = entry?.category || '';
     document.getElementById('species-latin').textContent = entry?.scientific || '';
     const description=document.getElementById('species-description');
@@ -131,21 +133,37 @@
   }
   search.addEventListener('input', filter);
   document.getElementById('animalReset').onclick=()=>{search.value='';selectedGroup='Все';filter();search.focus();};
-  document.addEventListener('conceptscreen',e=>{if(e.detail==='species')detail();});
   indexCards();
-  if (location.protocol==='file:') return;
-  fetch('catalogue.json').then(response=>{
-    if(!response.ok) throw Error('Catalogue unavailable');
-    return response.json();
-  }).then(data=>{
-    if(!Array.isArray(data)||!data.length)return;
-    for(const entry of data) bySlug.set(entry.slug,entry);
-    document.dispatchEvent(new Event('parkcatalogready'));
+  function showCatalogCards() {
+    if (cardsReady || !bySlug.size) return;
     const featured=['kapibara','karakal','zubr','koshachiy-lemur','enot-poloskun','edipov-tamarin'];
-    const rest=data.filter(entry=>!featured.includes(entry.slug)).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+    const rest=[...bySlug.values()].filter(entry=>!featured.includes(entry.slug)).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
     const sorted=[...featured.map(slug=>bySlug.get(slug)).filter(Boolean),...rest];
     grid.replaceChildren(...sorted.map(makeCard));
     indexCards();
-    if(location.hash.startsWith('#species/'))detail();
-  }).catch(()=>{ /* Six illustrated cards are bundled in the HTML for offline fallback. */ });
+    cardsReady = true;
+  }
+  async function loadCatalog() {
+    try {
+      const response = await fetch('catalogue.json');
+      if (!response.ok) throw Error('Catalogue unavailable');
+      const data = await response.json();
+      if (!Array.isArray(data) || !data.length) throw Error('Empty catalogue');
+      for (const entry of data) bySlug.set(entry.slug, entry);
+      document.dispatchEvent(new Event('parkcatalogready'));
+    } catch {
+      // Keep the six bundled cards. Re-entering the section can retry after a network failure.
+      catalogRequest = null;
+    }
+    if (section.classList.contains('current')) showCatalogCards();
+    if (document.getElementById('species').classList.contains('current')) detail();
+  }
+  document.addEventListener('conceptscreen', event => {
+    const screen = event.detail;
+    if (!['animals','species','map'].includes(screen)) return;
+    const canLoad = location.protocol !== 'file:';
+    if (screen === 'species') detail(canLoad && !bySlug.size);
+    if (screen === 'animals') showCatalogCards();
+    if (canLoad && !catalogRequest) catalogRequest = loadCatalog();
+  });
 })();

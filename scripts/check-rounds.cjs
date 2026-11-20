@@ -11,11 +11,11 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
     const page=await browser.newPage({viewport:{width:390,height:844}});
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
     const stats=()=>page.evaluate(()=>window.petDemo.stats());
-    async function loadRound(game,value,screen){
+    async function loadRound(game,value,screen,starterRoundRewarded=true){
       await page.goto(root+'#park');await page.reload();
-      await page.evaluate(({key,game,value})=>localStorage.setItem(key,JSON.stringify({
-        name:'Аки',onboardingDone:true,leaves:2,xp:40,[game]:value
-      })),{key,game,value});
+      await page.evaluate(({key,game,value,starterRoundRewarded})=>localStorage.setItem(key,JSON.stringify({
+        name:'Аки',onboardingDone:true,leaves:starterRoundRewarded?2:0,xp:40,starterRoundRewarded,[game]:value
+      })),{key,game,value,starterRoundRewarded});
       await page.evaluate(screen=>history.replaceState(null,'','#'+screen),screen);await page.reload();
       await page.locator('#'+screen+'.current').waitFor();
     }
@@ -85,7 +85,18 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
       await page.locator('[data-tab="park"]').click();await page.locator('#park.current').waitFor();
       const paused=(await stats()).orchard;await page.waitForTimeout(400);assert.deepEqual((await stats()).orchard,paused);
     }
+    await loadRound('orchard',{
+      id:3,attempt:2,caught:0,errors:2,kind:'apple',position:.09,spot:.5,fall:.97,finished:false,won:false,
+    },'catch',false);
+    await page.getByText('Урожай собран',{exact:true}).waitFor();
+    const starter=await stats();
+    assert.equal(starter.orchard.won,false);
+    assert.equal(starter.orchard.reward.leaves,5);
+    assert.equal(starter.leaves,5);
+    await page.reload();
+    await page.getByText('Урожай собран',{exact:true}).waitFor();
+    assert.equal((await stats()).leaves,5);
     assert.deepEqual(errors,[]);
-    console.log('PASS interrupted matching move, shared-cell win, round replay, last catch/miss, saved reward and park pause');
+    console.log('PASS interrupted matching move, shared-cell win, round replay, last catch/miss, saved reward, starter gift and park pause');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

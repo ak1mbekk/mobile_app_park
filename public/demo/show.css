@@ -167,6 +167,19 @@
 }
 #need-bars label{display:grid;gap:5px}
 #pet-actor{display:block;width:100%;height:auto}
+.pet-reaction{position:absolute;pointer-events:none}
+#intro>.pet-reaction{inset:0;width:100%;height:100%;object-fit:cover;z-index:-1}
+#pet-figure[data-reaction] #pet-actor{opacity:0}
+#home #pet-figure[data-reaction]{animation:none}
+#pet-figure>.pet-reaction{width:122%;height:122%;left:-11%;bottom:-4%;object-fit:contain}
+#pet-figure:not([data-wardrobe])>.pet-reaction{width:150%;height:150%;left:-25%;bottom:-8%}
+#home.in-kitchen.kitchen-hungry.has-kitchen-hungry-art:has(#pet-figure[data-reaction])::before{
+  background-image:var(--kitchen-art);
+}
+#home.in-kitchen #pet-figure[data-reaction]{visibility:visible}
+#wash>.pet-reaction,#chest>.pet-reaction{width:min(68%,280px);height:auto;left:50%;translate:-50% 0;z-index:2;filter:drop-shadow(2px 5px 3px #452c2450)}
+#wash>.pet-reaction{bottom:14%}
+#chest>.pet-reaction{bottom:max(18px,6%);left:76%;width:min(55%,245px)}
 #home #pet-figure[data-wardrobe]{transform:translateY(10%);animation:none}
 #home:has(#shop-preview:not([hidden])) #pet-figure[data-wardrobe]{left:24%;width:82%}
 #home.night #night-room{background-image:var(--fitted-sleep,none),var(--sleep-scene)}
@@ -258,7 +271,9 @@
 }
 .wash-vessel{position:absolute;left:17%;bottom:16%;width:78%;height:auto;pointer-events:none;filter:drop-shadow(0 5px 4px #38271d66)}
 .wash-vessel.upgraded{left:11%;width:86%;clip-path:polygon(8% 32%,31% 29%,36% 25%,42% 20%,49% 20%,56% 29%,87% 32%,100% 44%,94% 58%,88% 86%,77% 88%,72% 81%,39% 82%,33% 89%,20% 85%,16% 76%,10% 60%)}
-#wash-start{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);min-width:134px}
+#wash-start{position:absolute;left:17%;bottom:16%;width:78%;padding:0;background:transparent;border-radius:45%;line-height:0}
+#wash-start:has(.upgraded){left:11%;width:86%}
+#wash-start .wash-vessel{position:static;width:100%;height:auto}
 #home:has(#bath-preview-room:not([hidden])) > :is(#room-decor,#pet-figure,#aki-pet,#aki-heart,#rope-ball,.room-objects,.care-room-links,.pet-status,#home-profile,#shop-open,#need-bars,#bed-goal){visibility:hidden}
 
 #home:not(.night,.in-kitchen){--veranda-paper:#fff7e7;--veranda-ink:#31453b;--veranda-shadow:0 2px 6px #32433428}
@@ -293,3 +308,145 @@
 #home:not(.night,.in-kitchen) #aki-sleep{left:8%;top:auto;bottom:20%;display:grid;align-items:center}
 #home:not(.night,.in-kitchen) #aki-sleep[hidden]{display:none}
 #home:not(.night,.in-kitchen) #rope-ball{left:14%;top:auto;bottom:24%}
+
+#catch {
+  background-position: center top;
+}
+#catch .gameline {
+  gap: 8px;
+  justify-content: flex-start;
+}
+#catch .orchard-lives {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+  padding: 6px 12px;
+  color: #8b312b;
+  background: #f9edce;
+  border-radius: 15px;
+  font-size: 19px;
+}
+#catch .orchard-lives > span {
+  padding: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+}
+#catchField {
+  --orchard-fruit-size: clamp(37px, 13vw, 59px);
+  inset: 63px 0 49px;
+}
+#catchField:focus-visible {
+  outline: 2px solid #fff3c6;
+  outline-offset: -3px;
+}
+#catchField .orchard-twig {
+  position: absolute;
+  width: 5px;
+  height: max(12px, calc(13% - var(--orchard-fruit-size) * .38));
+  top: 0;
+  z-index: 1;
+  transform: translateX(-50%) rotate(8deg);
+  transform-origin: bottom;
+  border-radius: 40% 40% 70% 20%;
+  background: linear-gradient(90deg, #4b351e, #9a723d 70%);
+  pointer-events: none;
+}
+#catchField .orchard-twig::before,
+#catchField .orchard-twig::after {
+  position: absolute;
+  content: "";
+  width: 16px;
+  height: 8px;
+  top: 48%;
+  border-radius: 80% 0 80% 0;
+  background: linear-gradient(15deg, #596837, #958f50);
+}
+#catchField .orchard-twig::before { right: 3px; transform: rotate(35deg); }
+#catchField .orchard-twig::after { left: 3px; transform: rotate(-35deg); }
+#catchField #fallFruit {
+  z-index: 2;
+  width: var(--orchard-fruit-size);
+  transform: translate(-50%, -50%) rotate(var(--spin, 0deg));
+  filter: drop-shadow(1px 3px 3px #3e2f184f);
+}
+#catchField #basket {
+  bottom: 4%;
+  width: clamp(57px, 16vw, 82px);
+  height: 25px;
+  z-index: 3;
+  border-radius: 8% 8% 29% 29% / 15% 15% 55% 55%;
+  border-top: 4px solid #efbb78;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 7px, #542d1a63 7px 9px),
+    repeating-linear-gradient(0deg, #8b512e 0 3px, #c4874c 3px 6px, #dda365 6px 7px);
+  box-shadow: inset 0 -3px 0 #60381f, 0 5px 7px #3b2b1996;
+  transform: translate(-50%, var(--hop, 0px)) rotate(var(--tilt, 0deg)) scaleY(var(--squash, 1));
+  pointer-events: none;
+}
+#catchField #basket::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 14%;
+  width: 72%;
+  height: 22px;
+  border: 4px solid #a96e36;
+  border-bottom: 0;
+  border-radius: 50% 50% 0 0 / 86% 86% 0 0;
+  box-shadow: inset 0 2px 0 #f0b773, 0 -1px 0 #6a401f;
+}
+#catchField .orchard-impact {
+  position: absolute;
+  z-index: 2;
+  top: 87%;
+  pointer-events: none;
+}
+#catchField .orchard-impact[data-effect="ground"] { top: 91%; }
+#catchField .orchard-impact img {
+  position: absolute;
+  width: calc(var(--orchard-fruit-size) * .8);
+  max-width: none;
+}
+#catchField .orchard-impact::before {
+  position: absolute;
+  content: "";
+  left: 0;
+  bottom: -6px;
+  width: 40px;
+  height: 3px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #ffbc72;
+}
+#catchField .orchard-impact[data-effect="catch"]::before {
+  bottom: 3px;
+  width: 54px;
+  height: 26px;
+  border-radius: 12% 12% 40% 40%;
+  background:
+    radial-gradient(circle at 6% 56%, #fff0a6 0 2px, transparent 3px),
+    radial-gradient(circle at 22% 23%, #fff0a6 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 8%, #fff0a6 0 2px, transparent 3px),
+    radial-gradient(circle at 77% 22%, #fff0a6 0 2px, transparent 3px),
+    radial-gradient(circle at 93% 56%, #fff0a6 0 2px, transparent 3px);
+}
+#catchField .orchard-impact[data-effect="rattle"]::before {
+  width: 36px;
+  height: 2px;
+  background: #e83925;
+}
+#catch .orchard-feedback {
+  position: absolute;
+  inset: auto 12px 8px;
+  margin: 0 auto;
+  width: fit-content;
+  padding: 7px 12px;
+  color: #fff5df;
+  background: #34281be8;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+#catch .orchard-feedback:empty,
+#catch :is(.orchard-impact,.orchard-twig)[hidden] { display: none; }

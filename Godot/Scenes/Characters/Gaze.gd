@@ -9,7 +9,7 @@ extends SkeletonModifier3D
 @export_range(0, 15, 0.5) var vertical_degrees := 9.0
 @export_range(0.03, 0.25, 0.01) var response_seconds := 0.10
 @export_range(0.15, 0.7, 0.01) var return_seconds := 0.40
-@export_range(0, 14, 0.5) var head_yaw_degrees := 8.0
+@export_range(0, 14, 0.5) var head_yaw_degrees := 13.0
 @export_range(0, 8, 0.5) var head_pitch_degrees := 4.0
 @export_range(0.05, 0.40, 0.01) var head_delay_seconds := 0.16
 @export var skeleton: Skeleton3D
@@ -17,8 +17,10 @@ extends SkeletonModifier3D
 
 @export var surface: ShaderMaterial
 const NO_TOUCH := -1
+const TAP_LOOK_SECONDS := 0.48
 var finger := NO_TOUCH
 var pointing := false
+var tap_look_left := 0.0
 var screen_point := Vector2.ZERO
 var fruit: MeshInstance3D
 var suspended := false
@@ -45,8 +47,11 @@ func _input(event: InputEvent) -> void:
     # Release the tracked contact even when the finger ends over a UI control.
     if event is InputEventScreenTouch and event.index == finger and (event.canceled or not event.pressed):
         finger = NO_TOUCH
-        pointing = false
+        pointing = not event.canceled and not suspended and fruit == null
+        tap_look_left = TAP_LOOK_SECONDS if pointing else 0.0
         set_process(true)
+    elif event is InputEventScreenDrag and event.index == finger:
+        point_at(event.position)
 
 func _unhandled_input(event: InputEvent) -> void:
     if not enabled or suspended or fruit != null:
@@ -55,14 +60,13 @@ func _unhandled_input(event: InputEvent) -> void:
         if event.pressed and not event.canceled and finger == NO_TOUCH:
             finger = event.index
             point_at(event.position)
-    elif event is InputEventScreenDrag and event.index == finger:
-        point_at(event.position)
     elif event is InputEventMouseMotion and finger == NO_TOUCH and event.device != InputEvent.DEVICE_ID_EMULATION:
         point_at(event.position)
 
 func point_at(target: Vector2) -> void:
     screen_point = target
     pointing = true
+    tap_look_left = 0.0
     set_process(true)
 
 func follow_apple(target: MeshInstance3D) -> void:
@@ -70,6 +74,7 @@ func follow_apple(target: MeshInstance3D) -> void:
         return
     finger = NO_TOUCH
     pointing = false
+    tap_look_left = 0.0
     fruit = target
     set_process(true)
 
@@ -80,12 +85,14 @@ func release_apple() -> void:
 func finish_tracking() -> void:
     suspended = true
     pointing = false
+    tap_look_left = 0.0
     finger = NO_TOUCH
     release_apple()
 
 func reset_attention() -> void:
     finger = NO_TOUCH
     pointing = false
+    tap_look_left = 0.0
     fruit = null
     angles = Vector2.ZERO
     head_angles = Vector2.ZERO
@@ -105,6 +112,9 @@ func _process(delta: float) -> void:
     var camera := get_viewport().get_camera_3d()
     if not camera:
         return
+    if tap_look_left > 0.0:
+        tap_look_left -= delta
+        pointing = tap_look_left > 0.0
     var desired := Vector2.ZERO
     var head_target := Vector2.ZERO
     var following := enabled and not suspended and (pointing or is_instance_valid(fruit))
@@ -117,13 +127,13 @@ func _process(delta: float) -> void:
         var offset := (target - camera.unproject_position(eye)) / (span * Vector2(0.38, 0.32))
         var direction := offset.limit_length(1.0)
         desired = direction * Vector2(horizontal_degrees, vertical_degrees)
-        if direction.length() > 0.42:
+        if direction.length() > 0.17:
             if direction.normalized().dot(last_direction) < 0.65:
                 head_wait = 0.0
             last_direction = direction.normalized()
             head_wait += delta
             if head_wait >= head_delay_seconds:
-                head_target = direction * smoothstep(0.42, 0.95, direction.length()) * Vector2(head_yaw_degrees, head_pitch_degrees)
+                head_target = direction * smoothstep(0.17, 0.54, direction.length()) * Vector2(head_yaw_degrees, head_pitch_degrees)
         else:
             head_wait = 0.0
     else:

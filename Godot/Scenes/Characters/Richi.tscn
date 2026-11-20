@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" path="res://Art/Characters/Richi.glb" id="Rig"]
 [ext_resource type="Script" path="res://Scenes/Characters/Richi.gd" id="Behaviour"]
 [ext_resource type="Script" path="res://Scenes/Characters/Gaze.gd" id="Gaze"]
+[ext_resource type="Script" path="res://Scenes/Characters/PawPose.gd" id="Paws"]
 [ext_resource type="Shader" path="res://Materials/RichiEyes.gdshader" id="EyeShader"]
 [ext_resource type="Texture2D" path="res://Art/Characters/EyesProjection.png" id="EyeProjection"]
 [ext_resource type="Texture2D" path="res://Art/Characters/TailRings.png" id="TailRings"]
@@ -53,6 +54,9 @@ script = ExtResource("Gaze")
 surface = SubResource("EyeMaterial")
 skeleton = NodePath("..")
 actor_mesh = NodePath("../output_unwrapped")
+
+[node name="PawPose" type="SkeletonModifier3D" parent="Модель/SmartRigArmature/Skeleton3D"]
+script = ExtResource("Paws")
 
 [node name="Headwear" type="BoneAttachment3D" parent="Модель/SmartRigArmature/Skeleton3D"]
 bone_name = "mixamorig_Head"

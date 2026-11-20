@@ -72,6 +72,7 @@ func _save(stage: String) -> Error:
     return error
 
 func _after_meal() -> void:
+    aki.rest_after_meal()
     if _has_web_host():
         _notify_host("meal-finished")
         return

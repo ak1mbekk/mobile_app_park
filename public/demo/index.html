@@ -24,9 +24,10 @@
   </div>
   <button type="button" id="close3d" class="scene-switch">Лёгкая версия</button>
 </div>
-<button class="fruit" id="apple-hotspot" type="button" aria-label="Протянуть яблоко еноту"><img src="assets/fruit.webp" draggable="false" alt=""></button>
+<button class="fruit" id="apple-hotspot" type="button" aria-label="Протянуть яблоко еноту"><img loading="lazy" src="assets/fruit.webp" draggable="false" alt=""></button>
 <p class="instruction" id="intro-hint" aria-live="polite">Перетащи яблоко к лапам</p>
 <script src="meeting.js" defer></script>
+<script src="pet-reactions.js" defer></script>
 </section>
 <section id="name" class="screen cabin" aria-labelledby="naming-title">
 <div class="sheet"><h2 id="naming-title">Как назовём енота?</h2>
@@ -37,10 +38,10 @@
 <div id="bath-preview-room" class="wash-room-art" hidden aria-hidden="true">
   <img id="bath-preview-vessel" class="wash-vessel" src="assets/base-bath.webp" alt="" loading="lazy">
 </div>
-<div id="pet-figure"><img id="pet-actor" src="assets/pet-kit.webp" alt="" draggable="false"><span id="pet-hat" hidden></span></div>
-<img id="rope-ball" src="assets/rope-ball.webp" alt="" draggable="false" hidden>
+<div id="pet-figure"><img loading="lazy" id="pet-actor" src="assets/pet-kit.webp" alt="" draggable="false"><span id="pet-hat" hidden></span></div>
+<img loading="lazy" id="rope-ball" src="assets/rope-ball.webp" alt="" draggable="false" hidden>
 <div class="pet-status"><span id="aki-display">Ричи</span><span id="aki-level">Уровень 1</span><span class="xptrack"><i id="aki-meter"></i></span><span id="aki-balance" aria-label="Листья">0</span></div>
-<button id="home-profile" data-profile type="button" aria-label="Открыть профиль" aria-haspopup="dialog"><img src="assets/avatar-raccoon.webp" width="36" height="36" alt=""></button>
+<button id="home-profile" data-profile type="button" aria-label="Открыть профиль" aria-haspopup="dialog"><img loading="lazy" src="assets/avatar-raccoon.webp" width="36" height="36" alt=""></button>
 <button id="shop-open" type="button" hidden>Лавка</button>
 <dialog id="cottage-shop" aria-labelledby="shop-title">
   <header><h2 id="shop-title">Лесная лавка</h2><button type="button" id="shop-close" aria-label="Закрыть">×</button></header>
@@ -58,19 +59,19 @@
 <p class="homemsg" id="aki-feedback" aria-live="polite" hidden></p>
 <aside id="bed-goal" hidden><p id="bed-goal-text" aria-live="polite"></p><div><button id="bed-goal-action" class="primary" type="button"></button><button id="bed-goal-later" type="button">Позже</button></div></aside>
 <div class="room-objects">
-<button class="object bed" id="aki-sleep" aria-label="Уложить спать" type="button" hidden><span>Уложить</span></button>
-<button class="object chest" data-go="chest" aria-label="Открыть сундук с играми" type="button"><img id="starter-chest" src="assets/shop-chest.webp" alt="" draggable="false"><span>Игры</span></button></div>
+<button class="object bed" id="aki-sleep" aria-label="Уложить спать" type="button" hidden></button>
+<button class="object chest" data-go="chest" aria-label="Открыть сундук с играми" type="button"><img loading="lazy" id="starter-chest" src="assets/shop-chest.webp" alt="" draggable="false"></button></div>
 <section id="kitchen-room" aria-labelledby="kitchen-title" hidden>
   <header class="care-room-heading">
     <h2 id="kitchen-title" tabindex="-1">Кухня</h2>
   </header>
-  <button id="snack-piece" type="button" aria-label="Поднести яблоко к еноту" hidden><img src="assets/fruit.webp" draggable="false" alt=""></button>
+  <button id="snack-piece" type="button" aria-label="Поднести яблоко к еноту" hidden><img loading="lazy" src="assets/fruit.webp" draggable="false" alt=""></button>
   <div class="kitchen-actions">
     <p id="kitchen-hint" aria-live="polite">Перетащи яблоко к лапам</p>
     <button id="kitchen-another" type="button" hidden>Взять яблоко</button>
     <button id="kitchen-pantry-toggle" type="button" aria-controls="aki-pantry" aria-expanded="false">Другие угощения</button>
   </div>
-  <div class="sheet" id="aki-pantry" hidden><div class="sheet-header"><h2>Чем угостить?</h2><button class="iconbtn" type="button" id="close-pantry" aria-label="Закрыть">×</button></div><div class="foodlist"><button type="button" id="offer-apple" hidden>Кормить в 3D</button><button type="button" data-snack="грушей" data-cost="0">Груша<small>Бесплатно</small></button><button type="button" data-snack="ягодами" data-cost="2">Ягоды<small>2 листочка</small></button></div></div>
+  <div class="sheet" id="aki-pantry" hidden><div class="sheet-header"><h2>Чем угостить?</h2><button class="iconbtn" type="button" id="close-pantry" aria-label="Закрыть">×</button></div><div class="foodlist"><button type="button" id="offer-apple" hidden>Открыть 3D</button><button type="button" data-snack="грушей" data-cost="0">Груша<small>Бесплатно</small></button><button type="button" data-snack="ягодами" data-cost="2">Ягоды<small>2 листочка</small></button></div></div>
 </section>
 </section>
 <section id="game" class="screen felt" aria-labelledby="pairs-title">
@@ -80,14 +81,14 @@
 <section id="win" class="screen felt" aria-labelledby="aki-win-title"><div class="win-pad">
 <header class="gamebar" style="align-self:stretch"><button class="backbtn" data-go="home" aria-label="В домик" type="button"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button></header>
 <h1 class="gameTitle" id="aki-win-title">Все пары найдены!</h1><div class="reward"><b><svg class="ic" aria-hidden="true"><use href="#aki-leaf"/></svg>+5 листочков</b><b id="pair-xp"></b></div>
-<img class="win-photo" src="assets/capybara.webp" alt="Капибара сидит в траве"><h2>Капибара</h2><button type="button" class="rewardlink" data-go="animal">Познакомиться в разделе «Парк»</button>
+<img loading="lazy" class="win-photo" src="assets/capybara.webp" alt="Капибара сидит в траве"><h2>Капибара</h2><button type="button" class="rewardlink" data-go="animal">Познакомиться в разделе «Парк»</button>
 <div class="win-actions"><button type="button" id="aki-replay">Сыграть ещё</button><button type="button" data-go="home">Вернуться в домик</button></div></div></section>
 <section class="screen visitor-screen" id="park"><div class="park-top"><div class="park-mast"><h1><img class="park-signature" src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"></h1><p>Барановичи</p></div><button type="button" class="back-to-game" data-tab="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg><span>К Ричи</span></button><button type="button" id="visitor-theme" class="zk-circle" aria-label="Тёмная тема" aria-pressed="false"><svg class="p-icon moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.4A8.4 8.4 0 0 1 9.6 3.5a8.6 8.6 0 1 0 10.9 10.9Z"/></svg><svg class="p-icon sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button type="button" data-profile class="zk-circle" aria-label="Открыть профиль"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.3"/><path d="M5.5 20v-2a6.5 6.5 0 0 1 13 0v2"/></svg></button></div><div class="p-content"><div id="parkMenu"></div><button type="button" class="park-reward" data-go="pass">
   <span class="reward-ticket">
     <span class="reward-ticket-copy"><strong>Награда за уровень</strong><span id="parkRewardState">Откроется на уровне 10</span></span>
     <svg class="reward-ticket-arrow p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg>
   </span>
-  <img class="reward-pet" src="assets/richi-reward.webp" alt="" width="130" height="120">
+  <img loading="lazy" class="reward-pet" src="assets/richi-reward.webp" alt="" width="130" height="120">
 </button></div></section>
 <section class="screen visitor-screen" id="feed" aria-labelledby="p-feed-title"><div class="p-content">
 <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
@@ -128,7 +129,7 @@
 </section>
 <section class="screen visitor-screen" id="animal" aria-labelledby="p-animal-title"><div class="p-content">
 <button class="p-back" type="button" data-go="map" aria-label="Назад · Карта парка"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
-<div class="p-animal-photo"><img src="assets/capybara.webp" alt="Капибара крупным планом"></div>
+<div class="p-animal-photo"><img loading="lazy" src="assets/capybara.webp" alt="Капибара крупным планом"></div>
 <p class="p-species">Hydrochoerus hydrochaeris</p><h1 class="p-title" id="p-animal-title">Капибара</h1>
 <p class="p-bio">Глаза и уши капибары расположены высоко. Во время плавания они остаются над водой, даже когда почти всё тело погружено.</p>
 <dl class="p-facts"><div><dt>Родина</dt><dd>Южная Америка</dd></div><div><dt>Масса тела</dt><dd>35–70 кг</dd></div></dl>
@@ -185,12 +186,12 @@
     <label class="search"><svg class="p-icon ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15.5 15.5 5 5"/></svg><input id="animalSearch" type="search" aria-label="Найти животное" placeholder="Найти животное" autocomplete="off" enterkeyhint="search"></label>
     <div id="animalClasses" class="catalog-classes" role="group" aria-label="Группы животных" hidden></div>
     <div class="animalgrid" id="catalog-list">
-      <button type="button" class="animalcard" data-go="animal"><img src="assets/capybara.webp" alt=""><small>Грызуны</small><b>Капибара</b></button>
-      <a class="animalcard" href="https://animal-park.by/galereya/enot-poloskun.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img src="assets/raccoon.webp" alt=""><small>Хищные</small><b>Енот-полоскун</b></a>
-      <a class="animalcard" href="https://animal-park.by/galereya/koshachiy-lemur.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img src="assets/lemur.webp" alt=""><small>Приматы</small><b>Кошачий лемур</b></a>
-      <a class="animalcard" href="https://animal-park.by/galereya/karakal.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img src="assets/caracal.webp" alt=""><small>Хищные</small><b>Каракал</b></a>
-      <a class="animalcard" href="https://animal-park.by/galereya/zubr.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img src="assets/bison.webp" alt=""><small>Парнокопытные</small><b>Европейский зубр</b></a>
-      <a class="animalcard" href="https://animal-park.by/galereya/edipov-tamarin.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img src="assets/tamarin.webp" alt=""><small>Приматы</small><b>Эдипов тамарин</b></a>
+      <button type="button" class="animalcard" data-go="animal"><img loading="lazy" src="assets/capybara.webp" alt=""><small>Грызуны</small><b>Капибара</b></button>
+      <a class="animalcard" href="https://animal-park.by/galereya/enot-poloskun.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/raccoon.webp" alt=""><small>Хищные</small><b>Енот-полоскун</b></a>
+      <a class="animalcard" href="https://animal-park.by/galereya/koshachiy-lemur.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/lemur.webp" alt=""><small>Приматы</small><b>Кошачий лемур</b></a>
+      <a class="animalcard" href="https://animal-park.by/galereya/karakal.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/caracal.webp" alt=""><small>Хищные</small><b>Каракал</b></a>
+      <a class="animalcard" href="https://animal-park.by/galereya/zubr.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/bison.webp" alt=""><small>Парнокопытные</small><b>Европейский зубр</b></a>
+      <a class="animalcard" href="https://animal-park.by/galereya/edipov-tamarin.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/tamarin.webp" alt=""><small>Приматы</small><b>Эдипов тамарин</b></a>
     </div>
     <div id="animalEmpty" class="empty" hidden><p role="status">Таких животных в подборке нет.</p><button class="cat-back" id="animalReset" type="button">Сбросить поиск</button></div>
   </div>
@@ -202,8 +203,7 @@
   <h1 id="wash-title">Ванная</h1>
 </header>
 <div id="wash-entry">
-  <img id="wash-vessel" class="wash-vessel" src="assets/base-bath.webp" alt="Деревянная купель">
-  <button id="wash-start" type="button" class="primary">Купать</button>
+  <button id="wash-start" type="button" aria-label="Искупать Ричи"><img loading="lazy" id="wash-vessel" class="wash-vessel" src="assets/base-bath.webp" alt="Деревянная купель"></button>
 </div>
 <div id="soap-area" role="button" tabindex="0" aria-label="Намылить шерсть губкой"><span class="foam" aria-hidden="true"></span></div>
 <div class="wash-status"><p id="washHint" aria-live="polite">Потри шерсть губкой</p><progress id="scrub" max="100" value="0"></progress></div>
@@ -212,15 +212,15 @@
 <section id="chest" class="screen toy-chest"><div class="gamepad">
 <button class="backbtn" data-go="home" aria-label="В домик">‹</button><h1>Сундук с играми</h1>
 <div class="toylist">
-<button data-go="game" class="toy-pairs"><span class="playing-cards" aria-hidden="true"><img src="assets/bison.webp" alt=""><img src="assets/lemur.webp" alt=""><img src="assets/bison.webp" alt=""></span><span class="toy-description"><strong>Найди пару</strong><small>Открой одинаковых животных</small></span></button>
-<button data-go="match" class="toy-match"><span class="mini-board" aria-hidden="true"><img src="assets/piece-1.webp" alt=""><img src="assets/piece-0.webp" alt=""><img src="assets/piece-2.webp" alt=""><img src="assets/piece-0.webp" alt=""><img src="assets/piece-0.webp" alt=""><img src="assets/piece-0.webp" alt=""><img src="assets/piece-2.webp" alt=""><img src="assets/piece-3.webp" alt=""><img src="assets/piece-1.webp" alt=""></span><span class="toy-description"><strong>Три в ряд</strong><small>Собери девять ягод</small></span></button>
-<button data-go="catch" class="toy-orchard"><span class="apple-branch" aria-hidden="true"><img src="assets/fruit.webp" alt=""></span><span class="toy-description"><strong>Лови яблоки</strong><small>Веди корзинку под ветками</small></span></button></div>
-<button id="buy-ball" class="ball-shop"><img src="assets/rope-ball.webp" alt=""><span>Плетёный мяч<small id="ball-price"></small></span></button><p id="toy-notice" role="status"></p></div></section>
+<button data-go="game" class="toy-pairs"><span class="playing-cards" aria-hidden="true"><img loading="lazy" src="assets/bison.webp" alt=""><img loading="lazy" src="assets/lemur.webp" alt=""><img loading="lazy" src="assets/bison.webp" alt=""></span><span class="toy-description"><strong>Найди пару</strong><small>Открой одинаковых животных</small></span></button>
+<button data-go="match" class="toy-match"><span class="mini-board" aria-hidden="true"><img loading="lazy" src="assets/piece-1.webp" alt=""><img loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-2.webp" alt=""><img loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-2.webp" alt=""><img loading="lazy" src="assets/piece-3.webp" alt=""><img loading="lazy" src="assets/piece-1.webp" alt=""></span><span class="toy-description"><strong>Три в ряд</strong><small>Собери девять ягод</small></span></button>
+<button data-go="catch" class="toy-orchard"><span class="apple-branch" aria-hidden="true"><img loading="lazy" src="assets/fruit.webp" alt=""></span><span class="toy-description"><strong>Лови яблоки</strong><small>Веди корзинку под ветками</small></span></button></div>
+<button id="buy-ball" class="ball-shop"><img loading="lazy" src="assets/rope-ball.webp" alt=""><span>Плетёный мяч<small id="ball-price"></small></span></button><p id="toy-notice" role="status"></p></div></section>
 <section id="match" class="screen toy-chest"><div class="gamepad"><div class="gameline"><button class="backbtn" data-go="chest" aria-label="К игрушкам">‹</button><span id="matchGoal"></span><span id="matchMoves"></span></div>
 <div id="matchBoard" aria-label="Поле с плодами"></div><p id="matchHint" class="gameHelp" aria-live="polite"></p>
 <div id="matchEnd" class="game-end" hidden><button class="primary" id="matchAgain">Сыграть ещё</button><button class="secondary" data-go="home">В домик</button></div></div></section>
 <section id="catch" class="screen orchard"><div class="gameline"><button class="backbtn" data-go="chest" aria-label="К игрушкам">‹</button><span id="catchScore">Яблоки 0 · Попытки 3</span></div>
-<div id="catchField" tabindex="0" role="application" aria-label="Двигай корзинку пальцем или стрелками"><img id="fallFruit" src="assets/fruit.webp" alt="" hidden><div id="basket" aria-hidden="true">🧺</div></div>
+<div id="catchField" tabindex="0" role="application" aria-label="Двигай корзинку пальцем или стрелками"><img loading="lazy" id="fallFruit" src="assets/fruit.webp" alt="" hidden><div id="basket" aria-hidden="true">🧺</div></div>
 <div class="sheet" id="catchSheet"><h2 id="catchTitle">Лови яблоки</h2><p id="catchTip">Веди корзинку пальцем. Собирай яблоки и пропускай шишки. У тебя три попытки.</p><button class="primary" id="catchStart">Начать</button></div></section>
 <section id="pass" class="screen visitor-screen"><div class="p-content"><button class="p-back" data-go="park" aria-label="Назад · Парк"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 class="p-title">Награда за уровень</h1><figure class="coupon" aria-labelledby="coupon-title">
 <div class="coupon-stub"><span>Парк животных</span><strong>10<span>%</span></strong></div>

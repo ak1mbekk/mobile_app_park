@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import HomePage from './pages/HomePage';
@@ -17,6 +17,13 @@ type DemoWindow = Window & {
   conceptStart?: () => void;
 };
 
+type GuideNavigation = {
+  hostUrl: string;
+  hash: string;
+  gameReturn?: string;
+  parkOrigins?: Record<string, string>;
+};
+
 function demoHash(hash: string, profile: boolean) {
   const route = hash.replace(/^#\//, '#');
   return /^#(?:park|map(?:\/[^#]+)?)$/.test(route) ? route : profile ? '#park' : '';
@@ -26,7 +33,13 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
   const frame = useRef<HTMLIFrameElement>(null);
   const requested = useRef(hash);
   const pending = useRef(false);
-  const [source] = useState(() => import.meta.env.BASE_URL + 'demo/index.html' + search + hash);
+  const [startup] = useState(() => {
+    const saved = window.history.state?.animalParkGuide as GuideNavigation | undefined;
+    const resume = !profile && saved?.hostUrl === window.location.href &&
+      typeof saved.hash === 'string' && demoHash(saved.hash, false)
+      ? saved : undefined;
+    return { source: import.meta.env.BASE_URL + 'demo/index.html' + search + (resume?.hash ?? hash), resume };
+  });
 
   function applyFragment() {
     if (!pending.current || !frame.current?.contentDocument) return;
@@ -46,6 +59,36 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
     }
   }
 
+  const saveGuideNavigation = useCallback(() => {
+    const child = frame.current?.contentWindow;
+    if (!child || pending.current || window.location.protocol === 'file:' || profile) return;
+    const hash = demoHash(child.location.hash, false);
+    const { animalParkGuide, ...rest } = window.history.state ?? {};
+    if (!hash) {
+      if (animalParkGuide) window.history.replaceState(rest, '');
+      return;
+    }
+    const { gameReturn, parkOrigins } = child.history.state ?? {};
+    const snapshot: GuideNavigation = { hostUrl: window.location.href, hash, gameReturn, parkOrigins };
+    window.history.replaceState({ ...rest, animalParkGuide: snapshot }, '');
+  }, [profile]);
+
+  function loadFrame() {
+    applyFragment();
+    if (frame.current?.contentDocument) saveGuideNavigation();
+  }
+
+  useEffect(() => {
+    function onGuideNavigation(event: MessageEvent) {
+      if (event.origin === window.location.origin && event.source === frame.current?.contentWindow &&
+          event.data === 'animal-park:guide-navigation') {
+        saveGuideNavigation();
+      }
+    }
+    window.addEventListener('message', onGuideNavigation);
+    return () => window.removeEventListener('message', onGuideNavigation);
+  }, [saveGuideNavigation]);
+
   useEffect(() => {
     function sync(target: string) {
       if (requested.current === target) return;
@@ -64,8 +107,9 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
     ref={frame}
     title="Домик у тропы и парк животных"
     className="w-full h-full border-0"
-    src={source}
-    onLoad={applyFragment}
+    src={startup.source}
+    data-guide-navigation={startup.resume && JSON.stringify(startup.resume)}
+    onLoad={loadFrame}
   />;
 }
 

@@ -110,6 +110,7 @@
       return 'Не удалось сохранить покупку мяча.';
     }
     refreshHome();
+    document.dispatchEvent(new Event('parkpurchase'));
     return '';
   }
   window.petDemo={
@@ -232,7 +233,6 @@
     const sleep=$('aki-sleep');
     sleep.hidden=!saved.night&&!canSleep();
     sleep.setAttribute('aria-label',saved.night?'Разбудить':'Уложить спать');
-    sleep.lastElementChild.textContent=saved.night?'Разбудить':'Уложить';
     $('wash-start').disabled=saved.night;
     document.dispatchEvent(new Event('petprofile'));
   }
@@ -357,7 +357,8 @@
   function activateWare(w){
     if(!w||(!owned.has(w.id)&&saved.leaves<w.price))return false;
     const previous={leaves:saved.leaves,hat:saved.hat,owned:[...owned],placed:[...placed]};
-    if(!owned.has(w.id)){saved.leaves-=w.price;owned.add(w.id);}
+    const purchased=!owned.has(w.id);
+    if(purchased){saved.leaves-=w.price;owned.add(w.id);}
     if(w.group==='hat')saved.hat=saved.hat===w.id?null:w.id;
     else if(placed.has(w.id))placed.delete(w.id);else placed.add(w.id);
     saved.owned=[...owned];saved.placed=[...placed];
@@ -368,6 +369,7 @@
       return false;
     }
     preview=null;shopStatus='';refreshHome();
+    if(purchased)document.dispatchEvent(new Event('parkpurchase'));
     return true;
   }
   $('shop-confirm').onclick=()=>{
@@ -568,7 +570,7 @@
     if(!saved.night&&!canSleep()){remindBed();return;}
     const reason=setResting(!saved.night);
     if(reason){window.petDemo.refuse(reason);return;}
-    feedback(saved.night?'Спокойной ночи, '+saved.name+'!':'Доброе утро, '+saved.name+'!');
+    $('aki-feedback').hidden=true;
   };
   $('aki-name-input').value=saved.name;
   $('aki-name-input').oninput=()=>{$('aki-name-form').querySelector('button').disabled=!$('aki-name-input').value.trim();};
@@ -593,10 +595,10 @@
     fruit.style.removeProperty('opacity');fruit.style.removeProperty('transition');hint.textContent='Перетащи яблоко к лапам';
   }
   function dropSuccess() {
-    if(eating)return; eating=true;drag=null;fruit.disabled=true;hint.textContent=saved.name+' пробует яблоко';
+    if(eating)return; eating=true;drag=null;fruit.disabled=true;hint.textContent='';
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     fruit.style.transition=reduce?'none':'left .35s ease,top .35s ease,transform .8s ease,opacity .8s ease-in';
-    fruit.style.left='49%';fruit.style.top='51%';fruit.style.transform='translate(-50%,-50%) scale(.25)';fruit.style.opacity='0';
+    fruit.style.left='41%';fruit.style.top='54%';fruit.style.transform='translate(-50%,-50%) scale(.25)';fruit.style.opacity='0';
     feedTimer=setTimeout(()=>window.petDemo.finishMeeting(),reduce?200:900);
   }
   fruit.onpointerdown=e=>{
@@ -609,7 +611,7 @@
   fruit.onpointermove=e=>{if(!drag||e.pointerId!==drag.id)return;const [x,y]=fruitPoint(e);
     fruit.style.left=(Math.max(.08,Math.min(.92,x))*100)+'%';fruit.style.top=(Math.max(.13,Math.min(.90,y))*100)+'%';};
   fruit.onpointerup=e=>{if(!drag||e.pointerId!==drag.id)return;const [x,y]=fruitPoint(e);
-    const valid=Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>24&&x>.24&&x<.68&&y>.45&&y<.69;
+    const valid=Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>24&&Math.hypot((x-.41)/.17,(y-.54)/.11)<=1;
     if(valid)dropSuccess();else resetFruit();};
   fruit.onpointercancel=resetFruit;
   fruit.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();dropSuccess();}};

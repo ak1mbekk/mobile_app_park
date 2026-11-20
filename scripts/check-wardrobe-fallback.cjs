@@ -63,6 +63,8 @@ const folder = 'assets/fallback-wardrobe/';
     assert.equal(await actor.getAttribute('src'), 'assets/pet-kit.webp');
     await ware('Льняная кепка').tap();
     await page.locator('#shop-confirm').tap();
+    await page.locator('#pet-figure canvas[data-pose="clap"]').waitFor();
+    await page.locator('#pet-figure canvas').waitFor({ state: 'detached' });
     await page.reload({ waitUntil: 'domcontentloaded' });
     await fitted('kit-content-cap');
     assert.equal((await pet()).leaves, 70);
@@ -175,7 +177,7 @@ async function checkOfflineMeeting(page) {
   await page.reload({ waitUntil: 'domcontentloaded' });
   assert.equal(await page.evaluate(() => window.petDemo.stats().onboardingDone), false);
   await page.evaluate(async () => {
-    for (const name of ['intro', 'threshold-morning', 'fruit', 'home', 'veranda-room']) {
+    for (const name of ['first-veranda', 'threshold-morning', 'fruit', 'named-veranda', 'veranda-room']) {
       const asset = new URL('assets/' + name + '.webp', location.href);
       if (!await caches.match(asset)) throw new Error(name + ' is missing from the saved walk');
     }

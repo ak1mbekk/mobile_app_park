@@ -3,8 +3,6 @@
  * Та же проверенная подборка, которую использует мобильный путеводитель.
  */
 
-import data from '../../public/demo/catalogue.json';
-
 export interface SiteAnimal {
   id: string;
   name: string;
@@ -12,4 +10,8 @@ export interface SiteAnimal {
   slug: string;
 }
 
-export const animalsFromSite: SiteAnimal[] = data as SiteAnimal[];
+export async function loadAnimalsFromSite(signal: AbortSignal): Promise<SiteAnimal[]> {
+  const response = await fetch(import.meta.env.BASE_URL + 'demo/catalogue.json', { signal });
+  if (!response.ok) throw new Error('Не удалось загрузить каталог животных');
+  return response.json();
+}

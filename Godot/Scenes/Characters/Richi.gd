@@ -9,15 +9,18 @@ const SLEEP := &"Sleep_Normally"
 const FURNITURE_SLEEP := &"Sleep/Curled"
 const SLEEP_LIBRARY := preload("res://Art/Characters/Sleep/CurledSleep.tres")
 const WASH := &"Wash_Face"
-const REST := &"Sit_Cross_Legged"
+const REST := &"Idle"
 const RUB_EYES := &"Rub_Eyes"
 const WALK := &"Casual_Walk"
+const PURCHASE_JUMP := &"Regular_Jump"
+const PURCHASE_CLAP := &"Stand_Clap_and_Sit_Down"
 @export_node_path("AnimationPlayer") var animation_player_path := NodePath("Модель/AnimationPlayer")
 @onready var player: AnimationPlayer = get_node(animation_player_path)
 @onready var skeleton: Skeleton3D = $"Модель/SmartRigArmature/Skeleton3D"
 @onready var left_palm := skeleton.find_bone("mixamorig_LeftHandMiddle1")
 @onready var right_palm := skeleton.find_bone("mixamorig_RightHandMiddle1")
 @onready var gaze = skeleton.get_node("Взгляд")
+@onready var paw_pose = skeleton.get_node("PawPose")
 @onready var body: MeshInstance3D = gaze.actor_mesh
 @onready var baby_mesh := body.mesh
 @onready var hat_seat: Node3D = skeleton.get_node("Headwear/Seat")
@@ -28,10 +31,12 @@ var needs: Dictionary = {}
 var mood: StringName
 var age_stage := 0
 var sleeping_on_furniture := false
+var celebrating_purchase := false
 var eyelid_tween: Tween
 
 func _ready() -> void:
-    player.play(WAIT)
+    paw_pose.player = player
+    player.play(REST if player.has_animation(REST) else WAIT)
     player.advance(0)
     if Engine.is_editor_hint():
         player.pause()
@@ -104,6 +109,7 @@ func step_toward_ball() -> void:
 func idle_in_home() -> void:
     var waking := sleeping_on_furniture
     sleeping_on_furniture = false
+    stop_purchase_celebration()
     resting_at_home = true
     gaze.suspended = false
     _apply_mood(true, 0.60 if waking else 0.0)
@@ -113,6 +119,20 @@ func set_needs(values: Dictionary) -> void:
     if resting_at_home:
         _apply_mood(false)
 
+func celebrate_purchase() -> void:
+    _clear_expression()
+    celebrating_purchase = true
+    gaze.reset_attention()
+    gaze.suspended = true
+    player.play(PURCHASE_JUMP, 0.16, 1.35)
+
+func stop_purchase_celebration() -> void:
+    if not celebrating_purchase:
+        return
+    celebrating_purchase = false
+    paw_pose.clapping = false
+    gaze.suspended = false
+
 func refuse() -> void:
     $Reactions.stop()
     $Reactions.play(&"refuse")
@@ -121,6 +141,7 @@ func refuse() -> void:
 func _clear_expression() -> void:
     resting_at_home = false
     sleeping_on_furniture = false
+    stop_purchase_celebration()
     gaze.mood_angles = Vector2.ZERO
     _set_eyelids(0.0)
 
@@ -161,7 +182,6 @@ func _apply_mood(force: bool, wake_duration := 0.0) -> void:
             angles = Vector2(2.0, 7.5)
             eyelids = 0.48
         &"hungry":
-            clip = WAIT
             angles = Vector2(-2.0, -11.0)
         &"dirty":
             clip = WASH
@@ -185,10 +205,16 @@ func rest_after_meal() -> void:
     player.play(EAT)
     player.seek(player.get_animation(EAT).length, true)
     player.pause()
+    gaze.suspended = false
 
 func _on_finished(clip: StringName) -> void:
     if clip == EAT:
         eating_finished = true
         meal_finished.emit()
+    elif celebrating_purchase and clip == PURCHASE_JUMP:
+        paw_pose.clapping = true
+        player.play_section(PURCHASE_CLAP, 0.24, 1.86, 0.13, 1.3)
+    elif celebrating_purchase and clip == PURCHASE_CLAP:
+        idle_in_home()
     elif resting_at_home and clip in [WASH, RUB_EYES]:
         player.play(REST, 0.22)

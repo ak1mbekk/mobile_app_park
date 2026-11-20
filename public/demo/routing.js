@@ -82,6 +82,9 @@ function present(id){
     backLink.setAttribute('aria-label','Назад · '+(labels[dest.split('/')[0]]||'Парк'));
   }
   document.dispatchEvent(new CustomEvent('conceptscreen',{detail:id}));
+  if(window.parent!==window && location.protocol!=='file:'){
+    window.parent.postMessage('animal-park:guide-navigation',location.origin);
+  }
   if(blocked)window.petDemo.refuse(blocked);
 }
 window.conceptGo=function(id,keepOrigin=false){
@@ -136,6 +139,14 @@ document.addEventListener('click',e=>{
   }
 });
 function conceptStart(){
+  const frame=window.frameElement;
+  const initialGuide=frame?.getAttribute('data-guide-navigation');
+  if(initialGuide){
+    frame.removeAttribute('data-guide-navigation');
+    const {hash,gameReturn,parkOrigins}=JSON.parse(initialGuide);
+    // Only the guide route, not its previous iframe history entry, survived the reload.
+    if(hash===location.hash)history.replaceState({gameReturn,parkOrigins},'');
+  }
   const pet=window.petDemo?.stats();
   if(pet?.onboardingDone)lastHome='home';
   else if(pet?.mealFinished)lastHome='name';

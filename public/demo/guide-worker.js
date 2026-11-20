@@ -1,14 +1,14 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '26';
+const version = prefix + '28';
 const base = new URL(self.registration.scope);
 const shell = [
   'index.html','base.css','show.css','visitor.css','park-and-chest.css','vendor/park-menu/menu.css','vendor/park-menu/menu.js','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
   'places.js','routing.js','catalog.js','map-projection.js','park-map.js','park-schedule.js','feedings.js',
   'assets/park-survey.webp','map-boundaries.json','map-boundary-geometry.js',
-  'guide-offline.js','family.js','meeting.js','home.js','show.js','match.js',
+  'guide-offline.js','family.js','meeting.js','home.js','show.js','match.js','pet-reactions.js',
   'assets/avatar-raccoon.webp','assets/avatar-bison.webp','assets/park-wordmark.webp','assets/woven-diamonds.svg','assets/linen-weave.svg','assets/richi-reward.webp',
-  'assets/intro.webp','assets/fruit.webp','assets/home.webp','assets/threshold-morning.webp',
+  'assets/first-veranda.webp','assets/fruit.webp','assets/named-veranda.webp','assets/threshold-morning.webp',
   'assets/starter-room.webp','assets/veranda-room.webp','assets/kitchen-room.webp','assets/kitchen-hungry.webp','assets/wash-room.webp',
   'assets/kitchen-wallpaper.webp','assets/kitchen-wallpaper-hungry.webp','assets/kitchen-cabinet.webp','assets/kitchen-cabinet-hungry.webp',
   'assets/kitchen-furnished.webp','assets/kitchen-furnished-hungry.webp','assets/wash-tile-room.webp',
@@ -66,7 +66,7 @@ self.addEventListener('fetch',event=>{
   if (req.method!=='GET' || url.origin!==base.origin || !url.pathname.startsWith(base.pathname)) return;
   const path=url.pathname.slice(base.pathname.length);
   const page=req.mode==='navigate' && (path===''||path==='index.html');
-  if (!page && !shell.includes(path) && path!=='catalogue.json' && path!=='map-alignment.json' && !/^assets\/(?:(?:species|fallback-wardrobe)\/)?[a-z0-9_-]+\.webp$/i.test(path)) return;
+  if (!page && !shell.includes(path) && path!=='catalogue.json' && path!=='map-alignment.json' && !/^assets\/(?:(?:species|fallback-wardrobe|pet-reactions)\/)?[a-z0-9_-]+\.webp$/i.test(path)) return;
   event.respondWith((async()=>{
     const cache=await caches.open(version);
     const key=page?new URL('index.html',base):req;
@@ -80,7 +80,7 @@ self.addEventListener('fetch',event=>{
         if(await validBoundariesResponse(response))await cache.put(req,response.clone());
         else return (await cache.match(key)) || response;
       }
-      if(response.ok && path.startsWith('assets/fallback-wardrobe/') &&
+      if(response.ok && (path.startsWith('assets/fallback-wardrobe/') || path.startsWith('assets/pet-reactions/')) &&
          response.headers.get('Content-Type')?.startsWith('image/webp')){
         await cache.put(req,response.clone());
       }

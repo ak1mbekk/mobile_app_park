@@ -140,61 +140,20 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(173, 92)
 accessibility_name = "Кормить Ричи"
 
-[node name="Label" type="Label" parent="Интерфейс/Actions/Feed"]
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_top = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-text = "Кормить"
-
 [node name="Wash" type="Button" parent="Интерфейс/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(350, 165)
 accessibility_name = "Купать Ричи"
-
-[node name="Label" type="Label" parent="Интерфейс/Actions/Wash"]
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_top = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-text = "Купать"
 
 [node name="Sleep" type="Button" parent="Интерфейс/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(146, 78)
 accessibility_name = "Спать"
 
-[node name="SleepLabel" type="Label" parent="Интерфейс/Actions/Sleep"]
-unique_name_in_owner = true
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_top = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-text = "Спать"
-
 [node name="Play" type="Button" parent="Интерфейс/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(175, 90)
 accessibility_name = "Сундук с играми"
-
-[node name="Label" type="Label" parent="Интерфейс/Actions/Play"]
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_top = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-text = "Игры"
 
 [node name="Header" type="PanelContainer" parent="Интерфейс"]
 unique_name_in_owner = true

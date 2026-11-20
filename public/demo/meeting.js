@@ -15,7 +15,7 @@
   let frame, room, timeout;
   let progressObserver;
   let ready = false;
-  let available = false;
+  let available;
   let lighter = false;
   let offerOnLoad = false;
   const coveredControls = new Set();
@@ -33,6 +33,9 @@
 
   function syncPause() {
     frame?.contentWindow?.setParkScenePaused?.(document.hidden || !room?.classList.contains('current'));
+    const naming = ready && room?.id === 'intro' && document.querySelector('#name.current') !== null;
+    document.getElementById('intro').toggleAttribute('data-naming-backdrop', naming);
+    document.getElementById('intro').inert = naming;
   }
 
   function syncHome(extra = {}) {
@@ -58,6 +61,7 @@
       document.querySelector(room.id === 'intro' ? '#apple-hotspot' : '#aki-feed')?.focus({preventScroll:true});
     }
     room = null;
+    syncPause();
   }
 
   function enter(scene, offerApple = false) {
@@ -124,9 +128,13 @@
   }
 
   function startCurrentRoom() {
-    if (!available || frame || document.hidden || !shouldStart3d()) return;
     const current = document.querySelector('#intro.current,#home.current');
-    if (current && (current.id !== 'home' || window.petDemo.stats().onboardingDone)) enter(current.id);
+    if (!current || frame || document.hidden) return;
+    if (available === undefined) {
+      available = supports3d();
+      updateEngineOptions();
+    }
+    if (available && shouldStart3d() && (current.id !== 'home' || window.petDemo.stats().onboardingDone)) enter(current.id);
   }
 
   function showOpeningWhileRoomDecodes() {
@@ -166,11 +174,14 @@
     startCurrentRoom();
   }
 
-  if (location.protocol !== 'file:' && preference !== '2d') {
-    const gl = document.createElement('canvas').getContext('webgl2');
-    if (gl) {
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
-      available = true;
+  function supports3d() {
+    if (!window.isSecureContext || location.protocol === 'file:' || preference === '2d') return false;
+    try {
+      const gl = document.createElement('canvas').getContext('webgl2');
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
+      return Boolean(gl);
+    } catch {
+      return false;
     }
   }
 
@@ -268,6 +279,7 @@
   });
 
   function syncRoom() {
+    if (frame && !ready && document.querySelector('.visitor-screen.current')) leave();
     moveToHome();
     syncPause();
     syncHome();
@@ -276,6 +288,7 @@
   document.addEventListener('conceptscreen', syncRoom);
   document.addEventListener('visibilitychange', syncRoom);
   document.addEventListener('petprofile', () => syncHome());
+  document.addEventListener('parkpurchase', () => syncHome({celebrate_purchase:true}));
   window.addEventListener('online', () => {
     updateEngineOptions();
     startCurrentRoom();

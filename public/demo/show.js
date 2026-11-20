@@ -59,26 +59,98 @@
   const field=id('catchField'),fruit=id('fallFruit'),basket=id('basket');
   let running=false,attempt=0,caught=0,position=.5,fall=0,spot=.5,frame=0,last=0,active='';
   let orchardId=0,errors=0,kind='apple',reward=null;
+  let basketTilt=0,feedback=null,pointer=null;
+  const twig=document.createElement('span'),impact=document.createElement('div');
+  const landed=document.createElement('img'),lives=document.createElement('span');
+  const orchardTip=document.createElement('p');
+  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  twig.className='orchard-twig';twig.hidden=true;twig.setAttribute('aria-hidden','true');
+  impact.className='orchard-impact';impact.hidden=true;impact.setAttribute('aria-hidden','true');
+  landed.alt='';impact.append(landed);field.prepend(twig,impact);
+  orchardTip.className='orchard-feedback';orchardTip.setAttribute('role','status');
+  field.after(orchardTip);
+  basket.textContent='';
+  lives.className='orchard-lives';lives.setAttribute('role','group');lives.setAttribute('aria-label','Жизни: 3 из 3');
+  lives.append(...Array.from({length:3},()=>{
+    const heart=document.createElement('span');heart.textContent='♥';heart.setAttribute('aria-hidden','true');return heart;
+  }));
+  id('catchScore').after(lives);
+  const fruitUrl=item=>item==='cone'?'assets/pine-cone.webp':'assets/fruit.webp';
+  const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   function saveOrchard(){
     const state={id:orchardId,attempt,caught,position,spot,fall,errors,kind,finished:!running,won:!running&&caught>0};
     window.petDemo.storeGame('orchard',state);
     if(state.reward)reward=state.reward;
   }
-  function moveBasket(x){position=Math.max(.09,Math.min(.91,x));basket.style.left=position*100+'%';}
+  function moveBasket(x){
+    const next=clamp(x,.09,.91);
+    basketTilt=clamp(basketTilt+(next-position)*206,-16,16);
+    position=next;drawField();
+  }
   function moveAt(e){const r=field.getBoundingClientRect();moveBasket((e.clientX-r.left)/r.width);}
-  field.onpointerdown=e=>{field.setPointerCapture(e.pointerId);moveAt(e);};field.onpointermove=e=>{if(field.hasPointerCapture(e.pointerId))moveAt(e);};
-  field.onkeydown=e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();moveBasket(position+(e.key==='ArrowLeft'?-.08:.08));}};
-  function drawFruit(){
-    fruit.src=kind==='cone'?'assets/pine-cone.webp':'assets/fruit.webp';
+  field.onpointerdown=e=>{
+    if(!running||pointer!==null||e.button!==0)return;
+    pointer=e.pointerId;field.setPointerCapture(pointer);moveAt(e);
+  };
+  field.onpointermove=e=>{if(pointer===e.pointerId)moveAt(e);};
+  field.onlostpointercapture=e=>{if(pointer===e.pointerId)pointer=null;};
+  field.onkeydown=e=>{
+    if(running&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
+      e.preventDefault();moveBasket(position+(e.key==='ArrowLeft'?-.08:.08));
+    }
+  };
+  function drawField(){
+    const released=clamp((fall-.23)/.77,0,1);
+    fruit.style.left=spot*100+'%';
+    twig.style.left=fruit.style.left;
+    fruit.style.top=(13+released**2*76)+'%';
+    const angle=fall<.23?Math.sin(fall*27)*7:(spot<.5?1:-1)*released*310;
+    fruit.style.setProperty('--spin',(reducedMotion.matches?0:angle)+'deg');
+    basket.style.left=position*100+'%';
+    let tilt=basketTilt,hop=0,squash=0;
+    if(feedback){
+      const p=feedback.elapsed/410,fading=1-p;
+      const catching=feedback.effect==='catch',ground=feedback.effect==='ground';
+      impact.style.opacity=fading;
+      const bounce=catching?13*p:-Math.sin(Math.PI*p)*(ground?25:38);
+      const drift=catching?0:(ground?21:12)*p;
+      landed.style.transform=catching
+        ?`translate(-50%, ${bounce}px) scale(${fading})`
+        :`translate(calc(-50% + ${drift}px), ${bounce}px) rotate(${p*320}deg)`;
+      if(catching){
+        hop=Math.sin(p*2*Math.PI)*fading*12;
+        squash=fading*.12;
+      }else if(!ground){
+        tilt+=Math.sin(p*5*Math.PI)*fading*14;
+      }
+    }
+    basket.style.setProperty('--tilt',(reducedMotion.matches?0:tilt)+'deg');
+    basket.style.setProperty('--hop',(reducedMotion.matches?0:hop)+'px');
+    basket.style.setProperty('--squash',reducedMotion.matches?1:1-squash);
+  }
+  function showFruit(){
+    fruit.src=fruitUrl(kind);
     fruit.alt=kind==='cone'?'Шишка':'Яблоко';
-    fruit.style.left=spot*100+'%';fruit.style.top=(fall*fall*92)+'%';fruit.hidden=!running;}
-  function drop(){kind=attempt>0&&Math.random()<.27?'cone':'apple';fall=.01;spot=.10+Math.random()*.80;drawFruit();}
+    fruit.hidden=twig.hidden=!running;
+    drawField();
+  }
+  function drop(){kind=attempt>0&&Math.random()<.27?'cone':'apple';fall=.01;spot=.10+Math.random()*.80;}
+  function showImpact(effect,message){
+    feedback={effect,elapsed:0};
+    orchardTip.textContent=message;
+    impact.dataset.effect=effect;
+    impact.style.left=(effect==='ground'?spot:position)*100+'%';
+    impact.hidden=reducedMotion.matches;
+    landed.src=fruitUrl(kind);
+  }
   function orchardProgress(){
-    id('catchScore').textContent='Яблоки '+caught+' · Попытки '+(3-errors);
-    id('catchSheet').hidden=running;drawFruit();
+    id('catchScore').textContent='Яблоки '+caught;
+    lives.setAttribute('aria-label','Жизни: '+(3-errors)+' из 3');
+    Array.from(lives.children).forEach((heart,index)=>{heart.textContent=index<3-errors?'♥':'♡';});
+    id('catchSheet').hidden=running||Boolean(feedback);showFruit();
     if(!running){
       id('catchTitle').textContent='Урожай собран';
-      id('catchTip').textContent='Яблоки: '+caught+(reward?' · Листья +'+reward.leaves+' · Опыт +'+reward.xp:'');
+      id('catchTip').textContent=(orchardTip.textContent?orchardTip.textContent+' · ':'')+'Яблоки: '+caught+(reward?' · Листья +'+reward.leaves+' · Опыт +'+reward.xp:'');
       id('catchStart').textContent='Ещё раз';
     }
   }
@@ -93,30 +165,55 @@
     errors=legacy?(round.finished?3:Math.min(2,round.attempt-round.caught)):round.errors;
     kind=legacy?'apple':round.kind;reward=round.reward??null;
     orchardId=round.id;attempt=round.attempt;caught=round.caught;fall=round.fall;spot=round.spot;
-    running=!round.finished;moveBasket(round.position);orchardProgress();
+    running=!round.finished;position=clamp(round.position,.09,.91);orchardProgress();
   }
   function tick(t){
-    if(!running||active!=='catch'||document.hidden)return;
-    if(last)fall+=Math.min(60,t-last)/Math.max(520,1100-attempt*27);last=t;
-    fruit.style.top=(fall*fall*92)+'%';
-    if(fall>=1){
-      attempt++;
-      const grabbed=Math.abs(position-spot)<.155;
-      if(kind==='apple' && grabbed)caught++;
-      else if(grabbed || kind==='apple')errors++;
-      running=errors<3;
-      if(running)drop();else fall=1;
-      saveOrchard();orchardProgress();
-      if(!running)return;
+    if(active!=='catch'||document.hidden)return;
+    const elapsed=last?Math.min(60,t-last):0;last=t;
+    if(feedback){
+      feedback.elapsed+=elapsed;
+      if(feedback.elapsed>=410){
+        feedback=null;impact.hidden=true;
+        if(!running)orchardProgress();
+      }
     }
-    frame=requestAnimationFrame(tick);
+    basketTilt*=Math.exp(-.012*elapsed);
+    if(running){
+      fall+=elapsed/Math.max(520,1100-attempt*27);
+      if(fall>=1){
+        attempt++;
+        const grabbed=Math.abs(position-spot)<.155;
+        if(kind==='apple'&&grabbed){
+          caught++;showImpact('catch','Яблоко поймано');
+        }else if(grabbed||kind==='apple'){
+          errors++;
+          showImpact(grabbed?'rattle':'ground',grabbed?'Поймана шишка':'Яблоко упало');
+        }else{
+          orchardTip.textContent='Шишка пролетела мимо';
+        }
+        running=errors<3;
+        if(running)drop();else fall=1;
+        saveOrchard();orchardProgress();
+      }
+    }
+    drawField();
+    if(running||feedback)frame=requestAnimationFrame(tick);
   }
-  function resume(){cancelAnimationFrame(frame);last=0;if(running&&active==='catch'&&!document.hidden)frame=requestAnimationFrame(tick);}
+  function resume(){
+    cancelAnimationFrame(frame);last=0;
+    if(active==='catch'&&!document.hidden&&(running||feedback))frame=requestAnimationFrame(tick);
+    else if(pointer!==null){
+      if(field.hasPointerCapture(pointer))field.releasePointerCapture(pointer);
+      pointer=null;
+    }
+  }
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&running)saveOrchard();resume();});
   window.addEventListener('pagehide',()=>{if(running)saveOrchard();});
   id('catchStart').onclick=()=>{
-    orchardId++;attempt=0;caught=0;errors=0;reward=null;running=true;moveBasket(.5);drop();
+    orchardId++;attempt=0;caught=0;errors=0;reward=null;running=true;position=.5;basketTilt=0;
+    orchardTip.textContent='';drop();
     saveOrchard();orchardProgress();resume();
+    field.focus({preventScroll:true});
   };
   function showStats(){
     const p=window.petDemo.stats();

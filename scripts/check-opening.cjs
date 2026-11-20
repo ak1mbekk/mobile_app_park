@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const {chromium} = require('playwright');
+const pack = /\/meeting3d\/index(?:-[a-f0-9]{64})?\.pck(?:\?|$)/;
 
 async function main() {
   const url = new URL(process.argv[2] || 'http://127.0.0.1:8168/demo/index.html');
@@ -20,7 +21,7 @@ async function main() {
       let unblock;
       const gate = new Promise(resolve => { unblock = resolve; });
       try {
-        await page.route('**/meeting3d/index.pck*', async route => {
+        await page.route(pack, async route => {
           await gate;
           await route.abort().catch(() => {});
         });
@@ -75,7 +76,7 @@ async function main() {
     }
     const denied = await browser.newPage({viewport:{width:390,height:844}, isMobile:true, hasTouch:true});
     try {
-      await denied.route('**/meeting3d/index.pck*', route => route.fulfill({status:403,body:'Unavailable'}));
+      await denied.route(pack, route => route.fulfill({status:403,body:'Unavailable'}));
       await denied.goto(url.href, {waitUntil:'domcontentloaded'});
       await denied.getByText('Не удалось загрузить 3D.', {exact:false}).waitFor({timeout:45000});
       assert.ok(await denied.locator('#opening-progress').isHidden());

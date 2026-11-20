@@ -13,6 +13,7 @@ var kind := "apple"
 var running := false
 var finger := -1
 var feedback_tween: Tween
+var basket_tilt := 0.0
 
 
 func _ready() -> void:
@@ -70,6 +71,10 @@ func _new_round() -> void:
     errors = 0
     finger = -1
     basket_position = 0.5
+    basket_tilt = 0.0
+    if feedback_tween:
+        feedback_tween.kill()
+    %Field.flash = 0.0
     running = true
     _drop()
     _save_round()
@@ -84,6 +89,7 @@ func _drop() -> void:
 
 
 func _process(delta: float) -> void:
+    basket_tilt = lerpf(basket_tilt, 0.0, 1.0 - exp(-12.0 * delta))
     fall += minf(0.06, delta) / maxf(0.52, 1.1 - attempt * 0.027)
     if fall >= 1.0:
         _land()
@@ -96,11 +102,11 @@ func _land() -> void:
     if kind == "apple" and grabbed:
         caught += 1
         %Hint.text = "Яблоко поймано"
-        _flash(true)
+        _flash("catch")
     elif grabbed or kind == "apple":
         errors += 1
         %Hint.text = _error_text()
-        _flash(false)
+        _flash("rattle" if grabbed else "ground")
     else:
         %Hint.text = "Шишка пролетела мимо"
     running = errors < LIVES
@@ -118,13 +124,15 @@ func _error_text() -> String:
     return "Поймана шишка" if kind == "cone" else "Яблоко упало"
 
 
-func _flash(success: bool) -> void:
+func _flash(effect: String) -> void:
     if feedback_tween:
         feedback_tween.kill()
-    %Field.success = success
+    %Field.effect = effect
+    %Field.landing_x = spot
+    %Field.landing_basket_x = basket_position
     %Field.flash = 1.0
     feedback_tween = create_tween()
-    feedback_tween.tween_method(_fade_flash, 1.0, 0.0, 0.28)
+    feedback_tween.tween_method(_fade_flash, 1.0, 0.0, 0.41)
 
 
 func _fade_flash(value: float) -> void:
@@ -133,6 +141,7 @@ func _fade_flash(value: float) -> void:
 
 
 func checkpoint() -> void:
+    finger = -1
     if running:
         _save_round()
 
@@ -148,6 +157,7 @@ func _save_round() -> void:
 func _draw_field() -> void:
     %Field.fruit_x = spot
     %Field.basket_x = basket_position
+    %Field.basket_tilt = basket_tilt
     %Field.fall = fall
     %Field.cone = kind == "cone"
     %Field.fruit_visible = running
@@ -208,5 +218,8 @@ func _handle_pointer(point: Vector2, pointer: int, pressed: bool, field: Rect2) 
 
 
 func _move_basket(position: float) -> void:
-    basket_position = clampf(position, 0.09, 0.91)
+    var next_position := clampf(position, 0.09, 0.91)
+    var offset := next_position - basket_position
+    basket_tilt = clampf(basket_tilt + offset * 3.6, -0.28, 0.28)
+    basket_position = next_position
     _draw_field()

@@ -52,6 +52,7 @@ func _run() -> void:
 
     _press(cabin.shop, "cap")
     _expect(cabin.richi.hat_seat.get_node("cap").visible and cabin.native_leaves == 9, "The hat is tried on without a charge")
+    _expect(not cabin.richi.celebrating_purchase, "Trying on a hat does not celebrate")
     _expect(cabin.shop.get_node("%Confirm").disabled, "Purchase is unavailable one leaf below the price")
     _press(cabin.shop, "Confirm")
     _expect(cabin.native_leaves == 9 and not cabin.native_owned.has("cap"), "An unaffordable confirmation is ignored")
@@ -60,12 +61,16 @@ func _run() -> void:
     cabin.native_leaves = 10
     _choose("cap")
     _expect(cabin.native_leaves == 0 and cabin.native_hat == "cap", "The exact balance buys and equips the hat once")
+    _expect(not cabin.shop.visible and cabin.richi.celebrating_purchase, "A new purchase reveals the pet for the celebration")
+    await create_timer(3.0).timeout
+    _press(cabin, "Shop")
     _press(cabin.shop, "cap")
     _expect(cabin.shop.get_node("%Confirm").text == "Снять", "The equipped hat can be removed")
     _press(cabin.shop, "Confirm")
     _expect(cabin.native_hat.is_empty() and cabin.native_owned.has("cap"), "Removing the hat preserves ownership")
     _choose("cap")
     _expect(cabin.native_leaves == 0 and cabin.native_hat == "cap", "Re-equipping an owned hat is free")
+    _expect(cabin.shop.visible and not cabin.richi.celebrating_purchase, "Re-equipping stays in the shop without celebrating")
 
     cabin.native_leaves = 120
     _press(cabin.shop, "Furniture")
@@ -86,6 +91,7 @@ func _run() -> void:
 
     var blocked_draft := test_dir.path_join("home.cfg.tmp")
     _expect(DirAccess.make_dir_absolute(blocked_draft) == OK, "The test blocks the draft file")
+    _press(cabin, "Shop")
     _press(cabin.shop, "settee")
     _press(cabin.shop, "Confirm")
     _expect(cabin.native_leaves == 10 and cabin.native_placed.has("settee") and not cabin.shop.get_node("%Status").text.is_empty(), "Failed save rolls back the furniture change and reports it")
@@ -172,6 +178,8 @@ func _open_cabin() -> void:
 
 
 func _choose(id: String) -> void:
+    if not cabin.shop.visible:
+        _press(cabin, "Shop")
     _press(cabin.shop, id)
     _press(cabin.shop, "Confirm")
 

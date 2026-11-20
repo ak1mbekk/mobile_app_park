@@ -49,7 +49,7 @@ const {chromium}=require('playwright');
     }
     async function feed(targetX,targetY){
       const room=await box();
-      const start=point(room,.189,.782),end=point(room,targetX,targetY);
+      const start=point(room,.223,.731),end=point(room,targetX,targetY);
       await touchAt('touchStart',start);
       for(let i=1;i<=12;i++){
         const t=i/12;
@@ -123,11 +123,12 @@ const {chromium}=require('playwright');
       await page.screenshot({path:process.env.PARK_CAPTURE_INTRO});
     }
     console.log('First playable Godot frame, browser launch excluded:',(Date.now()-started)/1000,'s');
-    await press(.18,.782);
+    await press(.223,.731);
     assert.equal((await stats()).mealFinished,false);
     await page.waitForTimeout(500);
-    await feed(.49,.56);
+    await feed(.41,.537);
     await page.locator('#name.current').waitFor({timeout:45000});
+    assert.equal(await page.locator('#intro[data-naming-backdrop][inert] iframe').count(),1);
     assert.equal(await page.locator('#aki-name-input').inputValue(),'Ричи');
     await page.locator('#aki-name-input').fill('Аки');
     await page.locator('#aki-name-form button').click();
@@ -277,7 +278,7 @@ const {chromium}=require('playwright');
     const light=await browser.newPage();
     const downloads=[];
     light.on('request',r=>{
-      if(r.method()==='GET' && /\/meeting3d\/index\.(pck|wasm)$/.test(r.url()))downloads.push(r.url());
+      if(r.method()==='GET' && /\/meeting3d\/index(?:-[a-f0-9]{64})?\.(pck|wasm)$/.test(new URL(r.url()).pathname))downloads.push(r.url());
     });
     await light.addInitScript(()=>Object.defineProperty(navigator,'connection',{value:{saveData:true}}));
     const lightUrl=new URL(root);

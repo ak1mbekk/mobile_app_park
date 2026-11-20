@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import PageLayout from '../components/layout/PageLayout';
 import EmptyState from '../components/ui/EmptyState';
 import { getLocalAnimals } from '../utils/remoteApi';
-import { animalsFromSite } from '../data/animalsFromSite';
+import { loadAnimalsFromSite, type SiteAnimal } from '../data/animalsFromSite';
 import { PawIcon, MapPinIcon } from '../components/icons';
 
 type AnimalItem =
@@ -13,6 +13,17 @@ type AnimalItem =
 
 export default function AnimalsPage() {
   const apiAnimals = getLocalAnimals();
+  const hasApiAnimals = apiAnimals.length > 0;
+  const [siteAnimals, setSiteAnimals] = useState<SiteAnimal[] | null>(null);
+  useEffect(() => {
+    if (hasApiAnimals) return;
+    const controller = new AbortController();
+    loadAnimalsFromSite(controller.signal).then(setSiteAnimals, () => {
+      if (!controller.signal.aborted) setSiteAnimals([]);
+    });
+    return () => controller.abort();
+  }, [hasApiAnimals]);
+
   const animals = useMemo((): AnimalItem[] => {
     if (apiAnimals.length > 0) {
       return apiAnimals.map((a) => ({
@@ -23,18 +34,20 @@ export default function AnimalsPage() {
         hasCoords: true,
       }));
     }
-    return animalsFromSite.map((a) => ({
+    return (siteAnimals ?? []).map((a) => ({
       source: 'site' as const,
       id: a.id,
       name: a.name,
       url: a.url,
     }));
-  }, [apiAnimals]);
+  }, [apiAnimals, siteAnimals]);
 
   return (
     <div className="max-w-[480px] mx-auto h-full flex flex-col min-h-0">
       <PageLayout title="Животные" subtitle="Коллекция парка">
-        {animals.length === 0 ? (
+        {!hasApiAnimals && siteAnimals === null ? (
+          <p role="status">Загружаем список животных…</p>
+        ) : animals.length === 0 ? (
           <div className="card p-8">
             <EmptyState
               icon={<PawIcon className="w-14 h-14 text-[var(--accent)]/60 mx-auto" />}

@@ -5,8 +5,9 @@
 [node name="Станции ухода" type="Node3D"]
 
 [node name="Сундук с игрушками" type="Node3D" parent="."]
-position = Vector3(-0.175, 0, 1.25)
+position = Vector3(0.225, 0, 1.77)
 rotation = Vector3(0, -0.23, 0)
+scale = Vector3(0.61, 0.61, 0.61)
 
 [node name="Метка" type="Marker3D" parent="Сундук с игрушками"]
 position = Vector3(0, 0.15, 0.09)

@@ -42,7 +42,7 @@ const SHOP_SAVE_ERROR := "Не удалось сохранить изменен�
 @onready var shop: Control = get_node_or_null("Интерфейс/Shop")
 @onready var status: Label = %Status
 @onready var awake_pose := richi.transform
-@onready var idle_pose := awake_pose.rotated_local(Vector3.UP, 0.22).rotated_local(Vector3.RIGHT, -0.07)
+@onready var idle_pose := awake_pose.rotated_local(Vector3.UP, 0.42)
 @onready var day_sun := sun.light_energy
 @onready var day_bounce := bounce.light_energy
 @onready var day_bounce_color := bounce.light_color
@@ -155,7 +155,6 @@ func _ready() -> void:
 func _show_room(animate := true) -> void:
     _set_mode(&"home", animate)
     richi.idle_in_home()
-    richi.gaze.point_at(get_viewport().get_visible_rect().size * Vector2(0.50, 0.20))
     _set_status("")
     _check_hungry_room.call_deferred()
 
@@ -265,6 +264,7 @@ func _move_between_floor_and_bath(entering: bool) -> void:
     bath_moving = true
     if pose_tween:
         pose_tween.kill()
+    richi.stop_purchase_celebration()
     richi.resting_at_home = false
     richi.gaze.suspended = true
     bathroom.preview()
@@ -280,8 +280,6 @@ func _move_between_floor_and_bath(entering: bool) -> void:
     var waypoints: Array[Vector3] = []
     var motion := create_tween()
     if entering:
-        motion.tween_callback(_play_travel_animation.bind(&"Sit_to_Stand_Transition_M", 1.05, 2.15, 0.19))
-        motion.tween_interval(0.75)
         waypoints.append(outside.origin)
         _walk_on_floor(motion, floor_pose, waypoints)
         motion.tween_callback(_set_mode.bind(&"bath", false, false))
@@ -363,8 +361,12 @@ func _buy_ball() -> void:
     elif not ball_owned and not night and native_leaves >= BALL_PRICE:
         native_leaves -= BALL_PRICE
         ball_owned = true
+        if not _save_home():
+            native_leaves += BALL_PRICE
+            ball_owned = false
+            return
         _update_native_stats()
-        _save_home()
+        _celebrate_purchase()
 
 func _play_ball() -> void:
     if location != MAIN or not ball_owned or active_mode != &"home" or not _can_start_play():
@@ -492,7 +494,22 @@ func _commit_native_ware(id: String) -> bool:
         return false
     _show_shop_catalog()
     _update_native_stats()
+    if not purchased:
+        _celebrate_purchase()
     return true
+
+func _celebrate_purchase() -> void:
+    if night:
+        return
+    if game_room and game_room.visible:
+        game_room.checkpoint()
+        game_room.hide()
+        _close_games()
+    if shop and shop.visible:
+        shop.hide()
+        %Header.show()
+    _show_room(false)
+    richi.celebrate_purchase()
 
 func _sync_native_shop() -> void:
     var selected := native_shop_selected
@@ -670,6 +687,7 @@ func _move_between_floor_and_bed() -> void:
     sleep_moving = true
     if pose_tween:
         pose_tween.kill()
+    richi.stop_purchase_celebration()
     richi.resting_at_home = false
     richi.gaze.suspended = true
     _set_status("")
@@ -685,8 +703,6 @@ func _move_between_floor_and_bed() -> void:
     var motion := create_tween()
 
     if night:
-        motion.tween_callback(_play_travel_animation.bind(&"Sit_to_Stand_Transition_M", 1.05, 2.15, 0.19))
-        motion.tween_interval(0.78)
         motion.tween_callback(_play_travel_animation.bind(&"Walking", 0.0, 1.22, 0.13))
         motion.tween_property(richi, "transform", walking_out, 0.21)
         motion.tween_property(richi, "transform", Transform3D(walking_out.basis, at_edge.origin), 0.80 if not settee_in_use else 0.42)
@@ -740,7 +756,7 @@ func _finish_sleep_movement(curl_started := false) -> void:
             richi.sleep_on_bed(false)
     else:
         richi.idle_in_home()
-    _set_status("Спокойной ночи, " + pet_name + "!" if night else "Доброе утро, " + pet_name + "!")
+    _set_status("")
 
 func _set_room_light(night_weight: float) -> void:
     bedroom.get_node("Свет").visible = night_weight > 0.02
@@ -818,8 +834,7 @@ func _refresh_controls() -> void:
     %Play.visible = free and in_main
     %Shop.visible = free and in_main and not moving and shop != null
     %Sleep.visible = in_main and has_sleep_furniture and (night or free)
-    %SleepLabel.text = "Разбудить" if night else "Спать"
-    %Sleep.accessibility_name = %SleepLabel.text
+    %Sleep.accessibility_name = "Разбудить" if night else "Уложить спать"
     %Back.visible = not moving and active_mode in [&"feed", &"bath"]
     %Back.text = "Из купели" if active_mode == &"bath" else "К миске"
     %MainRoom.set_pressed_no_signal(in_main)
@@ -1036,6 +1051,8 @@ func _sync_state(args: Array) -> void:
         _set_status(str(data.refusal))
     if data.get("offer_apple", false):
         _offer_apple()
+    if data.get("celebrate_purchase", false) == true:
+        _celebrate_purchase()
     _refresh_controls()
     _position_stations()
     _check_hungry_room.call_deferred()

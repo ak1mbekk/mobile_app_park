@@ -46,7 +46,37 @@ const demoTitle = 'Домик у тропы и парк животных';
     await demo.locator('#park.current').waitFor();
     const profile = await (await page.locator('iframe[title="' + demoTitle + '"]').elementHandle()).contentFrame();
     assert.equal(new URL(profile.url()).searchParams.get('view'), '2d');
-    console.log('PASS mobile root entry, external and internal Back, stable frame, legacy /map, lightweight view and profile');
+
+    await go('?view=2d');
+    await demo.locator('#intro.current').waitFor();
+    const game = await (await page.locator('iframe[title="' + demoTitle + '"]').elementHandle()).contentFrame();
+    await game.evaluate(() => localStorage.setItem('aki-concept-demo', JSON.stringify({
+      name:'Ричи', onboardingDone:true, mealFinished:true, leaves:37, updated:Date.now(),
+    })));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await demo.locator('#home.current').waitFor();
+    await demo.locator('#aki-feed').tap();
+    await demo.locator('#kitchen-room').waitFor();
+    await demo.locator('.park-entrance').tap();
+    await demo.locator('#park [data-go="map"]').first().tap();
+    await demo.locator('#map.current .p-back').tap();
+    await demo.locator('#park.current').waitFor();
+    let releaseLogo;
+    const logoLoading = new Promise(resolve => { releaseLogo = resolve; });
+    await page.route('**/assets/park-wordmark.webp', async route => {
+      await logoLoading;
+      await route.continue().catch(() => {});
+    });
+    try {
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await demo.locator('#park.current .back-to-game').tap();
+      await demo.locator('#kitchen-room').waitFor();
+    } finally {
+      releaseLogo();
+    }
+    const resumed = await (await page.locator('iframe[title="' + demoTitle + '"]').elementHandle()).contentFrame();
+    assert.equal(await resumed.evaluate(() => window.petDemo.stats().leaves),37);
+    console.log('PASS mobile root entry, external and internal Back, stable frame, legacy /map, lightweight view, profile and reload back to the same room');
   } finally {
     await browser.close();
   }
