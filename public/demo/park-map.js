@@ -504,6 +504,7 @@
   picker.disabled = true;
   for (const [key, name] of Object.entries(serviceNames)) serviceSelect.add(new Option(name, key));
   zoneButtons.forEach(button => {
+    button.disabled = false;
     button.onclick = () => {
       const zone = Number(button.dataset.zone);
       if (zone !== state.zone) navigate({ zone, id: '' });
@@ -521,6 +522,7 @@
     if (id) card.querySelector('h2')?.focus({ preventScroll: true });
   };
   serviceSelect.onchange = () => navigate({ id: '', kind: 'service', service: serviceSelect.value });
+  searchToggle.disabled = false;
   searchToggle.onclick = () => setSearch(search.hidden, true);
   search.querySelector('.map-search-close').onclick = () => setSearch(false, true);
   search.onkeydown = event => {
@@ -528,4 +530,5 @@
     event.stopPropagation();
     setSearch(false, true);
   };
+  if (document.getElementById('map').classList.contains('current')) show();
 })();

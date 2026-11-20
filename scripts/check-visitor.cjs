@@ -11,6 +11,40 @@ async function openMapSearch(map){
   if(await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
 }
 
+async function firstVisitScripts(browser) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const calls = [];
+  try {
+    const intro = new URL(root);
+    intro.searchParams.set('view', '2d');
+    intro.hash = 'intro';
+    page.on('request', request => calls.push(new URL(request.url()).pathname));
+    await page.route('https://tile.openstreetmap.org/**', route => route.abort());
+    await page.goto(intro.href);
+    await page.locator('#intro.current').waitFor();
+    assert.ok(!calls.some(url => /(?:leaflet\/leaflet|park-menu\/menu|park-map|map-projection)\.js$/.test(url)));
+
+    await page.route('**/vendor/park-menu/menu.js', route => route.abort(), { times: 1 });
+    await page.getByRole('button', { name: 'Парк · открыть путеводитель', exact: true }).click();
+    await page.getByRole('button', { name: 'Загрузить меню ещё раз' }).click();
+    const mapLink = page.getByRole('link', { name: 'Карта парка', exact: true });
+    await mapLink.waitFor();
+    assert.ok(!calls.some(url => url.endsWith('/leaflet/leaflet.js')));
+
+    await page.route('**/vendor/leaflet/leaflet.js', route => route.abort(), { times: 1 });
+    await mapLink.click();
+    await page.getByRole('button', { name: 'Загрузить карту ещё раз' }).click();
+    await page.locator('#map.current .visitor-survey').evaluate(image => image.decode());
+    await page.locator('#map .p-back').click();
+    await mapLink.click();
+    await page.locator('#map.current .visitor-survey').waitFor();
+    assert.equal(calls.filter(url => url.endsWith('/park-map.js')).length, 1);
+    assert.equal(calls.filter(url => url.endsWith('/leaflet/leaflet.js')).length, 2);
+  } finally {
+    await page.close();
+  }
+}
+
 async function coldCafeEntry(browser){
   const page=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
   let releaseAlignment;
@@ -622,7 +656,7 @@ async function mapShell(browser,appRoot){
 (async()=>{
   if(output)fs.mkdirSync(output,{recursive:true});
   const b=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
-  try{await coldCafeEntry(b);await fullScreenMap(b);await zoomSelectedPlace(b);await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await nestedMapBack(b);await availability(b);await offline(b);
+  try{await firstVisitScripts(b);await coldCafeEntry(b);await fullScreenMap(b);await zoomSelectedPlace(b);await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await nestedMapBack(b);await availability(b);await offline(b);
     if(process.argv[4]){await calendarShell(b,process.argv[4]);await mapShell(b,process.argv[4]);console.log('PASS calendar and canonical map shells, exact Back and editor link');}
     console.log('PASS visitor themes, 3 widths, zone destinations, canonical map and touch targets, programme retries, cancellation, empty day, restored offline guide');}
   finally{await b.close()}

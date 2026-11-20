@@ -55,7 +55,10 @@ async function collect(stream) {
 }
 
 function injectBootstrap(html, [pack, wasm]) {
-  return html.replace(loader, script =>
+  // The host already displays this portrait during boot. Reuse its WebP in
+  // the engine frame so its hidden splash doesn't fetch another full-size PNG.
+  return html.replace(/(<img id="status-splash"[^>]*\bsrc=")index\.png"/, '$1../assets/threshold-morning.webp"')
+    .replace(loader, script =>
     `<script src="delivery.js" data-pack="${pack}" data-wasm="${wasm}"></script>\n\t\t${script}`);
 }
 

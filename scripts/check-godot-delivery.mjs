@@ -14,7 +14,7 @@ assert.equal(path.dirname(root), temporary);
 const game = path.join(root, 'public', prefix);
 const pack = Buffer.from('0123456789'.repeat(512));
 const wasm = Buffer.from('wasm'.repeat(512));
-const html = '<script src="index.js"></script>';
+const html = '<img id="status-splash" src="index.png" alt=""><script src="index.js"></script>';
 const config = () => ({ configFile: false, root, logLevel: 'silent', plugins: [godotDelivery()] });
 
 function send(port, filename, headers={}, method='GET') {
@@ -31,6 +31,7 @@ function send(port, filename, headers={}, method='GET') {
 async function assets(port) {
   const response = await send(port, 'index.html');
   assert.equal(response.code, 200);
+  assert.match(response.body.toString(), /src="\.\.\/assets\/threshold-morning\.webp"/);
   const files = [...response.body.toString().matchAll(/data-(?:pack|wasm)="([^"]+)"/g)].map(match => match[1]);
   assert.equal(files.length, 2);
   return files;

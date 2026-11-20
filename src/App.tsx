@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import HomePage from './pages/HomePage';
-import MapPage from './pages/MapPage';
 import VisitorMapPage from './pages/VisitorMapPage';
 import AnimalsPage from './pages/AnimalsPage';
 import CalendarPage from './pages/CalendarPage';
@@ -11,6 +10,8 @@ import MorePage from './pages/MorePage';
 import NewsPage from './pages/NewsPage';
 import InfoPage from './pages/InfoPage';
 import SettingsPage from './pages/SettingsPage';
+
+const MapPage = lazy(() => import('./pages/MapPage'));
 
 type DemoWindow = Window & {
   conceptReplace?: (route: string) => void;
@@ -167,7 +168,7 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/guide" element={<HomePage />} />
           <Route path="/map" element={<VisitorMapPage />} />
-          <Route path="/map/editor" element={<MapPage />} />
+          <Route path="/map/editor" element={<Suspense fallback={<p role="status">Загружаем редактор карты…</p>}><MapPage /></Suspense>} />
           <Route path="/animals/synced" element={<AnimalsPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/shop" element={<ShopPage />} />

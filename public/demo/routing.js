@@ -5,6 +5,53 @@ if(window.parent!==window && ['calendar','map'].includes(guideLayout)){
 }
 const domestic=new Set(['intro','name','home','game','win','wash','chest','match','catch']);
 let lastHome='intro', currentScreen='', currentRoute='', previousScreens={};
+
+// The game and the guide share this HTML document. Load each visitor tool on its first visit.
+const visitorScripts = new Map();
+function loadVisitorScript(src) {
+  if (!visitorScripts.has(src)) {
+    visitorScripts.set(src, new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = () => {
+        script.remove();
+        visitorScripts.delete(src);
+        reject(new Error(src));
+      };
+      document.head.append(script);
+    }));
+  }
+  return visitorScripts.get(src);
+}
+
+async function loadVisitorTools(screen) {
+  const isMap = screen === 'map';
+  if (!isMap && screen !== 'park') return;
+  try {
+    if (isMap) {
+      await loadVisitorScript('vendor/leaflet/leaflet.js');
+      await loadVisitorScript('map-projection.js');
+      await loadVisitorScript('park-map.js');
+    } else {
+      await loadVisitorScript('vendor/park-menu/menu.js');
+    }
+  } catch {
+    if (currentScreen !== screen) return;
+    const host = isMap ? byId('map').querySelector('.map-status') : byId('parkMenu');
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'p-link visitor-tools-retry';
+    retry.textContent = isMap ? 'Загрузить карту ещё раз' : 'Загрузить меню ещё раз';
+    retry.onclick = () => {
+      host.textContent = isMap ? 'Загружаем карту…' : 'Загружаем меню…';
+      loadVisitorTools(screen);
+    };
+    host.replaceChildren(retry);
+  }
+}
+document.addEventListener('conceptscreen', event => loadVisitorTools(event.detail));
+
 function visitorMapRoute(route){
   const [screen,...parts]=route.split('/');
   if(screen==='overview')return 'map';
