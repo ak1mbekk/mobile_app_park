@@ -212,7 +212,7 @@
       hits.sort((a,b)=>a.distance-b.distance||compareIds.compare(a.point.id,b.point.id));
       choose(hits);
     }
-    return {dismiss,activate};
+    return {dismiss,activate,destroy:()=>panel.remove()};
   }
   window.parkGuide={zones,markerFace,speciesPortrait,bindMarkerHitChooser,places:[...places,...numberedEnclosures].sort(byZoneAndNumber),geoFacilities};
 })();

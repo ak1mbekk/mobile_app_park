@@ -1,6 +1,6 @@
 import { createHash, randomBytes, scrypt as derive, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 
 const scrypt = promisify(derive);
@@ -8,6 +8,13 @@ const cookie = 'park_family';
 const lifetime = 30 * 86400;
 const limit = 80000;
 const digest = value => createHash('sha256').update(value).digest('hex');
+const localAddresses = new Set(['::1', '127.0.0.1', '::ffff:127.0.0.1']);
+const localHost = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::[0-9]+)?$/i;
+
+function inside(parent, candidate) {
+  const relative = path.relative(parent, candidate);
+  return relative === '' || (relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative));
+}
 
 async function readBody(req) {
   let bytes = 0;
@@ -25,11 +32,18 @@ async function readBody(req) {
 export default function familyAccounts({ directory } = {}) {
   const attempts = new Map();
   let database;
-  async function open(root) {
+  async function open({ root, publicDir, build }) {
     if (!database) database = import('node:sqlite').then(({ DatabaseSync }) => {
-      const dir = directory ?? process.env.ANIMAL_PARK_FAMILY_DIR ?? path.resolve(root, '..', '.animal-park-private');
+      const dir = path.resolve(directory ?? process.env.ANIMAL_PARK_FAMILY_DIR ?? path.join(root, '..', '.animal-park-private'));
+      const servedDirectories = [root, publicDir, path.resolve(root, build.outDir)].filter(Boolean);
+      if (servedDirectories.some(served => inside(served, dir))) throw new Error('The family database needs a private directory.');
       mkdirSync(dir, { recursive: true, mode: 0o700 });
-      const db = new DatabaseSync(path.join(dir, 'families.sqlite'));
+      const realDirectory = realpathSync(dir);
+      if (servedDirectories.some(served => existsSync(served) && inside(realpathSync(served), realDirectory))) {
+        throw new Error('The family database needs a private directory.');
+      }
+      const dbPath = path.join(realDirectory, 'families.sqlite');
+      const db = new DatabaseSync(dbPath);
       db.exec(`PRAGMA foreign_keys = ON;
         CREATE TABLE IF NOT EXISTS families(
           id INTEGER PRIMARY KEY, login TEXT UNIQUE NOT NULL, salt TEXT NOT NULL,
@@ -55,18 +69,25 @@ export default function familyAccounts({ directory } = {}) {
       try {
         const address = req.socket.remoteAddress;
         const tls = Boolean(req.socket.encrypted);
-        if (!tls && !['::1', '127.0.0.1', '::ffff:127.0.0.1'].includes(address)) return send(403, { error: 'Для входа с телефона нужен HTTPS.' });
+        if (!tls && (!localAddresses.has(address) || !localHost.test(req.headers.host ?? '')))
+          return send(403, { error: 'Для входа с телефона нужен HTTPS.' });
         const action = req.url.split('?')[0];
         const change = req.method === 'POST';
         if (!change && req.method !== 'GET') return send(405, {});
         if (change && (req.headers.origin !== (tls ? 'https://' : 'http://') + req.headers.host ||
             req.headers['content-type']?.split(';')[0] !== 'application/json')) return send(403, {});
-        const db = await open(server.config.root);
+        const db = await open(server.config);
         const now = Date.now();
         const key = req.headers.cookie?.split(/;\s*/).find(entry => entry.startsWith(cookie+'='))?.slice(cookie.length+1);
-        const user = key && db.prepare('SELECT f.id,f.login,f.revision FROM sessions s JOIN families f ON f.id=s.family WHERE s.token=? AND s.expires>?').get(digest(key), now);
+        const tokenHash = key && digest(key);
+        const getUser = () => tokenHash && db.prepare(
+          'SELECT f.id,f.login,f.revision FROM sessions s JOIN families f ON f.id=s.family WHERE s.token=? AND s.expires>?'
+        ).get(tokenHash, Date.now());
         const options = '; Path=/api/family; HttpOnly; SameSite=Strict' + (tls ? '; Secure' : '');
-        if (!change && action === '/session') return send(200, { login: user?.login ?? null, revision: user?.revision ?? 0 });
+        if (!change && action === '/session') {
+          const user = getUser();
+          return send(200, { login: user?.login ?? null, revision: user?.revision ?? 0 });
+        }
         if (change && (action === '/login' || action === '/register')) {
           const body = await readBody(req);
           const login = typeof body?.login === 'string' ? body.login.trim().toLowerCase() : '';
@@ -87,32 +108,40 @@ export default function familyAccounts({ directory } = {}) {
           } else if (!row || !timingSafeEqual(verifier, Buffer.from(row.verifier, 'hex'))) {
             return send(401, { error: 'Проверьте логин и пароль.' });
           }
-          if (key) db.prepare('DELETE FROM sessions WHERE token=?').run(digest(key));
+          if (tokenHash) db.prepare('DELETE FROM sessions WHERE token=?').run(tokenHash);
           db.prepare('DELETE FROM sessions WHERE expires<=?').run(now);
           const token = randomBytes(32).toString('hex');
           db.prepare('INSERT INTO sessions VALUES (?,?,?)').run(digest(token), row.id, now + lifetime*1000);
           res.setHeader('Set-Cookie', cookie+'='+token+options+'; Max-Age='+lifetime);
           return send(200, { login, revision: row.revision });
         }
-        if (!user) return send(401, {});
+        if (action !== '/save' && !(change && action === '/logout')) return send(404, {});
+        const body = change && action === '/save' ? await readBody(req) : null;
+        const user = getUser();
+        const expected = req.headers['x-park-family'];
+        if (!user || (expected !== undefined && expected !== encodeURIComponent(user.login))) {
+          return send(401, { code: 'session_changed', error: 'Вход в аккаунт изменился. Подключитесь заново.' });
+        }
         if (change && action === '/logout') {
-          db.prepare('DELETE FROM sessions WHERE token=?').run(digest(key));
+          db.prepare('DELETE FROM sessions WHERE token=?').run(tokenHash);
           res.setHeader('Set-Cookie', cookie+'='+options+'; Max-Age=0');
           return send(200, {});
         }
-        if (action !== '/save') return send(404, {});
         if (!change) {
           const row = db.prepare('SELECT snapshot,revision FROM families WHERE id=?').get(user.id);
           return send(200, { pet: row.snapshot ? JSON.parse(row.snapshot) : null, revision: row.revision });
         }
-        const body = await readBody(req);
         const pet = body?.pet;
         if (!Number.isSafeInteger(body?.revision) || !pet || pet.onboardingDone !== true ||
             typeof pet.name !== 'string' || !pet.name.trim() || pet.name.length > 24 ||
             ![pet.xp,pet.leaves].every(n => Number.isSafeInteger(n) && n >= 0))
           return send(422, { error: 'Сначала познакомьтесь с енотом и дайте ему имя.' });
         const result = db.prepare('UPDATE families SET snapshot=?,revision=revision+1 WHERE id=? AND revision=?').run(JSON.stringify(pet),user.id,body.revision);
-        if (!result.changes) return send(409, { error: 'С другого устройства уже сохранили игру. Заново откройте профиль и выберите нужное сохранение.' });
+        if (!result.changes) return send(409, {
+          code: 'save_conflict',
+          error: 'С другого устройства уже сохранили игру. Сравните копии перед заменой.',
+          revision: getUser()?.revision ?? user.revision,
+        });
         send(200, { revision: body.revision + 1 });
       } catch (error) { send(error.status ?? 503, { error: 'Не удалось выполнить запрос к семейному профилю.' }); }
     });

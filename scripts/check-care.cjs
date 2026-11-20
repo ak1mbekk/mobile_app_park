@@ -22,6 +22,11 @@ const { chromium } = require('playwright');
     await page.locator('#aki-name-form button').click();
     await page.locator('#need-bars').waitFor();
     assert.deepEqual(await page.locator('#need-bars meter').evaluateAll(bars=>bars.map(x=>x.value)),[50,50,50,50]);
+    await page.locator('#home-profile').click();
+    await page.locator('#profileDialog[open]').waitFor();
+    assert.equal(await page.locator('#pr-name').textContent(),(await stats()).name);
+    await page.locator('#profileDialog [aria-label="Закрыть"]').click();
+    assert.ok(await page.locator('#home.current').isVisible());
     for(const [field,mood] of Object.entries({food:'hungry',energy:'sleepy',joy:'lonely',clean:'dirty'})){
       await restore({onboardingDone:true,[field]:10},'home');
       assert.match(await page.locator('#pet-actor').getAttribute('src'),new RegExp(mood));

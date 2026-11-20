@@ -14,8 +14,9 @@
 <label>Видимость плана <input id="opacity" type="range" min="0" max="100" value="50"></label>
 <details><summary>Точки подхода для маршрутов</summary>
 <label>Вольер <select id="approach-place"><option value="">Выберите вольер</option></select></label>
-<p>Отметь место на открытой гостевой дорожке у ограды. Эту точку получит Яндекс для пешего маршрута.</p>
+<p>Отметьте проверенный на месте подход со стороны гостевой дорожки. Яндекс использует эту точку для пешего маршрута.</p>
 <button id="place-approach" type="button" disabled>Указать на карте</button>
+<button id="confirm-approach" type="button" hidden>Подтвердить гостевой подход</button>
 <button id="remove-approach" type="button" hidden>Убрать точку</button>
 <p id="approach-note" role="status"></p></details>
 <details id="boundary-editor"><summary>Границы вольеров</summary>

@@ -257,7 +257,7 @@ func _open_games() -> void:
         return
     if hosted:
         _notify_host("games")
-    elif not night:
+    else:
         _launch_games()
 
 func _buy_ball() -> void:
@@ -270,7 +270,7 @@ func _buy_ball() -> void:
         _save_home()
 
 func _play_ball() -> void:
-    if not ball_owned or active_mode != &"home" or night:
+    if not ball_owned or active_mode != &"home" or not _can_start_play():
         return
     _set_mode(&"ball", false)
     _set_status("")
@@ -284,8 +284,25 @@ func _on_ball_finished(stage: int) -> void:
 func _open_pair_animal(species: String) -> void:
     _notify_host("pair-animal:" + species)
 
+func _can_start_play() -> bool:
+    if night:
+        return false
+    if not hosted:
+        _refresh_native_needs()
+    var needs: Dictionary = richi.needs
+    var reason := ""
+    if float(needs.get("food", 50.0)) <= 25.0:
+        reason = "Сначала угости енота. Он проголодался."
+    elif float(needs.get("energy", 50.0)) <= 25.0:
+        reason = pet_name + " устал. Дай ему поспать."
+    if reason.is_empty():
+        return true
+    richi.refuse()
+    _set_status(reason)
+    return false
+
 func _launch_games(game := "") -> void:
-    if not game_room:
+    if not game_room or (not hosted and not _can_start_play()):
         return
     %Header.hide()
     $Комната.hide()

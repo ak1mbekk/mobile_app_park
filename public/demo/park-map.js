@@ -13,8 +13,9 @@
   let surface, map, layer, picker, card, serviceField, status, calibration, hitChooser, tiles;
   let boundaryData;
   let refreshing, redrawSurvey;
-  let loading = false, mapReady = false, drawing = false, tileUnavailable = false, surveyFailed = false;
+  let loading = false, mapReady = false, drawing = false, surveyFailed = false;
   const markers = new Map();
+  const failedTiles = new Set();
   const local = () => places.filter(point => point.zone === state.zone);
   const label = point => point.service ? point.name : '№ ' + point.badge + ' · ' + point.name;
   const serviceKeys = point => point.services || [point.service];
@@ -61,7 +62,7 @@
     const messages = [];
     if (surveyFailed) messages.push('Изображение карты не загрузилось. Места доступны в списке.');
     else if (!calibration) messages.push('Открыта локальная карта. Географические точки сейчас недоступны.');
-    else if (!navigator.onLine || tileUnavailable) messages.push('Открыта локальная карта парка.');
+    else if (!navigator.onLine || failedTiles.size) messages.push('Открыта локальная карта парка.');
     status.textContent = messages.join(' ');
     status.hidden = !messages.length;
   }
@@ -149,13 +150,14 @@
     const note = document.createElement('small');
     if (geo) {
       const pair = geo.lng.toFixed(7) + ',' + geo.lat.toFixed(7);
-      card.append(cardLink('Открыть место в Яндекс Картах ↗', 'https://yandex.by/maps/?ll=' + pair + '&pt=' + pair + '&z=18'));
+      const linkText = point.geo ? 'Открыть место в Яндекс Картах ↗' : 'Примерное место в Яндекс Картах ↗';
+      card.append(cardLink(linkText, 'https://yandex.by/maps/?ll=' + pair + '&pt=' + pair + '&z=18'));
       note.textContent = point.geo ? 'Источник координат — OpenStreetMap.' :
-        boundary(point) ? 'Контур обведён по технической карте парка. Отметка приблизительная.' :
-          'Приблизительная отметка по технической карте парка.';
+        boundary(point) ? 'Контур обведён по техническому плану.' : 'Точка отмечена по номеру на техническом плане.';
     } else {
       card.append(cardLink('Открыть зону в Яндекс Картах ↗', guide.zones[point.zone].yandex));
-      note.textContent = 'Географическая точка места пока не подтверждена.';
+      note.textContent = point.plan ? 'Географическая привязка техплана сейчас недоступна.' :
+        'По схеме посетителя известна зона парка.';
     }
     const approach = calibration?.approaches?.[point.zone + '/' + point.id];
     if (Array.isArray(approach) && approach.length === 2 && approach.every(Number.isFinite) &&
@@ -171,7 +173,7 @@
   function saveView() {
     if (drawing || !mapReady || !document.getElementById('map').classList.contains('current')) return;
     const { lat, lng } = map.getCenter();
-    const view = { zone: state.zone, geographic: Boolean(calibration), lat, lng, zoom: map.getZoom() };
+    const view = { zone: state.zone, id: state.id, geographic: Boolean(calibration), lat, lng, zoom: map.getZoom() };
     views.set(state.zone, view);
     history.replaceState({ ...history.state, parkMapView: view }, '');
   }
@@ -184,7 +186,9 @@
       if (!mapReady || !map.getCenter().equals(center) || map.getZoom() !== saved.zoom) {
         map.setView(center, saved.zoom, { animate: false });
       }
-      if (point && !map.getBounds().pad(-0.14).contains(point)) map.panTo(point, { animate: false });
+      if (point && saved.id !== state.id && !map.getBounds().pad(-0.14).contains(point)) {
+        map.panTo(point, { animate: false });
+      }
     } else if (point) {
       map.setView(point, calibration ? 17 : 0, { animate: false });
     } else {
@@ -231,7 +235,7 @@
       const ring = boundary(item);
       if (ring) {
         const area = L.polygon(ring, {
-          pane: 'visitor-areas', className: 'place-area' + (picked ? ' picked' : ''), bubblingMouseEvents: false
+          pane: 'visitor-areas', className: 'place-area' + (picked ? ' picked' : ''), smoothFactor: 0, bubblingMouseEvents: false
         });
         const open = () => navigate({ id: item.id });
         area.on('add', () => {
@@ -290,8 +294,8 @@
       tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       });
-      tiles.on('tileerror', () => { tileUnavailable = true; updateStatus(); });
-      tiles.on('tileload', () => { if (tileUnavailable) { tileUnavailable = false; updateStatus(); } });
+      tiles.on('tileerror', ({ tile }) => { failedTiles.add(tile); updateStatus(); });
+      tiles.on('tileload tileunload', ({ tile }) => { if (failedTiles.delete(tile)) updateStatus(); });
       tiles.addTo(map);
     }
     addSurvey();
@@ -305,15 +309,19 @@
     map.on('moveend', saveView);
     map.on('click', () => hitChooser.dismiss());
     host.querySelectorAll('[data-zone]').forEach(button => {
-      button.onclick = () => navigate({ zone: Number(button.dataset.zone), id: '' });
+      button.onclick = () => {
+        const zone = Number(button.dataset.zone);
+        if (zone !== state.zone) navigate({ zone, id: '' });
+      };
     });
     host.querySelectorAll('[data-kind]').forEach(button => {
-      button.onclick = () => navigate({ id: '', kind: button.dataset.kind, service: '' });
+      button.onclick = () => {
+        const kind = button.dataset.kind;
+        if (kind !== state.kind) navigate({ id: '', kind, service: '' });
+      };
     });
     picker.onchange = () => navigate({ id: picker.value });
     serviceSelect.onchange = () => navigate({ id: '', kind: 'service', service: serviceSelect.value });
-    window.addEventListener('online', () => { tiles?.redraw(); updateStatus(); });
-    window.addEventListener('offline', updateStatus);
   }
 
   function validAlignment(value) {
@@ -382,13 +390,21 @@
   function refreshAlignment() {
     if (refreshing || !map || !document.getElementById('map').classList.contains('current')) return;
     refreshing = Promise.all([readAlignment(), readBoundaries()]).then(([next, boundaries]) => {
-      const alignmentChanged = next && calibration && ['revision', 'centerX', 'centerY', 'scale', 'angle']
-        .some(key => next[key] !== calibration[key]);
+      const recovered = next && !calibration;
+      const alignmentChanged = next && (recovered || ['revision', 'centerX', 'centerY', 'scale', 'angle']
+        .some(key => next[key] !== calibration[key]));
       const boundariesChanged = boundaries && boundaries.revision !== boundaryData?.revision;
       if (!alignmentChanged && !boundariesChanged) return;
       if (alignmentChanged) calibration = next;
       if (boundariesChanged) boundaryData = boundaries;
-      if (document.getElementById('map').classList.contains('current')) draw();
+      if (recovered) {
+        hitChooser.destroy();
+        map.remove();
+        map = null;
+        mapReady = false;
+        surveyFailed = false;
+      }
+      show();
     }).finally(() => { refreshing = null; });
   }
 
@@ -400,4 +416,10 @@
     if (map && document.getElementById('map').classList.contains('current')) draw();
   });
   window.addEventListener('focus', refreshAlignment);
+  window.addEventListener('online', () => {
+    tiles?.redraw();
+    if (map) updateStatus();
+    refreshAlignment();
+  });
+  window.addEventListener('offline', () => { if (map) updateStatus(); });
 })();

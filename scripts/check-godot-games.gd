@@ -1,6 +1,7 @@
 extends SceneTree
 
 const GAME_ROOM = preload("res://Scenes/Games/GameRoom.tscn")
+const HOME = preload("res://Scenes/Levels/Home.tscn")
 const CELLS := [
     0, 1, 2, 3, 4, 0, 1, 2, 3, 0, 0, 1, 2, 3, 4, 0, 1, 2,
     3, 4, 0, 2, 0, 3, 4, 0, 1, 0, 3, 4, 0, 1, 2, 3, 4, 0,
@@ -36,8 +37,11 @@ func _run() -> void:
     await _test_pairs()
     await _test_match()
     await _test_orchard()
+    room.queue_free()
+    await process_frame
+    await _test_home_play_needs()
     if failures == 0:
-        print("PASS Godot chest and ball action, pair reveal/replay/guide, match combos, orchard hearts/replay, and return home")
+        print("PASS Godot chest and ball action, pair reveal/replay/guide, match combos, orchard hearts/replay, return home, and play needs")
     quit(failures)
 
 
@@ -52,6 +56,47 @@ func _test_ball() -> void:
     room.set_ball_shop(true, true)
     _tap(ball)
     _expect(ball_requests == 1 and ball.disabled and ball.text.contains("В домике"), "The purchased ball cannot be paid for twice")
+
+func _test_home_play_needs() -> void:
+    var home = HOME.instantiate()
+    root.add_child(home)
+    home.night = false
+    home.ball_owned = true
+    home._show_room()
+    var games: BaseButton = home.get_node("%Play")
+    var ball: BaseButton = home.get_node("%Ball")
+    for key in ["food", "energy"]:
+        home.native_needs = {"food": 50.0, "clean": 50.0, "energy": 50.0, "joy": 50.0}
+        home.native_needs[key] = 25.0
+        home.native_needs_updated = 0.0
+        games.pressed.emit()
+        _expect(not home.game_room.visible, "The native chest refuses play at 25 " + key)
+        ball.pressed.emit()
+        _expect(home.active_mode == &"home", "The native toy refuses play at 25 " + key)
+        _expect(home.richi.get_node("Reactions").current_animation == &"refuse", "The pet shows the refusal")
+    home.native_needs.food = 25.1
+    home.native_needs.energy = 25.1
+    home.native_needs_updated = 0.0
+    games.pressed.emit()
+    _expect(home.game_room.visible, "The chest opens above both need thresholds")
+    home.game_room.get_node("%Back").pressed.emit()
+    ball.pressed.emit()
+    _expect(home.active_mode == &"ball", "The toy starts above both need thresholds")
+    home.care.stop_toy()
+    home._show_room()
+    home.hosted = true
+    home.richi.set_needs({"food": 25.0, "energy": 50.0})
+    ball.pressed.emit()
+    _expect(home.active_mode == &"home", "The hosted toy honors the latest web needs")
+    home.hosted = false
+    home._set_sleep(true, false)
+    games.pressed.emit()
+    ball.pressed.emit()
+    _expect(not home.game_room.visible and home.active_mode == &"sleep", "Sleep prevents a new game or toy session")
+    var murmur: AudioStreamPlayer = home.richi.get_node("SoftMurmur")
+    await create_timer(murmur.stream.get_length() + 0.1).timeout
+    home.queue_free()
+    await process_frame
 
 
 func _test_pairs() -> void:

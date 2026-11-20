@@ -187,7 +187,9 @@
 #home:has(#shop-preview:not([hidden]),#aki-feedback:not([hidden])) #bed-goal{visibility:hidden}
 #room-decor [data-furnishing=lantern]{left:1%;bottom:62%;width:9%}
 #room-decor [data-furnishing=chest]{right:4%;bottom:16%;width:27%}
-#shop-open{position:absolute;z-index:3;top:9px;right:12px;padding:0 14px;min-height:44px;border-radius:13px;background:#fcf2db;color:#423222;font-weight:700}
+#shop-open{position:absolute;z-index:3;top:9px;right:64px;padding:0 14px;min-height:44px;border-radius:13px;background:#fcf2db;color:#423222;font-weight:700}
+#home-profile{position:absolute;z-index:3;top:9px;right:12px;width:44px;height:44px;padding:4px;border:0;border-radius:50%;background:#fcf2db}
+#home-profile img{display:block;border-radius:50%;object-fit:cover}
 #cottage-shop{width:min(94vw,410px);max-height:86dvh;overflow:auto;margin:auto;padding:20px;background:#f8f0df;color:#3e3429}
 #cottage-shop h2{font:600 26px/1.2 Georgia,serif}
 .shop-tools,.shop-tools [role=group]{display:flex;align-items:center;gap:5px}

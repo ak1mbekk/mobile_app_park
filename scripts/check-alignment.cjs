@@ -126,6 +126,10 @@ async function verifyMaps(){
     await p.locator('#place-approach').click();
     await p.locator('#drag-area').click({position:{x:206,y:192}});
     await p.waitForFunction(()=>document.querySelector('#base-map').src.includes('pt='));
+    assert.match(await p.locator('#approach-note').textContent(),/^Точка для проверки:/);
+    assert.ok(await p.locator('#confirm-approach').isVisible());
+    await p.locator('#confirm-approach').click();
+    assert.match(await p.locator('#approach-note').textContent(),/^Точка подхода:/);
     const fixturePoint=(await p.locator('#approach-note').textContent()).split(': ')[1].split(', ').map(Number);
     assert.ok(fixturePoint[0]>53.07 && fixturePoint[0]<53.12);
     await p.locator('#remove-approach').click();

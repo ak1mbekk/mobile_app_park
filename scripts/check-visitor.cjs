@@ -95,36 +95,73 @@ async function cartography(browser){
     assert.match(await map.locator('.map-place-portrait').getAttribute('src'),/capybara\.webp$/);
     assert.equal(await map.locator('.park-surface .place-marker img').count(),0);
     assert.match(await yandex.getAttribute('href'),/[?&]pt=26\.\d+,53\.\d+/);
+    assert.match(await yandex.textContent(),/^Примерное место/);
+    assert.equal(await map.locator('.place-info a[href*="rtext="]').count(),0);
+    await map.locator('[data-zone="1"]').tap();
+    await map.locator('[data-kind="all"]').tap();
+    assert.equal(await picker.inputValue(),'36');
 
     const oldZoom=(await view()).zoom;
     await map.getByRole('button',{name:'Увеличить'}).click();
     await p.waitForFunction(zoom=>history.state.parkMapView.zoom>zoom,oldZoom);
+    const centerBeforePan=await view();
+    const surface=map.locator('.park-surface');
+    await surface.focus();
+    for(let i=0;i<4;i++){
+      const previous=await view();
+      await p.keyboard.press('ArrowRight');
+      await p.waitForFunction(lng=>history.state.parkMapView.lng>lng,previous.lng);
+    }
     const camera=await view();
+    assert.ok(camera.lng>centerBeforePan.lng+.001);
     await map.locator('[data-go="animal"]').click();
     await p.locator('#animal.current .p-back').click();
     await p.waitForURL('**#map/1/36',{waitUntil:'commit'});
     await title.getByText('Капибара',{exact:true}).waitFor();
     assert.equal((await view()).zoom,camera.zoom);
+    assert.ok(Math.abs((await view()).lng-camera.lng)<.0000001,'Back restores the panned map');
     assert.equal(await picker.inputValue(),'36');
     await p.reload();
-    await pin.waitFor();
+    await title.getByText('Капибара',{exact:true}).waitFor();
     assert.equal((await view()).zoom,camera.zoom);
+    assert.ok(Math.abs((await view()).lng-camera.lng)<.0000001,'Reload restores the panned map');
+    await p.evaluate(()=>window.conceptGo('map/1/35'));
 
     const verifyAreaTap=async(zone,id,name)=>{
       await p.evaluate(route=>window.conceptGo(route),'map/'+zone+'/'+id);
       await title.getByText(name,{exact:true}).waitFor();
       await map.getByRole('button',{name:'Закрыть карточку места'}).click();
       const area=map.locator('.place-area[data-place-id="'+id+'"]');
+      if(zone===1&&id==='36'){
+        const outside=await area.evaluate(path=>{
+          const box=path.getBBox();
+          for(const x of [box.x-5,box.x+box.width+5]){
+            for(const offset of [.25,.4,.6,.75]){
+              const pixel=new DOMPoint(x,box.y+box.height*offset);
+              const tap=pixel.matrixTransform(path.getScreenCTM());
+              const target=document.elementFromPoint(tap.x,tap.y);
+              if(target?.closest('.park-surface')&&!target.closest('.leaflet-interactive,.leaflet-control')){
+                return {x:tap.x,y:tap.y};
+              }
+            }
+          }
+          return null;
+        });
+        assert.ok(outside,'There is a tappable point across the capybara enclosure fence');
+        await p.touchscreen.tap(outside.x,outside.y);
+        assert.equal(await picker.inputValue(),'');
+        assert.ok(await title.isHidden());
+      }
       const interior=await area.evaluate(path=>{
         const box=path.getBBox();
-        for(let dy=.3;dy<=.7;dy+=.1)for(let dx=.3;dx<=.7;dx+=.1){
+        for(const dx of [.12,.88,.22,.78])for(let dy=.2;dy<=.8;dy+=.1){
           const pixel=new DOMPoint(box.x+box.width*dx,box.y+box.height*dy);
           const tap=pixel.matrixTransform(path.getScreenCTM());
           if(path.isPointInFill(pixel)&&document.elementFromPoint(tap.x,tap.y)===path)return {x:tap.x,y:tap.y};
         }
         return null;
       });
-      assert.ok(interior,'Interior of '+zone+'/'+id+' is an exposed physical hit target');
+      assert.ok(interior,'Interior away from the center of '+zone+'/'+id+' is an exposed hit target');
       await p.touchscreen.tap(interior.x,interior.y);
       await title.getByText(name,{exact:true}).waitFor();
       assert.equal(await map.locator('.place-marker[data-place-id="'+id+'"]').count(),0);
@@ -157,6 +194,27 @@ async function cartography(browser){
       assert.equal(await map.locator('.place-marker.picked').count(),geo?1:0);
       const url=new URL(await yandex.getAttribute('href'));
       assert.equal(url.searchParams.has('pt'),geo);
+      if(kind==='cafe'){
+        const cdp=await context.newCDPSession(p);
+        const {targetInfo}=await cdp.send('Target.getTargetInfo');
+        await cdp.send('Browser.setPermission',{
+          browserContextId:targetInfo.browserContextId,origin:new URL(root).origin,
+          permission:{name:'geolocation'},setting:'denied'
+        });
+        assert.equal(await p.evaluate(async()=> (await navigator.permissions.query({name:'geolocation'})).state),'denied');
+        await context.route('https://yandex.by/maps/**',route=>route.fulfill({
+          contentType:'text/html',body:'<title>Яндекс Карты</title>'
+        }));
+        const beforeLink=await view();
+        const [popup]=await Promise.all([p.waitForEvent('popup'),yandex.tap()]);
+        await popup.waitForLoadState();
+        assert.equal(new URL(popup.url()).searchParams.get('pt'),'26.0212333,53.0910999');
+        assert.equal(new URL(popup.url()).searchParams.has('rtext'),false);
+        await popup.close();
+        assert.deepEqual(await view(),beforeLink);
+        assert.equal(await picker.inputValue(),id);
+        assert.equal(await service.inputValue(),kind);
+      }
       await p.locator('[data-tab="park"]').click();
       await p.goBack();
       await title.getByText(expected,{exact:true}).waitFor();
@@ -339,13 +397,21 @@ async function offline(browser){
 
   const fresh=await browser.newPage();
   try{
-    await fresh.route('**/map-alignment.json',route=>route.abort());
+    let outage=true;
+    await fresh.route('**/map-alignment.json',route=>outage?route.abort():route.continue());
+    await fresh.route('https://tile.openstreetmap.org/**',route=>route.abort());
     await fresh.goto(root+'#map/1/36');
     await fresh.locator('#map .leaflet-image-layer').evaluate(img=>img.decode());
     await fresh.getByText('Открыта локальная карта. Географические точки сейчас недоступны.').waitFor();
     assert.equal(await fresh.locator('#map .place-info h2').textContent(),'Капибара');
     await fresh.locator('#map .place-area.picked[data-place-id="36"]').waitFor();
     assert.match(await fresh.locator('#map .place-info a').first().getAttribute('href'),/11025733579/);
+    outage=false;
+    await fresh.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await fresh.locator('#map .visitor-survey').evaluate(image=>image.decode());
+    assert.equal(await fresh.locator('#map .place-info h2').textContent(),'Капибара');
+    assert.match(await fresh.locator('#map .place-info a').first().textContent(),/^Примерное место/);
+    assert.equal(await fresh.locator('#map .map-hit-chooser').count(),1);
   }finally{await fresh.close();}
 }
 async function calendarShell(browser,appRoot){

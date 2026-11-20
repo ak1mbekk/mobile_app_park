@@ -1,101 +1,212 @@
 (() => {
   const find = id => document.getElementById(id);
+  const dialog = find('profileDialog');
   const section = find('family-account');
   const form = find('family-access');
   const status = find('family-status');
-  let session = {}, registering = false, pending = null;
+  const signed = find('family-signed');
+  const review = find('family-review');
+  const retry = find('family-retry');
+  const saveButton = find('family-save');
+  const restoreButton = find('family-restore');
+  let session = { login: null, revision: 0 };
+  let registering = false;
+  let pending = null;
   let busy = false;
-  async function request(path, body) {
-    const options = { cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(9000) };
-    if (body !== undefined) Object.assign(options, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const response = await fetch('/api/family/' + path, options);
-    if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Сервер аккаунтов недоступен. Енот сохранён на устройстве.');
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Сессия закончилась. Откройте профиль ещё раз.');
-    return data;
+
+  async function request(action, body) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 9000);
+    try {
+      const options = { cache: 'no-store', credentials: 'same-origin', signal: controller.signal, headers: {} };
+      if (session.login && ['save', 'logout'].includes(action)) {
+        options.headers['X-Park-Family'] = encodeURIComponent(session.login);
+      }
+      if (body !== undefined) {
+        options.method = 'POST';
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(body);
+      }
+      const response = await fetch('/api/family/' + action, options);
+      if (!response.headers.get('content-type')?.includes('application/json')) {
+        throw new Error('Сервер аккаунтов недоступен. Можно продолжить игру на этом устройстве.');
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        throw Object.assign(new Error(data.error || 'Не удалось связаться с семейным аккаунтом.'), {
+          code: data.code,
+          revision: data.revision,
+        });
+      }
+      return data;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
+
+  function paint(message) {
+    pending = null;
+    form.hidden = Boolean(session.login);
+    signed.hidden = !session.login;
+    review.hidden = true;
+    retry.hidden = true;
+    restoreButton.disabled = !session.revision;
+    saveButton.disabled = !window.petDemo.stats().onboardingDone;
+    status.textContent = message ?? (session.login
+      ? 'Выполнен вход · ' + session.login + (session.revision ? '' : '. В аккаунте пока нет сохранения.')
+      : 'Взрослый может сохранить игру в аккаунте и перенести её на другое устройство.');
+    find('family-submit').textContent = registering ? 'Создать аккаунт' : 'Войти';
+    find('family-mode').textContent = registering ? 'Уже есть аккаунт' : 'Создать аккаунт';
+    form.elements.password.autocomplete = registering ? 'new-password' : 'current-password';
+  }
+
+  async function connect() {
+    pending = null;
+    form.hidden = review.hidden = signed.hidden = true;
+    retry.hidden = false;
+    status.textContent = 'Подключение…';
+    session = await request('session');
+    paint();
+  }
+
   function task(action) {
     return async event => {
       event?.preventDefault();
       if (busy) return;
       busy = true;
       section.setAttribute('aria-busy', 'true');
-      try { await action(); }
-      catch (error) { status.textContent = error instanceof TypeError || error.name === 'TimeoutError' ? 'Нет связи с сервером. Игра сохранена на устройстве.' : error.message; }
-      finally { busy = false; section.removeAttribute('aria-busy'); }
+      try {
+        await action();
+      } catch (error) {
+        if (error.code === 'save_conflict') {
+          session.revision = error.revision ?? session.revision;
+          paint(error.message);
+          saveButton.focus();
+        } else if (error.code === 'session_changed') {
+          pending = null;
+          form.hidden = review.hidden = signed.hidden = true;
+          retry.hidden = false;
+          status.textContent = error.message;
+          retry.focus();
+        } else {
+          status.textContent = error instanceof TypeError || error.name === 'AbortError'
+            ? 'Нет связи с сервером. Можно продолжить игру на этом устройстве.'
+            : error.message;
+        }
+      } finally {
+        busy = false;
+        section.removeAttribute('aria-busy');
+      }
     };
   }
-  function paint() {
-    form.hidden = Boolean(session.login);
-    find('family-signed').hidden = !session.login;
-    find('family-review').hidden = true;
-    find('family-restore').disabled = !session.revision;
-    find('family-save').disabled = !window.petDemo.stats().onboardingDone;
-    status.textContent = session.login ? 'Выполнен вход · ' + session.login : 'Взрослый может сохранить игру и перенести её на другой телефон.';
-    find('family-submit').textContent = registering ? 'Создать аккаунт' : 'Войти';
-    find('family-mode').textContent = registering ? 'Уже есть аккаунт' : 'Создать аккаунт';
-    form.elements.password.autocomplete = registering ? 'new-password' : 'current-password';
-  }
-  const connect = task(async () => {
-    form.hidden = find('family-review').hidden = find('family-signed').hidden = true;
-    find('family-retry').hidden = false;
-    status.textContent = 'Подключение…';
-    pending = null;
-    session = await request('session');
-    find('family-retry').hidden = true;
+
+  const open = task(connect);
+  document.addEventListener('click', event => {
+    if (event.target.closest('[data-profile]')) open();
+  });
+  retry.onclick = open;
+  find('family-mode').onclick = () => {
+    if (busy) return;
+    registering = !registering;
+    paint();
+  };
+  form.onsubmit = task(async () => {
+    session = await request(registering ? 'register' : 'login', {
+      login: form.elements.login.value,
+      password: form.elements.password.value,
+    });
+    form.reset();
+    registering = false;
     paint();
   });
-  document.addEventListener('click', event => { if(event.target.closest('[data-profile]')) connect(); });
-  find('family-retry').onclick = connect;
-  find('family-mode').onclick = () => { if (!busy) { registering = !registering; paint(); } };
-  form.onsubmit = task(async () => {
-    session = await request(registering ? 'register' : 'login', { login: form.elements.login.value, password: form.elements.password.value });
-    form.reset(); registering = false; paint();
-  });
   find('family-logout').onclick = task(async () => {
-    await request('logout', {}); session = {}; pending = null; paint();
+    await request('logout', {});
+    session = { login: null, revision: 0 };
+    paint();
   });
-  function confirm(action, message, caption) {
-    pending = action;
-    find('family-signed').hidden = true;
+
+  function confirm(action, message, caption, opener) {
+    pending = { action, opener };
+    signed.hidden = true;
     find('family-comparison').textContent = message;
     find('family-confirm').textContent = caption;
-    find('family-review').hidden = false;
+    review.hidden = false;
+    find('family-cancel').focus();
   }
-  find('family-cancel').onclick = () => { if (!busy) { pending = null; paint(); } };
-  find('family-confirm').onclick = task(async () => { if (pending) await pending(); });
-  async function save() {
-    const pet = window.petDemo.stats();
-    const result = await request('save', { revision: session.revision, pet });
-    session.revision = result.revision; pending = null; paint();
-    status.textContent = pet.name + ' сохранён в семейном аккаунте.';
-  }
-  find('family-save').onclick = task(async () => {
-    if (session.revision) {
-      const copy = await request('save');
-      if (session.revision !== copy.revision) throw new Error('Сохранение изменилось. Откройте профиль заново.');
-      confirm(save, 'Заменить сохранение «' + copy.pet.name + '» в аккаунте текущей игрой?', 'Заменить сохранение');
-    } else await save();
+
+  find('family-cancel').onclick = () => {
+    if (busy || !pending) return;
+    const { opener } = pending;
+    paint();
+    opener.focus();
+  };
+  find('family-confirm').onclick = task(async () => {
+    if (pending) await pending.action();
   });
-  find('family-restore').onclick = task(async () => {
+
+  async function save(revision, pet) {
+    const result = await request('save', { revision, pet });
+    session.revision = result.revision;
+    paint(pet.name + ' сохранён в семейном аккаунте.');
+    saveButton.focus();
+  }
+
+  function describe(pet) {
+    return '«' + pet.name + '» · опыт ' + pet.xp + ' · листья ' + pet.leaves;
+  }
+
+  saveButton.onclick = task(async () => {
     const copy = await request('save');
-    if (!copy.pet) throw new Error('В аккаунте пока нет сохранения.');
+    const pet = window.petDemo.stats();
     session.revision = copy.revision;
-    const local = window.petDemo.stats();
-    const prompt = 'Восстановить «' + copy.pet.name + '» с ' + copy.pet.xp + ' опыта?' +
-      (local.onboardingDone ? ' Текущая игра «' + local.name + '» на этом устройстве будет заменена.' : '');
-    confirm(() => {
-      const text = JSON.stringify(copy.pet);
-      const key = 'aki-concept-demo';
-      const old = localStorage.getItem(key);
-      if (old) localStorage.setItem(key+'.before-restore', old);
-      localStorage.setItem(key, text);
-      try { localStorage.setItem(key+'.backup', text); } catch { /* primary save is sufficient */ }
-      history.replaceState(null, '', '#home'); location.reload();
-    }, prompt, 'Восстановить игру');
+    if (!copy.pet) {
+      await save(copy.revision, pet);
+      return;
+    }
+    confirm(
+      () => save(copy.revision, pet),
+      'Заменить сохранение в аккаунте? В аккаунте ' + describe(copy.pet) + '. На устройстве ' + describe(pet) + '.',
+      'Заменить сохранение',
+      saveButton
+    );
   });
-  find('profileDialog').addEventListener('close', () => { form.elements.password.value = ''; pending = null; });
-  if (new URLSearchParams(location.search).get('panel') === 'profile') {
-    document.querySelector('#park [data-profile]').click();
+
+  function restore(pet) {
+    const key = 'aki-concept-demo';
+    const record = JSON.stringify(pet);
+    try {
+      const local = localStorage.getItem(key) ?? localStorage.getItem(key + '.backup');
+      if (local) localStorage.setItem(key + '.before-restore', local);
+      localStorage.setItem(key, record);
+    } catch {
+      throw new Error('Не удалось записать игру на этом устройстве. Проверьте, доступно ли хранилище браузера.');
+    }
+    try { localStorage.setItem(key + '.backup', record); } catch { /* The primary save is already written. */ }
+    history.replaceState(history.state, '', '#home');
+    location.reload();
+  }
+
+  restoreButton.onclick = task(async () => {
+    const copy = await request('save');
+    session.revision = copy.revision;
+    if (!copy.pet) {
+      paint();
+      return;
+    }
+    const local = window.petDemo.stats();
+    const comparison = 'Восстановить игру из аккаунта? В аккаунте ' + describe(copy.pet) + '.' +
+      (local.onboardingDone ? ' На устройстве ' + describe(local) + '. Эта игра будет заменена.' : '');
+    confirm(() => restore(copy.pet), comparison, 'Восстановить игру', restoreButton);
+  });
+
+  dialog.addEventListener('close', () => {
+    form.elements.password.value = '';
+    pending = null;
+  });
+  const entry = new URL(location.href);
+  if (entry.searchParams.get('panel') === 'profile') {
+    entry.searchParams.delete('panel');
+    history.replaceState(history.state, '', entry);
+    document.querySelector('#park [data-profile]')?.click();
   }
 })();
