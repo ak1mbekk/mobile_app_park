@@ -212,8 +212,7 @@ async function appearance(browser){
                     route.startsWith('map/'))){
           if(route.startsWith('map/')){
             await view.locator('.place-info h2').waitFor();
-            const photo=view.locator('.map-place-portrait');
-            if(await photo.count())await photo.evaluate(image=>image.decode());
+            await view.locator('.map-place-portrait').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
           }
           await page.waitForLoadState('networkidle');await page.screenshot({path:path.join(output,'visitor-'+colorScheme+'-'+width+'-'+route.replaceAll('/','-')+'.png')});
         }
@@ -423,7 +422,8 @@ async function markerHitTesting(browser){
       const a=items[i].rect,b=items[j].rect;
       const left=Math.max(a.left,b.left,frame.left+10),right=Math.min(a.right,b.right,frame.right-65);
       const top=Math.max(a.top,b.top,frame.top+10),bottom=Math.min(a.bottom,b.bottom,frame.bottom-20);
-      if(right-left>=5&&bottom-top>=5)return {x:(left+right)/2,y:(top+bottom)/2};
+      const x=(left+right)/2,y=(top+bottom)/2;
+      if(right-left>=5&&bottom-top>=5&&document.elementFromPoint(x,y)?.closest('.place-marker'))return {x,y};
     }
     return null;
   });
@@ -431,11 +431,22 @@ async function markerHitTesting(browser){
     await p.route('https://tile.openstreetmap.org/**',route=>route.abort());
     await p.goto(root+'#map/1');
     await map.locator('.visitor-survey').evaluate(img=>img.decode());
+    await openMapSearch(map);
     const target=await overlap();
     assert.ok(target,'Zone 1 retains an overlapping touch target');
     await p.touchscreen.tap(target.x,target.y);
     const choices=map.locator('.map-hit-chooser:not([hidden]) [data-place-id]');
     await choices.first().waitFor();
+    assert.ok(await map.locator('#map-search').isHidden(),'Only the place chooser is visible');
+    await p.keyboard.press('Escape');
+    assert.ok(await map.locator('#map-search').isVisible(),'Cancel restores the open search');
+    await map.getByRole('button',{name:'Закрыть поиск'}).tap();
+    const nextTarget=await overlap();
+    assert.ok(nextTarget);
+    const zoom=await p.evaluate(()=>history.state.parkMapView.zoom);
+    await p.touchscreen.tap(nextTarget.x,nextTarget.y);
+    await choices.first().waitFor();
+    assert.equal(await p.evaluate(()=>history.state.parkMapView.zoom),zoom);
     assert.ok(await choices.count()>=2);
     assert.ok(await choices.evaluateAll(items=>items.every(item=>item.querySelector('b')?.textContent&&item.querySelector('small')?.textContent)));
     const id=await choices.first().getAttribute('data-place-id');
@@ -443,11 +454,20 @@ async function markerHitTesting(browser){
     await p.waitForURL('**#map/1/'+id,{waitUntil:'commit'});
     assert.equal(await map.locator('.place-picker select').inputValue(),id);
     assert.ok(await map.locator('.place-marker.picked').isVisible());
+    assert.ok(await map.locator('.place-info h2').evaluate(title=>title===document.activeElement));
     const single=map.locator('[data-place-id="osm-9868277697"].place-marker');
     await single.press('Enter');
     await p.waitForURL('**#map/1/osm-9868277697',{waitUntil:'commit'});
     assert.equal(await choices.count(),0);
     assert.match(await map.locator('.place-info h2').textContent(),/Туалет/);
+    await p.keyboard.press('Escape');
+    assert.ok(await map.locator('.map-result').isHidden());
+    assert.ok(await single.evaluate(marker=>marker===document.activeElement));
+    await openMapSearch(map);
+    await map.locator('[data-zone="1"]').focus();
+    await p.keyboard.press('Escape');
+    assert.ok(await map.locator('#map-search').isHidden());
+    assert.ok(await map.locator('.map-search-toggle').evaluate(toggle=>toggle===document.activeElement));
   }finally{await context.close();}
 }
 

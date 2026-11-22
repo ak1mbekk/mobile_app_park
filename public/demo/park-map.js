@@ -12,6 +12,7 @@
   const serviceField = search.querySelector('.service-picker');
   const serviceSelect = serviceField.querySelector('select');
   const status = host.querySelector('.map-status');
+  const toolbar = host.querySelector('.visitor-map-head');
   const zoneButtons = host.querySelectorAll('[data-zone]');
   const kindButtons = search.querySelectorAll('[data-kind]');
   const serviceNames = {
@@ -35,12 +36,13 @@
   let boundaryData;
   let refreshing, redrawSurvey;
   let loading = false, mapReady = false, drawing = false, surveyFailed = false;
+  let searchOpen = false, choosing = false, placeTrigger;
   let framing = 'zone';
   const markers = new Map();
   const failedTiles = new Set();
   const local = () => places.filter(point => point.zone === state.zone);
   const selectedPlace = () => local().find(point => point.id === state.id);
-  const label = point => point.service ? point.name : '№ ' + point.badge + ' · ' + point.name;
+  const label = point => point.service || point.name.startsWith('Вольер №') ? point.name : point.name + ' · № ' + point.badge;
   const serviceKeys = point => point.services || [point.service];
   const visible = point =>
     (state.kind === 'all' || (state.kind === 'service') === Boolean(point.service)) &&
@@ -68,13 +70,42 @@
     window.conceptReplace(route.join('/'));
   }
 
+  function updateSheets() {
+    search.hidden = !searchOpen || choosing;
+    result.hidden = searchOpen || choosing || card.hidden;
+    searchToggle.setAttribute('aria-expanded', String(!search.hidden));
+  }
+
   function setSearch(open, returnFocus = false) {
-    search.hidden = !open;
-    searchToggle.setAttribute('aria-expanded', String(open));
-    result.hidden = open || card.hidden;
+    searchOpen = open;
     hitChooser?.dismiss();
+    updateSheets();
     if (open) search.querySelector('h2').focus({ preventScroll: true });
     else if (returnFocus) searchToggle.focus({ preventScroll: true });
+  }
+
+  function openPlace(id, source = 'map') {
+    placeTrigger = { zone: state.zone, id, source };
+    navigate({ id });
+    card.querySelector('h2')?.focus({ preventScroll: true });
+  }
+
+  function closePlace() {
+    const { id, zone } = state;
+    const fromPicker = placeTrigger?.id === id && placeTrigger.zone === zone && placeTrigger.source === 'picker';
+    placeTrigger = undefined;
+    navigate({ id: '' });
+    if (fromPicker) {
+      setSearch(true);
+      picker.focus({ preventScroll: true });
+      return;
+    }
+    const target = surface.querySelector(`[data-place-id="${CSS.escape(id)}"]`);
+    const bounds = target?.getBoundingClientRect();
+    const viewport = surface.getBoundingClientRect();
+    const inView = bounds && bounds.right > viewport.left && bounds.left < viewport.right &&
+      bounds.bottom > viewport.top && bounds.top < viewport.bottom;
+    (inView ? target : searchToggle).focus({ preventScroll: true });
   }
 
   function position(point) {
@@ -140,14 +171,14 @@
   function renderCard(point) {
     card.replaceChildren();
     card.hidden = !point;
-    result.hidden = !point || !search.hidden;
+    updateSheets();
     if (!point) return;
     const close = document.createElement('button');
     close.type = 'button';
     close.className = 'map-sheet-close';
     close.innerHTML = '<svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
     close.setAttribute('aria-label', 'Закрыть карточку места');
-    close.onclick = () => { navigate({ id: '' }); searchToggle.focus({ preventScroll: true }); };
+    close.onclick = closePlace;
     const title = document.createElement('h2');
     title.tabIndex = -1;
     title.textContent = point.name;
@@ -157,42 +188,44 @@
     header.className = 'map-place-heading';
     const words = document.createElement('div');
     words.append(title, detail);
-    const portraitSlug = !point.service && point.species?.find(slug => guide.speciesPortrait(slug));
-    if (portraitSlug) {
-      const photo = new Image(46, 46);
-      photo.className = 'map-place-portrait';
-      photo.alt = point.species.length > 1 ? guide.speciesName?.(portraitSlug) || '' : '';
-      photo.decoding = 'async';
-      photo.onerror = () => photo.remove();
-      photo.src = guide.speciesPortrait(portraitSlug);
-      header.append(photo);
-    }
+    const residents = (point.species || []).map(slug => ({
+      slug, name: guide.speciesName?.(slug) || (slug === 'kapibara' ? 'Капибара' : ''),
+      portrait: guide.speciesPortrait(slug)
+    })).filter(resident => resident.name);
+    const individual = residents.length === 1 && residents[0].name === point.name;
+    if (individual && residents[0].portrait) header.append(residentPortrait(residents[0].portrait));
     header.append(words);
     card.append(close, header);
 
-    for (const slug of point.species || []) {
-      const name = guide.speciesName?.(slug);
-      if (!name && slug !== 'kapibara') continue;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'p-link';
-      button.dataset.go = slug === 'kapibara' ? 'animal' : 'species/' + slug;
-      button.textContent = (name || 'Капибара') + ' →';
-      card.append(button);
+    if (residents.length) {
+      const list = document.createElement('div');
+      list.className = 'map-residents';
+      for (const {slug, name, portrait} of residents) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.go = slug === 'kapibara' ? 'animal' : 'species/' + slug;
+        if (!individual && portrait) button.append(residentPortrait(portrait));
+        button.append(individual ? 'Об этом животном' : name);
+        const arrow = document.createElement('span');
+        arrow.setAttribute('aria-hidden', 'true');
+        arrow.textContent = '→';
+        button.append(arrow);
+        list.append(button);
+      }
+      card.append(list);
     }
-
+    const actions = document.createElement('div');
+    actions.className = 'map-place-actions';
+    card.append(actions);
     const geo = projection.position(calibration, point.zone, point);
     const note = document.createElement('small');
     if (geo) {
       const pair = geo.lng.toFixed(7) + ',' + geo.lat.toFixed(7);
       const linkText = point.geo ? 'Открыть место в Яндекс Картах ↗' : 'Примерное место в Яндекс Картах ↗';
-      card.append(cardLink(linkText, 'https://yandex.by/maps/?ll=' + pair + '&pt=' + pair + '&z=18'));
-      note.textContent = point.geo ? 'Источник координат — OpenStreetMap.' :
-        boundary(point) ? 'Контур обведён по техническому плану.' : 'Точка отмечена по номеру на техническом плане.';
+      actions.append(cardLink(linkText, 'https://yandex.by/maps/?ll=' + pair + '&pt=' + pair + '&z=18'));
     } else {
-      card.append(cardLink('Открыть зону в Яндекс Картах ↗', guide.zones[point.zone].yandex));
-      note.textContent = point.plan ? 'Географическая привязка техплана сейчас недоступна.' :
-        'По схеме посетителя известна зона парка.';
+      actions.append(cardLink('Открыть зону в Яндекс Картах ↗', guide.zones[point.zone].yandex));
+      note.textContent = 'Точное место на местности пока не подтверждено.';
     }
     const approach = calibration?.approaches?.[point.zone + '/' + point.id];
     if (Array.isArray(approach) && approach.length === 2 && approach.every(Number.isFinite) &&
@@ -200,9 +233,19 @@
       const destination = new URL('https://yandex.by/maps/');
       destination.searchParams.set('rtext', '~' + approach.join(','));
       destination.searchParams.set('rtt', 'pd');
-      card.append(cardLink('Пешком в Яндекс Картах ↗', destination.href));
+      actions.append(cardLink('Пешком в Яндекс Картах ↗', destination.href));
     }
-    card.append(note);
+    if (note.textContent) card.append(note);
+  }
+
+  function residentPortrait(src) {
+    const image = new Image(46, 46);
+    image.className = 'map-place-portrait';
+    image.alt = '';
+    image.decoding = 'async';
+    image.onerror = () => image.remove();
+    image.src = src;
+    return image;
   }
 
   function saveView() {
@@ -223,7 +266,7 @@
       const ring = boundary(item);
       if (ring) extent.extend(L.latLngBounds(ring));
     }
-    const header = host.querySelector('.visitor-map-head').getBoundingClientRect();
+    const header = toolbar.getBoundingClientRect();
     map.fitBounds(extent, { paddingTopLeft: [rim, header.bottom - surface.getBoundingClientRect().top + rim],
       paddingBottomRight: [rim, rim], maxZoom: calibration ? 19 : 2, animate: false });
   }
@@ -231,7 +274,7 @@
   function framePlace(point, zoom) {
     framing = 'place';
     const rect = surface.getBoundingClientRect();
-    const head = host.querySelector('.visitor-map-head').getBoundingClientRect();
+    const head = toolbar.getBoundingClientRect();
     const sheet = result.getBoundingClientRect();
     let left = 0, bottom = rect.height;
     if (!result.hidden) {
@@ -342,7 +385,7 @@
     const groups = new Map();
     for (const item of local().filter(visible)) {
       const ll = position(item);
-      const groupLabel = item.service || 'Вольеры и животные';
+      const groupLabel = item.service || 'Животные';
       if (!groups.has(groupLabel)) {
         const group = document.createElement('optgroup');
         group.label = groupLabel;
@@ -358,13 +401,13 @@
         const area = L.polygon(ring, {
           pane: 'visitor-areas', className: 'place-area' + (picked ? ' picked' : ''), smoothFactor: 0, bubblingMouseEvents: false
         });
-        const open = () => navigate({ id: item.id });
+        const open = () => openPlace(item.id);
         area.on('add', () => {
           const element = area.getElement();
           element.setAttribute('tabindex', '0');
           element.setAttribute('role', 'button');
           labelTarget(element, item, picked, open);
-        }).on('click', open).addTo(layer);
+        }).on('click', open).on('dblclick', L.DomEvent.stopPropagation).addTo(layer);
         continue;
       }
       const face = item.service ? guide.markerFace(item) : '';
@@ -380,6 +423,7 @@
         labelTarget(marker.getElement(), item, picked, event => hitChooser.activate(item, event));
       }).addTo(layer);
       marker.on('click', event => hitChooser.activate(item, event.originalEvent));
+      marker.on('dblclick', L.DomEvent.stopPropagation);
       markers.set(item.id, marker);
     }
     if (point && !visible(point)) picker.append(new Option(label(point), point.id));
@@ -419,7 +463,8 @@
     hitChooser = guide.bindMarkerHitChooser({
       container: host, markers,
       pointFor: id => local().find(point => point.id === id),
-      open: point => navigate({ id: point.id })
+      open: point => openPlace(point.id),
+      onVisibilityChange: visible => { choosing = visible; updateSheets(); }
     });
     map.on('movestart', () => {
       if (!drawing) framing = 'free';
@@ -467,7 +512,9 @@
 
   function show() {
     if (!document.getElementById('map').classList.contains('current')) return;
-    Object.assign(state, parseRoute());
+    const next = parseRoute();
+    if (next.id && (next.id !== state.id || next.zone !== state.zone) && searchOpen) setSearch(false);
+    Object.assign(state, next);
     try { localStorage.setItem('park-map-zone', String(state.zone)); } catch {}
     zoneButtons.forEach(button => {
       button.setAttribute('aria-pressed', String(Number(button.dataset.zone) === state.zone));
@@ -562,18 +609,20 @@
     };
   });
   picker.onchange = () => {
-    const id = picker.value;
-    navigate({ id });
-    if (id) card.querySelector('h2')?.focus({ preventScroll: true });
+    if (picker.value) openPlace(picker.value, 'picker');
+    else navigate({ id: '' });
   };
   serviceSelect.onchange = () => navigate({ id: '', kind: 'service', service: serviceSelect.value });
   searchToggle.disabled = false;
-  searchToggle.onclick = () => setSearch(search.hidden, true);
+  searchToggle.onclick = () => setSearch(!searchOpen || choosing, true);
   search.querySelector('.map-search-close').onclick = () => setSearch(false, true);
-  search.onkeydown = event => {
+  host.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
+    if (choosing) hitChooser.dismiss();
+    else if (searchOpen) setSearch(false, true);
+    else if (!result.hidden) closePlace();
+    else return;
     event.stopPropagation();
-    setSearch(false, true);
-  };
+  });
   if (document.getElementById('map').classList.contains('current')) show();
 })();

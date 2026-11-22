@@ -92,6 +92,11 @@
     {zone:1,id:'6.1',x:433,y:526,plan:[475,448],name:'Камерунская коза',species:[]},
     {zone:1,id:'7',x:489,y:548,plan:[509,426],name:'Мини-шетлендский пони и валлийский козёл',species:['poni','valijskaya-koza']},
     {zone:1,id:'8',x:522,y:548,plan:[542,418],name:'Одногорбый верблюд и пони аппалуза',species:['odnogorbyij-verblyud','poni-appaluza']},
+    ...[[9,[482,411],[486,335]],[10,[417,368],[442,350]],[11,[361,349],[408,353]],
+        [12,[344,343],[377,356]],[13,[311,336],[344,361]],[14,[269,323],[294,358]]].map(([id,[x,y],plan])=>({
+      zone:1,id:String(id),x,y,plan,name:'Вольер № '+id,
+      detail:'По схеме парка животные зимуют в тёплом домике. Виды не указаны.',species:[]
+    })),
     {zone:1,id:'15.1',x:208,y:341,plan:[235,315],name:'Коза ламанча и бурская коза',species:['burskaya-koza']},
     {zone:1,id:'16',x:166,y:441,plan:[224,386],name:'Мини-шетлендский пони',species:['poni']},
     {zone:1,id:'16.1',x:121,y:389,plan:[207,371],name:'Валлийская овца',species:[]},
@@ -171,19 +176,21 @@
     }
     return badge;
   }
-  function bindMarkerHitChooser({container,markers,pointFor,open}){
+  function bindMarkerHitChooser({container,markers,pointFor,open,onVisibilityChange}){
     let origin=null;
     const panel=document.createElement('div');panel.className='map-hit-chooser';panel.hidden=true;
     panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Выберите место под пальцем');container.append(panel);
-    function dismiss(){panel.hidden=true;panel.replaceChildren();}
+    function dismiss(){
+      if(panel.hidden)return;
+      panel.hidden=true;panel.replaceChildren();onVisibilityChange?.(false);
+    }
     function closeChooser(){dismiss();origin?.focus({preventScroll:true});}
     L.DomEvent.disableClickPropagation(panel);
     L.DomEvent.disableScrollPropagation(panel);
     panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();closeChooser();}});
     function choose(candidates){
       panel.replaceChildren();
-      const heading=document.createElement('strong');heading.textContent='Что открыть?';
-      const hint=document.createElement('span');hint.textContent='Несколько мест под пальцем';
+      const heading=document.createElement('strong');heading.textContent='Места рядом';
       const list=document.createElement('div');
       for(const {point} of candidates){
         const button=document.createElement('button'),name=document.createElement('b'),type=document.createElement('small');
@@ -193,7 +200,9 @@
       }
       const close=document.createElement('button');close.type='button';close.className='map-hit-close';close.textContent='×';
       close.setAttribute('aria-label','Закрыть выбор мест');close.onclick=closeChooser;
-      panel.append(heading,hint,list,close);panel.hidden=false;list.firstElementChild?.focus({preventScroll:true});
+      panel.append(heading,list,close);panel.hidden=false;
+      onVisibilityChange?.(true);
+      list.firstElementChild?.focus({preventScroll:true});
     }
     function activate(point,event){
       if(!event || !event.detail || event.type==='keypress' || event.type==='keydown'){
@@ -212,7 +221,7 @@
       hits.sort((a,b)=>a.distance-b.distance||compareIds.compare(a.point.id,b.point.id));
       choose(hits);
     }
-    return {dismiss,activate,destroy:()=>panel.remove()};
+    return {dismiss,activate,destroy:()=>{dismiss();panel.remove();}};
   }
   window.parkGuide={zones,markerFace,speciesPortrait,bindMarkerHitChooser,places:[...places,...numberedEnclosures].sort(byZoneAndNumber),geoFacilities};
 })();

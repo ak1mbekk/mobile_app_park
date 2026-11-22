@@ -178,8 +178,17 @@ async function verifyMaps(){
     const services=map.locator('.service-picker select');
     const pointLink=map.locator('.place-info a[href*="pt="]');
     await pins.first().waitFor();
-    assert.equal(await areas.count(),5);
-    assert.equal(await pins.count()+await areas.count(),34);
+    const zone1=Object.keys(outlineFixture.enclosures).filter(key=>key.startsWith('1/'));
+    const zone1Places=await p.evaluate(()=>{
+      const {places,geoFacilities}=window.parkGuide;
+      return [...places,...geoFacilities].filter(place=>place.zone===1&&(place.plan||place.geo)).length;
+    });
+    assert.equal(await areas.count(),zone1.length);
+    assert.equal(await pins.count()+await areas.count(),zone1Places);
+    for(const id of ['2','9','16','36']){
+      assert.equal(await map.locator(`.place-area[data-place-id="${id}"]`).count(),1);
+    }
+    assert.equal(await map.locator('.place-marker[data-place-id="3.1"]').count(),1);
     await outline.evaluate(im=>im.decode());
     assert.ok((await outline.evaluate(im=>im.style.transform)).startsWith('matrix('));
 
@@ -224,8 +233,12 @@ async function verifyMaps(){
     assert.match(await map.locator('.place-info a').first().getAttribute('href'),/11025733579/);
 
     const records=await p.evaluate(()=>window.parkGuide.places.filter(place=>place.plan));
-    assert.equal(records.length,54);
-    assert.equal(new Set(records.map(place=>place.zone+'/'+place.id)).size,54);
+    assert.equal(new Set(records.map(place=>place.zone+'/'+place.id)).size,records.length);
+    for(const id of ['9','10','11','12','13','14']){
+      const seasonal=records.find(place=>place.zone===1&&place.id===id);
+      assert.ok(seasonal,`Seasonal enclosure ${id} is available`);
+      assert.deepEqual(seasonal.species,[]);
+    }
     for(const zone of [1,2]){
       await p.evaluate(zone=>window.conceptGo('map/'+zone),zone);
       await map.locator('[data-zone="'+zone+'"][aria-pressed="true"]').waitFor();
