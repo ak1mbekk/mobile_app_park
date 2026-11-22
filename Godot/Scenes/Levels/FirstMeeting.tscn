@@ -50,9 +50,9 @@ rotation = Vector3(0, -0.84, 0)
 scale = Vector3(1.23, 1.20, 1.23)
 
 [node name="Тень на коврике" parent="." groups=["Камера и свет"] instance=ExtResource("Contact")]
-position = Vector3(0.272, 0.0206, 0.463)
+position = Vector3(0.31, 0.0185, 0.495)
 rotation = Vector3(0, -0.84, 0)
-scale = Vector3(0.42, 1, 0.35)
+scale = Vector3(0.47, 1, 0.44)
 
 [node name="Яблоко" parent="." node_paths=PackedStringArray("raccoon") groups=["Интерактивные предметы"] instance=ExtResource("Apple")]
 position = Vector3(-0.076, 0.002, 1.545)

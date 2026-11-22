@@ -7,7 +7,7 @@
 [ext_resource type="ArrayMesh" path="res://Art/Meshes/VerandaLinen.obj" id="LinenMesh"]
 [ext_resource type="Shader" path="res://Materials/VerandaWood.gdshader" id="Wood"]
 [ext_resource type="Shader" path="res://Materials/VerandaCloth.gdshader" id="Cloth"]
-[ext_resource type="Shader" path="res://Materials/VerandaRush.gdshader" id="Rush"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Textiles/VerandaFlax.glb" id="Rush"]
 
 [sub_resource type="ShaderMaterial" id="Paint"]
 shader = ExtResource("Wood")
@@ -16,10 +16,6 @@ shader_parameter/old_oak = ExtResource("Oak")
 [sub_resource type="ShaderMaterial" id="Curtain"]
 resource_local_to_scene = true
 shader = ExtResource("Cloth")
-shader_parameter/flax = ExtResource("Flax")
-
-[sub_resource type="ShaderMaterial" id="Straw"]
-shader = ExtResource("Rush")
 shader_parameter/flax = ExtResource("Flax")
 
 [sub_resource type="StandardMaterial3D" id="Plaster"]
@@ -54,14 +50,6 @@ material = SubResource("OakBeam")
 
 [sub_resource type="BoxMesh" id="BoxPlaster"]
 material = SubResource("Plaster")
-
-[sub_resource type="CylinderMesh" id="Coils"]
-material = SubResource("Straw")
-top_radius = 1.0
-bottom_radius = 0.975
-height = 0.014
-radial_segments = 80
-rings = 0
 
 [sub_resource type="QuadMesh" id="Outside"]
 material = SubResource("River")
@@ -367,7 +355,6 @@ position = Vector3(0.043, 0.763, 0.002)
 scale = Vector3(0.102, 0.034, 0.075)
 mesh = SubResource("BoxOakBeam")
 
-[node name="Ковёр" type="MeshInstance3D" parent="."]
-position = Vector3(0.215, 0.010, 0.48)
-scale = Vector3(0.61, 1, 0.58)
-mesh = SubResource("Coils")
+[node name="Ковёр" parent="." instance=ExtResource("Rush")]
+position = Vector3(0.215, 0, 0.48)
+scale = Vector3(0.96, 0.49, 1.31)

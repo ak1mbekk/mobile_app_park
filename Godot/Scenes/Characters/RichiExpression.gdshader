@@ -13,8 +13,16 @@ uniform float expression_lid : hint_range(0.0, 1.0) = 0.0;
 uniform float wet_eyes : hint_range(0.0, 1.0) = 0.0;
 uniform float mouth_open : hint_range(0.0, 1.0) = 0.0;
 uniform float belly_motion = 0.0;
+// The secondary UV is a frontal projection of the two eye sockets. Scale the
+// opening around each socket, so blink, wet line and gaze use the same lids.
+uniform vec2 eye_opening_scale = vec2(1.36, 1.42);
+varying float face_coverage;
 
 void vertex() {
+    // Classify before interpolation. Clamped UV2 corners on a paw triangle
+    // can interpolate to a valid eye coordinate inside that triangle.
+    vec2 edge = min(UV2, vec2(1.0) - UV2);
+    face_coverage = step(0.00001, min(edge.x, edge.y));
     // Hips and lower spine support the soft belly. Exclude legs, arms and the face.
     vec4 torso = vec4(lessThan(BONE_INDICES, uvec4(4u)));
     float supported = smoothstep(0.35, 0.84, dot(torso, BONE_WEIGHTS));
@@ -29,21 +37,24 @@ void fragment() {
     float ring = texture(tail_rings, UV).r * tail_coverage;
     vec3 fur = texture(coat, UV).rgb * mix(vec3(1.0), vec3(0.32, 0.34, 0.38), ring);
     vec2 size = vec2(340.0, 120.0);
-    vec2 pixel = UV2 * size;
-    vec2 centre = vec2(pixel.x < 170.0 ? 61.0 : 281.0, 57.0);
+    vec2 projection = UV2 * size;
+    vec2 centre = vec2(projection.x < 170.0 ? 61.0 : 281.0, 57.0);
+    vec2 pixel = centre + (projection - centre) / eye_opening_scale;
+    // UV2 is clamped on the rest of the mesh. Never paint those borders.
+    vec2 margins = min(projection, size - projection);
+    float socket = smoothstep(0.35, 3.5, min(margins.x, margins.y)) * smoothstep(0.72, 0.98, face_coverage);
     float radius = length((pixel - centre) / vec2(43.0, 40.0));
     float lid_weight = 0.0;
-    if (radius < 1.0) {
+    if (radius < 1.34 && socket > 0.0) {
         // Pin the lid and outer rim. UV2 follows the same skinned vertices as UV0.
         float weight = 1.0 - smoothstep(0.46, 1.0, radius);
         vec2 shift = gaze * vec2(0.85, 0.82) * weight / size;
-        vec3 moved = texture(eye_projection, UV2 - shift).rgb;
+        vec3 moved = texture(eye_projection, pixel / size - shift).rgb;
         // Keep the baked catchlights under the window as the iris slides underneath.
         vec2 p = pixel * 2.0;
-        float glint = 0.65 * exp(-dot(p-vec2(110.0,83.0), p-vec2(110.0,83.0))/38.0)
-                    + 0.65 * exp(-dot(p-vec2(514.0,83.0), p-vec2(514.0,83.0))/38.0)
-                    + 0.56 * exp(-dot(p-vec2(573.0,82.0), p-vec2(573.0,82.0))/38.0);
-        float mask = (1.0 - smoothstep(0.74, 1.0, radius)) * smoothstep(0.0, 2.0, length(gaze));
+        vec2 highlight = p - (pixel.x < 170.0 ? vec2(110.0,83.0) : vec2(514.0,83.0));
+        float glint = 0.92 * (1.0-smoothstep(0.4,1.0,length(highlight/vec2(11.0,13.5))));
+        float mask = socket * (1.0 - smoothstep(0.98, 1.34, radius));
         fur = mix(fur, mix(moved, vec3(0.94, 0.88, 0.75), glint), mask);
     }
     // Cover the painted amber rim as well as the pupil, and give the lid a matte finish.
@@ -52,7 +63,7 @@ void fragment() {
     float full_closure = smoothstep(0.70, 1.0, lid_amount);
     vec2 eye = (pixel - centre) / mix(vec2(54.0, 44.0), vec2(62.0, 51.0), full_closure);
     float lid_radius = length(eye);
-    if (lid_amount > 0.0 && lid_radius < 1.0) {
+    if (lid_amount > 0.0 && lid_radius < 1.0 && socket > 0.0) {
         float rim = 1.0 - smoothstep(mix(0.80, 0.89, full_closure), 1.0, lid_radius);
         float inner = eye.x * (pixel.x < 170.0 ? 1.0 : -1.0);
         float lid_edge = mix(-1.05, 0.10 + 0.18 * (1.0 - eye.x * eye.x), lid_amount)
@@ -64,21 +75,21 @@ void fragment() {
         float cheek_edge = 0.68 - 0.28 * (1.0 - eye.x * eye.x);
         float raised_cheek = smoothstep(-0.04, 0.09, eye.y - cheek_edge) * max(0.0,expression);
         cover = max(cover, raised_cheek);
-        lid_weight = cover * rim * closure;
+        lid_weight = cover * rim * closure * socket;
         float crease = (1.0 - smoothstep(0.025, 0.070, abs(eye.y - lid_edge))) * (1.0 - smoothstep(0.58, 0.89, abs(eye.x)));
         fur = mix(fur, lid_fur, lid_weight);
-        fur = mix(fur, lid_fur * 0.22, crease * rim * closure);
+        fur = mix(fur, lid_fur * 0.22, crease * rim * closure * socket);
     }
-    if (wet_eyes > 0.0 && radius < 1.0) {
+    if (wet_eyes > 0.0 && radius < 1.0 && socket > 0.0) {
         float outer = pixel.x < 170.0 ? -1.0 : 1.0;
         vec2 tear = (pixel - centre - vec2(12.0 * outer, 22.0)) / vec2(11.0, 15.0);
         float water = (1.0 - smoothstep(0.42, 1.0, length(tear))) * wet_eyes;
         float wet_line = (pixel.y - centre.y - 14.0) / 5.3;
         float edge = 0.62 * exp(-wet_line * wet_line) * (1.0 - smoothstep(0.45, 0.91, radius));
-        fur = mix(fur, vec3(0.51, 0.74, 0.87), max(water * 0.86, edge * wet_eyes));
+        fur = mix(fur, vec3(0.51, 0.74, 0.87), socket * max(water * 0.86, edge * wet_eyes));
         vec2 reflected = tear - vec2(-0.14, -0.10);
         float tear_glint = exp(-dot(reflected, reflected) * 5.8) * water;
-        fur = mix(fur, vec3(0.84, 0.96, 1.0), tear_glint);
+        fur = mix(fur, vec3(0.84, 0.96, 1.0), socket * tear_glint);
     }
     if (mouth_open > 0.0 || abs(expression) > 0.05) {
         // The muzzle island is sampled in texture space so the mouth follows the skinned face.
@@ -96,8 +107,9 @@ void fragment() {
     ALBEDO = fur;
     NORMAL_MAP = texture(relief, UV).rgb;
     vec3 surface = texture(orm, UV).rgb;
-    NORMAL_MAP_DEPTH = mix(1.0, 0.24, lid_weight);
-    ROUGHNESS = mix(surface.g, 0.92, lid_weight);
-    METALLIC = surface.b * (1.0 - lid_weight);
-    SPECULAR = mix(0.5, 0.09, lid_weight);
+    float cornea = socket * (1.0 - smoothstep(0.70, 0.96, radius)) * (1.0 - lid_weight);
+    NORMAL_MAP_DEPTH = mix(0.24, 0.07, cornea);
+    ROUGHNESS = mix(max(0.89, surface.g), 0.36, cornea);
+    METALLIC = 0.0;
+    SPECULAR = mix(0.18, 0.43, cornea);
 }
