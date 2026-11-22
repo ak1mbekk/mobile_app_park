@@ -94,6 +94,52 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
       await page.clock.runFor(1200);
       assert.deepEqual((await stats()).orchard,paused);
     }
+    // Restore drops one CSS pixel inside/outside each rim. Measure the real image
+    // alpha, not the rectangle (transparent margins differ on apples and cones).
+    const edgeRound={id:30,attempt:0,caught:0,errors:0,position:.5,spot:.5,fall:.99,finished:false,won:false};
+    for(const [width,height] of [[320,568],[430,932]]){
+      await page.setViewportSize({width,height});
+      for(const reduced of [false,true]){
+        await page.emulateMedia({reducedMotion:reduced?'reduce':'no-preference'});
+        for(const kind of ['apple','cone']){
+          await loadRound('orchard',{...edgeRound,kind},'catch');
+          const sizes=await page.evaluate(async({kind,reduced})=>{
+            const field=document.querySelector('#catchField'),fruit=document.querySelector('#fallFruit');
+            const basket=document.querySelector('#basket');
+            const asset=new URL('assets/'+(kind==='apple'?'fruit':'pine-cone')+'.webp',location.href);
+            const sprite=await createImageBitmap(await (await fetch(asset)).blob());
+            const {width:w,height:h}=sprite;
+            const ctx=new OffscreenCanvas(w,h).getContext('2d');
+            ctx.drawImage(sprite,0,0);sprite.close();
+            const pixels=ctx.getImageData(0,0,w,h).data;
+            const edges=[1,-1].map(direction=>{
+              const angle=(reduced?0:direction*310)*Math.PI/180;
+              let lo=Infinity,hi=-Infinity;
+              for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(pixels[(y*w+x)*4+3]>100){
+                const projected=((x+.5-w/2)*Math.cos(angle)-(y+.5-h/2)*Math.sin(angle))/w;
+                lo=Math.min(lo,projected);hi=Math.max(hi,projected);
+              }
+              return [lo,hi];
+            });
+            return {field:field.clientWidth,rim:parseFloat(getComputedStyle(basket).width)*78/216,
+              fruit:parseFloat(getComputedStyle(fruit).width),edges};
+          },{kind,reduced});
+          for(const [side,spot] of [[-1,.32],[1,.68]])for(const overlap of [-1,1]){
+            const [lo,hi]=sizes.edges[spot<.5?0:1];
+            const limit=side*sizes.rim-(side>0?lo:hi)*sizes.fruit;
+            const position=spot-(limit-side*overlap)/sizes.field;
+            await loadRound('orchard',{...edgeRound,kind,position,spot},'catch');
+            await page.clock.runFor(100);
+            const state=(await stats()).orchard;
+            assert.equal(state.attempt,1);
+            assert.equal(kind==='apple'?state.caught:state.errors,Number(overlap>0),
+              `Visible rim (${width}px, reduce=${reduced}, ${kind}, side=${side}, overlap=${overlap}px)`);
+          }
+        }
+      }
+    }
+    await page.setViewportSize({width:390,height:844});
+    await page.emulateMedia({reducedMotion:'no-preference'});
     await loadRound('orchard',{
       id:3,attempt:2,caught:0,errors:2,kind:'apple',position:.09,spot:.5,fall:.97,finished:false,won:false,
     },'catch',false);
@@ -120,6 +166,6 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
     await page.locator('#home.current').waitFor();
     assert.equal(await page.evaluate(key=>localStorage.getItem(key),key),replacement);
     assert.deepEqual(errors,[]);
-    console.log('PASS interrupted matching move, shared-cell win, round replay, last catch/miss, saved reward, starter gift, park pause and updated profile on reload');
+    console.log('PASS interrupted matching move, shared-cell win, round replay, last catch/miss, 32 sprite rim boundaries, saved reward, starter gift, park pause and updated profile on reload');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

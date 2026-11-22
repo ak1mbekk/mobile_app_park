@@ -112,6 +112,25 @@
   id('catchScore').after(lives);
   const fruitUrl=item=>item==='cone'?'assets/pine-cone.webp':'assets/fruit.webp';
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+  // Horizontal opaque extents in the CSS sprite's own widths: still, +310°, −310°.
+  const landingEdges={
+    apple:[[-.378,.422],[-.494,.448],[-.428,.454]],
+    cone:[[-.323,.337],[-.385,.285],[-.416,.480]]
+  };
+  new ResizeObserver(([entry])=>{
+    // The opening of the 216px square basket tile is centred on row 68.
+    field.style.setProperty('--orchard-rim-offset',entry.contentRect.width*(1-68/216)+'px');
+  }).observe(basket);
+  function overlapsBasket(){
+    // Read layout once per landing; CSS, safe areas and zoom determine actual sprite sizes.
+    const rimWidth=parseFloat(getComputedStyle(basket).width);
+    const itemWidth=parseFloat(getComputedStyle(fruit).width);
+    const angle=reducedMotion.matches?0:basketTilt*Math.PI/180;
+    const half=rimWidth*(78/216)*Math.cos(angle);
+    const dx=(spot-position)*field.clientWidth;
+    const [left,right]=landingEdges[kind][reducedMotion.matches?0:spot<.5?1:2];
+    return dx+left*itemWidth<half && dx+right*itemWidth> -half;
+  }
   function saveOrchard(){
     const state={id:orchardId,attempt,caught,position,spot,fall,errors,kind,finished:!running,won:!running&&caught>0};
     window.petDemo.storeGame('orchard',state);
@@ -138,7 +157,8 @@
     const released=clamp((fall-.23)/.77,0,1);
     fruit.style.left=spot*100+'%';
     twig.style.left=fruit.style.left;
-    fruit.style.top=(13+released**2*76)+'%';
+    const progress=released*released;
+    fruit.style.top=`calc(${13+progress*86}% - var(--orchard-rim-offset, 60px) * ${progress})`;
     const angle=fall<.23?Math.sin(fall*27)*7:(spot<.5?1:-1)*released*310;
     fruit.style.setProperty('--spin',(reducedMotion.matches?0:angle)+'deg');
     basket.style.left=position*100+'%';
@@ -220,7 +240,7 @@
       fall+=elapsed/Math.max(520,1100-attempt*27);
       if(fall>=1){
         attempt++;
-        const grabbed=Math.abs(position-spot)<.155;
+        const grabbed=overlapsBasket();
         if(kind==='apple'&&grabbed){
           caught++;showImpact('catch','Яблоко поймано');
         }else if(grabbed||kind==='apple'){

@@ -399,13 +399,14 @@
   z-index: 3;
   background: url("assets/harvest-basket.webp") left center / 400% 100% no-repeat;
   filter: drop-shadow(0 3px 2px #3b2b1959);
+  transform-origin: 50% 31.4815%;
   transform: translate(-50%, var(--hop, 0px)) rotate(var(--tilt, 0deg)) scaleY(var(--squash, 1));
   pointer-events: none;
 }
 #catchField .orchard-impact {
   position: absolute;
   z-index: 2;
-  top: 87%;
+  top: calc(99% - var(--orchard-rim-offset, 60px));
   pointer-events: none;
 }
 #catchField .orchard-impact[data-effect="ground"] { top: 91%; }

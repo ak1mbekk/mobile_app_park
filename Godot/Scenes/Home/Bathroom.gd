@@ -13,6 +13,7 @@ const POUR_TILT := 0.94
 @onready var soap: MeshInstance3D = $Губка
 @onready var jug: Node3D = $Кувшин
 @onready var jug_water: MeshInstance3D = $Кувшин/Вода
+@onready var jug_surface: ShaderMaterial = jug_water.material_override
 @onready var jug_spout: Marker3D = $Кувшин/Носик
 @onready var jug_handle: Marker3D = $Кувшин/Ручка
 @onready var effects = $Эффекты
@@ -108,9 +109,18 @@ func pour_target(camera: Camera3D) -> Vector2:
 
 func _refill_jug() -> void:
     jug.transform = jug_rest
-    jug_water.position.y = FULL_WATER_Y
-    jug_water.scale = Vector3.ONE
+    _set_water_surface(0.0)
     jug_water.show()
+
+func _set_water_surface(used: float) -> void:
+    # Liquid stays level as the ceramic turns. The lowest point of the rim limits its height.
+    var tilt := jug.rotation.x
+    var height := minf(lerpf(FULL_WATER_Y, 0.069, used), 0.256 - 0.095 * tan(tilt))
+    if not is_equal_approx(jug_water.rotation.x, -tilt) or not is_equal_approx(jug_water.position.y, height):
+        jug_water.rotation.x = -tilt
+        jug_water.position.y = height
+        jug_surface.set_shader_parameter("pitcher_tilt", tilt)
+        jug_surface.set_shader_parameter("fill_height", height)
 
 func cancel_gesture() -> void:
     pointer = NO_POINTER
@@ -183,9 +193,7 @@ func _move_tools(camera: Camera3D, chest: Vector3, speed: float, delta: float) -
         jug.position = handle_before_turn.lerp(grip, speed) - jug.basis * jug_handle.position
     else:
         jug.position = jug.position.lerp(jug_rest.origin, speed)
-    jug_water.position.y = lerpf(FULL_WATER_Y, 0.069, rinse_progress)
-    var water_radius := lerpf(0.075, 0.093, sin(rinse_progress * PI))
-    jug_water.scale = Vector3(water_radius / 0.075, 1.0, water_radius / 0.075)
+    _set_water_surface(rinse_progress)
     pouring = aimed and to_local(jug_point()).distance_to(grip) < 0.11 and jug.rotation.x > 0.38
     if pouring:
         effects.show_stream(jug_spout.global_position, impact, effect_time)

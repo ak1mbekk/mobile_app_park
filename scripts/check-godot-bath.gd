@@ -152,6 +152,8 @@ func _run() -> void:
 
 func _expect_pour_clearance(finger: Vector2) -> void:
     var camera := root.get_camera_3d()
+    _expect(bath.jug_water.global_basis.y.normalized().dot(Vector3.UP) > 0.999, "Water stays level under gravity when the pitcher tilts")
+    _expect(bath.jug_water.position.y < 0.19, "The water surface stays below the low rim during pouring")
     var width := root.get_visible_rect().size.x
     var handle: Vector2 = camera.unproject_position(bath.jug_point())
     _expect(handle.distance_to(finger) < width * 0.03, "The handle stays under the finger while tilting")

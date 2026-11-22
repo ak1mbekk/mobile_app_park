@@ -2,7 +2,6 @@ extends "res://Scenes/Games/GameRound.gd"
 
 const REPLAY_ICON = preload("res://Scenes/Games/Art/game-replay.svg")
 const LIVES := 3
-const COLLISION_RANGE := 0.155
 
 var attempt := 0
 var caught := 0
@@ -100,7 +99,7 @@ func _process(delta: float) -> void:
 
 func _land() -> void:
     attempt += 1
-    var grabbed := absf(basket_position - spot) < COLLISION_RANGE
+    var grabbed: bool = %Field.overlaps_mouth(spot, basket_position, basket_tilt, kind == "cone")
     if kind == "apple" and grabbed:
         caught += 1
         %Hint.text = "Яблоко поймано"

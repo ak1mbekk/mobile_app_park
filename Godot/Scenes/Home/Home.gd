@@ -89,6 +89,7 @@ var has_sleep_furniture := false
 var settee_in_use := false
 var native_needs := {"food": 50.0, "clean": 50.0, "energy": 50.0, "joy": 50.0}
 var native_needs_updated := 0.0
+var native_sleep_start_energy := -1.0
 
 func _ready() -> void:
     ambience.environment = ambience.environment.duplicate()
@@ -217,6 +218,7 @@ func _on_fed() -> void:
     awaiting_meal_result = true
     if not hosted:
         _finish_meal_reaction(_increase_native_need("food", 32))
+        _update_native_stats()
         _save_home()
     _notify_host("meal-finished")
 
@@ -379,6 +381,7 @@ func _on_washed() -> void:
     richi._set_eyelids(0.45, 0.14)
     if not hosted:
         _increase_native_need("clean", 55)
+        _update_native_stats()
         _save_home()
     _notify_host("wash-finished")
     await get_tree().create_timer(bathroom.CLEAN_SECONDS, false).timeout
@@ -650,15 +653,14 @@ func _store_round(game: String, round: Dictionary) -> void:
             if not native_starter_round_rewarded:
                 leaves = maxi(leaves, BED_PRICE)
             native_starter_round_rewarded = true
-            var xp := 10 if round.won else 0
-            round.reward = {"leaves": leaves, "xp": xp}
+            var xp_before := native_xp
+            if round.won:
+                _increase_native_need("joy", 18, 10)
+            round.reward = {"leaves": leaves, "xp": native_xp - xp_before}
             var needed_leaves := native_leaves < BED_PRICE
             native_leaves += leaves
             if needed_leaves and native_leaves >= BED_PRICE:
                 native_bed_goal_dismissed = false
-            native_xp += xp
-            if round.won:
-                _increase_native_need("joy", 18)
     native_rounds[game] = round
     game_room.set_rounds(native_rounds)
     _update_native_stats()
@@ -682,7 +684,15 @@ func _toggle_sleep() -> void:
         richi.refuse()
         _set_status("Спать пока не хочется.")
         return
+    if not night:
+        native_sleep_start_energy = float(native_needs.energy)
+    else:
+        if native_sleep_start_energy >= 0.0:
+            var recovered := float(native_needs.energy) - native_sleep_start_energy
+            native_xp += clampi(floori(recovered / 10.0), 0, 3)
+        native_sleep_start_energy = -1.0
     _set_sleep(not night)
+    _update_native_stats()
     _save_home()
 
 func _set_sleep(value: bool, animate := true) -> void:
@@ -976,6 +986,9 @@ func _load_home() -> void:
                 if (value is int or value is float) and is_finite(value):
                     native_needs[key] = clampf(value, 0, 100)
         native_needs_updated = float(save.get_value("home", "needs_updated", 0.0))
+        var sleep_start = save.get_value("home", "sleep_start_energy", -1.0)
+        if (sleep_start is float or sleep_start is int) and is_finite(sleep_start) and sleep_start >= 0.0 and sleep_start <= 100.0:
+            native_sleep_start_energy = float(sleep_start)
         _sync_native_shop()
         _set_sleep(bool(save.get_value("home", "night", false)), false)
     else:
@@ -1017,6 +1030,8 @@ func _save_home() -> bool:
     save.set_value("home", "starter_round_rewarded", native_starter_round_rewarded)
     save.set_value("home", "needs", native_needs)
     save.set_value("home", "needs_updated", native_needs_updated)
+    if night and native_sleep_start_energy >= 0.0:
+        save.set_value("home", "sleep_start_energy", native_sleep_start_energy)
     var draft := SAVE_PATH + ".tmp"
     return save.save(draft) == OK and DirAccess.rename_absolute(
         ProjectSettings.globalize_path(draft), ProjectSettings.globalize_path(SAVE_PATH)
@@ -1049,10 +1064,12 @@ func _refresh_native_needs() -> void:
     _check_hungry_room.call_deferred()
 
 
-func _increase_native_need(key: String, amount: float) -> bool:
+func _increase_native_need(key: String, amount: float, max_xp := 3) -> bool:
     _advance_native_needs()
     var previous: float = native_needs[key]
-    native_needs[key] = minf(previous + amount, 100)
+    var gain := minf(amount, 100.0 - previous)
+    native_needs[key] = previous + gain
+    native_xp += floori(max_xp * gain / amount)
     %NeedsHud.set_values(native_needs)
     richi.set_needs(native_needs)
     return previous < 100.0 and native_needs[key] == 100.0
@@ -1208,4 +1225,5 @@ func _interaction_point(point: Vector2, size: Vector2) -> Dictionary:
 func _notify_host(event_name: String) -> void:
     if hosted:
         var browser := JavaScriptBridge.get_interface("window")
-        browser.parent.postMessage(HOST_PREFIX + event_name, str(browser.location.origin))
+        if browser != null:
+            browser.parent.postMessage(HOST_PREFIX + event_name, str(browser.location.origin))

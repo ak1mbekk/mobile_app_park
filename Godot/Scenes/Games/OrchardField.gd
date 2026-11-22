@@ -3,6 +3,13 @@ extends Control
 const APPLE = preload("res://Scenes/Games/Art/fruit.webp")
 const CONE = preload("res://Scenes/Games/Art/pine-cone.webp")
 const RELEASE := 0.23
+const LANDING_TURNS := 0.86
+# The opening spans x=30..186 in each 216 px basket render. At impact the
+# sprites are rotated: these are their opaque left/right extents, in widths
+# from the sprite's centre (first pair falls on the left side of the field).
+const MOUTH_HALF := 78.0 / 216.0
+const APPLE_LANDING := [Vector2(-0.494, 0.449), Vector2(-0.428, 0.455)]
+const CONE_LANDING := [Vector2(-0.386, 0.285), Vector2(-0.417, 0.481)]
 @export var basket_atlas: Texture2D
 
 var fruit_x := 0.5
@@ -18,8 +25,22 @@ var landing_x := 0.5
 var landing_basket_x := 0.5
 
 
+func _basket_width(field: Vector2) -> float:
+    return minf(field.y * 0.24, clampf(field.x * 0.24, 82, 156))
+
+func _fruit_width(field: Vector2) -> float:
+    return clampf(field.x * 0.141, 44, 75)
+
+func overlaps_mouth(drop_x: float, at_x: float, tilt: float, is_cone: bool) -> bool:
+    # A restored near-landed drop can tick before containers finish their first layout.
+    var field := size if size.x > 0 and size.y > 0 else get_viewport_rect().size
+    var opening := _basket_width(field) * MOUTH_HALF * cos(tilt)
+    var extent: Vector2 = (CONE_LANDING if is_cone else APPLE_LANDING)[0 if drop_x < 0.5 else 1]
+    var dx := (drop_x - at_x) * field.x
+    return dx + extent.x * _fruit_width(field) < opening and dx + extent.y * _fruit_width(field) > -opening
+
 func _draw() -> void:
-    var basket_width := minf(size.y * 0.24, clampf(size.x * 0.24, 82, 156))
+    var basket_width := _basket_width(size)
     var basket := Vector2(basket_x * size.x, size.y - basket_width * 0.67)
     var pulse := 1.0 - flash
     var tilt := basket_tilt if fruit_visible else basket_tilt * flash
@@ -32,13 +53,13 @@ func _draw() -> void:
             tilt += sin(pulse * TAU * 2.5) * flash * 0.21
     _draw_landing(basket, pulse)
     var anchor := Vector2(fruit_x * size.x, maxf(49.0, size.y * 0.13))
-    var width := clampf(size.x * 0.141, 44, 75)
+    var width := _fruit_width(size)
     if fruit_visible:
         var texture := CONE if cone else APPLE
         var fall_phase := clampf(inverse_lerp(RELEASE, 1.0, fall), 0, 1)
         _draw_twig(anchor, width)
-        var center := anchor.lerp(Vector2(anchor.x, basket.y - 12), fall_phase * fall_phase)
-        var angle := sin(fall * 27.0) * 0.12 if fall < RELEASE else (1.0 if fruit_x < 0.5 else -1.0) * fall_phase * TAU * 0.86
+        var center := anchor.lerp(Vector2(anchor.x, basket.y), fall_phase * fall_phase)
+        var angle := sin(fall * 27.0) * 0.12 if fall < RELEASE else (1.0 if fruit_x < 0.5 else -1.0) * fall_phase * TAU * LANDING_TURNS
         _draw_fruit(texture, center, width, angle, 1.0)
     var tile := float(basket_atlas.get_height())
     var source := Rect2(mini(harvest, 3) * tile, 0, tile, tile)
@@ -65,7 +86,7 @@ func _draw_twig(anchor: Vector2, width: float) -> void:
 func _draw_landing(basket: Vector2, pulse: float) -> void:
     if flash <= 0.0:
         return
-    var mouth := Vector2(landing_basket_x * size.x, basket.y - 18)
+    var mouth := Vector2(landing_basket_x * size.x, basket.y)
     if effect == "catch":
         var color := Color(1.0, 0.93, 0.52, flash)
         for index in 5:

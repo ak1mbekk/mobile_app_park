@@ -15,6 +15,15 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+    var test_dir := "animal-park-toy-qa-%d-%d" % [OS.get_process_id(), Time.get_ticks_usec()]
+    ProjectSettings.set_setting("application/config/use_custom_user_dir", true)
+    ProjectSettings.set_setting("application/config/custom_user_dir_name", test_dir)
+    var save_dir := OS.get_user_data_dir()
+    if save_dir.get_file() != test_dir or DirAccess.dir_exists_absolute(save_dir) or DirAccess.make_dir_recursive_absolute(save_dir) != OK:
+        push_error("Could not isolate the ball test save")
+        quit(1)
+        return
+    await _check_purchase()
     root.size = Vector2i(540, 960)
     room = HOME.instantiate()
     root.add_child(room)
@@ -24,9 +33,53 @@ func _run() -> void:
     await _check_cancellation()
     room.queue_free()
     await process_frame
+    DirAccess.remove_absolute(save_dir.path_join("home.cfg"))
+    DirAccess.remove_absolute(save_dir)
     if failures == 0:
-        print("PASS rope ball: catch, roll back, floor pickup, visible carry, return, pause and cancellation")
+        print("PASS rope ball: purchase, unobstructed floor tap, room change, reload, catch, carry, return, pause and cancellation")
     quit(failures)
+
+
+func _check_purchase() -> void:
+    var view := SubViewport.new()
+    view.own_world_3d = true
+    root.add_child(view)
+    for device in [Vector2i(320,568), Vector2i(390,844), Vector2i(430,932)]:
+        # The canvas expands vertically from the project's 540x960 design size.
+        view.size = Vector2i(540, maxi(960, roundi(540.0 * device.y / device.x)))
+        room = HOME.instantiate()
+        view.add_child(room)
+        if device.x == 320:
+            _expect(not room.ball_owned and not room.care.ball.is_visible_in_tree(), "Unbought toy is absent")
+            room.native_leaves = 5
+            room._update_native_stats()
+            room.get_node("%Play").pressed.emit()
+            room.game_room.get_node("%Ball").pressed.emit()
+            _expect(not room.game_room.visible and room.richi.celebrating_purchase, "The purchase shows the actual room and purchase reaction")
+        _expect(room.ball_owned and room.native_leaves == 0, "The saved toy is owned and costs five leaves just once")
+        _expect(room._go_to_room(room.KITCHEN) and not room.care.ball.is_visible_in_tree(), "The toy stays in the veranda when visiting the kitchen")
+        _expect(room._go_to_room(room.MAIN), "Return from the kitchen")
+        await process_frame
+        _expect(room.care.ball.is_visible_in_tree(), "Owned toy is on the floor at " + str(device))
+        var camera: Camera3D = room.room_camera
+        var center := camera.unproject_position(room.care.ball.global_position)
+        var button: Button = room.get_node("%ToyBall")
+        _expect(button.get_global_rect().has_point(center), "Floor toy and its action are aligned at " + str(device))
+        _expect(Rect2(Vector2.ZERO, view.size).encloses(button.get_global_rect()), "The toy action fits the viewport at " + str(device))
+        for id in ["Dock", "Header", "RoomNavigation", "Play", "Sleep"]:
+            var other: Control = room.get_node("%" + id)
+            _expect(not other.is_visible_in_tree() or not button.get_global_rect().intersects(other.get_global_rect()),
+                "Toy target is unobstructed by %s at %s" % [id, device])
+        for down in [true, false]:
+            var event := InputEventScreenTouch.new()
+            event.position = center
+            event.pressed = down
+            view.push_input(event, true)
+        _expect(room.active_mode == &"ball", "Touching the visible toy starts play at " + str(device))
+        room.queue_free()
+        await process_frame
+    view.queue_free()
+    await process_frame
 
 
 func _set_level(level: int) -> void:
@@ -105,15 +158,17 @@ func _check_level(level: int) -> void:
     _expect(completed == previous_finish + 1, "The result is emitted once at level %d" % level)
     _expect(room.status.text.ends_with(RESULTS[LEVELS.find(level)]), "The age-specific result matches level %d" % level)
     var end_distance := ball.global_position.distance_to(floor)
+    var toy_distance := Vector2(origin.x, origin.z).distance_to(Vector2(floor.x, floor.z))
     if level == 1:
-        _expect(end_distance > 0.55, "The baby leaves the caught ball nearby")
+        _expect(end_distance > toy_distance * 0.40 and ball.global_position.distance_to(origin) < toy_distance * 0.65,
+            "The baby leaves the ball near its paws instead of returning it to the floor marker")
     else:
         _expect(end_distance < 0.007, "The older pet returns the ball to its starting position")
     if level == 10:
         _expect(reach_gap < 0.14, "The adult reaches the ball down at floor height")
-        _expect(carry_samples >= 18 and carry_distance > 0.20, "The adult takes several steps with the ball")
+        _expect(carry_samples >= 18 and carry_distance > toy_distance * 0.19, "The adult takes several steps with the ball")
         _expect(carry_clearance > 0.13, "The held ball stays in front of the adult torso")
-        _expect(maximum_walk > 0.62 and origin.distance_to(actor.global_position) < 0.01, "The adult returns to the rug")
+        _expect(maximum_walk > toy_distance * 0.63 and origin.distance_to(actor.global_position) < 0.01, "The adult traverses the approach and returns to the rug")
         print("Adult floor grip gap ", reach_gap, ", carry ", carry_distance, ", clearance ", carry_clearance)
     else:
         _expect(maximum_walk < 0.01, "The younger pet plays from the rug")

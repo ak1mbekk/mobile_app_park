@@ -23,13 +23,12 @@ roughness = 0.63
 albedo_color = Color(0.045, 0.075, 0.055, 1)
 roughness = 0.76
 
-[sub_resource type="StandardMaterial3D" id="PitcherWater"]
-albedo_color = Color(0.27, 0.73, 0.84, 1)
-metallic = 0.12
-roughness = 0.22
-emission_enabled = true
-emission = Color(0.16, 0.45, 0.54, 1)
-emission_energy_multiplier = 0.16
+[sub_resource type="ShaderMaterial" id="PitcherWater"]
+resource_local_to_scene = true
+shader = ExtResource("WaterShader")
+shader_parameter/water_color = Color(0.18, 0.50, 0.54, 1)
+shader_parameter/sky_color = Color(0.70, 0.86, 0.84, 1)
+shader_parameter/pitcher = true
 
 [sub_resource type="StandardMaterial3D" id="ToolGuide"]
 albedo_color = Color(1, 0.87, 0.49, 0.7)
@@ -71,10 +70,10 @@ radial_segments = 8
 rings = 4
 
 [sub_resource type="CylinderMesh" id="WaterInPitcher"]
-material = SubResource("PitcherWater")
 top_radius = 0.075
 bottom_radius = 0.075
-height = 0.008
+height = 0.0002
+cap_bottom = false
 radial_segments = 32
 
 [sub_resource type="TorusMesh" id="GuideRing"]
@@ -205,6 +204,7 @@ scale = Vector3(0.91, 0.91, 0.91)
 [node name="Вода" type="MeshInstance3D" parent="Кувшин"]
 position = Vector3(0, 0.244, 0)
 mesh = SubResource("WaterInPitcher")
+material_override = SubResource("PitcherWater")
 cast_shadow = 0
 
 [node name="Носик" type="Marker3D" parent="Кувшин"]
