@@ -37,7 +37,7 @@
     matchesPanel.replaceChildren();
     if (!needle) return;
     for (const p of visitorPlaces) {
-      const terms = [p.name,...(p.species || []).map(s => guide.speciesName?.(s) || '')].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е');
+      const terms = [p.name,...(p.keywords || []),...(p.species || []).map(s => guide.speciesName?.(s) || '')].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е');
       if (!terms.includes(needle)) continue;
       const b = document.createElement('button');
       b.type = 'button';
@@ -58,7 +58,7 @@
     }
   }
   serviceOffsets.sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
-  let map, layer, calibration, hitChooser, tiles;
+  let map, layer, calibration, hitChooser;
   let boundaryData;
   let refreshing, redrawSurvey;
   let loading = false, mapReady = false, drawing = false, surveyFailed = false;
@@ -66,7 +66,6 @@
   let framing = 'zone';
   const markers = new Map();
   const cafeGroups = new Map();
-  const failedTiles = new Set();
   const local = () => visitorPlaces.filter(point => point.zone === state.zone);
   const selectedPlace = () => local().find(point => point.id === state.id);
   const label = point => point.name;
@@ -88,6 +87,11 @@
     if (guide.legacyCafeIds[zoneNumber]?.includes(id)) {
       history.replaceState(history.state, '', '#map/' + zoneNumber + '/service/cafe');
       return { zone: zoneNumber, id: '', kind: 'service', service: 'cafe' };
+    }
+    if (id && !visitorPlaces.some(place=>place.zone===zoneNumber && place.id===id)) {
+      const suffix = kind === 'all' ? '' : '/' + kind + (service ? '/' + service : '');
+      history.replaceState(history.state,'','#map/'+zoneNumber+suffix);
+      return {zone:zoneNumber,id:'',kind,service};
     }
     return { zone: zoneNumber, id, kind, service };
   }
@@ -160,7 +164,7 @@
     if (search.hidden && !filterHint.hidden) messages.push(filterHint.textContent);
     else if (surveyFailed) messages.push('Изображение карты не загрузилось. Места доступны в списке.');
     else if (!calibration) messages.push('Открыта локальная карта. Географические точки сейчас недоступны.');
-    else if (!navigator.onLine || failedTiles.size) messages.push('Открыта локальная карта парка.');
+    else if (!navigator.onLine) messages.push('Открыта локальная карта парка.');
     status.textContent = messages.join(' ');
     status.hidden = !messages.length;
   }
@@ -456,6 +460,15 @@
     layer.clearLayers();
     markers.clear();
     const matches = local().filter(visible);
+    for (const roof of guide.surveyBuildings.filter(b=>b.zone===state.zone)) {
+      const destination = matches.find(item=>item.id===roof.place);
+      const ring = roof.ring.map(([x,y])=>calibration
+        ? projection.crs.pointToLatLng(projection.toWorld(calibration,x,y),16) : L.latLng(-y,x));
+      const outline = L.polygon(ring,{pane:'visitor-areas',interactive:Boolean(destination),
+        color:'#97664b',fillColor:'#cf926d',fillOpacity:0.8,weight:1});
+      if (destination) outline.on('click',()=>openPlace(destination.id));
+      outline.addTo(layer);
+    }
     picker.replaceChildren(new Option('Выберите место', ''));
     const groups = new Map();
     for (const item of matches) {
@@ -505,7 +518,7 @@
     picker.value = point?.id || '';
     picker.disabled = picker.options.length === 1;
     picker.parentElement.hidden = picker.disabled;
-    filterHint.hidden = state.kind === 'all' || Boolean(point) || layer.getLayers().length > 0;
+    filterHint.hidden = state.kind === 'all' || Boolean(point) || matches.some(item=>position(item));
     filterHint.textContent = filterHint.hidden ? '' : matches.length
       ? 'Для этих мест пока нет отметок на карте. Они доступны в списке.'
       : 'В списке этой зоны таких мест нет.';
@@ -532,12 +545,18 @@
     const zoomControl = L.control.zoom({ position: 'topright', zoomInTitle: 'Увеличить', zoomOutTitle: 'Уменьшить' }).addTo(map);
     zoomControl.getContainer().addEventListener('click', zoomSelectedPlace, true);
     if (calibration) {
-      tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      });
-      tiles.on('tileerror', ({ tile }) => { failedTiles.add(tile); updateStatus(); });
-      tiles.on('tileload tileunload', ({ tile }) => { if (failedTiles.delete(tile)) updateStatus(); });
-      tiles.addTo(map);
+      // Use the same local landscape as the 3D map. Public raster tiles also
+      // contain third-party POI labels which cannot respect staff-only access.
+      const mounted = map;
+      map.createPane('visitor-land').style.zIndex = '250';
+      const colors = {water:'#86c6c7',stream:'#86c6c7',wood:'#acc798',grass:'#d4e0b5',
+        building:'#c99e75',road:'#fff2d8',walk:'#fff6df',fence:'#8e947a'};
+      fetch('assets/park-landscape.geojson').then(r=>r.ok ? r.json() : null).then(data=>{
+        if (!data || map!==mounted) return;
+        L.geoJSON(data,{pane:'visitor-land',interactive:false,filter:f=>f.properties.kind in colors,
+          style:f=>({color:colors[f.properties.kind],fillOpacity:1,weight:1.5}),
+          attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+      }).catch(()=>{}); // The independent survey overlay still covers the park.
     }
     addSurvey();
     layer = L.layerGroup().addTo(map);
@@ -692,7 +711,6 @@
   });
   window.addEventListener('focus', refreshAlignment);
   window.addEventListener('online', () => {
-    tiles?.redraw();
     if (map) updateStatus();
     refreshAlignment();
   });

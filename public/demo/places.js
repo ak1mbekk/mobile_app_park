@@ -59,7 +59,6 @@
   const geoFacilities=[
     {zone:1,id:'osm-9868277697',name:'Туалет у входной части парка',geo:[26.0125061,53.0949839]},
     {zone:1,id:'osm-9868277715',name:'Туалет в северной части зоны',geo:[26.0130966,53.0979380]},
-    {zone:1,id:'osm-9946443995',name:'Туалет в западной части зоны',geo:[26.0095583,53.0974340]},
     {zone:2,id:'osm-9868296562',name:'Туалет в южной части зоны',geo:[26.0213501,53.0904689]},
     {zone:2,id:'osm-10971056120',name:'Туалет в северной части зоны',geo:[26.0214259,53.0927221]}
   ].map(p=>({...p,badge:'WC',service:'Туалеты'})).concat([
@@ -73,7 +72,7 @@
     {zone:1,id:'cafe-12',name:'Кафе (буйвол)',geo:[26.016451996283358,53.096626902799045]},
     {zone:1,id:'cafe-13',name:'Кафе у пирса',geo:[26.0133403545969,53.097806338801696]},
     {zone:1,id:'cafe-14',name:'Кафе в центре',geo:[26.010004,53.096660]},
-    {zone:1,id:'cafe-14-1',name:'Пицца',geo:[26.010135,53.096426]},
+    {zone:1,id:'cafe-14-1',name:'Пиццерия',geo:[26.010135,53.096426],keywords:['пицца'],symbol:'pizza'},
     {zone:1,id:'cafe-15',name:'Ярмарочный домик 1',geo:[26.010577,53.096673]},
     {zone:1,id:'cafe-15-1',name:'Ярмарочный домик 2',geo:[26.010651,53.096600]},
     {zone:2,id:'cafe-21',name:'Фудтрак',geo:[26.02131702998618,53.09097172838789]},
@@ -83,6 +82,15 @@
     {zone:2,id:'cafe-23',name:'Кафе (павлин)',geo:[26.028002,53.091333]},
     {zone:2,id:'cafe-24',name:'Кафе (кабанчик)',geo:[26.023469,53.092165]}
   ].map(point=>({...point,service:'Кафе',badge:'☕'}));
+  // Outlines traced in pixels on the original 2064 × 2369 survey. Only assign a
+  // visitor destination where the park's independent food pin agrees with the plan.
+  const surveyBuildings = [
+    {zone:1,place:'cafe-14',ring:[[106.2,1180],[111.1,1177.5],[116.5,1192.5],[110.4,1194.4]]},
+    {zone:1,ring:[[110.4,1194.4],[116.5,1192.5],[119.2,1199],[113,1201.2]]},
+    {zone:1,place:'cafe-14-1',ring:[[113,1201.2],[119.2,1199],[124.6,1212.1],[116.2,1215]]},
+    {zone:2,place:'cafe-21-1',ring:[[1005.2,1915],[1012,1913.5],[1014,1929.7],[1007,1930]]},
+    {zone:2,ring:[[1014.5,1937.9],[1020,1938.1],[1020,1943.9],[1014.4,1943.8]]}
+  ];
   // These old names/OSM nodes have no proven identity with an official cafe.
   // A legacy link opens its zone's cafe filter, never an arbitrary nearby place.
   const legacyCafeIds={
@@ -156,6 +164,7 @@
   const speciesPortrait=slug=>markerPortraits[slug]||window.parkGuide.speciesPhoto?.(slug);
   // Each facility has its own silhouette. Enclosures share one rim in both map views.
   const serviceGlyphs={
+    pizza:'M3 3Q14 2 21 12L5 21z M4 7Q12 6 17 12 M8 11h.1 M11 14h.1 M7 16h.1',
     'Вход':'M4 20V4h12v3 M4 20h12v-3 M11 12h10m-4-4 4 4-4 4',
     'Сувениры':'M3 9h18v4H3z M5 13v8h14v-8 M12 9v12 M12 9C3 9 5 1 9 4l3 5c6-11 12-1 0 0z',
     'Кафе':'M3 9h13v5a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6z M16 10h2a3 3 0 0 1 0 6h-2 M6 3v3m4-4v3m4-2v3',
@@ -171,9 +180,9 @@
     }
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
-    if(point.service && serviceGlyphs[point.service]){
+    if(point.service && serviceGlyphs[point.symbol || point.service]){
       const path=document.createElementNS(svg.namespaceURI,'path');
-      path.setAttribute('d',serviceGlyphs[point.service]);svg.append(path);
+      path.setAttribute('d',serviceGlyphs[point.symbol || point.service]);svg.append(path);
     }else{
       const use=document.createElementNS(svg.namespaceURI,'use');
       use.setAttribute('href','#aki-paw');svg.append(use);
@@ -237,5 +246,5 @@
     }
     return {dismiss,activate,showGroup,destroy:()=>{dismiss();panel.remove();}};
   }
-  window.parkGuide={zones,markerFace,speciesPortrait,bindMarkerHitChooser,legacyCafeIds,places:[...places,...numberedEnclosures,...cafes].sort(byZoneAndNumber),geoFacilities};
+  window.parkGuide={zones,markerFace,speciesPortrait,bindMarkerHitChooser,legacyCafeIds,surveyBuildings,places:[...places,...numberedEnclosures,...cafes].sort(byZoneAndNumber),geoFacilities};
 })();

@@ -32,6 +32,9 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
     layer('shadows', 'fill', 'shadow', { 'fill-color':'#63573b', 'fill-opacity':0.23 }),
     layer('buildings', 'fill-extrusion', 'building', { 'fill-extrusion-color': '#c99e75',
       'fill-extrusion-height': ['get', 'height'], 'fill-extrusion-vertical-gradient': true }),
+    { id:'survey-buildings', type:'fill-extrusion',source:'pavilions',paint:{
+      'fill-extrusion-color':['case',['get','chosen'],'#bc5936',['has','id'],'#cc8861','#c99e75'],
+      'fill-extrusion-height':3, 'fill-extrusion-vertical-gradient':true } },
     { id: 'locations', type: 'symbol', source: 'points', layout: {
       'symbol-sort-key': ['case', ['get','chosen'], -100, ['get','rank']],
       'icon-image': ['get','icon'], 'icon-size': ['case',['get','chosen'],1.16,0.82], 'icon-padding': 2,
@@ -53,7 +56,8 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
       sources: {land: source('assets/park-landscape.geojson',
         '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'),
         survey:{type:'image',url:'assets/park-survey.webp',coordinates:surveyCorners(alignment)},
-        points: source(collection([])), areas: source(collection([])), rails:source(collection([]))}, layers}
+        points: source(collection([])), areas: source(collection([])), rails:source(collection([])),
+        pavilions:source(collection([]))}, layers}
   });
   map.addControl(new gl.AttributionControl({compact:false}), 'bottom-left');
   map.addControl(new gl.NavigationControl({visualizePitch:true}), 'bottom-right');
@@ -146,7 +150,7 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
       if (!ll) continue;
       const xy = [ll.lng,ll.lat];
       const chosen = item.id === selected;
-      const props = {id:item.id, name:item.name, chosen, rank:item.service ? 2 : 1};
+      const props = {id:item.id, name:item.name, chosen, rank:item.symbol === 'pizza' ? 0 : item.service ? 2 : 1};
       if (chosen) target = xy;
       bounds.extend(xy);
       const ring = boundary(item)?.map(p => [p.lng,p.lat]);
@@ -155,17 +159,31 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
         addFence(ring, rails);
       }
       const photo = item.species?.map(window.parkGuide.speciesPortrait).find(Boolean);
-      props.icon = photo || item.service || 'paw';
+      props.icon = photo || item.symbol || item.service || 'paw';
       pin(props.icon,item);
       points.push({type:'Feature',properties:props,geometry:{type:'Point',coordinates:xy}});
     }
     map.getSource('points').setData(collection(points));
     map.getSource('areas').setData(collection(areas));
     map.getSource('rails').setData(collection(rails));
+    const buildings = window.parkGuide.surveyBuildings.map(({zone:buildingZone, place, ring}) => {
+      const projection = window.parkProjection;
+      const coords = ring.map(([x,y]) => {
+        const ll = projection.crs.pointToLatLng(projection.toWorld(surveyAlignment,x,y),16);
+        return [ll.lng,ll.lat];
+      });
+      const properties = {chosen:false};
+      if (place && buildingZone === zone && items.some(item => item.id === place)) {
+        properties.id = place;
+        properties.chosen = selected === place;
+      }
+      return {type:'Feature',properties,geometry:{type:'Polygon',coordinates:[[...coords,coords[0]]]}};
+    });
+    map.getSource('pavilions').setData(collection(buildings));
     const key = [zone,selected,payload.filter].join('/');
     if (cameraKey !== key) {
       map.resize();
-      if (target) map.jumpTo({center:target,zoom:17.55,pitch:53,padding:{top:72,bottom:145,left:16,right:16}});
+      if (target) map.jumpTo({center:target,zoom:buildings.some(b=>b.properties.chosen) ? 19 : 17.55,pitch:53,padding:{top:72,bottom:145,left:16,right:16}});
       else if (!bounds.isEmpty()) {
         const center = bounds.getCenter();
         const view = map.cameraForBounds(bounds,{padding:{top:76,bottom:40,left:24,right:24},maxZoom:17.8});
@@ -178,8 +196,9 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
   map.on('click', event => {
     if (!ready) return;
     const p = event.point;
-    const hits = map.queryRenderedFeatures([[p.x-7,p.y-7],[p.x+7,p.y+7]], {layers:['locations','habitats']});
-    if (hits.length) select(hits[0].properties.id);
+    const hit = map.queryRenderedFeatures([[p.x-7,p.y-7],[p.x+7,p.y+7]],
+      {layers:['locations','survey-buildings','habitats']}).find(feature=>feature.properties.id);
+    if (hit) select(hit.properties.id);
   });
   return {update};
 };
