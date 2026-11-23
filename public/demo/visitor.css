@@ -222,6 +222,14 @@ html.dark #visitor-theme .sun-icon {display:block}
 #map .service-picker{margin:0 0 8px}
 #map .map-filter-hint{margin:8px 0;color:var(--ink);font-size:15px;line-height:1.4}
 #map .place-picker{display:block;margin:0}
+#animal-map-query{width:100%;min-height:44px;margin:6px 0 10px;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--paper);color:var(--ink);font:inherit}
+#animal-map-matches{display:grid;max-height:24dvh;overflow:auto;margin-bottom:8px}
+#animal-map-matches[hidden]{display:none}
+#animal-map-matches button{min-height:44px;text-align:left;padding:8px;color:var(--ink);background:var(--surface);border-bottom:1px solid var(--line)}
+#map .maplibregl-ctrl-bottom-right{bottom:18px;right:4px}
+#map .maplibregl-ctrl-group button{width:42px;height:42px}
+#map .maplibregl-ctrl-attrib{font:10px/1.5 system-ui}
+#map:has(.map-result:not([hidden])) .maplibregl-ctrl-bottom-right,#map:has(#map-search:not([hidden])) .maplibregl-ctrl-bottom-right{visibility:hidden}
 #map .place-picker select{
   width:100%;min-width:0;min-height:48px;padding:0 8px 0 12px;
   border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font-size:15px;

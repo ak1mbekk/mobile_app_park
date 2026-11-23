@@ -32,6 +32,10 @@ async function loadVisitorTools(screen) {
     if (isMap) {
       await loadVisitorScript('vendor/leaflet/leaflet.js');
       await loadVisitorScript('map-projection.js');
+      try {
+        await loadVisitorScript('vendor/maplibre/maplibre-gl.js');
+        await loadVisitorScript('park-landscape.js');
+      } catch { /* The plan remains available on devices without the 3D renderer. */ }
       await loadVisitorScript('park-map.js');
     } else {
       await loadVisitorScript('vendor/park-menu/menu.js');

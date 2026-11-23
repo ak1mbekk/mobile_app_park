@@ -27,6 +27,27 @@
   const places = [...guide.places, ...guide.geoFacilities];
   const views = new Map();
   const state = { zone: 1, id: '', kind: 'all', service: '' };
+  let landscape, flatOnly = false;
+  const query = host.querySelector('#animal-map-query');
+  const matchesPanel = host.querySelector('#animal-map-matches');
+  const visitorPlaces = places.filter(p => !p.name.startsWith('Вольер №'));
+  function searchAnimals() {
+    const needle = query.value.trim().toLocaleLowerCase('ru').replace(/ё/g, 'е');
+    matchesPanel.hidden = !needle;
+    matchesPanel.replaceChildren();
+    if (!needle) return;
+    for (const p of visitorPlaces) {
+      const terms = [p.name,...(p.species || []).map(s => guide.speciesName?.(s) || '')].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е');
+      if (!terms.includes(needle)) continue;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = p.name + ' · ' + guide.zones[p.zone].name;
+      b.onclick = () => { setSearch(false); navigate({zone:p.zone,id:p.id,kind:'all',service:''}); };
+      matchesPanel.append(b);
+    }
+    if (!matchesPanel.childElementCount) matchesPanel.textContent = 'Совпадений нет';
+  }
+  query.oninput = searchAnimals;
   const markerSize = 44;
   const markerRadius = markerSize / 2;
   const serviceGap = markerSize + 2;
@@ -46,9 +67,9 @@
   const markers = new Map();
   const cafeGroups = new Map();
   const failedTiles = new Set();
-  const local = () => places.filter(point => point.zone === state.zone);
+  const local = () => visitorPlaces.filter(point => point.zone === state.zone);
   const selectedPlace = () => local().find(point => point.id === state.id);
-  const label = point => point.service || point.name.startsWith('Вольер №') ? point.name : point.name + ' · № ' + point.badge;
+  const label = point => point.name;
   const serviceKeys = point => point.services || [point.service];
   const visible = point =>
     (state.kind === 'all' || (state.kind === 'service') === Boolean(point.service)) &&
@@ -92,7 +113,7 @@
     searchOpen = open;
     hitChooser?.dismiss();
     updateSheets();
-    if (open) search.querySelector('h2').focus({ preventScroll: true });
+    if (open) query.focus({ preventScroll: true });
     else if (returnFocus) searchToggle.focus({ preventScroll: true });
   }
 
@@ -171,16 +192,6 @@
     redrawSurvey = redraw;
   }
 
-  function cardLink(text, href) {
-    const link = document.createElement('a');
-    link.className = 'p-link';
-    link.href = href;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.textContent = text;
-    return link;
-  }
-
   function renderCard(point) {
     card.replaceChildren();
     card.hidden = !point;
@@ -196,7 +207,7 @@
     title.tabIndex = -1;
     title.textContent = point.name;
     const detail = document.createElement('p');
-    detail.textContent = point.detail || (point.service || 'Вольер № ' + point.badge) + ' · ' + guide.zones[point.zone].name;
+    detail.textContent = point.detail || guide.zones[point.zone].name;
     const header = document.createElement('div');
     header.className = 'map-place-heading';
     const words = document.createElement('div');
@@ -227,28 +238,11 @@
       }
       card.append(list);
     }
-    const actions = document.createElement('div');
-    actions.className = 'map-place-actions';
-    card.append(actions);
-    const geo = projection.position(calibration, point.zone, point);
-    const note = document.createElement('small');
-    if (geo) {
-      const pair = geo.lng.toFixed(7) + ',' + geo.lat.toFixed(7);
-      const linkText = point.geo ? 'Открыть место в Яндекс Картах ↗' : 'Примерное место в Яндекс Картах ↗';
-      actions.append(cardLink(linkText, 'https://yandex.by/maps/?ll=' + pair + '&pt=' + pair + '&z=18'));
-    } else {
-      actions.append(cardLink('Открыть зону в Яндекс Картах ↗', guide.zones[point.zone].yandex));
-      note.textContent = 'Точное место на местности пока не подтверждено.';
+    if (!position(point)) {
+      const note = document.createElement('small');
+      note.textContent = 'Известна зона. Точное место пока не подтверждено.';
+      card.append(note);
     }
-    const approach = calibration?.approaches?.[point.zone + '/' + point.id];
-    if (Array.isArray(approach) && approach.length === 2 && approach.every(Number.isFinite) &&
-        Math.abs(approach[0]) <= 90 && Math.abs(approach[1]) <= 180) {
-      const destination = new URL('https://yandex.by/maps/');
-      destination.searchParams.set('rtext', '~' + approach.join(','));
-      destination.searchParams.set('rtt', 'pd');
-      actions.append(cardLink('Пешком в Яндекс Картах ↗', destination.href));
-    }
-    if (note.textContent) card.append(note);
   }
 
   function residentPortrait(src) {
@@ -623,13 +617,37 @@
       }
       return;
     }
+    if (calibration && !flatOnly && window.createParkLandscape) {
+      if (!landscape) {
+        try {
+          landscape = window.createParkLandscape(surface, openPlace, () => {
+            flatOnly = true;
+            landscape = null;
+            show();
+          }, calibration);
+        } catch { flatOnly = true; }
+      }
+      if (landscape) {
+        const items = local().filter(visible);
+        picker.replaceChildren(new Option('Выберите место',''));
+        items.forEach(item => picker.add(new Option(label(item),item.id)));
+        picker.value = next.id;
+        picker.disabled = !items.length;
+        filterHint.hidden = !!items.length;
+        filterHint.textContent = 'В этой зоне таких мест нет.';
+        status.hidden = true;
+        renderCard(selectedPlace());
+        landscape.update({items,selected:next.id,zone:next.zone,position,boundary,alignment:calibration,filter:next.kind+'/'+next.service});
+        return;
+      }
+    }
     if (!map) mount();
     updateStatus();
     draw();
   }
 
   function refreshAlignment() {
-    if (refreshing || !map || !document.getElementById('map').classList.contains('current')) return;
+    if (refreshing || (!map && !landscape) || !document.getElementById('map').classList.contains('current')) return;
     refreshing = Promise.all([readAlignment(), readBoundaries()]).then(([next, boundaries]) => {
       const recovered = next && !calibration;
       const alignmentChanged = next && (recovered || ['revision', 'centerX', 'centerY', 'scale', 'angle']
@@ -670,7 +688,7 @@
     else setSearch(false);
   });
   document.addEventListener('parkcatalogready', () => {
-    if (map && document.getElementById('map').classList.contains('current')) draw();
+    if (document.getElementById('map').classList.contains('current')) show();
   });
   window.addEventListener('focus', refreshAlignment);
   window.addEventListener('online', () => {

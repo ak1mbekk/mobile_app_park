@@ -1,0 +1,8 @@
+# Объёмная карта посетителя
+
+Экран `/demo/index.html#map` использует локальную сборку MapLibre GL JS 5.15.0. Геометрия зданий отрисована слоем fill-extrusion. Высота берётся из height или рассчитывается как 3 м на этаж из building:levels. При отсутствии обоих тегов принята условная высота 3 м. Тени и цвета условные. [Исходный проект и лицензия BSD-3-Clause](https://github.com/maplibre/maplibre-gl-js/tree/v5.15.0) · [Пример от разработчиков](https://maplibre.org/maplibre-gl-js/docs/examples/display-buildings-in-3d/)
+
+Геометрия зданий, растительности, водоёмов, дорожек и оград в `public/demo/assets/park-landscape.geojson` получена из OpenStreetMap. Данные © участники OpenStreetMap, доступны по ODbL 1.0. Выборка включает окрестности парка. Обновить файл можно повторным запуском `python scripts/import-park-landscape.py park.osm public/demo/assets/park-landscape.geojson` из корня проекта с выгруженным XML. [Исходная область OSM](https://api.openstreetmap.org/api/0.6/map?bbox=26.007,53.087,26.031,53.102) · [Атрибуция и условия](https://www.openstreetmap.org/copyright)
+
+Техплан и точки животных используют сохранённую ручную привязку. Поиск охватывает обе зоны. Нажатие на животное открывает карточку внутри карты. Точка без подтверждённых координат даёт только название зоны. Поиск маршрутов по проверенной сети гостевых дорожек и аудиогид относятся к последующим этапам.
+
