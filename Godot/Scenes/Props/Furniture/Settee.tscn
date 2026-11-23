@@ -161,6 +161,10 @@ rings = 5
 
 [node name="Диван у окна" type="Node3D" unique_id=1946188824]
 
+[node name="Место для вышитой подушки" type="Marker3D" parent="."]
+position = Vector3(0.268, 0.326, -0.105)
+rotation = Vector3(1.19, -0.13, -0.09)
+
 [node name="Ореховая рама" type="MeshInstance3D" parent="." unique_id=1082517319]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.087, 0)
 material_override = SubResource("Wood")

@@ -1,0 +1,18 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Scenes/Home/WindowWildlife.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/perch.svg" id="Body"]
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/ripple.svg" id="Extra"]
+[node name="Окунь" type="Node3D"]
+script = ExtResource("Script")
+wildlife = 0
+[node name="Animal" type="Sprite3D" parent="."]
+texture = ExtResource("Body")
+pixel_size = 0.00155
+shaded = false
+cast_shadow = 0
+[node name="Wake" type="Sprite3D" parent="."]
+texture = ExtResource("Extra")
+
+pixel_size = 0.00215
+cast_shadow = 0
+

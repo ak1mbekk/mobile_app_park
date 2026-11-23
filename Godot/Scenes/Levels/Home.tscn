@@ -1,7 +1,9 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://Scenes/Home/Home.gd" id="HomeScript"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Interactive/pear.glb" id="KitchenPear"]
 [ext_resource type="Script" path="res://Scenes/Home/SleepSignals.gd" id="SleepSignals"]
+[ext_resource type="Script" path="res://Scenes/Home/SetteeTouch.gd" id="SetteeTouch"]
 [ext_resource type="PackedScene" path="res://Scenes/Levels/StarterHomeRoom.tscn" id="Room"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/Bedroom.tscn" id="Bedroom"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/Bathroom.tscn" id="Bathroom"]
@@ -18,6 +20,12 @@
 [ext_resource type="ArrayMesh" path="res://Art/Characters/RichiGrowth.res" id="RichiGrowth"]
 [ext_resource type="Texture2D" path="res://Art/Brand/profile-raccoon.webp" id="ProfileIcon"]
 [ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="TouchButton"]
+
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/nav-veranda.svg" id="Navveranda"]
+
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/nav-kitchen.svg" id="Navkitchen"]
+
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/nav-bath.svg" id="Navbath"]
 
 [sub_resource type="StyleBoxFlat" id="Panel"]
 bg_color = Color(0.105, 0.15, 0.108, 0.96)
@@ -113,6 +121,11 @@ growth_mesh = ExtResource("RichiGrowth")
 
 [node name="Комната" parent="." instance=ExtResource("Room")]
 
+[node name="PearVisual" parent="Комната/Яблоко" instance=ExtResource("KitchenPear")]
+visible = false
+position = Vector3(-0.000012, -0.000048, 0)
+scale = Vector3(1.017668, 1.017668, 1.017668)
+
 [node name="Станции ухода" parent="." instance=ExtResource("Stations")]
 
 [node name="Обстановка" parent="." instance=ExtResource("Decor")]
@@ -153,6 +166,7 @@ custom_minimum_size = Vector2(350, 165)
 accessibility_name = "Купать Ричи"
 
 [node name="Sleep" type="Button" parent="Интерфейс/Actions"]
+script = ExtResource("SetteeTouch")
 unique_name_in_owner = true
 custom_minimum_size = Vector2(146, 78)
 accessibility_name = "Спать"
@@ -311,7 +325,10 @@ theme_override_constants/separation = 6
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 76)
 size_flags_horizontal = 3
-text = "Веранда"
+tooltip_text = "Веранда"
+icon = ExtResource("Navveranda")
+icon_alignment = 1
+theme_override_constants/icon_max_width = 52
 toggle_mode = true
 accessibility_name = "Перейти в главную комнату"
 
@@ -319,7 +336,10 @@ accessibility_name = "Перейти в главную комнату"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 76)
 size_flags_horizontal = 3
-text = "Кухня"
+tooltip_text = "Кухня"
+icon = ExtResource("Navkitchen")
+icon_alignment = 1
+theme_override_constants/icon_max_width = 52
 toggle_mode = true
 accessibility_name = "Перейти на кухню"
 
@@ -327,7 +347,10 @@ accessibility_name = "Перейти на кухню"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 76)
 size_flags_horizontal = 3
-text = "Ванная"
+tooltip_text = "Ванная"
+icon = ExtResource("Navbath")
+icon_alignment = 1
+theme_override_constants/icon_max_width = 52
 toggle_mode = true
 accessibility_name = "Перейти в ванную"
 

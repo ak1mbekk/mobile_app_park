@@ -34,6 +34,7 @@ var sleeping_on_furniture := false
 var celebrating_purchase := false
 var eyelid_tween: Tween
 var eyelid_value := 0.0
+var meal_turn: Tween
 
 func _ready() -> void:
     paw_pose.player = player
@@ -132,6 +133,16 @@ func set_needs(values: Dictionary) -> void:
     needs = values
 
 func react_to_full_meal() -> void:
+    if meal_turn and meal_turn.is_valid():
+        meal_turn.kill()
+    var camera := get_viewport().get_camera_3d()
+    if camera:
+        var parent_basis := get_parent_node_3d().global_basis if get_parent_node_3d() else Basis.IDENTITY
+        var direction := parent_basis.inverse() * (camera.global_position - global_position)
+        var start := rotation.y
+        var target := atan2(direction.x, direction.z)
+        meal_turn = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+        meal_turn.tween_method(func(value: float): rotation.y = lerp_angle(start, target, value), 0.0, 1.0, 0.45)
     presentation.start_reaction(&"full")
 
 func react_to_wake() -> void:
@@ -157,6 +168,8 @@ func refuse() -> void:
     $SoftMurmur.play()
 
 func _clear_expression() -> void:
+    if meal_turn and meal_turn.is_valid():
+        meal_turn.kill()
     resting_at_home = false
     sleeping_on_furniture = false
     stop_purchase_celebration()

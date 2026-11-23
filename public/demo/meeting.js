@@ -150,6 +150,7 @@
     frame.contentWindow.setParkHomeState?.(JSON.stringify({
       name, night, level, leaves, ball, hat:window.petDemo.outfit() ?? hat ?? '',
       furniture:window.petDemo.furniture(), shop:window.petDemo.nativeShop(), bed_goal:window.petDemo.bedGoal(),
+      pantry:window.petDemo.foodSnapshot(),
       rounds:{pairs, match, orchard}, needs:{food, clean, energy, joy}, ...opening, ...extra
     }));
   }
@@ -392,9 +393,17 @@
     if (event.data === 'animal-park:meal-finished') {
       if (room.id === 'intro') {
         window.petDemo.finishMeeting();
-      } else syncHome({meal_reached_full:window.petDemo.finishAppleSnack()}, true);
+      } else if(!frame.contentWindow.parkNativeFood)syncHome({meal_reached_full:window.petDemo.finishAppleSnack()}, true);
     }
     if (room?.id !== 'home') return;
+    if (typeof event.data==='string'&&event.data.startsWith('animal-park:food:choose:')) {
+      const refusal=window.petDemo.chooseFood(event.data.slice('animal-park:food:choose:'.length));
+      syncHome(refusal?{refusal}:{offer_food:true},true);
+    }
+    if (typeof event.data==='string'&&event.data.startsWith('animal-park:food:finished:')) {
+      const result=window.petDemo.finishFood(Number(event.data.slice('animal-park:food:finished:'.length)));
+      syncHome({meal_reached_full:result.reachedMaximum},true);
+    }
     if(event.data==='animal-park:overlay-open'||event.data==='animal-park:overlay-closed'){
       document.body.toggleAttribute('data-game-overlay',event.data==='animal-park:overlay-open');
       return;

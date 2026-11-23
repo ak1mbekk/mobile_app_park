@@ -1,0 +1,43 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Games/GameTile.tscn" id="Base"]
+[ext_resource type="Script" path="res://Scenes/Games/MatchTile.gd" id="Script"]
+
+[sub_resource type="StyleBoxFlat" id="Pocket"]
+bg_color = Color(0.86, 0.88, 0.77, 1)
+border_width_bottom = 2
+border_color = Color(0.68, 0.72, 0.56, 1)
+corner_radius_top_left = 13
+corner_radius_top_right = 13
+corner_radius_bottom_left = 13
+corner_radius_bottom_right = 13
+shadow_color = Color(0.23, 0.28, 0.17, 0.09)
+shadow_size = 2
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="Hover"]
+bg_color = Color(0.92, 0.93, 0.83, 1)
+corner_radius_top_left = 13
+corner_radius_top_right = 13
+corner_radius_bottom_left = 13
+corner_radius_bottom_right = 13
+
+[sub_resource type="StyleBoxFlat" id="Focus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.30, 0.42, 0.25, 1)
+corner_radius_top_left = 13
+corner_radius_top_right = 13
+corner_radius_bottom_left = 13
+corner_radius_bottom_right = 13
+
+[node name="MatchTile" instance=ExtResource("Base")]
+clip_contents = false
+theme_override_styles/normal = SubResource("Pocket")
+theme_override_styles/hover = SubResource("Hover")
+theme_override_styles/pressed = SubResource("Pocket")
+theme_override_styles/focus = SubResource("Focus")
+script = ExtResource("Script")

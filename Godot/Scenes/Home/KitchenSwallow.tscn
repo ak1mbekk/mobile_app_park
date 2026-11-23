@@ -1,0 +1,19 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Scenes/Home/WindowWildlife.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/swallow.svg" id="Body"]
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/wing.svg" id="Extra"]
+[node name="Ласточка" type="Node3D"]
+script = ExtResource("Script")
+wildlife = 1
+[node name="Animal" type="Sprite3D" parent="."]
+texture = ExtResource("Body")
+pixel_size = 0.00165
+shaded = false
+cast_shadow = 0
+[node name="Wing" type="Sprite3D" parent="Animal"]
+texture = ExtResource("Extra")
+position = Vector3(-0.001, 0.002, 0.001)
+offset = Vector2(-13, 8)
+pixel_size = 0.0015
+cast_shadow = 0
+

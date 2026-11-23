@@ -163,7 +163,7 @@ const logicalAsset=url=>new URL(url).pathname.split('/').pop().replace(/-[a-f0-9
       await checkHomeRetry(browser,root);
       return;
     }
-    await page.goto(root.href);
+    await page.goto(root.href,{waitUntil:'domcontentloaded'});
     await ready('intro');
     assert.equal(new URL(page.url()).hash,'#intro');
     await page.locator(roomSelector).evaluate(iframe=>{iframe.contentWindow.testMeetingEngine=true;});

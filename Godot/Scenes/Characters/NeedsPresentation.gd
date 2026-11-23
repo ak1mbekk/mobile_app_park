@@ -26,6 +26,7 @@ var expression := 0.0
 var eyelid_weight := 0.0
 var tear_weight := 0.0
 var mouth_weight := 0.0
+var meal_exhaled := false
 
 func attach(pet: Node3D, gesture_modifier: SkeletonModifier3D) -> void:
     actor = pet
@@ -54,12 +55,11 @@ func start_reaction(kind: StringName) -> void:
         return
     reaction = kind
     reaction_time = 0.0
+    meal_exhaled = false
     if kind == FULL:
         fullness = maxf(fullness, 0.8)
         if not sigh.stream:
             sigh.stream = _make_breath(true)
-        if audible:
-            sigh.play()
 
 func cancel_reaction() -> void:
     reaction = &""
@@ -86,6 +86,10 @@ func _process(delta: float) -> void:
         cancel_reaction()
     elif not reaction.is_empty():
         reaction_time += delta
+        if reaction == FULL and reaction_time >= 1.60 and not meal_exhaled:
+            meal_exhaled = true
+            if audible:
+                sigh.play()
         if reaction_time >= (2.5 if reaction == FULL else 2.05):
             cancel_reaction()
 
@@ -107,7 +111,7 @@ func _process(delta: float) -> void:
     var gesture_weight := 0.0
     var yawn := 0.0
     if reaction == FULL:
-        gesture_weight = _envelope(reaction_time, 0.10, 0.50, 1.58, 2.1)
+        gesture_weight = _envelope(reaction_time, 0.25, 0.65, 1.58, 2.20)
     elif reaction == WAKE:
         gesture_weight = _envelope(reaction_time, 0.2, 0.80, 1.29, 1.95)
         yawn = _envelope(reaction_time, 0.10, 0.55, 1.03, 1.64)
@@ -132,10 +136,11 @@ func _process(delta: float) -> void:
     actor.gaze.resting_angles = Vector2(4.5 * sin(since_rumble * 4.8), -0.6) * search
 
     expression = move_toward(expression, -0.75 if very_sad else -0.65 if sad else 1.0 if happy else 0.0, delta * 3.8)
-    eyelid_weight = move_toward(eyelid_weight, maxf(0.40 if sleepy and not observing else 0.0, 0.65 * yawn), delta * 3.3)
+    var exhale := _envelope(reaction_time, 1.55, 1.75, 1.98, 2.30) if reaction == FULL else 0.0
+    eyelid_weight = move_toward(eyelid_weight, maxf(maxf(0.40 if sleepy and not observing else 0.0, 0.65 * yawn), 0.18 * exhale), delta * 3.3)
     tear_weight = 0.0
     var mouth_target := 0.33 + 0.25 * absf(belly_motion) if hungry else 0.28 if happy and expressive_idle else 0.0
-    mouth_weight = move_toward(mouth_weight, maxf(yawn, mouth_target), delta * 4.0)
+    mouth_weight = move_toward(mouth_weight, maxf(maxf(yawn, mouth_target), 0.14 * exhale), delta * 4.0)
     fullness = move_toward(fullness, smoothstep(88.0, 100.0, food), delta * 1.5)
     skin.set_shader_parameter("expression", expression)
     skin.set_shader_parameter("expression_lid", eyelid_weight)

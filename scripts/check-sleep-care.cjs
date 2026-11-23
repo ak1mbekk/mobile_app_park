@@ -27,7 +27,7 @@ async function main(){
   for(const bed of ['bed','bed-willow','settee','bed-oak','bed-daybed'])for(const [age,xp] of [['kit',0],['young',90],['adult',270]]){
    await restore({night:true,xp,owned:[bed],placed:[bed]});
    const sources=await page.locator('#night-room').evaluate(async el=>{const urls=[...getComputedStyle(el).backgroundImage.matchAll(/url\(["']?([^"')]+)["']?\)/g)].map(x=>x[1]);await Promise.all(urls.map(src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=resolve;img.onerror=reject;img.src=src;})));return urls;});
-   assert.ok(sources.some(src=>src.includes('sleep-'+bed+'-curled.webp')));if(age!=='kit')assert.ok(sources.some(src=>src.includes('-'+age+'-bare.webp')));
+   if(bed==='settee')assert.ok(sources.some(src=>src.includes('room-settee-sleep-'+age+'-bare.webp')));else{assert.ok(sources.some(src=>src.includes('sleep-'+bed+'-curled.webp')));if(age!=='kit')assert.ok(sources.some(src=>src.includes('-'+age+'-bare.webp')));}
    assert.ok(await page.locator('#sleep-signals').isVisible());
    if(out){fs.mkdirSync(out,{recursive:true});await page.screenshot({path:path.join(out,bed+'-'+age+'-fallback.png')});}
   }

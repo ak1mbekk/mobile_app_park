@@ -1,6 +1,6 @@
 extends "res://Scenes/Games/GameRound.gd"
 
-const TILE = preload("res://Scenes/Games/GameTile.tscn")
+const TILE = preload("res://Scenes/Games/MatchTile.tscn")
 const WIDTH := 6
 const TARGET := 9
 const INITIAL_MOVES := 12
@@ -22,11 +22,22 @@ var resolving := false
 var selected := -1
 var drag_start := -1
 var finger := -1
+@export var reduced_motion := false
+@export var haptics_enabled := true
+var motion_phase: StringName = &"idle"
+var motion_epoch := 0
+var active_tween: Tween
+var settled_record: Dictionary = {}
+var drag_origin := Vector2.ZERO
+var drag_neighbor := -1
+var drag_distance := 0.0
+var gesture_moved := false
 
 
 func _ready() -> void:
     %Again.pressed.connect(_new_round)
-    resized.connect(fit_tile_board.bind(%Board))
+    resized.connect(_resize_board)
+    visibility_changed.connect(_sync_activity)
     fit_tile_board.call_deferred(%Board)
     for index in WIDTH * WIDTH:
         var button := TILE.instantiate()
@@ -35,6 +46,7 @@ func _ready() -> void:
 
 
 func restore(record: Dictionary) -> void:
+    _stop_motion()
     super.restore(record)
     var field = record.get("cells", [])
     var remaining = record.get("moves", -1)
@@ -47,6 +59,7 @@ func restore(record: Dictionary) -> void:
     berries = int(collected)
     bonus = clampi(int(record.get("bonus", 0)), 0, 5)
     finished = record.finished
+    settled_record = record.duplicate(true)
     _paint()
     _update_result()
 
@@ -69,6 +82,7 @@ func _is_integer_in_range(value: Variant, lower: int, upper: int) -> bool:
 
 
 func _new_round() -> void:
+    _stop_motion()
     begin_round()
     cells = _fill_board()
     moves = INITIAL_MOVES
@@ -174,23 +188,32 @@ func _choose(index: int) -> void:
     if not adjacent:
         selected = index
         _paint()
+        _feel(8)
         return
 
     var previous := selected
     selected = -1
     resolving = true
+    var epoch := motion_epoch
     var next := cells.duplicate()
     _swap(next, previous, index)
     var line := _lines(next)
     if line.removed.is_empty():
         await _animate_swap(previous, index)
+        if epoch != motion_epoch:
+            return
         _swap(cells, previous, index)
         _paint()
-        await _animate_swap(previous, index)
+        motion_phase = &"reject"
+        _feel(12)
+        await _animate_swap(previous, index, true)
+        if epoch != motion_epoch:
+            return
         _swap(cells, previous, index)
         resolving = false
+        motion_phase = &"idle"
         _paint()
-        %Hint.text = "Нужна линия из трёх плодов."
+        %Hint.text = "Попробуй другую пару — ход сохранён."
         return
 
     # Persist the fully resolved turn before showing the first animation.
@@ -215,6 +238,8 @@ func _choose(index: int) -> void:
     var settled := _fill_board() if reshuffle else next
     _save_move(settled, remaining, collected, earned_bonus, ended)
     await _animate_swap(previous, index)
+    if epoch != motion_epoch:
+        return
     moves = remaining
     for cascade_index in cascades.size():
         var cascade: Dictionary = cascades[cascade_index]
@@ -223,15 +248,26 @@ func _choose(index: int) -> void:
         %Hint.text = "Линия из %d" % cascade.longest
         if cascade_index > 0:
             %Hint.text = "Каскад ×%d · " % (cascade_index + 1) + %Hint.text
-        await _animate_pop(cascade.removed)
+        %Hint.modulate = Color(0.56, 0.32, 0.14) if cascade.longest >= 4 else Color.WHITE
+        if cascade.longest >= 4:
+            %Effects.announce("%d в ряд!" % cascade.longest)
+        elif cascade_index > 0:
+            %Effects.announce("Каскад ×%d" % (cascade_index + 1))
+        _feel(22 if cascade.longest >= 4 else 12)
+        await _animate_pop(cascade.removed, cascade.longest >= 4)
+        if epoch != motion_epoch:
+            return
         cells = cascade.after
         berries = cascade.collected
         bonus = cascade.bonus
         _paint()
         await _animate_fall(cascade.falls)
+        if epoch != motion_epoch:
+            return
     cells = settled
     finished = ended
     resolving = false
+    motion_phase = &"idle"
     _paint()
     _update_result()
     if not ended and reshuffle:
@@ -241,10 +277,12 @@ func _choose(index: int) -> void:
 
 
 func _save_move(next: Array, remaining: int, collected: int, earned_bonus: int, ended: bool) -> void:
-    commit({
+    var record := {
         "cells": next.duplicate(), "moves": remaining, "berries": collected, "bonus": earned_bonus,
         "finished": ended, "won": collected >= TARGET,
-    })
+    }
+    commit(record)
+    settled_record = record.duplicate(true)
 
 
 func _row(index: int) -> int:
@@ -256,8 +294,7 @@ func _paint() -> void:
         var piece := int(cells[index])
         var description := "%s · ряд %d, место %d" % [NAMES[piece], _row(index) + 1, index % WIDTH + 1]
         var tile = %Grid.get_child(index)
-        tile.face.modulate = Color.WHITE
-        tile.face.scale = Vector2.ONE
+        tile.reset_motion()
         tile.paint(PIECES[piece], description, selected == index)
     %Goal.text = "Малина %d из %d" % [mini(TARGET, berries), TARGET]
     %Counter.text = "Ходы %d" % moves
@@ -269,51 +306,78 @@ func _update_result() -> void:
     if resolving:
         return
     %ResultActions.visible = finished
+    %Hint.modulate = Color.WHITE
     if finished:
         var payout := reward_text()
         var result := "Корзинка полна!" if berries >= TARGET else "Ходы закончились"
         %Hint.text = result if payout.is_empty() else result + "\n" + payout
     else:
-        %Hint.text = "Поменяй соседние плоды местами, чтобы собрать три в ряд."
+        %Hint.text = "Потяни плод к соседнему.\nСобери малину по три в ряд."
 
 
-func _animate_swap(first: int, second: int) -> void:
+func _animate_swap(first: int, second: int, returning := false) -> void:
+    motion_phase = &"reject" if returning else &"swap"
     var a = %Grid.get_child(first)
     var b = %Grid.get_child(second)
     var movement: Vector2 = b.position - a.position
-    var start: Vector2 = a.face.position
-    var tween := create_tween().set_parallel().set_trans(Tween.TRANS_SINE)
-    tween.tween_property(a.face, "position", start + movement, 0.14)
-    tween.tween_property(b.face, "position", start - movement, 0.14)
+    var start := Vector2(5, 5)
+    a.set_held(true)
+    b.z_index = 2
+    var tween := _motion_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+    var duration := 0.07 if reduced_motion else 0.20 if returning else 0.18
+    tween.tween_property(a.face, "position", start + movement, duration)
+    tween.tween_property(b.face, "position", start - movement, duration)
+    tween.tween_property(a.face, "scale", Vector2.ONE, duration)
+    tween.tween_property(b.face, "scale", Vector2.ONE, duration)
     await tween.finished
-    a.face.position = start
-    b.face.position = start
+    a.reset_motion()
+    b.reset_motion()
 
 
-func _animate_pop(removed: Dictionary) -> void:
-    var tween := create_tween().set_parallel()
+func _animate_pop(removed: Dictionary, strong := false) -> void:
+    motion_phase = &"clear"
+    var tween := _motion_tween().set_parallel()
     for index in removed:
         var face: TextureRect = %Grid.get_child(index).face
         face.pivot_offset = face.size * 0.5
-        tween.tween_property(face, "scale", Vector2(0.28, 0.28), 0.19)
-        tween.tween_property(face, "modulate:a", 0.15, 0.19)
+        if not reduced_motion:
+            %Effects.burst(face.get_global_rect().get_center(), int(cells[index]), strong)
+            if cells[index] == 0:
+                %Effects.collect(face.get_global_rect().get_center(), %Goal.get_global_rect().get_center(), PIECES[0])
+            tween.tween_property(face, "scale", Vector2.ONE * (1.19 if strong else 1.12), 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+            tween.tween_property(face, "scale", Vector2.ONE * 0.10, 0.16).set_delay(0.08).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+        tween.tween_property(face, "modulate:a", 0.0, 0.08 if reduced_motion else 0.15).set_delay(0.0 if reduced_motion else 0.09)
     await tween.finished
 
 
 func _animate_fall(falls: Dictionary) -> void:
+    motion_phase = &"fall"
     if falls.is_empty():
         return
-    var tween := create_tween().set_parallel().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+    var tween := _motion_tween().set_parallel().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
     for index in falls:
         var tile = %Grid.get_child(index)
         var end: Vector2 = tile.face.position
-        tile.face.position.y -= falls[index] * (tile.size.y + 6.0)
-        tween.tween_property(tile.face, "position", end, 0.18 + 0.04 * falls[index])
+        if reduced_motion:
+            tile.face.modulate.a = 0.0
+            tween.tween_property(tile.face, "modulate:a", 1.0, 0.08)
+            continue
+        tile.face.position.y -= falls[index] * (tile.size.y + %Grid.get_theme_constant("v_separation"))
+        var duration := 0.12 + 0.065 * sqrt(float(falls[index]))
+        var delay := float(index % WIDTH) * 0.012
+        tween.tween_property(tile.face, "position", end, duration).set_delay(delay)
+        tween.tween_property(tile.face, "scale", Vector2(1.08, 0.91), 0.055).set_delay(delay + duration)
+        tween.tween_property(tile.face, "scale", Vector2.ONE, 0.095).set_delay(delay + duration + 0.055).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
     await tween.finished
 
 
 func _input(event: InputEvent) -> void:
     if not is_visible_in_tree() or resolving or finished:
+        return
+    if event is InputEventScreenDrag or event is InputEventMouseMotion:
+        if drag_start >= 0 and ((event is InputEventScreenDrag and event.index == finger) or (event is InputEventMouseMotion and finger == -2)):
+            _preview_drag(event.position)
+            get_viewport().set_input_as_handled()
         return
     var touch := event is InputEventScreenTouch
     if not touch and not (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT):
@@ -324,16 +388,123 @@ func _input(event: InputEvent) -> void:
         if index >= 0 and drag_start == -1:
             drag_start = index
             finger = pointer
+            drag_origin = event.position
+            drag_neighbor = -1
+            drag_distance = 0.0
+            gesture_moved = false
+            motion_phase = &"drag"
+            var tile = %Grid.get_child(index)
+            tile.set_held(true)
+            if not reduced_motion:
+                tile.face.scale = Vector2.ONE * 1.06
+            _feel(7)
             get_viewport().set_input_as_handled()
     elif pointer == finger and drag_start >= 0:
         var start := drag_start
+        var neighbor := drag_neighbor
+        var moved := gesture_moved
+        var distance := drag_distance
         drag_start = -1
         finger = -1
         get_viewport().set_input_as_handled()
-        if index >= 0 and (not touch or not event.canceled):
+        if index < 0 or (touch and event.canceled):
+            _reset_pointer()
+            return
+        if moved:
+            if neighbor >= 0 and distance >= %Grid.get_child(start).size.x * 0.23:
+                selected = start
+                _choose(neighbor)
+            else:
+                _reset_pointer()
+        else:
+            _reset_pointer()
             if start != index:
                 selected = start
             _choose(index)
+
+
+func _preview_drag(point: Vector2) -> void:
+    var delta := point - drag_origin
+    gesture_moved = gesture_moved or delta.length() > 6.0
+    if not gesture_moved:
+        return
+    var vertical := absf(delta.y) > absf(delta.x)
+    var direction := signi(int(delta.y if vertical else delta.x))
+    var neighbor := drag_start + direction * (WIDTH if vertical else 1)
+    if neighbor < 0 or neighbor >= cells.size() or (not vertical and _row(neighbor) != _row(drag_start)):
+        neighbor = -1
+    for tile in %Grid.get_children():
+        tile.reset_motion()
+    var tile = %Grid.get_child(drag_start)
+    tile.set_held(true)
+    var pitch: float = tile.size.y + 6 if vertical else tile.size.x + 6
+    drag_distance = minf(absf(delta.y if vertical else delta.x), pitch)
+    drag_neighbor = neighbor
+    var amount := minf(drag_distance, pitch * (0.95 if neighbor >= 0 else 0.12)) * direction
+    var movement := Vector2(0, amount) if vertical else Vector2(amount, 0)
+    if not reduced_motion:
+        tile.face.position = Vector2(5, 5) + movement
+        tile.face.scale = Vector2.ONE * 1.06
+        if neighbor >= 0:
+            var other = %Grid.get_child(neighbor)
+            other.face.position = Vector2(5, 5) - movement
+            other.face.scale = Vector2.ONE * 0.96
+
+
+func _reset_pointer() -> void:
+    drag_start = -1
+    drag_neighbor = -1
+    finger = -1
+    gesture_moved = false
+    for tile in %Grid.get_children():
+        tile.reset_motion()
+    if not resolving:
+        motion_phase = &"idle"
+
+
+func _motion_tween() -> Tween:
+    active_tween = create_tween()
+    if not is_visible_in_tree():
+        active_tween.pause()
+    return active_tween
+
+
+func _stop_motion() -> void:
+    motion_epoch += 1
+    if active_tween and active_tween.is_valid():
+        active_tween.kill()
+    resolving = false
+    _reset_pointer()
+    if is_instance_valid(%Effects):
+        %Effects.clear()
+
+
+func _resize_board() -> void:
+    fit_tile_board(%Board)
+    if resolving and not settled_record.is_empty():
+        restore(settled_record)
+    elif drag_start >= 0:
+        _reset_pointer()
+
+
+func _sync_activity() -> void:
+    if not is_visible_in_tree():
+        if not resolving:
+            _reset_pointer()
+        if active_tween and active_tween.is_valid():
+            active_tween.pause()
+    elif active_tween and active_tween.is_valid():
+        active_tween.play()
+
+
+func _notification(what: int) -> void:
+    if is_node_ready() and what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_PAUSED] and not resolving:
+        _reset_pointer()
+
+
+func _feel(milliseconds: int) -> void:
+    if haptics_enabled and not reduced_motion and OS.has_feature("mobile"):
+        Input.vibrate_handheld(milliseconds)
 
 
 func _cell_at(point: Vector2) -> int:

@@ -415,3 +415,73 @@
     transform: rotate(9deg) translateY(-4px);
   }
 }
+
+/* Match-3: a small wooden tray, with fruit moving independently of its pockets. */
+#match {
+  --match-ink: #4b3020;
+  --match-cream: #fff1cf;
+  background: radial-gradient(ellipse at 50% 20%, #a3754d55, transparent 65%),
+    repeating-linear-gradient(3deg, #4b352800 0 48px, #241b1617 49px 51px, #4b352800 52px 110px), #4b3528;
+  color: var(--match-cream);
+}
+#match .gamepad { width: min(100%, 440px); gap: 16px; padding: clamp(16px, 4vh, 36px) 8px 24px; }
+#match .gameline { gap: 8px; padding-inline: 6px; }
+#match .gameline .backbtn { flex: 0 0 44px; padding: 10px; box-shadow: 0 3px 0 #2e211a; }
+#match #match-title { margin: 0; font: 500 clamp(23px, 6.2vw, 29px)/1.15 Georgia, serif; white-space: nowrap; }
+#match #match-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+#match #matchMoves { flex: none; padding: 8px 10px; border-radius: 10px; font-size: 13px; background: #35271f; color: #fff1cf; box-shadow: inset 0 1px 2px #21160f80; }
+#match .match-goal { display: grid; justify-items: center; gap: 8px; padding: 9px 12px 4px; }
+#match #matchGoal { font-size: 15px; font-weight: 650; }
+#match #matchGoal::before { width: 26px; height: 26px; filter: drop-shadow(0 2px 1px #24181180); }
+#match #matchProgress { width: min(200px, 66%); height: 7px; border: 0; border-radius: 8px; background: #2d211b; overflow: hidden; appearance: none; }
+#match #matchProgress::-webkit-progress-bar { background: #2d211b; border-radius: 8px; }
+#match #matchProgress::-webkit-progress-value { background: #b8cd86; border-radius: 8px; }
+#match #matchProgress::-moz-progress-bar { background: #b8cd86; border-radius: 8px; }
+#match .match-tray { position: relative; width: 100%; margin-block: 8px 2px; }
+#match #matchBoard {
+  position: relative; isolation: isolate; gap: 3px; padding: 7px;
+  border: 2px solid #d1a16c; border-radius: 18px; overflow: hidden;
+  background: repeating-linear-gradient(0deg, #b47c4700 0 34px, #70431c16 35px 36px), #b47c47;
+  box-shadow: inset 0 2px 0 #ffe1a987, inset 0 -2px 0 #79502e, 0 5px 0 #2d2018, 0 12px 24px #21170d40;
+  user-select: none; -webkit-user-select: none; touch-action: none;
+}
+#match .piece {
+  min-width: 0; min-height: 44px; padding: 0; border: 0; border-radius: 9px; overflow: visible;
+  background: linear-gradient(145deg, #744724, #986239);
+  box-shadow: inset 0 2px 3px #4b2b1b80, inset 0 -1px 0 #e8b77b9c;
+  -webkit-tap-highlight-color: transparent; cursor: pointer;
+}
+#match .piece img { width: 100%; height: 100%; padding: 5%; object-fit: contain; border-radius: inherit; filter: drop-shadow(0 2px 1px #45220c65); will-change: auto; }
+#match .piece:is(.swapping,.dragging,.swap-target) { z-index: 3; }
+#match .piece:is(.chosen,.dragging,.swap-target) { outline: 2px solid #ffe8a4; outline-offset: -2px; background: #ad7947; }
+#match .piece.chosen::after { content: ''; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #ffe8a4; bottom: 3px; left: calc(50% - 2.5px); }
+#match .piece.pop { animation: none; }
+#match .piece:is(.match-four,.match-five)::after {
+  content: ''; position: absolute; inset: 3px; border: 2px solid #ffe7a3; border-radius: 7px;
+  pointer-events: none; box-shadow: inset 0 0 12px #ffe7a355, 0 0 8px #ffe7a333;
+}
+#match .piece.match-five::after { border-color: #daf3b1; box-shadow: inset 0 0 14px #d1f7a677, 0 0 10px #d1f7a644; }
+#match .piece:focus-visible { outline: 3px solid #fff6d4; outline-offset: -4px; box-shadow: inset 0 0 0 5px #3d572f; z-index: 4; }
+#match #matchCombo { position: absolute; z-index: 5; top: -15px; left: 50%; transform: translateX(-50%); padding: 7px 15px; border: 1px solid #e6c47d; border-radius: 20px; background: #fff0c4; color: #614123; box-shadow: 0 3px 8px #2d1b1450; font: 750 15px/1.2 system-ui; white-space: nowrap; pointer-events: none; }
+#match #matchCombo[data-level='five'] { background: #e7f1cc; border-color: #abc57b; color: #3b5527; }
+#match #matchHint { min-height: 42px; margin: 0; padding: 4px 10px; text-align: center; font-size: 14px; line-height: 1.5; color: #f5dfbc; }
+#match:has(#matchEnd:not([hidden])) #matchHint { color: #493722; background: #f1e2c4; }
+#match #matchEnd { gap: 10px; padding-inline: 8px; }
+#match #matchEnd button { flex: 1; min-height: 48px; }
+@media (max-width: 340px) {
+  #match #matchBoard { padding: 5px; gap: 2px; border-radius: 14px; }
+  #match .gamepad { gap: 12px; }
+  #match #matchMoves { padding-inline: 8px; font-size: 12px; }
+}
+@media (max-height: 610px) {
+  #match .gamepad { padding-top: 12px; gap: 9px; }
+  #match .match-goal { padding-top: 0; gap: 5px; }
+  #match .match-tray { margin-top: 4px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #match #matchProgress::-webkit-progress-value { transition: width 180ms ease; }
+  #match .piece:is(.match-four,.match-five)::after { animation: match-glow 340ms ease-out both; }
+  #match #matchCombo:not([hidden]) { animation: match-combo-in 200ms ease-out both; }
+  @keyframes match-glow { from { opacity: 0; transform: scale(.85); } 40% { opacity: 1; } to { opacity: 0; transform: scale(1.1); } }
+  @keyframes match-combo-in { from { opacity: 0; translate: 0 5px; } to { opacity: 1; translate: 0 0; } }
+}

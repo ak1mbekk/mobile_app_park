@@ -1,10 +1,12 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://Scenes/Home/KitchenSwallow.tscn" id="Swallow"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/CareRoomShell.tscn" id="Room"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Furniture/Bench.tscn" id="Bench"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Textiles/FirstRug.tscn" id="SeatMat"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/KitchenDining.tscn" id="Dining"]
 [ext_resource type="PackedScene" path="res://Art/TrailHouse/Care/food-bowl.glb" id="Bowl"]
+[ext_resource type="PackedScene" path="res://Scenes/Home/KitchenFood.tscn" id="Food"]
 [ext_resource type="PackedScene" path="res://Art/TrailHouse/Care/fruit-dish.glb" id="Fruit"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/BathRoomShell.tscn" id="Bath"]
 [ext_resource type="PackedScene" path="res://Scenes/Home/KitchenFixtures.tscn" id="Kitchen"]
@@ -42,7 +44,9 @@ scale = Vector3(0.69, 1, 0.69)
 [node name="Сервировка" parent="Кухня" instance=ExtResource("Dining")]
 
 [node name="Яблоко у миски" type="Marker3D" parent="Кухня"]
-position = Vector3(0.12, 0.006, 1.365)
+position = Vector3(-0.112, 0.062, 1.045)
+
+[node name="Запасы еды" parent="Кухня" instance=ExtResource("Food")]
 
 [node name="Место для Ричи" type="Marker3D" parent="Кухня"]
 position = Vector3(0.245, 0.014, 0.47)
@@ -51,6 +55,9 @@ rotation = Vector3(0, -0.66, 0)
 [node name="Камера комнаты" type="Marker3D" parent="Кухня"]
 position = Vector3(0.06, 0.79, 3.03)
 rotation = Vector3(-0.184, 0, 0)
+
+[node name="Ласточка за окном" parent="Кухня" instance=ExtResource("Swallow")]
+position = Vector3(-0.45, 0.67, -0.50)
 
 [node name="Ванная" type="Node3D" parent="."]
 position = Vector3(2.46, 0, 0)

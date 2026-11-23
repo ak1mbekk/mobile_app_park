@@ -118,8 +118,31 @@
 #snack-piece.fruit-cutout{background:none;box-shadow:none;overflow:visible}
 #snack-piece img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
 #snack-piece.fruit-cutout img{filter:drop-shadow(1px 4px 3px #38271d99)}
+#home.in-kitchen #snack-piece{left:calc(50% - .10 * var(--kitchen-art-width));top:calc(50% + .292 * var(--kitchen-art-height));width:max(44px,.095 * var(--kitchen-art-width));z-index:5}
+#kitchen-bowl{position:absolute;left:calc(50% - .10 * var(--kitchen-art-width));top:calc(50% + .303 * var(--kitchen-art-height));width:calc(.205 * var(--kitchen-art-width));height:calc(.11 * var(--kitchen-art-width));transform:translate(-50%,-50%);pointer-events:none;z-index:4}
+#kitchen-bowl img{position:absolute;width:43%;height:auto;filter:drop-shadow(0 2px 2px #38271d66)}
+#kitchen-bowl img:nth-child(1){left:0;top:4%;rotate:-12deg}
+#kitchen-bowl img:nth-child(2){right:0;top:8%;rotate:14deg}
+#kitchen-bowl img:nth-child(3){left:28%;top:-8%;width:37%}
+#home.in-kitchen .kitchen-actions{position:static;background:none;padding:0}
+#aki-pantry.kitchen-foods{position:absolute;right:12px;bottom:14px;z-index:8;display:flex;gap:8px}
+#aki-pantry.kitchen-foods button{position:relative;width:56px;height:68px;min-height:44px;border:1px solid #bca17a80;border-radius:13px;background:#fbefcfed;padding:5px;color:#3f5030;box-shadow:0 2px 4px #33241330}
+#aki-pantry.kitchen-foods img{display:block;width:44px;height:44px;object-fit:contain;pointer-events:none}
+#aki-pantry.kitchen-foods [data-snack=apple]{display:grid;place-items:center}
+#aki-pantry.kitchen-foods .food-price{position:absolute;bottom:3px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:3px;font:700 13px/1 system-ui}
+#aki-pantry.kitchen-foods .food-price .ic{width:16px;height:16px}
+#aki-pantry.kitchen-foods .food-stock{position:absolute;bottom:3px;left:50%;translate:-50% 0;padding:2px 7px;border-radius:8px;background:#365c3c;color:#fff8e4;font:700 12px/1 system-ui}
+#aki-pantry.kitchen-foods [hidden]{display:none!important}
+#aki-pantry.kitchen-foods button:disabled{opacity:.55}
+#aki-pantry.kitchen-foods button:focus-visible{outline:3px solid #28472e;outline-offset:2px}
+#kitchen-another{position:absolute;left:calc(50% - .10 * var(--kitchen-art-width));top:calc(50% + .292 * var(--kitchen-art-height));width:max(44px,.095 * var(--kitchen-art-width));aspect-ratio:1;transform:translate(-50%,-50%);z-index:5;background:none;padding:0;border:0}
+#kitchen-another img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(1px 4px 3px #38271d99)}
 #home{--veranda-scene:url("assets/veranda-room.webp");--scene:var(--veranda-scene);--sleep-scene:linear-gradient(#101c38a8,#18120391);background-color:#c9d4c8}
 #home::before{background-image:var(--veranda-scene);background-size:cover}
+.room-window-life{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
+#home > .room-window-life{z-index:-1}
+#wash > .room-window-life{z-index:0}
+@media (prefers-reduced-motion:reduce){.room-window-life{display:none}}
 #home.night::before{filter:none}
 #night-room{position:absolute;inset:0;background:var(--sleep-scene) center/100% 100% no-repeat;pointer-events:none;opacity:0;transition:opacity .7s ease}
 #home.night #night-room{opacity:1}
@@ -204,6 +227,7 @@
 @keyframes sleep-wake{35%{transform:translateY(-5px) scale(1.015,1.04)}70%{transform:translateY(1px) scale(1.02,.99)}100%{transform:none}}
 @media(prefers-reduced-motion:reduce){#home.night #night-room,#home.sleep-waking #pet-figure,#sleep-signals span{animation:none}#sleep-signals span{opacity:.7;transform:none}#sleep-signals span:nth-child(2){left:15px;bottom:23px}#sleep-signals span:nth-child(3){left:32px;bottom:48px}}
 #room-decor{position:absolute;inset:0;pointer-events:none}
+#room-decor [data-furnishing=cushion]{right:6%;bottom:23%;width:22%;transform:rotate(-7deg) scaleY(.78);transform-origin:center bottom}
 #room-decor img{position:absolute;filter:drop-shadow(0 3px 2px #38271d66)}
 #room-decor [data-furnishing=bed]{left:8%;bottom:25%;width:34%}
 #home:not(.night) .object{width:auto;height:auto;padding:0 7px;border-radius:8px}
@@ -398,7 +422,7 @@
 /* The camera for these Godot stills puts the visible fur between the ears and the waterline. */
 #wash.washing #soap-area { left:36%; top:39%; width:25%; height:20%; }
 #wash.washing #soap-area .foam { inset:55% 8% 1%; }
-#bath-sponge { position:absolute; left:-82%; top:57%; width:58%; min-width:44px; height:auto; cursor:grab; touch-action:none; user-select:none; -webkit-user-drag:none; z-index:5; filter:drop-shadow(0 4px 3px #263b3555); }
+#bath-sponge { position:absolute; left:-94%; bottom:-95%; width:58%; min-width:44px; height:auto; cursor:grab; touch-action:none; user-select:none; -webkit-user-drag:none; z-index:5; filter:drop-shadow(0 4px 3px #263b3555); }
 #soap-area.scrubbing #bath-sponge { cursor:grabbing; transform:rotate(-12deg); filter:drop-shadow(0 6px 4px #263b3566); }
 #soap-area:focus-visible { outline:2px solid #d6e7bf; outline-offset:4px; }
 #soap-area:focus-visible #bath-sponge { filter:drop-shadow(0 0 3px #fff2b9); }
@@ -600,3 +624,8 @@
 #home.current:not(.night, .in-kitchen) #aki-heart {
   left: 49%;
 }
+/* The transparent settee render and its sleep target share the same box. */
+#home:not(.night,.in-kitchen) #room-decor [data-furnishing=settee]{left:1%;bottom:32%;top:auto;width:46%;clip-path:none;filter:drop-shadow(0 3px 2px #38271d66)}
+#home.furnished-bed:not(.night,.in-kitchen) #aki-sleep{left:1%;bottom:32%;top:auto;width:46%;height:auto;aspect-ratio:600/440;padding:0;z-index:2;border-radius:18%}
+#home.night[data-sleep-bed=settee][data-age] #night-room{background-image:var(--settee-sleep);background-size:100% 100%;background-position:center}
+#home.night[data-sleep-bed=settee] #sleep-signals{left:57%;top:39%}

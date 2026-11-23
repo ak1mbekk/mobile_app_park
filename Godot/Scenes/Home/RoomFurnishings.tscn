@@ -1,12 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Texture2D" path="res://Art/Textures/WindowLinen.png" id="Weave"]
-
-[sub_resource type="StandardMaterial3D" id="Fabric"]
-albedo_color = Color(0.73, 0.38, 0.21, 1)
-albedo_texture = ExtResource("Weave")
-uv1_scale = Vector3(3, 3, 1)
-roughness = 0.91
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Furniture/embroidered-cushion.glb" id="CushionModel"]
 
 [sub_resource type="StandardMaterial3D" id="Brass"]
 albedo_color = Color(0.56, 0.39, 0.23, 1)
@@ -18,11 +12,6 @@ albedo_color = Color(0.98, 0.73, 0.42, 1)
 emission_enabled = true
 emission = Color(0.88, 0.53, 0.22, 1)
 emission_energy_multiplier = 0.31
-
-[sub_resource type="SphereMesh" id="Cushion"]
-material = SubResource("Fabric")
-radius = 0.15
-height = 0.30
 
 [sub_resource type="CylinderMesh" id="LanternFrame"]
 material = SubResource("Brass")
@@ -47,12 +36,10 @@ ring_segments = 8
 
 [node name="Обстановка" type="Node3D"]
 
-[node name="cushion" type="MeshInstance3D" parent="."]
+[node name="cushion" parent="." instance=ExtResource("CushionModel")]
 visible = false
-position = Vector3(0.41, 0.053, 0.83)
-rotation = Vector3(0, -0.64, 0.07)
-scale = Vector3(0.91, 0.33, 0.67)
-mesh = SubResource("Cushion")
+position = Vector3(0.41, 0.06, 0.83)
+rotation = Vector3(0.36, -0.19, -0.04)
 
 [node name="lantern" type="Node3D" parent="."]
 visible = false

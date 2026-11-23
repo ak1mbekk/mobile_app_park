@@ -1,14 +1,15 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '42';
+const version = prefix + '43';
 const base = new URL(self.registration.scope);
 const shell = [
   'guide-shell.css','guide-shell.js','catalog-editorial.css','richi-hub.js',
   'assets/park-richi-welcome.webp','assets/richi-forest-map.webp','assets/richi-trail-banner.webp',
   'index.html','base.css','show.css','visitor.css','park-and-chest.css','vendor/park-menu/menu.css','vendor/park-menu/menu.js','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
+  'assets/nav-veranda.svg','assets/nav-kitchen.svg','assets/nav-bath.svg','assets/shop-cushion.webp',
   'places.js','routing.js','catalog.js','map-projection.js','park-map.js','park-schedule.js','feedings.js',
   'assets/park-survey.webp','map-boundaries.json','map-boundary-geometry.js',
-  'guide-offline.js','family.js','meeting.js','home.js','show.js','match.js','pet-reactions.js',
+  'guide-offline.js','family.js','meeting.js','home.js','show.js','match.js','pet-reactions.js','room-ambience.js',
   'assets/avatar-raccoon.webp','assets/avatar-bison.webp','assets/park-wordmark.webp','assets/woven-diamonds.svg','assets/linen-weave.svg','assets/richi-reward.webp',
   'assets/first-veranda.webp','assets/fruit.webp','assets/named-veranda.webp','assets/threshold-morning.webp',
   'assets/starter-room.webp','assets/veranda-room.webp','assets/kitchen-room.webp','assets/kitchen-hungry.webp','assets/wash-room.webp',
@@ -19,7 +20,8 @@ const shell = [
   'assets/harvest-basket.webp','assets/orchard.webp','assets/pine-cone.webp','assets/richi-orchard-catcher.webp',
   'mini-games.css','assets/woodland-shop.svg','assets/bath-jug.svg','assets/bath-sponge.webp','assets/richi-profile.webp',
   ...['bison','lemur','raccoon','capybara','tamarin','caracal'].map(id=>'assets/game-toy-'+id+'.webp'),
-  'assets/shop-chest.webp','assets/shop-bed.webp','assets/room-settee.webp','assets/rope-ball.webp',
+  'assets/shop-chest.webp','assets/shop-bed.webp','assets/room-settee.webp','assets/room-settee-cushion.webp','assets/rope-ball.webp',
+  ...['kit','young','adult'].flatMap(age=>['','-cushion'].map(pillow=>'assets/room-settee-sleep-'+age+'-bare'+pillow+'.webp')),
   ...[0,1,2,3,4].map(id=>'assets/piece-'+id+'.webp'),
   'assets/shop-wallpaper.webp','assets/shop-kitchen-cabinet.webp','assets/shop-bath-tile.webp',
   'assets/sleep-bed-curled.webp','assets/sleep-settee-curled.webp',
@@ -80,7 +82,8 @@ self.addEventListener('fetch',event=>{
     const key=page?new URL('index.html',base):req;
     // Selected appearance layers are immutable within this worker version.
     // Reuse only layers the player has actually viewed; never prefetch the collection.
-    if(path.startsWith('assets/fallback-wardrobe/')){
+    const appearance = path.startsWith('assets/fallback-wardrobe/') || path.startsWith('assets/room-settee-sleep-');
+    if(appearance){
       const selected=await cache.match(key);
       if(selected)return selected;
     }
@@ -94,7 +97,7 @@ self.addEventListener('fetch',event=>{
         if(await validBoundariesResponse(response))await cache.put(req,response.clone());
         else return (await cache.match(key)) || response;
       }
-      if(response.ok && (path.startsWith('assets/fallback-wardrobe/') || path.startsWith('assets/pet-reactions/')) &&
+      if(response.ok && (appearance || path.startsWith('assets/pet-reactions/')) &&
          response.headers.get('Content-Type')?.startsWith('image/webp')){
         await cache.put(req,response.clone());
       }
@@ -103,6 +106,13 @@ self.addEventListener('fetch',event=>{
     } catch (error) {
       const saved=await cache.match(key);
       if (saved) return saved;
+      // Before a fitted portrait has been viewed online, retain the same bed,
+      // age and purchased cushion using the matching offline base portrait.
+      const basePortrait=path.replace(/^(assets\/room-settee-sleep-(?:kit|young|adult)-)(?:cap|ranger|crown)(-cushion)?\.webp$/, '$1bare$2.webp');
+      if(basePortrait!==path){
+        const fallback=await cache.match(new URL(basePortrait,base));
+        if(fallback)return fallback;
+      }
       throw error;
     }
   })());

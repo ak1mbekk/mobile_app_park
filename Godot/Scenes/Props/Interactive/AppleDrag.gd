@@ -21,6 +21,8 @@ var bite_stage := 0
 var settling := false
 var settle_from: Vector3
 var settle_time := 0.0
+var food_kind := "apple"
+@onready var pear_visual: Node3D = get_node_or_null("PearVisual")
 @onready var initial_scale := scale
 @onready var whole_apple := mesh
 
@@ -111,8 +113,9 @@ func _process(delta: float) -> void:
         var stage := int(phase >= 0.45) + int(phase >= 0.59)
         if stage != bite_stage:
             bite_stage = stage
-            mesh = first_bite if stage == 1 else second_bite
-            _show_whole_apple_visual(false)
+            if food_kind == "apple":
+                mesh = first_bite if stage == 1 else second_bite
+                _show_whole_apple_visual(false)
         var remaining := 1.0 - 0.16 * smoothstep(0.45, 0.49, phase) - 0.22 * smoothstep(0.59, 0.63, phase)
         scale = initial_scale * remaining
         global_position = palm_center() - center_offset()
@@ -141,11 +144,18 @@ func restore_eaten() -> void:
     hide()
 
 func _show_whole_apple_visual(visible_whole: bool) -> void:
+    if pear_visual:
+        pear_visual.visible = food_kind == "pear"
     if whole_apple_visual == null:
         return
-    whole_apple_visual.visible = visible_whole
-    layers = 0 if visible_whole else 1
-    cast_shadow = SHADOW_CASTING_SETTING_OFF if visible_whole else SHADOW_CASTING_SETTING_ON
+    whole_apple_visual.visible = visible_whole and food_kind == "apple"
+    layers = 0 if visible_whole or food_kind == "pear" else 1
+    cast_shadow = SHADOW_CASTING_SETTING_OFF if layers == 0 else SHADOW_CASTING_SETTING_ON
+
+func set_food_kind(kind: String) -> void:
+    food_kind = "pear" if kind == "pear" else "apple"
+    mesh = whole_apple
+    _show_whole_apple_visual(true)
 
 func reset_apple() -> void:
     pointer = NO_POINTER

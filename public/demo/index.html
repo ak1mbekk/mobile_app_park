@@ -83,13 +83,13 @@
   <header class="care-room-heading">
     <h2 id="kitchen-title" tabindex="-1">Кухня</h2>
   </header>
+  <div id="kitchen-bowl" aria-hidden="true"><img loading="lazy" src="assets/fruit.webp" alt=""><img loading="lazy" src="assets/fruit.webp" alt=""><img loading="lazy" src="assets/fruit.webp" alt=""><span></span></div>
   <button id="snack-piece" type="button" aria-label="Поднести яблоко к еноту" hidden><img loading="lazy" src="assets/fruit.webp" draggable="false" alt=""></button>
   <div class="kitchen-actions">
     <p id="kitchen-hint" aria-live="polite">Перетащи яблоко к лапам</p>
-    <button id="kitchen-another" type="button" hidden>Взять яблоко</button>
-    <button id="kitchen-pantry-toggle" type="button" aria-controls="aki-pantry" aria-expanded="false">Другие угощения</button>
   </div>
-  <div class="sheet" id="aki-pantry" hidden><div class="sheet-header"><h2>Чем угостить?</h2><button class="iconbtn" type="button" id="close-pantry" aria-label="Закрыть">×</button></div><div class="foodlist"><button type="button" id="offer-apple" hidden>Открыть 3D</button><button type="button" data-snack="грушей" data-cost="0">Груша<small>Бесплатно</small></button><button type="button" data-snack="ягодами" data-cost="2">Ягоды<small>2 листочка</small></button></div></div>
+  <button id="kitchen-another" type="button" aria-label="Взять бесплатное яблоко из миски" hidden><img loading="lazy" src="assets/fruit.webp" alt=""></button>
+  <div id="aki-pantry" class="kitchen-foods" role="group" aria-label="Выбрать угощение"><button type="button" id="offer-apple" hidden>Открыть 3D</button><button type="button" data-snack="apple" aria-label="Взять бесплатное яблоко"><img loading="lazy" src="assets/fruit.webp" alt=""></button><button type="button" data-snack="pear" aria-label="Купить грушу за 1 лист. Немного сытнее яблока."><img loading="lazy" src="assets/piece-1.webp" alt=""><span class="food-price" aria-hidden="true">1<svg class="ic"><use href="#aki-leaf"/></svg></span><span class="food-stock" aria-hidden="true" hidden></span></button></div>
 </section>
 </section>
 <section id="game" class="screen felt" aria-labelledby="pairs-title">
@@ -271,8 +271,10 @@
 <button type="button" data-go="match" class="toy-match"><span class="mini-board" aria-hidden="true"><img loading="lazy" src="assets/piece-1.webp" alt=""><img loading="lazy" src="assets/piece-4.webp" alt=""><img loading="lazy" src="assets/piece-2.webp" alt=""><img class="same-fruit" loading="lazy" src="assets/piece-0.webp" alt=""><img class="same-fruit" loading="lazy" src="assets/piece-0.webp" alt=""><img class="same-fruit" loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-2.webp" alt=""><img loading="lazy" src="assets/piece-3.webp" alt=""><img loading="lazy" src="assets/piece-1.webp" alt=""></span><span class="toy-description"><strong>Три в ряд</strong><small>Собери 9 ягод малины</small></span></button>
 <button type="button" data-go="catch" class="toy-orchard"><span class="apple-branch" aria-hidden="true"><span class="orchard-preview-basket"></span><img class="orchard-preview-apple" loading="lazy" src="assets/fruit.webp" alt=""><img class="orchard-preview-cone" loading="lazy" src="assets/pine-cone.webp" alt=""></span><span class="toy-description"><strong>Лови яблоки</strong><small>Пропускай шишки</small></span></button></div>
 <button id="buy-ball" class="ball-shop"><img loading="lazy" src="assets/rope-ball.webp" alt=""><span>Плетёный мяч<small id="ball-price"></small></span></button><p id="toy-notice" role="status"></p></div></section>
-<section id="match" class="screen toy-chest" aria-labelledby="match-title"><div class="gamepad"><div class="gameline"><button class="backbtn" type="button" data-go="chest" aria-label="К сундуку"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><span id="matchGoal"></span><span id="matchMoves"></span></div><h1 class="sr" id="match-title">Три в ряд</h1>
-<div id="matchBoard" aria-label="Поле с плодами"></div><p id="matchHint" class="gameHelp" aria-live="polite"></p>
+<section id="match" class="screen toy-chest" aria-labelledby="match-title"><div class="gamepad"><div class="gameline"><button class="backbtn" type="button" data-go="chest" aria-label="К сундуку"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="match-title">Три в ряд</h1><span id="matchMoves"></span></div>
+<div class="match-goal"><span id="matchGoal"></span><progress id="matchProgress" max="9" value="0" aria-label="Собранная малина"></progress></div>
+<div class="match-tray"><div id="matchBoard" role="group" aria-label="Поле с плодами, 6 рядов по 6" aria-describedby="matchKeys" aria-busy="false" data-phase="idle"></div><span id="matchCombo" aria-hidden="true" hidden></span></div><p id="matchHint" class="gameHelp" aria-live="polite" aria-atomic="true"></p>
+<p id="matchKeys" class="sr">Сдвинь плод к соседнему или нажми на два соседних плода. Клавиатура: стрелки перемещают фокус, Enter или пробел выбирает плод. Escape снимает выбор.</p>
 <div id="matchEnd" class="game-end" hidden>
   <button type="button" class="primary" id="matchAgain"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 1 1 2 7M4 11V5m0 6h6"/></svg>Ещё раз</button>
   <button type="button" class="secondary" data-go="chest"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7h18"/><rect x="10" y="9" width="4" height="5" rx="1"/></svg>К сундуку</button>
@@ -301,10 +303,11 @@
   </details>
 </dialog>
 <script src="guide-shell.js"></script>
+<script src="room-ambience.js" defer></script>
 <nav class="room-switcher" aria-label="Комнаты домика" hidden>
-  <button id="kitchen-back" type="button" data-go="home">Веранда</button>
-  <button id="aki-feed" type="button" data-go="home/kitchen">Кухня</button>
-  <button type="button" data-go="wash">Ванная</button>
+  <button id="kitchen-back" type="button" data-go="home" aria-label="Веранда" title="Веранда"><img src="assets/nav-veranda.svg" width="38" height="38" alt=""></button>
+  <button id="aki-feed" type="button" data-go="home/kitchen" aria-label="Кухня" title="Кухня"><img src="assets/nav-kitchen.svg" width="38" height="38" alt=""></button>
+  <button type="button" data-go="wash" aria-label="Ванная" title="Ванная"><img src="assets/nav-bath.svg" width="38" height="38" alt=""></button>
 </nav>
 <dialog id="profileDialog"><form method="dialog"><header><h2>Профиль</h2><button aria-label="Закрыть">×</button></header><div class="profile-line">Питомец на устройстве<strong id="pr-name">Ричи</strong></div></form>
 <section id="family-account" aria-labelledby="family-title"><h3 id="family-title">Семейный аккаунт</h3>

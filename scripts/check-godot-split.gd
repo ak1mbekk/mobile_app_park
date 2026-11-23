@@ -51,6 +51,8 @@ func check() -> void:
     if not expect(home != null, "Home unavailable after mount"):
         return
     scene = home.instantiate()
+    if not expect(scene.has_method("_go_to_room"), "Home script dependencies missing from mounted pack"):
+        return
     root.add_child(scene)
     await process_frame
     await process_frame
@@ -59,6 +61,8 @@ func check() -> void:
         if not expect(packed != null, "Missing game " + game):
             return
         var instance := packed.instantiate()
+        if not expect(instance.get_script() != null and instance.get_script().can_instantiate(), "Game script dependencies missing for " + game):
+            return
         instance.free()
     for bed: String in ["WillowBed", "OakBed", "BlueDaybed", "Settee"]:
         var packed := load("res://Scenes/Props/Furniture/" + bed + ".tscn") as PackedScene

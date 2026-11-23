@@ -46,7 +46,8 @@ const folder = 'assets/fallback-wardrobe/';
         await image.decode();
       });
       const src = await layer.evaluate(el => getComputedStyle(el).backgroundImage);
-      assert.ok(src.includes(folder + name + '.webp'));
+      const expected=name.startsWith('sleep-settee-')?'assets/room-settee-'+name.replace('sleep-settee-','sleep-'):folder+name;
+      assert.ok(src.includes(expected+'.webp'));
       assert.ok(await page.locator('#home.night').isVisible());
       assert.equal(await page.locator('#pet-figure').evaluate(el => getComputedStyle(el).opacity), '0');
     }
@@ -165,9 +166,9 @@ async function checkOffline(browser, mobile) {
   await page.locator('#home.night').waitFor();
   await page.evaluate(async () => {
     const background = getComputedStyle(document.getElementById('night-room')).backgroundImage;
-    if (!background.includes('sleep-settee-curled.webp')) throw new Error('The basic sleep image is missing');
+    if (!background.includes('room-settee-sleep-adult-crown.webp')) throw new Error('The current settee sleep image is missing');
     const image = new Image();
-    image.src = 'assets/sleep-settee-curled.webp';
+    image.src = 'assets/room-settee-sleep-adult-crown.webp';
     await image.decode();
   });
   await page.context().close();

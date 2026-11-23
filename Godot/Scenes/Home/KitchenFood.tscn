@@ -1,0 +1,156 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scenes/Home/KitchenFood.gd" id="Script"]
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Interactive/drag-apple.glb" id="Apple"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/fruit.webp" id="AppleIcon"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/piece-1.webp" id="PearIcon"]
+[ext_resource type="Texture2D" path="res://Scenes/Home/Art/food-leaf.svg" id="Leaf"]
+[ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="TouchButton"]
+
+[sub_resource type="StyleBoxFlat" id="Face"]
+bg_color = Color(0.956863, 0.901961, 0.788235, 1)
+content_margin_left = 8.0
+content_margin_right = 8.0
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+
+[sub_resource type="StyleBoxFlat" id="Pressed"]
+bg_color = Color(0.85098, 0.764706, 0.611765, 1)
+content_margin_left = 8.0
+content_margin_right = 8.0
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+
+[sub_resource type="Theme" id="FoodTheme"]
+Button/font_sizes/font_size = 19
+Button/colors/font_color = Color(0.286275, 0.215686, 0.137255, 1)
+Button/colors/font_hover_color = Color(0.286275, 0.215686, 0.137255, 1)
+Button/colors/font_pressed_color = Color(0.286275, 0.215686, 0.137255, 1)
+Button/styles/normal = SubResource("Face")
+Button/styles/hover = SubResource("Face")
+Button/styles/pressed = SubResource("Pressed")
+
+[sub_resource type="StyleBoxFlat" id="StockBadge"]
+bg_color = Color(0.211765, 0.360784, 0.235294, 1)
+content_margin_left = 8.0
+content_margin_right = 8.0
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="Запасы еды" type="Node3D"]
+script = ExtResource("Script")
+
+[node name="BowlFruit" type="Node3D" parent="."]
+position = Vector3(-0.112, 0.062, 1.045)
+
+[node name="AppleLeft" parent="BowlFruit" instance=ExtResource("Apple")]
+position = Vector3(-0.038, -0.008, 0.012)
+scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="AppleRight" parent="BowlFruit" instance=ExtResource("Apple")]
+position = Vector3(0.038, -0.006, 0.009)
+scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="AppleBack" parent="BowlFruit" instance=ExtResource("Apple")]
+position = Vector3(0.004, 0.002, -0.033)
+scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="Interface" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="Choice" type="HBoxContainer" parent="Interface"]
+visible = false
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -184.0
+offset_top = -198.0
+offset_right = -12.0
+offset_bottom = -102.0
+grow_horizontal = 0
+grow_vertical = 0
+theme = SubResource("FoodTheme")
+theme_override_constants/separation = 8
+
+[node name="Apple" type="Button" parent="Interface/Choice"]
+script = ExtResource("TouchButton")
+custom_minimum_size = Vector2(82, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+accessibility_name = "Взять бесплатное яблоко"
+
+[node name="Fruit" type="TextureRect" parent="Interface/Choice/Apple"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 14.0
+offset_right = 70.0
+offset_bottom = 76.0
+mouse_filter = 2
+texture = ExtResource("AppleIcon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Pear" type="Button" parent="Interface/Choice"]
+script = ExtResource("TouchButton")
+custom_minimum_size = Vector2(82, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+accessibility_name = "Купить грушу за 1 лист. Немного сытнее яблока."
+
+[node name="Fruit" type="TextureRect" parent="Interface/Choice/Pear"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 5.0
+offset_right = 70.0
+offset_bottom = 66.0
+mouse_filter = 2
+texture = ExtResource("PearIcon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Price" type="HBoxContainer" parent="Interface/Choice/Pear"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 67.0
+offset_right = 63.0
+offset_bottom = 91.0
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Amount" type="Label" parent="Interface/Choice/Pear/Price"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.211765, 0.360784, 0.235294, 1)
+theme_override_font_sizes/font_size = 18
+text = "1"
+
+[node name="Leaf" type="TextureRect" parent="Interface/Choice/Pear/Price"]
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("Leaf")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Stock" type="Label" parent="Interface/Choice/Pear"]
+visible = false
+layout_mode = 0
+offset_left = 19.0
+offset_top = 69.0
+offset_right = 64.0
+offset_bottom = 91.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.972549, 0.894118, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("StockBadge")
+text = "×1"
+horizontal_alignment = 1

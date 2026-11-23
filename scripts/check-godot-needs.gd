@@ -112,7 +112,8 @@ func _check_needs() -> void:
         _touch(right, true)
         await create_timer(0.25).timeout
         print("Touch at ", right, ": eyes ", actor.gaze.angles, ", head ", actor.gaze.head_angles, ", tracking ", actor.gaze.finger)
-        _expect(actor.gaze.angles.x > 4.5 and actor.gaze.head_angles.x > 0.1, "Touch overrides hungry idle gaze and steers the head")
+        # Angular amplitude varies with the rendered viewport's camera aspect.
+        _expect(actor.gaze.finger == 0 and actor.gaze.angles.x > 1.0 and actor.gaze.head_angles.x > 0.1, "Touch overrides hungry idle gaze and steers the head")
         await _capture("06-hungry-following-finger")
         _touch(right, false)
         await create_timer(0.90).timeout
@@ -162,7 +163,7 @@ func _check_meal(food: float, expected_food: float, reaches_full: bool) -> void:
 
 func _check_hosted_meal() -> void:
     room.hosted = true
-    _state({"food": 85.0})
+    _state({"food": 85.0}, "", 1, {"pantry": {"pear": 0, "serial": 1, "serving": {"id": 1, "kind": "apple"}}})
     await create_timer(0.6).timeout
     var previous_meals := meals
     if not await _eat_apple() or not await _until(func(): return meals > previous_meals, 9.0, "hosted meal finishes"):
@@ -170,7 +171,7 @@ func _check_hosted_meal() -> void:
         return
     _state({"food": 99.99999})
     _expect(room.awaiting_meal_result and presentation.reaction.is_empty(), "An ordinary profile update does not consume the meal acknowledgement")
-    _state({"food": 99.99998}, "", 1, {"meal_reached_full": true})
+    _state({"food": 99.99998}, "", 1, {"meal_reached_full": true, "pantry": {"pear": 0, "serial": 1, "serving": null}})
     _expect(not room.awaiting_meal_result and presentation.reaction == &"full", "The host acknowledgement starts the reaction even after metered decay")
     await create_timer(0.65).timeout
     var reaction_time: float = presentation.reaction_time
@@ -183,6 +184,9 @@ func _check_hosted_meal() -> void:
 func _eat_apple() -> bool:
     if not _tap("kitchen") or not _tap("feed") or not await _until(func(): return room.active_mode == &"feed", 5.0, "apple ready"):
         return false
+    # The previous meal can leave a frontal reaction pose. Wait for the normal
+    # 0.42 s transition before measuring the grip's screen position for a drag.
+    await create_timer(0.46).timeout
     var state := _interaction()
     if state.apple == null or state.grip == null:
         _expect(false, "Apple and paws are available for a real drag")

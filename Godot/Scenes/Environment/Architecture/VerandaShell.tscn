@@ -1,5 +1,6 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://Scenes/Home/RiverPerch.tscn" id="Perch"]
 [ext_resource type="Texture2D" path="res://Art/Textures/Floodplain.webp" id="View"]
 [ext_resource type="Texture2D" path="res://Art/Textures/FramePost.jpg" id="Oak"]
 [ext_resource type="Texture2D" path="res://Art/Textures/Limewash.jpg" id="Wash"]
@@ -358,3 +359,6 @@ mesh = SubResource("BoxOakBeam")
 [node name="Ковёр" parent="." instance=ExtResource("Rush")]
 position = Vector3(0.215, 0, 0.48)
 scale = Vector3(0.96, 0.49, 1.31)
+
+[node name="Окунь в пойме" parent="." instance=ExtResource("Perch")]
+position = Vector3(-0.12, 0.86, -1.335)

@@ -48,7 +48,7 @@ const SHOP_SAVE_ERROR := "Не удалось сохранить изменен�
 @onready var shop: Control = get_node_or_null("Интерфейс/Shop")
 @onready var status: Label = %Status
 @onready var awake_pose := richi.transform
-@onready var idle_pose := awake_pose.rotated_local(Vector3.UP, 0.42)
+@onready var cushion_floor: Transform3D = furnishings.get_node("cushion").transform
 @onready var day_sun := sun.light_energy
 @onready var day_bounce := bounce.light_energy
 @onready var day_bounce_color := bounce.light_color
@@ -64,6 +64,8 @@ var hosted := false
 var has_host_state := false
 var meal_in_progress := false
 var awaiting_meal_result := false
+@onready var kitchen_food: Node = $"Комнаты ухода/Кухня/Запасы еды"
+var meal_portion_id := 0
 var keyboard_hotspots := false
 var guide_in_overlay := false
 var ball_owned := false
@@ -103,6 +105,7 @@ func _ready() -> void:
     ambience.environment = ambience.environment.duplicate()
     apple.global_position = kitchen.get_node("Яблоко у миски").global_position
     apple.floor_position = apple.global_position
+    kitchen_food.setup(self)
     dining.bind_actor(richi)
     apple.picked_up.connect(richi.gaze.follow_apple.bind(apple))
     apple.returned_to_floor.connect(richi.gaze.release_apple)
@@ -157,6 +160,7 @@ func _ready() -> void:
         browser.getParkNavigationState = web_navigation_callback
         browser.parkNativeGameRoom = game_room != null
         browser.parkNativeShop = shop != null
+        browser.parkNativeFood = true
         if JavaScriptBridge.eval("""(() => {
             try {
                 return parent.location.origin === location.origin &&
@@ -193,9 +197,14 @@ func _set_hotspot_focus(keyboard: bool) -> void:
                 hotspot.add_theme_stylebox_override("focus", hotspot.get_theme_stylebox("normal"))
 
 func _offer_apple() -> void:
+    _offer_food(kitchen_food.selected())
+
+func _offer_food(kind: String) -> void:
     if meal_in_progress or night or _moving_between_places():
         return
     if location != KITCHEN and not _go_to_room(KITCHEN):
+        return
+    if not kitchen_food.prepare(kind):
         return
     _check_hungry_room()
     if dining.state == &"waiting":
@@ -209,12 +218,17 @@ func _start_food() -> void:
     tableware_moving = false
     _set_mode(&"feed")
     richi.offer_apple()
+    apple.set_food_kind(kitchen_food.selected())
     apple.reset_apple()
+    var shade := apple.get_node_or_null("FloorShade") as Node3D
+    if shade:
+        shade.hide()
     apple.set_process_input(true)
     _set_status("")
 
 func _on_accepted() -> void:
     meal_in_progress = true
+    meal_portion_id = kitchen_food.portion_id()
     richi.gaze.finish_tracking()
     %Back.disabled = true
 
@@ -226,13 +240,17 @@ func _on_fed() -> void:
     _set_status("")
     awaiting_meal_result = true
     if not hosted:
-        _finish_meal_reaction(_increase_native_need("food", 32))
+        var result: Dictionary = kitchen_food.finish(meal_portion_id)
+        _finish_meal_reaction(bool(result.full))
         _update_native_stats()
-        _save_home()
+    else:
+        _notify_host("food:finished:" + str(meal_portion_id))
     _notify_host("meal-finished")
 
 func _finish_meal_reaction(reached_full: bool) -> void:
     if awaiting_meal_result and reached_full:
+        if pose_tween and pose_tween.is_valid():
+            pose_tween.kill()
         richi.react_to_full_meal()
     awaiting_meal_result = false
 
@@ -732,16 +750,16 @@ func _day_pose() -> Transform3D:
     return _pose_in(location)
 
 func _pose_in(place: StringName) -> Transform3D:
+    var pose := awake_pose
     if place == KITCHEN:
-        return kitchen.get_node("Место для Ричи").global_transform.scaled_local(awake_pose.basis.get_scale())
-    if place == BATH:
-        return bath_room.get_node("Место для Ричи").global_transform.scaled_local(awake_pose.basis.get_scale())
-    var pose := idle_pose
-    if sleep_furniture in ["bed-willow", "bed-oak", "bed-daybed"]:
+        pose.origin = kitchen.get_node("Место для Ричи").global_position
+    elif place == BATH:
+        pose.origin = bath_room.get_node("Место для Ричи").global_position
+    elif sleep_furniture in ["bed-willow", "bed-oak", "bed-daybed"]:
         pose.origin = _bed_marker("FloorPose").global_position
     elif settee_in_use:
-        pose.origin = bedroom.get_node("Место на полу у дивана").position
-    return pose
+        pose.origin = bedroom.get_node("Место на полу у дивана").global_position
+    return _face_point(pose, _camera_in(place).origin)
 
 func _bed_marker(marker: String) -> Node3D:
     return bedroom.get_node(BED_NODES[sleep_furniture]).get_node(marker)
@@ -770,6 +788,7 @@ func _move_sleep_camera(sleep_view: bool, animate := false) -> void:
     if animate:
         sleep_camera_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
         sleep_camera_tween.tween_property(room_camera, "global_transform", target, 0.65)
+        sleep_camera_tween.tween_callback(_position_stations)
     else:
         room_camera.global_transform = target
 
@@ -999,6 +1018,8 @@ func _refresh_controls() -> void:
     %GoalAction.text = str(goal.get("label", ""))
     %GoalButtons.visible = show_goal
     %Dock.visible = not (playing or shopping or previewing) and (status.visible or %Back.visible or show_goal)
+    if kitchen_food:
+        kitchen_food.refresh()
 
 func _position_stations() -> void:
     var camera := get_viewport().get_camera_3d()
@@ -1022,6 +1043,11 @@ func _position_stations() -> void:
     var header_bottom: float = %Header.get_global_rect().end.y + 6.0
     for button: Button in views:
         var marker: Node3D = views[button]
+        if button == %Sleep:
+            if settee_in_use:
+                %Sleep.fit_to_settee(camera, bedroom.get_node("Диван"), furnishings.get_node("cushion"), richi, night)
+                continue
+            %Sleep.clear_shape()
         button.size = button.custom_minimum_size
         var point := camera.unproject_position(marker.global_position) - button.size * 0.5
         button.position = Vector2(clampf(point.x, 8, screen.x - button.size.x - 8),
@@ -1049,6 +1075,14 @@ func _apply_furniture(furniture: Dictionary) -> void:
     stations.get_node("Сундук с игрушками/Дубовый сундук").visible = chest_visible
     for item: Node3D in furnishings.get_children():
         item.visible = preview == item.name or placed.has(String(item.name))
+    var cushion: Node3D = furnishings.get_node("cushion")
+    var settee := bedroom.get_node("Диван")
+    var on_seat := settee_in_use and cushion.visible
+    settee.get_node("Подушка с вышивкой").visible = not on_seat
+    if on_seat:
+        cushion.global_transform = settee.get_node("Место для вышитой подушки").global_transform
+    else:
+        cushion.transform = cushion_floor
     if night:
         return
     var mode: StringName = FURNITURE_PREVIEWS.get(preview, &"home")
@@ -1067,6 +1101,7 @@ func _load_home() -> void:
         pet_name = str(save.get_value("meeting", "pet_name", pet_name))
     %PetName.text = pet_name
     if save.load(SAVE_PATH) == OK:
+        kitchen_food.restore(save.get_value("home", "pantry", {}))
         native_rounds = save.get_value("home", "rounds", {})
         native_leaves = int(save.get_value("home", "leaves", 0))
         native_xp = int(save.get_value("home", "xp", 0))
@@ -1130,6 +1165,7 @@ func _save_home() -> bool:
     save.set_value("home", "starter_round_rewarded", native_starter_round_rewarded)
     save.set_value("home", "needs", native_needs)
     save.set_value("home", "needs_updated", native_needs_updated)
+    save.set_value("home", "pantry", kitchen_food.state)
     if night and native_sleep_start_energy >= 0.0:
         save.set_value("home", "sleep_start_energy", native_sleep_start_energy)
     var draft := SAVE_PATH + ".tmp"
@@ -1196,6 +1232,9 @@ func _sync_state(args: Array) -> void:
     %PetName.text = pet_name
     var level := int(data.get("level", 1))
     var leaves := int(data.get("leaves", 0))
+    set_meta("food_wallet", leaves)
+    if data.has("pantry"):
+        kitchen_food.restore(data.pantry)
     %Stats.text = "Уровень %d  ·  Листья %d" % [level, leaves]
     ball_owned = data.get("ball", false) == true
     richi.set_age_level(level, growth_mesh)
@@ -1225,7 +1264,7 @@ func _sync_state(args: Array) -> void:
     if data.get("refusal", "") != "":
         richi.refuse()
         _set_status(str(data.refusal))
-    if data.get("offer_apple", false):
+    if data.get("offer_apple", false) or data.get("offer_food", false):
         _offer_apple()
     if data.get("celebrate_purchase", false) == true:
         _celebrate_purchase()
@@ -1288,6 +1327,8 @@ func _interaction_state(_args: Array) -> String:
     for item in buttons:
         var button: Button = buttons[item]
         controls[item] = _interaction_point(button.get_global_rect().get_center(), size) if button.is_visible_in_tree() and not button.disabled else null
+    if controls["sleep"] != null and settee_in_use:
+        controls["sleep"] = _interaction_point(%Sleep.target_point(), size)
     var tiles: Array[Dictionary] = []
     if game_room and game_room.visible:
         var pairs_button: Button = game_room.get_node("%Pairs")
@@ -1317,6 +1358,7 @@ func _interaction_state(_args: Array) -> String:
         "paused": get_tree().paused, "food": richi.needs.get("food", 50), "dining": str(dining.state),
         "controls": controls, "apple": fruit, "grip": grip, "applePointer": apple.pointer,
         "appleSettling": apple.settling, "mealInProgress": meal_in_progress, "mealPhase": richi.meal_phase(),
+        "pantry": kitchen_food.state, "foodKind": apple.food_kind,
         "sponge": sponge, "scrubCenter": scrub_center,
         "jug": jug, "pourTarget": pour_target, "bathPouring": bathroom.pouring,
         "navigation": _navigation_state(), "gameTiles": tiles,

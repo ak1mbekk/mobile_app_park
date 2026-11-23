@@ -45,6 +45,7 @@ body[data-game-overlay] .shell:has(#home.current #scene3d:not([hidden])) .game-w
   flex:1; min-width:0; min-height:44px; border:0; border-radius:9px;
   font:600 14px/1.15 var(--zk-font); background:transparent; color:inherit;
 }
+.room-switcher button img { display:block; width:38px; height:38px; margin:auto; }
 .room-switcher button[aria-current] { background:#f3e8cd; color:#324137; }
 .shell:has(> .room-switcher:not([hidden])) { grid-template-rows:minmax(0,1fr) auto; }
 .shell:has(#home.current :is(#scene3d,#shop-preview,#bath-preview-room):not([hidden]), #home.current.night) > .room-switcher { display:none; }

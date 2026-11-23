@@ -5,22 +5,7 @@
 [ext_resource type="Material" path="res://Materials/OiledWood.tres" id="Wood"]
 [ext_resource type="Material" path="res://Scenes/Home/Art/MintPaint.tres" id="Mint"]
 [ext_resource type="Material" path="res://Scenes/Home/Art/GlazedTile.tres" id="Tile"]
-[ext_resource type="Texture2D" path="res://Art/Textures/OiledFrame.jpg" id="Grain"]
-
-[sub_resource type="StandardMaterial3D" id="DoorField"]
-albedo_color = Color(0.60, 0.72, 0.62, 1)
-roughness = 0.78
-roughness_texture = ExtResource("Grain")
-uv1_scale = Vector3(1.6, 0.65, 1)
-
-[sub_resource type="StandardMaterial3D" id="DoorMolding"]
-albedo_color = Color(0.66, 0.76, 0.64, 1)
-roughness = 0.81
-
-[sub_resource type="StandardMaterial3D" id="Iron"]
-albedo_color = Color(0.27, 0.20, 0.14, 1)
-metallic = 0.65
-roughness = 0.43
+[ext_resource type="Shader" path="res://Scenes/Home/Art/Condensation.gdshader" id="Frost"]
 
 [sub_resource type="StandardMaterial3D" id="Soap"]
 albedo_color = Color(0.74, 0.82, 0.68, 1)
@@ -37,52 +22,6 @@ size = Vector3(1.62, 0.026, 0.037)
 [sub_resource type="BoxMesh" id="TallTile"]
 material = ExtResource("Tile")
 size = Vector3(1.65, 0.84, 0.014)
-
-[sub_resource type="BoxMesh" id="DoorJamb"]
-material = ExtResource("Mint")
-size = Vector3(0.057, 1.468, 0.111)
-
-[sub_resource type="BoxMesh" id="DoorHeader"]
-material = ExtResource("Mint")
-size = Vector3(0.585, 0.055, 0.11)
-
-[sub_resource type="BoxMesh" id="Door"]
-material = SubResource("DoorField")
-size = Vector3(0.486, 1.408, 0.063)
-
-[sub_resource type="BoxMesh" id="UpperPanel"]
-material = ExtResource("Mint")
-size = Vector3(0.366, 0.510, 0.018)
-
-[sub_resource type="BoxMesh" id="LowerPanel"]
-material = ExtResource("Mint")
-size = Vector3(0.366, 0.490, 0.018)
-
-[sub_resource type="BoxMesh" id="UpperMolding"]
-material = SubResource("DoorMolding")
-size = Vector3(0.412, 0.555, 0.016)
-
-[sub_resource type="BoxMesh" id="LowerMolding"]
-material = SubResource("DoorMolding")
-size = Vector3(0.412, 0.535, 0.016)
-
-[sub_resource type="BoxMesh" id="Threshold"]
-material = ExtResource("Wood")
-size = Vector3(0.586, 0.027, 0.133)
-
-[sub_resource type="CapsuleMesh" id="Escutcheon"]
-material = SubResource("Iron")
-radius = 0.036
-height = 0.111
-radial_segments = 12
-rings = 6
-
-[sub_resource type="SphereMesh" id="Latch"]
-material = SubResource("Iron")
-radius = 0.028
-height = 0.056
-radial_segments = 12
-rings = 6
 
 [sub_resource type="BoxMesh" id="Niche"]
 material = ExtResource("Wood")
@@ -107,6 +46,30 @@ height = 0.079
 radial_segments = 12
 rings = 6
 
+[sub_resource type="ShaderMaterial" id="WetGlass"]
+shader = ExtResource("Frost")
+
+[sub_resource type="QuadMesh" id="PrivacyPane"]
+material = SubResource("WetGlass")
+size = Vector2(1.25, 1.14)
+
+[sub_resource type="StandardMaterial3D" id="Silver"]
+albedo_color = Color(0.63, 0.77, 0.74, 1)
+metallic = 0.72
+roughness = 0.16
+
+[sub_resource type="CylinderMesh" id="MirrorFrame"]
+material = ExtResource("Wood")
+top_radius = 0.236
+bottom_radius = 0.242
+height = 0.033
+
+[sub_resource type="CylinderMesh" id="Mirror"]
+material = SubResource("Silver")
+top_radius = 0.214
+bottom_radius = 0.216
+height = 0.008
+
 [node name="Обстановка ванной" instance=ExtResource("Shell")]
 
 [node name="Плитка" type="Node3D" parent="."]
@@ -116,7 +79,7 @@ visible = false
 position = Vector3(-0.709, 0.273, -0.386)
 mesh = SubResource("WallTile")
 
-[node name="Плитка у двери" type="MeshInstance3D" parent="Плитка"]
+[node name="Плитка под зеркалом" type="MeshInstance3D" parent="Плитка"]
 position = Vector3(0.958, 0.428, -0.386)
 mesh = SubResource("TallTile")
 
@@ -124,54 +87,19 @@ mesh = SubResource("TallTile")
 position = Vector3(0.958, 0.861, -0.379)
 mesh = SubResource("TileCap")
 
-[node name="Дверь" type="Node3D" parent="."]
-position = Vector3(0.622, 0.006, -0.369)
+[node name="Матовое стекло" type="MeshInstance3D" parent="."]
+position = Vector3(-0.50, 1.077, -0.43)
+mesh = SubResource("PrivacyPane")
+cast_shadow = 0
 
-[node name="Левый косяк" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(-0.264, 0.734, 0.007)
-mesh = SubResource("DoorJamb")
+[node name="Круглое зеркало в раме" type="MeshInstance3D" parent="."]
+position = Vector3(0.63, 1.13, -0.355)
+rotation = Vector3(1.5708, 0, 0)
+mesh = SubResource("MirrorFrame")
 
-[node name="Правый косяк" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(0.264, 0.734, 0.007)
-mesh = SubResource("DoorJamb")
-
-[node name="Наличник" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(0, 1.467, 0.007)
-mesh = SubResource("DoorHeader")
-
-[node name="Полотно" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(0, 0.704, 0.005)
-mesh = SubResource("Door")
-
-[node name="Верхний профиль" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(0, 1.013, 0.041)
-mesh = SubResource("UpperMolding")
-
-[node name="Нижний профиль" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(0, 0.356, 0.041)
-mesh = SubResource("LowerMolding")
-
-[node name="Верхняя филёнка" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(0, 1.013, 0.047)
-mesh = SubResource("UpperPanel")
-
-[node name="Нижняя филёнка" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(0, 0.356, 0.047)
-mesh = SubResource("LowerPanel")
-
-[node name="Дубовый порог" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(0, 0.013, 0.013)
-mesh = SubResource("Threshold")
-
-[node name="Накладка замка" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(-0.187, 0.680, 0.045)
-scale = Vector3(0.72, 1, 0.18)
-mesh = SubResource("Escutcheon")
-
-[node name="Литая ручка" type="MeshInstance3D" parent="Дверь"]
-position = Vector3(-0.187, 0.699, 0.078)
-scale = Vector3(1.09, 0.91, 0.69)
-mesh = SubResource("Latch")
+[node name="Зеркальное стекло" type="MeshInstance3D" parent="Круглое зеркало в раме"]
+position = Vector3(0, 0.016, 0)
+mesh = SubResource("Mirror")
 
 [node name="Ниша для принадлежностей" type="Node3D" parent="."]
 position = Vector3(0.204, 0.759, -0.249)
