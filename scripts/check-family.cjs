@@ -43,7 +43,7 @@ const folder=path.resolve(__dirname,'..');
     const a=await device(local);
     const b=await device(sample);
     async function open(page){
-      await page.locator('#park [data-profile]').tap();
+      await page.locator('#guide-nav [data-profile]').tap();
       await page.locator('#profileDialog').waitFor();
       await page.waitForFunction(()=>!document.querySelector('#family-account').hasAttribute('aria-busy'));
     }

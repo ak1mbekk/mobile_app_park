@@ -1,8 +1,10 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '38';
+const version = prefix + '40';
 const base = new URL(self.registration.scope);
 const shell = [
+  'guide-shell.css','guide-shell.js','catalog-editorial.css','richi-hub.js',
+  'assets/park-richi-welcome.webp','assets/richi-forest-map.webp','assets/richi-trail-banner.webp',
   'index.html','base.css','show.css','visitor.css','park-and-chest.css','vendor/park-menu/menu.css','vendor/park-menu/menu.js','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
   'places.js','routing.js','catalog.js','map-projection.js','park-map.js','park-schedule.js','feedings.js',
   'assets/park-survey.webp','map-boundaries.json','map-boundary-geometry.js',
@@ -14,7 +16,7 @@ const shell = [
   'assets/kitchen-furnished.webp','assets/kitchen-furnished-hungry.webp','assets/wash-tile-room.webp','assets/wash-wall-tile.webp',
   'assets/base-bath.webp','assets/room-bath.webp','assets/wash.webp','assets/wash-bath.webp','assets/clean.webp','assets/clean-bath.webp',
   ...['carved','copper','faience'].flatMap(id=>['shop','room','wash','clean'].map(kind=>'assets/'+kind+'-bath-'+id+'.webp')),
-  'assets/harvest-basket.webp','assets/orchard.webp','assets/pine-cone.webp',
+  'assets/harvest-basket.webp','assets/orchard.webp','assets/pine-cone.webp','assets/richi-orchard-catcher.webp',
   'mini-games.css','assets/woodland-shop.svg','assets/bath-jug.svg','assets/bath-sponge.webp','assets/richi-profile.webp',
   ...['bison','lemur','raccoon','capybara','tamarin','caracal'].map(id=>'assets/game-toy-'+id+'.webp'),
   'assets/shop-chest.webp','assets/shop-bed.webp','assets/room-settee.webp','assets/rope-ball.webp',

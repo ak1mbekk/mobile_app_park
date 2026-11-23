@@ -21,9 +21,10 @@ const baseline=process.argv.includes('--baseline');
     await animals.waitFor();
     await page.waitForFunction(()=>document.querySelectorAll('#animals .animalcard').length>6);
   }
+  async function openSearch(){if(!await search.isVisible())await page.locator('#catalog-search-toggle').click();}
   try{
     await page.goto(root+'#animals');await catalogue();
-    await search.fill('лемур');
+    await openSearch();await search.fill('лемур');
     await page.getByRole('button',{name:'Млекопитающие',exact:true}).tap();
     const route=await visible.first().getAttribute('data-go');
     await page.screenshot({path:path.join(output,baseline?'catalog-before.png':'catalog-after.png')});
@@ -49,6 +50,7 @@ const baseline=process.argv.includes('--baseline');
     if(!baseline){
       assert.ok(bounds.height>=44&&bounds.width>=44);
       await page.reload();await catalogue();assert.equal(await visible.count(),0);assert.equal(await group().textContent(),'Млекопитающие');
+      await page.locator('#catalog-search-toggle').click();assert.equal(await search.isVisible(),false);
     }
     await reset.tap();assert.equal(await search.inputValue(),'');assert.equal(await group().textContent(),'Все');assert.ok(await visible.count()>6);
     assert.equal(await search.evaluate(el=>el===document.activeElement),true);
@@ -56,12 +58,12 @@ const baseline=process.argv.includes('--baseline');
       await page.getByRole('button',{name:'Птицы',exact:true}).tap();await search.fill('а');
       await page.reload();await catalogue();assert.equal(await search.inputValue(),'а');assert.equal(await group().textContent(),'Птицы');
       await search.fill('несуществующее');await page.locator('#animals .cat-back[data-go]').tap();
-      await page.getByRole('link',{name:'Животные',exact:true}).tap();await catalogue();
+      await page.locator('#park [data-go="animals"]').first().tap();await catalogue();
       assert.equal(await search.inputValue(),'');assert.equal(await group().textContent(),'Все');
       await page.goto(root+'#species/koshachiy-lemur');await page.locator('#species.current .p-back').tap();await catalogue();assert.equal(await search.inputValue(),'');
       const fresh=await context.newPage();await fresh.goto(root+'#animals');assert.equal(await fresh.locator('#animalSearch').inputValue(),'');await fresh.close();
       for(const width of [320,430]){
-        await page.setViewportSize({width,height:844});await search.fill('нет987');
+        await page.setViewportSize({width,height:844});await openSearch();await search.fill('нет987');
         assert.ok(await reset.isVisible());assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await reset.tap();
       }
     }

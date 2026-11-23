@@ -1,4 +1,14 @@
-<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>Домик у тропы · Парк животных</title><link rel="icon" type="image/png" href="assets/park-favicon.png"><link rel="apple-touch-icon" href="assets/park-touch-icon.png"><link rel="stylesheet" href="vendor/leaflet/leaflet.css"><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="show.css"><link rel="stylesheet" href="visitor.css"><link rel="stylesheet" href="park-and-chest.css"><link rel="stylesheet" href="vendor/park-menu/menu.css"><script src="visitor-theme.js" defer></script><link rel="stylesheet" href="mini-games.css"></head><body><div class="shell">
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>Домик у тропы · Парк животных</title><link rel="icon" type="image/png" href="assets/park-favicon.png"><link rel="apple-touch-icon" href="assets/park-touch-icon.png"><link rel="stylesheet" href="vendor/leaflet/leaflet.css"><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="show.css"><link rel="stylesheet" href="visitor.css"><link rel="stylesheet" href="park-and-chest.css"><link rel="stylesheet" href="vendor/park-menu/menu.css"><script src="visitor-theme.js" defer></script><link rel="stylesheet" href="mini-games.css"><link rel="stylesheet" href="guide-shell.css"><link rel="stylesheet" href="catalog-editorial.css"></head><body><div class="shell">
+<header id="guide-header" class="guide-header" hidden>
+  <div class="guide-bar">
+    <a class="guide-wordmark" href="#park" data-go="park" aria-label="Парк животных · Главная"><img src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"><span>Барановичи</span></a>
+    <a class="guide-icon-button" href="#feed" data-go="feed" aria-label="Календарь кормлений"><svg class="ic" aria-hidden="true"><use href="#guide-bell"/></svg></a>
+    <button id="guide-burger" class="guide-icon-button" type="button" aria-label="Открыть меню" aria-controls="guide-drawer" aria-expanded="false"><span class="burger-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>
+  </div>
+</header>
+<header id="richi-header" class="guide-header" hidden>
+  <div class="guide-context"><a class="guide-icon-button p-back" data-go="park" href="#park" aria-label="Назад · Главная"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></a><strong>Игра с Ричи</strong></div>
+</header>
 <nav class="game-wayfinding" aria-label="Переход в путеводитель" hidden>
   <button type="button" class="park-entrance" data-tab="park" aria-label="Парк · открыть путеводитель" title="В парк"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21V3m0 2H4l-2 3 2 3h7m0-3h8l3 3-3 3h-8"/></svg></button>
 </nav>
@@ -93,13 +103,48 @@
   <button type="button" id="aki-replay"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 1 1 2 7M4 11V5m0 6h6"/></svg>Ещё раз</button>
   <button type="button" data-go="chest"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7h18"/><rect x="10" y="9" width="4" height="5" rx="1"/></svg>К сундуку</button>
 </div></div></section>
-<section class="screen visitor-screen" id="park"><div class="park-top"><div class="park-mast"><h1><img class="park-signature" src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"></h1><p>Барановичи</p></div><button type="button" class="back-to-game" data-tab="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg><span>К Ричи</span></button><button type="button" id="visitor-theme" class="zk-circle" aria-label="Тёмная тема" aria-pressed="false"><svg class="p-icon moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.4A8.4 8.4 0 0 1 9.6 3.5a8.6 8.6 0 1 0 10.9 10.9Z"/></svg><svg class="p-icon sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button type="button" data-profile class="zk-circle" aria-label="Открыть профиль"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.3"/><path d="M5.5 20v-2a6.5 6.5 0 0 1 13 0v2"/></svg></button></div><div class="p-content"><div id="parkMenu"><p role="status">Загружаем меню…</p></div><button type="button" class="park-reward" data-go="pass">
-  <span class="reward-ticket">
-    <span class="reward-ticket-copy"><strong>Награда за уровень</strong><span id="parkRewardState">Откроется на уровне 10</span></span>
-    <svg class="reward-ticket-arrow p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg>
-  </span>
-  <img loading="lazy" class="reward-pet" src="assets/richi-reward.webp" alt="" width="130" height="120">
-</button></div></section>
+<section class="screen visitor-screen" id="park" aria-labelledby="park-welcome-title">
+  <div class="park-content" id="parkMenu"><p role="status">Загружаем меню…</p></div>
+</section>
+<section class="screen visitor-screen" id="richi" aria-labelledby="richi-heading">
+  <div class="richi-layout">
+    <div class="richi-intro">
+      <div class="richi-forest"><img src="assets/richi-forest-map.webp" alt="Ричи с рюкзаком изучает карту леса" width="356" height="269" loading="lazy"></div>
+      <div class="richi-invitation"><h1 id="richi-heading">Отправляйся в приключение с Ричи!</h1>
+        <p id="richi-intro-line">Ухаживай за енотом, играй и зарабатывай листья.</p>
+        <button class="park-action park-action-primary" id="richi-play" data-tab="home" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10c2 0 3.3 1.5 3.8 4l1 5c.6 3.2-1.9 4.2-3.9 2.2L15 15H9l-2.9 3.2c-2 2-4.5 1-3.9-2.2l1-5c.5-2.5 1.8-4 3.8-4Z"/><path d="M8 9.7v4M6 11.7h4m5.8-1.1h.1m2 2h.1"/></svg>
+          <span>Начать игру</span><svg class="action-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="richi-dashboard">
+      <div class="richi-links">
+        <a href="#richi/progress" data-go="richi/progress" id="richi-progress-link" aria-controls="richi-progress" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="14" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="12" rx="1"/><rect x="18" y="3" width="4" height="18" rx="1"/></svg>
+          <strong>Мой прогресс</strong><span id="richi-level">Уровень 1</span>
+        </a>
+        <a href="#pass" data-go="pass"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v5c0 4-1.8 6-4 6s-4-2-4-6V3ZM8 5H4v2c0 3 2 5 5 5m7-7h4v2c0 3-2 5-5 5m-3 2v5m-4 2h8m-6-2h4"/></svg>
+          <strong>Награды</strong><span id="parkRewardState">Откроется на уровне 10</span>
+        </a>
+      </div>
+      <section class="richi-detail" id="richi-progress" tabindex="-1" hidden aria-labelledby="richi-progress-title">
+        <h2 id="richi-progress-title">Прогресс игрока</h2>
+        <div class="richi-level-summary"><strong id="richi-stage">Малыш</strong><span id="richi-points"></span></div>
+        <progress id="richi-xp-meter" aria-label="Опыт на текущем уровне" max="30" value="0"></progress>
+        <p id="richi-next"></p><p class="richi-wallet"><svg class="ic" aria-hidden="true"><use href="#aki-leaf"/></svg><strong id="richi-leaves">Листья · 0</strong></p>
+      </section>
+      <section class="richi-tasks" id="richi-tasks" aria-labelledby="richi-task-heading">
+        <h2 id="richi-task-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 1-6.5-7.7M17 12a5 5 0 1 1-5-5"/><path d="m12 12 7-7m0-3v3h3"/></svg>Текущие задания</h2>
+        <button type="button" class="richi-task" data-tab="home" id="richi-task">
+          <img src="assets/fruit.webp" alt="" width="44" height="44" id="richi-task-art" loading="lazy">
+          <span><strong id="richi-task-title">Угости Ричи яблоком</strong><small id="richi-task-copy">Первая встреча в домике</small></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg>
+        </button>
+      </section>
+    </div>
+  </div>
+</section>
 <section class="screen visitor-screen" id="feed" aria-labelledby="p-feed-title"><div class="p-content">
 <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
 <h1 class="p-title" id="p-feed-title">Кормления</h1><p class="p-lead">Зона «Казачны мір»</p>
@@ -191,10 +236,10 @@
   <a class="p-link" href="tel:+375447329219">Позвонить <span>+375 44 732 92 19</span></a></div>
 </div></section><section class="screen visitor-screen" id="animals" aria-labelledby="catalog-title">
   <div class="catalog">
-    <button type="button" class="cat-back" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
-    <h1 id="catalog-title" tabindex="-1">Животные</h1>
-    <label class="search"><svg class="p-icon ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15.5 15.5 5 5"/></svg><input id="animalSearch" type="search" aria-label="Найти животное" placeholder="Найти животное" autocomplete="off" enterkeyhint="search"></label>
+    <div class="catalog-heading"><button type="button" class="cat-back" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="catalog-title" tabindex="-1">Животные</h1><button id="catalog-search-toggle" type="button" aria-label="Поиск животных" aria-expanded="false" aria-controls="animalSearchPanel"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15.5 15.5 5 5"/></svg></button></div>
+    <label class="search" id="animalSearchPanel" hidden><svg class="p-icon ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15.5 15.5 5 5"/></svg><input id="animalSearch" type="search" aria-label="Найти животное" placeholder="Найти животное" autocomplete="off" enterkeyhint="search"></label>
     <div id="animalClasses" class="catalog-classes" role="group" aria-label="Группы животных" hidden></div>
+    <p id="catalog-count" role="status" aria-live="polite" aria-atomic="true"></p>
     <div class="animalgrid" id="catalog-list">
       <button type="button" class="animalcard" data-go="animal"><img loading="lazy" src="assets/capybara.webp" alt=""><small>Грызуны</small><b>Капибара</b></button>
       <a class="animalcard" href="https://animal-park.by/galereya/enot-poloskun.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/raccoon.webp" alt=""><small>Хищные</small><b>Енот-полоскун</b></a>
@@ -207,7 +252,7 @@
   </div>
 </section>
 
-<section class="screen visitor-screen" id="species"><div class="p-content"><button class="p-back" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="species-name" class="p-title">Карточка животного</h1><p id="species-group" class="p-lead"></p><figure class="p-animal-photo" id="species-photo" hidden></figure><p id="species-latin"></p><p id="species-description" class="p-bio" hidden></p><button class="p-primary" id="species-place" hidden>Показать место на карте →</button><a id="species-source" class="p-link" href="https://animal-park.by/galereya/" target="_blank" rel="noopener">Подробнее на сайте парка ↗</a></div></section><section id="wash" class="screen bath-scene">
+<section class="screen visitor-screen" id="species" aria-labelledby="species-name"><div class="p-content species-editorial"><div class="species-heading"><button type="button" class="p-back" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><span>Знакомьтесь с обитателями</span></div><div class="species-story"><figure class="p-animal-photo" id="species-photo" hidden></figure><div class="species-copy"><p id="species-group" class="p-lead"></p><h1 id="species-name" class="p-title" tabindex="-1">Карточка животного</h1><p id="species-latin" hidden></p><p id="species-description" class="p-bio" hidden></p><p id="species-location" hidden></p><button type="button" class="p-primary" id="species-place" hidden>Показать место на карте →</button><a id="species-source" class="p-link" href="https://animal-park.by/galereya/" target="_blank" rel="noopener noreferrer">Подробнее на сайте парка ↗</a></div></div></div></section><section id="wash" class="screen bath-scene">
 
 <header class="care-room-heading">
   <h1 id="wash-title">Ванная</h1>
@@ -233,8 +278,8 @@
   <button type="button" class="secondary" data-go="chest"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7h18"/><rect x="10" y="9" width="4" height="5" rx="1"/></svg>К сундуку</button>
 </div></div></section>
 <section id="catch" class="screen orchard" aria-label="Лови яблоки"><div class="gameline"><button class="backbtn" type="button" data-go="chest" aria-label="К сундуку"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><span id="catchScore">Яблоки 0</span></div>
-<div id="catchField" tabindex="0" role="application" aria-label="Двигай корзинку пальцем или стрелками"><img loading="lazy" id="fallFruit" src="assets/fruit.webp" alt="" hidden><div id="basket" aria-hidden="true"></div></div>
-<div class="sheet" id="catchSheet"><h2 id="catchTitle" tabindex="-1">Лови яблоки</h2><p id="catchTip">Двигай корзинку пальцем или стрелками. Лови яблоки и пропускай шишки. У тебя три жизни.</p><div class="catch-actions">
+<div id="catchField" tabindex="0" role="application" aria-label="Двигай Ричи с корзинкой пальцем, мышью или стрелками"><img loading="lazy" id="fallFruit" src="assets/fruit.webp" alt="" hidden><div id="basket" aria-hidden="true"></div></div>
+<div class="sheet" id="catchSheet"><h2 id="catchTitle" tabindex="-1">Лови яблоки</h2><p id="catchTip">Веди Ричи за пальцем. Лови яблоки, пропускай шишки. У тебя три жизни.</p><div class="catch-actions">
   <button type="button" class="primary" id="catchStart"><svg class="ic" id="catchAgainIcon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M4 11a8 8 0 1 1 2 7M4 11V5m0 6h6"/></svg><span id="catchStartLabel">Начать</span></button>
   <button type="button" class="secondary" id="catchChest" data-go="chest" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7h18"/><rect x="10" y="9" width="4" height="5" rx="1"/></svg>К сундуку</button>
 </div></div></section>
@@ -244,6 +289,19 @@
 <progress id="coupon-progress" value="1" max="10" aria-label="Прогресс до награды"></progress></figcaption>
 </figure>
 <p>Тестовая касса. Оплата не списывается.</p><label class="count">Детских билетов <select id="ticketCount"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></label><label class="count">Взрослых билетов <select id="adultCount"><option selected>0</option><option>1</option><option>2</option><option>3</option></select></label><small>Демо-тарифы · детский 10 BYN, взрослый 15 BYN</small><p id="ticketTotal"></p><button id="testBuy" class="primary">Подтвердить тестовый заказ</button> <button class="secondary" id="newOrder" hidden>Новый расчёт</button></div></section></main>
+<nav id="guide-nav" aria-label="Быстрая навигация" hidden></nav>
+<dialog id="guide-drawer" aria-labelledby="guide-menu-title">
+  <div class="drawer-heading">
+    <a class="guide-wordmark" data-go="park" href="#park"><img src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"><span>Барановичи</span></a>
+    <h2 class="guide-sr" id="guide-menu-title">Меню парка</h2>
+    <span id="drawer-close-slot"></span>
+  </div>
+  <nav id="drawer-links" aria-label="Разделы приложения"></nav>
+  <details class="drawer-settings"><summary><svg class="ic" aria-hidden="true"><use href="#guide-settings"/></svg>Настройки</summary>
+    <button type="button" id="visitor-theme" aria-pressed="false"><span>Тёмная тема</span><span class="theme-switch" aria-hidden="true"></span></button>
+  </details>
+</dialog>
+<script src="guide-shell.js"></script>
 <nav class="room-switcher" aria-label="Комнаты домика" hidden>
   <button id="kitchen-back" type="button" data-go="home">Веранда</button>
   <button id="aki-feed" type="button" data-go="home/kitchen">Кухня</button>
@@ -263,4 +321,4 @@
 <div id="family-review" hidden><p id="family-comparison"></p><button type="button" id="family-confirm"></button>
 <button type="button" id="family-cancel">Отмена</button></div>
 <button id="family-retry" type="button" hidden>Повторить подключение</button>
-</section></dialog><script src="family.js" defer></script></div><script src="places.js"></script><script src="park-schedule.js"></script><script src="routing.js"></script><script src="home.js"></script><script src="catalog.js"></script><script src="guide-offline.js"></script><script src="feedings.js"></script><script src="show.js"></script><script src="match.js"></script><script>conceptStart()</script></body></html>
+</section></dialog><script src="family.js" defer></script></div><script src="places.js"></script><script src="park-schedule.js"></script><script src="routing.js"></script><script src="home.js"></script><script src="catalog.js"></script><script src="guide-offline.js"></script><script src="feedings.js"></script><script src="show.js"></script><script src="richi-hub.js"></script><script src="match.js"></script><script>conceptStart()</script></body></html>

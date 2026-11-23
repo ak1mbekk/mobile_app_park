@@ -64,7 +64,8 @@ function visitorMapRoute(route){
 function present(id){
   if(!id){
     const pet=window.petDemo?.stats();
-    id=pet?.onboardingDone?'home':pet?.mealFinished?'name':'intro';
+    const gameEntry=new URLSearchParams(location.search).has('view');
+    id=gameEntry?(pet?.onboardingDone?'home':pet?.mealFinished?'name':'intro'):'park';
     history.replaceState(history.state,'','#'+id);
   }
   const canonical=visitorMapRoute(id);
@@ -116,16 +117,15 @@ function present(id){
     if(button.dataset.go===currentRoute)button.setAttribute('aria-current','location');
     else button.removeAttribute('aria-current');
   }
-  const returnLabel=byId('park').querySelector('[data-tab="home"] span');
-  returnLabel.textContent=pet?.name && pet.name!=='Ричи'?'В игру':'К Ричи';
   let backLink=byId(id).querySelector('.p-back,.cat-back');
-  if(backLink && ['map','animal','species','tours'].includes(id)){
-    const fallback={map:'park',animal:'map/1/36',species:'animals',tours:'park'};
+  if(backLink && ['map','animal','species','tours','pass'].includes(id)){
+    const fallback={map:'park',animal:'map/1/36',species:'animals',tours:'park',pass:'richi'};
     let dest=previousScreens[id] || fallback[id];
     let labels={park:'Парк животных',feed:'Кормления',map:'Карта парка',animals:'Все животные',win:'К результату игры',species:'К животному',animal:'Капибара'};
     if(id==='species')labels.home='К результату игры';
     backLink.dataset.go=dest;
     labels.visitor='Для посетителей';
+    labels.richi='Игра с Ричи';
     backLink.setAttribute('aria-label','Назад · '+(labels[dest.split('/')[0]]||'Парк'));
   }
   document.dispatchEvent(new CustomEvent('conceptscreen',{detail:id}));
@@ -164,7 +164,7 @@ document.addEventListener('click',e=>{
   if(tab){
     if(tab.dataset.tab==='park'){
       conceptGo('park');
-      byId('park').querySelector('[data-tab="home"]').focus({preventScroll:true});
+      byId('guide-burger').focus({preventScroll:true});
     }else if(history.state?.parkReturnRoute===lastHome){
       history.back();
     }else{
@@ -198,9 +198,9 @@ function conceptStart(){
   const initialGuide=frame?.getAttribute('data-guide-navigation');
   if(initialGuide){
     frame.removeAttribute('data-guide-navigation');
-    const {hash,gameReturn,parkOrigins,nativeReturn}=JSON.parse(initialGuide);
+    const {hash,gameReturn,parkOrigins,nativeReturn,catalogState}=JSON.parse(initialGuide);
     // Only the guide route, not its previous iframe history entry, survived the reload.
-    if(hash===location.hash)history.replaceState({gameReturn,parkOrigins,nativeReturn},'');
+    if(hash===location.hash)history.replaceState({gameReturn,parkOrigins,nativeReturn,catalogState},'');
   }
   if(window.parent===window){
     try{

@@ -1,0 +1,111 @@
+#park.visitor-screen, #richi.visitor-screen {
+  background: var(--paper);
+  --landing-tile: color-mix(in srgb, rgb(var(--zk-cream-deep)) 75%, var(--surface));
+  --landing-icon: color-mix(in srgb, rgb(var(--zk-leaf)) 68%, var(--ink));
+  --landing-action: #8c353b;
+  --landing-radius: 15px;
+}
+.park-content, .richi-layout { width: min(100%, 1120px); margin-inline: auto; }
+.park-layout, .richi-layout { padding: 0 var(--guide-gutter, 16px) 22px; }
+.park-layout, .park-directory, .richi-layout, .richi-dashboard { display: grid; gap: 15px; }
+.park-intro, .park-directory, .richi-intro, .richi-dashboard { min-width: 0; }
+.park-welcome { position: relative; isolation: isolate; overflow: hidden; border-radius: var(--landing-radius); }
+.park-hero-art { display: block; width: 100%; height: auto; }
+.park-welcome::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgb(19 27 15 / .69), rgb(19 27 15 / .30) 41%, transparent 58%); }
+.park-hero-art { position: relative; z-index: -2; }
+.park-hello { position: absolute; left: clamp(16px, 5%, 40px); top: 46%; transform: translateY(-50%); width: 43%; color: white; }
+#park .park-hello h1 { font: 680 clamp(25px, 7.8vw, 39px)/.98 var(--zk-font); letter-spacing: -.045em; color: inherit; }
+.park-hello p { margin-top: clamp(7px, 2.2vw, 14px); font: 500 clamp(12px, 3.3vw, 16px)/1.33 var(--zk-font); }
+.park-visit-actions { position: relative; display: grid; gap: 7px; margin: -10px 6px 0; padding: 7px 7px 0; border-radius: 17px 17px 0 0; background: var(--paper); }
+.park-action, .park-shortcut, .park-game-banner, .richi-links a, .richi-task {
+  -webkit-tap-highlight-color: transparent; text-decoration: none; touch-action: manipulation; color: var(--ink);
+}
+.park-action { display: grid; grid-template-columns: 25px 1fr 18px; align-items: center; gap: 12px; min-height: 49px; width: 100%; padding: 9px 16px; border: 0; border-radius: 12px; text-align: left; font: 620 17px/1.16 var(--zk-font); }
+.park-action-primary { background: var(--landing-action); color: #fff7e8; }
+.park-action-secondary, .park-shortcut, .richi-links a { background: var(--landing-tile); }
+.park-action-secondary svg, .park-shortcut svg, .richi-links svg, .richi-tasks h2 svg { color: var(--landing-icon); }
+.park-action svg, .richi-links svg, .richi-tasks svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+.park-action .action-arrow, .richi-task>svg { width: 18px; }
+.park-directory { gap: 10px; }
+.park-visit-mode { justify-self: start; display: inline-flex; gap: 3px; padding: 2px; border-radius: 12px; background: var(--landing-tile); }
+.park-visit-mode button { min-height: 44px; padding: 7px 15px; border-radius: 10px; color: var(--muted); background: transparent; font: 550 14px/1.1 var(--zk-font); }
+.park-visit-mode button[aria-pressed="true"] { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.park-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.park-shortcuts.inside { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.park-shortcut { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 9px 4px; min-height: 77px; border-radius: 12px; text-align: center; font: 560 clamp(13px, 3.5vw, 15px)/1.15 var(--zk-font); }
+.park-shortcut svg { width: 27px; height: 27px; stroke-width: 1.65; }
+.park-game-banner { display: grid; grid-template-columns: minmax(70px, .8fr) minmax(100px, 1.2fr) 30px; align-items: center; gap: 9px; overflow: hidden; border-radius: var(--landing-radius); padding-right: 12px; background: #f5e7c9; color: #30251c; }
+.park-game-banner img { display: block; width: 100%; height: 100%; min-height: 76px; max-height: 122px; object-fit: contain; object-position: left bottom; background: #ecd9b8; mask-image: linear-gradient(90deg,black 78%,transparent); }
+.park-game-banner strong { display: block; font: 650 17px/1.12 var(--zk-font); }
+.park-game-banner small { display: block; margin: 4px 0; max-width: 25ch; font: 460 13px/1.26 var(--zk-font); }
+.park-game-banner>svg { width: 29px; height: 29px; padding: 6px; color: #3d462b; border-radius: 50%; background: #fff6e5; }
+html.dark .park-game-banner { background: #463b2c; color: #fbf1da; }
+.richi-layout { gap: 14px; }
+.richi-intro { text-align: center; }
+.richi-forest { width: min(100%, 460px); margin: 0 auto; position: relative; border-radius: var(--landing-radius) var(--landing-radius) 0 0; overflow: hidden; }
+.richi-forest img { display: block; width: 100%; height: auto; }
+.richi-forest::after { content:""; position:absolute; inset:auto 0 0; height:9%; background:linear-gradient(transparent,var(--paper)); }
+.richi-invitation { position:relative; z-index:1; margin: -4px auto 0; max-width: 415px; padding: 0 7px; }
+#richi .richi-invitation h1 { max-width: 22ch; margin-inline:auto; color: var(--ink); font: 670 clamp(23px,6.7vw,33px)/1.04 var(--zk-font); letter-spacing:-.04em; text-wrap:balance; overflow-wrap:anywhere; }
+.richi-invitation p { margin: 8px auto 14px; color:var(--muted); font: 450 16px/1.35 var(--zk-font); text-wrap:balance; max-width:32ch; overflow-wrap:anywhere; }
+#richi .richi-invitation .park-action { position:relative; display:flex; justify-content:center; width:min(100%,335px); margin-inline:auto; padding-inline:42px; min-height:52px; }
+#richi-play .action-arrow { position:absolute; right:16px; }
+.richi-dashboard { align-content: start; gap: 14px; }
+.richi-links { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:9px; }
+.richi-links a { display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center; gap:6px; padding:13px 7px; min-height:100px; border-radius:var(--landing-radius); }
+.richi-links svg { width:28px; height:28px; }
+.richi-links strong { font-size:16px; line-height:1.15; }
+.richi-links span { font-size:13px; line-height:1.2; color:var(--muted); }
+.richi-detail, .richi-tasks { border:1px solid var(--line); border-radius:var(--landing-radius); padding:13px; }
+#richi h2 { display:flex; align-items:center; gap:8px; color:var(--ink); font:640 18px/1.2 var(--zk-font); letter-spacing:-.025em; }
+.richi-detail .richi-level-summary { display:flex; justify-content:space-between; gap:8px; margin:12px 0 5px; }
+.richi-detail:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
+.richi-detail progress { display:block; width:100%; height:8px; border:0; border-radius:8px; appearance:none; overflow:hidden; background:var(--landing-tile); color:var(--green); }
+.richi-detail progress::-webkit-progress-bar { background:var(--landing-tile); }
+.richi-detail progress::-webkit-progress-value { background:var(--green); border-radius:8px; }
+.richi-detail progress::-moz-progress-bar { background:var(--green); border-radius:8px; }
+.richi-detail p { margin-top:6px; font-size:14px; line-height:1.4; color:var(--muted); }
+.richi-detail .richi-wallet { display:flex; align-items:center; gap:6px; margin-top:11px; color:var(--green); }
+.richi-task { width:100%; display:grid; grid-template-columns:40px 1fr 20px; align-items:center; gap:10px; text-align:left; margin-top:10px; padding:8px 10px; background:var(--landing-tile); border-radius:10px; min-height:64px; }
+.richi-task img { display:block; width:40px; height:43px; object-fit:contain; }
+.richi-task strong,.richi-task small { display:block; }
+.richi-task strong { font-weight:600; font-size:15px; line-height:1.26; }
+.richi-task small { font-size:13px; line-height:1.27; margin-top:3px; color:var(--muted); }
+.richi-task>svg { color:var(--landing-icon); }
+@media (hover:hover) {
+  .park-action:hover, .park-shortcut:hover, .richi-links a:hover, .park-game-banner:hover, .richi-task:hover { box-shadow:inset 0 0 0 2px currentColor; }
+}
+@media (prefers-reduced-motion:no-preference) {
+  .park-action, .park-shortcut, .richi-task, .richi-links a { transition:box-shadow .15s ease, transform .15s ease; }
+  .park-shortcut:active,.richi-links a:active { transform:translateY(1px); }
+}
+@media (min-width:600px) {
+  .park-layout, .richi-layout { padding-top:10px; }
+  .park-visit-actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .park-game-banner { grid-template-columns:100px 1fr 32px; }
+}
+@media (min-width:760px) {
+  .park-layout, .richi-layout { grid-template-columns:minmax(0,1.14fr) minmax(0,1fr); gap:clamp(18px,3vw,36px); align-items:start; padding-block:20px 42px; }
+  .park-directory { gap:14px; }
+  .park-welcome { border-radius:18px; }
+  .park-hello h1 { font-size:clamp(28px,3.7vw,45px); }
+  .park-hello p { font-size:clamp(13px,1.45vw,17px); }
+  .park-visit-actions { margin: -10px 8px 0; padding:8px 8px 0; grid-template-columns:1fr; }
+  .park-game-banner { min-height:86px; }
+  .park-shortcut { min-height:85px; }
+  .richi-layout { grid-template-columns:minmax(0,1fr) minmax(0,.93fr); }
+  .richi-forest { border-radius:18px 18px 0 0; }
+  .richi-dashboard { gap:18px; }
+  .richi-links a { min-height:132px; }
+  .richi-detail,.richi-tasks { padding:20px; }
+}
+@media (min-width:1060px) {
+  .park-visit-actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .park-shortcut { min-height:96px; }
+  .park-game-banner { min-height:100px; grid-template-columns:135px 1fr 35px; }
+}
+@media (min-width:760px) and (max-width:899px) and (orientation:portrait) {
+  .richi-layout { grid-template-columns:minmax(0,1fr); width:min(100%,590px); gap:22px; }
+  .richi-forest { width:100%; }
+  .richi-links a { min-height:104px; }
+}

@@ -223,20 +223,24 @@ async function appearance(browser){
       await page.evaluate(()=>window.conceptGo('park'));
       for(const mode of ['#beforeVisit','#duringVisit']){
         await page.locator(mode).click();
-        const links=page.getByRole('navigation',{name:'Меню парка'}).getByRole('link');
-        assert.deepEqual(await links.allTextContents(),mode==='#beforeVisit'
-          ? ['Купить билеты','Как доехать','Экскурсии','Карта парка','Животные','Для посетителей']
-          : ['Карта парка','Кормления','Животные','Для посетителей']);
+        const menu=page.locator('#parkMenu');
+        const primary=menu.getByRole('navigation',{name:'Посещение парка'}).getByRole('link');
+        const shortcuts=menu.getByRole('navigation',{name:'Разделы парка'}).getByRole('link');
+        const before=mode==='#beforeVisit';
+        assert.deepEqual(await primary.allTextContents(),before?['Купить билеты','Карта парка']:['Карта парка','Кормления']);
+        assert.deepEqual(await shortcuts.allTextContents(),before
+          ? ['Животные','Экскурсии','Календарь кормлений','Как добраться','Для посетителей','Игра с Ричи']
+          : ['Животные','Экскурсии','Для посетителей','Игра с Ричи']);
+        const links=menu.getByRole('link');
         assert.ok(await links.evaluateAll(items=>items.every(a=>{
           const box=a.getBoundingClientRect();
-          return box.height>=44 && box.right<=innerWidth && box.left>=0 && parseFloat(getComputedStyle(a).fontSize)>=25;
+          return box.height>=44 && box.width>=44 && box.right<=innerWidth && box.left>=0 && a.scrollWidth<=a.clientWidth+1;
         })),'Menu fits '+width);
-        const last=links.last();
-        await last.hover();
-        await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#parkMenu a:last-child .menu-vertical-arrow')).opacity)>.95);
-        assert.ok(await last.evaluate(a=>a.lastElementChild.getBoundingClientRect().right<=innerWidth),'Animated label fits '+width);
+        const banner=menu.getByRole('link',{name:/Играй с Ричи/});
+        await banner.focus();
+        assert.ok(await banner.evaluate(a=>a===document.activeElement && a.getBoundingClientRect().right<=innerWidth),'Game link can be focused at '+width);
       }
-      for(const route of ['park','chest','directions','feed/raccoons','animals','map/1/36','map/1/7','map/1/8','map/2/11','map/2/24','map/2/35','species/enot-poloskun','visitor','tours','pass']){
+      for(const route of ['park','richi','richi/progress','chest','directions','feed/raccoons','animals','map/1/36','map/1/7','map/1/8','map/2/11','map/2/24','map/2/35','species/enot-poloskun','visitor','tours','pass']){
         await page.evaluate(route=>window.conceptGo(route),route);
         const view=page.locator('#'+route.split('/')[0]+'.current');await view.waitFor();
         assert.ok(await view.evaluate(el=>el.scrollWidth<=el.clientWidth+1),route+' '+width);
@@ -258,7 +262,10 @@ async function appearance(browser){
         }
       }
     }
-    await page.evaluate(()=>window.conceptGo('park'));await page.locator('#visitor-theme').click();
+    await page.evaluate(()=>window.conceptGo('park'));
+    await page.locator('#guide-burger').click();
+    await page.locator('.drawer-settings summary').click();
+    await page.locator('#visitor-theme').click();
     await page.reload();
     assert.equal(await page.locator('#visitor-theme').getAttribute('aria-pressed'),String(colorScheme==='light'));
     await context.close();
@@ -559,7 +566,8 @@ async function parkEntry(browser){
     await page.route('https://tile.openstreetmap.org/**',route=>route.abort());
     await page.goto(root+'#park');
     await page.locator('#duringVisit').click();
-    assert.equal(await page.locator('#park .park-feature,#parkMenu img').count(),0);
+    await page.locator('#park .park-hero-art').evaluate(img=>img.decode());
+    assert.equal(await page.locator('#duringVisit').getAttribute('aria-pressed'),'true');
     assert.equal(await page.locator('#parkMenu a[href*="tickets"]').count(),0);
     await page.locator('#parkMenu [data-go="map"]').click();
     const map=page.locator('#map.current');
@@ -589,6 +597,7 @@ async function nestedMapBack(browser){
   try{
     await page.route('https://tile.openstreetmap.org/**',route=>route.abort());
     await page.goto(root+'#animals');
+    await page.locator('#catalog-search-toggle').click();
     await page.locator('#animalSearch').fill('зубр');
     await page.locator('#animals [data-go="species/zubr"]').click();
     await page.locator('#species-place').click();

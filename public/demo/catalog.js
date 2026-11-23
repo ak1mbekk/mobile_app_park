@@ -2,6 +2,8 @@
   const section = document.getElementById('animals');
   const grid = section.querySelector('.animalgrid');
   const search = document.getElementById('animalSearch');
+  const searchPanel=document.getElementById('animalSearchPanel');
+  const searchToggle=document.getElementById('catalog-search-toggle');
   const empty = document.getElementById('animalEmpty');
   const classes = document.getElementById('animalClasses');
   const groupOrder = ['Млекопитающие','Птицы','Рыбы','Другие'];
@@ -20,7 +22,6 @@
   let selectedGroup = 'Все';
   let returnCard = '';
   let focusPending = false;
-  const headings = new Map();
 
   // Keep filters on the catalogue's own history entry. A new visit starts clean,
   // while Back (including after a detail/map reload) restores this exact visit.
@@ -33,6 +34,8 @@
     search.value=typeof state?.query==='string'?state.query:'';
     selectedGroup=groupOrder.includes(state?.group)?state.group:'Все';
     returnCard=typeof state?.card==='string'?state.card:'';
+    searchPanel.hidden=!search.value;
+    searchToggle.setAttribute('aria-expanded',String(!searchPanel.hidden));
   }
   function restoreFocus() {
     if (!focusPending || !section.classList.contains('current')) return;
@@ -49,17 +52,6 @@
       return {card,group,text:normalize([card.textContent,category,group,card.dataset.scientific||''].join(' '))};
     });
     const groups=groupOrder.filter(group=>entries.some(entry=>entry.group===group));
-    const fragment=document.createDocumentFragment();
-    headings.clear();
-    for(const group of groups){
-      const heading=document.createElement('h2');
-      heading.className='catalog-group-heading';
-      const total=document.createElement('span');
-      heading.append(group,' ',total);
-      headings.set(group,{heading,total});
-      fragment.append(heading,...entries.filter(entry=>entry.group===group).map(entry=>entry.card));
-    }
-    grid.replaceChildren(fragment);
     if(bySlug.size && !groups.includes(selectedGroup)) selectedGroup='Все';
     classes.replaceChildren(...['Все',...groups].map(group=>{
       const control=document.createElement('button');
@@ -73,20 +65,17 @@
   function filter() {
     const words = normalize(search.value).split(' ').filter(Boolean);
     let found = 0;
-    const totals = new Map();
     for (const {card,text,group} of entries) {
       card.hidden = (selectedGroup!=='Все' && group!==selectedGroup) || !words.every(word=>text.includes(word));
+      card.classList.toggle('catalog-feature',card.dataset.go==='species/evropeyskaya-lan' && !words.length && selectedGroup==='Все');
       if (!card.hidden) {
         found++;
-        totals.set(group,(totals.get(group)||0)+1);
       }
-    }
-    for(const [group,{heading,total}] of headings){
-      heading.hidden=!totals.has(group);
-      total.textContent=String(totals.get(group)||0);
     }
     for(const button of classes.children)button.setAttribute('aria-pressed',String(button.dataset.group===selectedGroup));
     empty.hidden = found > 0;
+    document.getElementById('catalog-count').textContent=words.length||selectedGroup!=='Все'?'Найдено: '+found:'В каталоге: '+found;
+    section.classList.toggle('catalog-filtered',Boolean(words.length)||selectedGroup!=='Все');
   }
   classes.addEventListener('click',event=>{
     const button=event.target.closest('button[data-group]');
@@ -103,12 +92,16 @@
     document.getElementById('species-name').textContent = entry?.name || (loading ? 'Загружаем карточку…' : 'Карточка недоступна');
     document.getElementById('species-group').textContent = entry?.category || '';
     document.getElementById('species-latin').textContent = entry?.scientific || '';
+    document.getElementById('species-latin').hidden=!entry?.scientific;
     const description=document.getElementById('species-description');
     description.textContent=entry?.description || '';
     description.hidden=!entry?.description;
     document.getElementById('species-source').href = entry?.url || 'https://animal-park.by/galereya/';
     const mapLink=document.getElementById('species-place');
     const locations=window.parkGuide.places.filter(p=>entry && p.species?.includes(entry.slug));
+    const placeNote=document.getElementById('species-location');
+    placeNote.textContent=locations.length===1?window.parkGuide.zones[locations[0].zone].name+' · Вольер № '+(locations[0].badge||locations[0].id):locations.length>1?'Места на карте парка':'';
+    placeNote.hidden=!locations.length;
     const group=document.getElementById('other-enclosures');
     group?.remove();
     mapLink.hidden=locations.length!==1;
@@ -116,7 +109,7 @@
     if(locations.length>1){
       const list=document.createElement('div');list.id='other-enclosures';
       for(const p of locations){
-        const link=document.createElement('button');link.className='p-link';
+        const link=document.createElement('button');link.className='p-link';link.type='button';
         link.textContent=window.parkGuide.zones[p.zone].name+' · № '+p.id+' →';
         link.dataset.go='map/'+p.zone+'/'+p.id;list.append(link);
       }
@@ -147,23 +140,37 @@
       tag.innerHTML='<svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg>';
       tag.append('№ '+place.badge);tag.setAttribute('aria-label','Вольер № '+place.badge);button.append(tag);
     }
+    const copy=document.createElement('span');copy.className='catalog-card-copy';
     const group=document.createElement('small'), name=document.createElement('b');
     const subgroup=entry.category==='Парнокопытное'?'Парнокопытные':entry.category;
     name.textContent=entry.name;
-    button.append(name);
-    if (subgroup==='Приматы' || subgroup==='Парнокопытные') {
-      group.textContent=subgroup;
-      button.append(group);
+    group.textContent=subgroup;
+    copy.append(group,name);
+    if(entry.description){
+      const summary=document.createElement('span');summary.className='catalog-card-note';
+      summary.textContent=entry.description.split(/(?<=[.!?])\s/)[0];copy.append(summary);
+    }else if(entry.scientific){
+      const latin=document.createElement('span');latin.className='catalog-card-latin';latin.textContent=entry.scientific;copy.append(latin);
     }
+    const more=document.createElement('span');more.className='catalog-card-more';more.setAttribute('aria-hidden','true');more.textContent='→';copy.append(more);
+    button.append(copy);
     return button;
   }
   search.addEventListener('input',()=>{returnCard='';filter();saveSelection();});
-  document.getElementById('animalReset').onclick=()=>{search.value='';selectedGroup='Все';returnCard='';filter();saveSelection();search.focus();};
+  searchToggle.addEventListener('click',()=>{
+    searchPanel.hidden=!searchPanel.hidden;
+    searchToggle.setAttribute('aria-expanded',String(!searchPanel.hidden));
+    if(!searchPanel.hidden)search.focus();
+  });
+  document.getElementById('animalReset').onclick=()=>{
+    search.value='';selectedGroup='Все';returnCard='';filter();saveSelection();
+    searchPanel.hidden=false;searchToggle.setAttribute('aria-expanded','true');search.focus();
+  };
   if(location.hash==='#animals')restoreSelection();
   indexCards();
   function showCatalogCards() {
     if (cardsReady || !bySlug.size) return;
-    const featured=['kapibara','karakal','zubr','koshachiy-lemur','enot-poloskun','edipov-tamarin'];
+    const featured=['evropeyskaya-lan','enot-poloskun','filin','kapibara','karakal','zubr','koshachiy-lemur','edipov-tamarin'];
     const rest=[...bySlug.values()].filter(entry=>!featured.includes(entry.slug)).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
     const sorted=[...featured.map(slug=>bySlug.get(slug)).filter(Boolean),...rest];
     grid.replaceChildren(...sorted.map(makeCard));
@@ -190,7 +197,12 @@
     const screen = event.detail;
     if (!['animals','species','map'].includes(screen)) return;
     const canLoad = location.protocol !== 'file:';
-    if (screen === 'species') detail(canLoad && !bySlug.size);
+    if (screen === 'species') {
+      detail(canLoad && !bySlug.size);
+      requestAnimationFrame(()=>{
+        if(document.getElementById('species').classList.contains('current'))document.getElementById('species-name').focus({preventScroll:true});
+      });
+    }
     if (screen === 'animals') {
       restoreSelection();showCatalogCards();filter();focusPending=true;
       requestAnimationFrame(restoreFocus);

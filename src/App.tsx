@@ -24,6 +24,7 @@ type GuideNavigation = {
   hash: string;
   gameReturn?: string;
   parkOrigins?: Record<string, string>;
+  catalogState?: { query: string; group: string; card: string };
   nativeReturn?: { location: string } | null;
 };
 
@@ -40,7 +41,7 @@ function nativeReloadNavigation(): GuideNavigation | undefined {
 
 function demoHash(hash: string, profile: boolean) {
   const route = hash.replace(/^#\//, '#');
-  return /^#(?:park|map(?:\/[^#]+)?)$/.test(route) ? route : profile ? '#park' : '';
+  return /^#(?:park|animals|visitor|tours|directions|pass|animal|(?:map|feed|species|richi)(?:\/[^#]+)?)$/.test(route) ? route : profile ? '#park' : '';
 }
 
 function DemoEntry({ search, hash, profile }: { search: string; hash: string; profile: boolean }) {
@@ -78,14 +79,14 @@ function DemoEntry({ search, hash, profile }: { search: string; hash: string; pr
   const saveGuideNavigation = useCallback(() => {
     const child = frame.current?.contentWindow;
     if (!child || pending.current || window.location.protocol === 'file:' || profile) return;
-    const { gameReturn, parkOrigins, nativeReturn } = child.history.state ?? {};
+    const { gameReturn, parkOrigins, nativeReturn, catalogState } = child.history.state ?? {};
     const hash = demoHash(child.location.hash, false) || (child.location.hash === '#home' && nativeReturn ? '#home' : '');
     const { animalParkGuide, ...rest } = window.history.state ?? {};
     if (!hash) {
       if (animalParkGuide) window.history.replaceState(rest, '');
       return;
     }
-    const snapshot: GuideNavigation = { hostUrl: window.location.href, hash, gameReturn, parkOrigins, nativeReturn };
+    const snapshot: GuideNavigation = { hostUrl: window.location.href, hash, gameReturn, parkOrigins, nativeReturn, catalogState };
     window.history.replaceState({ ...rest, animalParkGuide: snapshot }, '');
   }, [profile]);
 
