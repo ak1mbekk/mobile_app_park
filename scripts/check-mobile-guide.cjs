@@ -23,7 +23,11 @@ async function check() {
       await page.screenshot({path:path.join(output, name + '.png'), animations:'disabled'});
     }
     await page.goto(url + '#park');
-    await page.locator('#duringVisit').waitFor();
+    await page.locator('#park .park-game-banner').waitFor();
+    assert.equal(await page.locator('#park address').textContent(),'Республика Беларусь, г. Барановичи');
+    const destinations = await page.locator('#parkMenu a').evaluateAll(links => links.map(link=>link.href));
+    assert.equal(new Set(destinations).size,destinations.length);
+    assert.equal(await page.locator('#guide-nav,#beforeVisit,#duringVisit').count(),0);
     await screenshot('01-park');
     await burger.click();
     await screenshot('02-menu');
@@ -42,7 +46,7 @@ async function check() {
     await drawer.locator('[data-go="animals"]').click();
     await page.locator('.animalcard:visible').first().waitFor();
     await screenshot('03-animals');
-    await page.locator('#guide-nav [data-go="park"]').click();
+    await page.locator('#animals .cat-back, #animals .p-back').first().click();
     await burger.click();
     await drawer.locator('[data-go="richi"]').click();
     await screenshot('04-richi');
@@ -50,7 +54,8 @@ async function check() {
     await page.locator('#richi-progress:visible').waitFor();
     await page.locator('#richi-header .p-back').click();
     await page.waitForFunction(() => location.hash === '#richi');
-    await page.locator('#guide-nav [data-profile]').click();
+    await page.locator('#richi-header .p-back').click();
+    await page.locator('#guide-profile').click();
     await page.locator('#profileDialog[open]').waitFor();
     await page.keyboard.press('Escape');
     for (const width of [320,360,375,390,430,768,1024,1440]) {

@@ -248,6 +248,6 @@
     entry.searchParams.delete('panel');
     entry.searchParams.delete('family');
     history.replaceState(history.state, '', entry);
-    document.querySelector('#guide-nav [data-profile]')?.click();
+    find('guide-profile')?.click();
   }
 })();

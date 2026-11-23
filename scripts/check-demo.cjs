@@ -23,7 +23,10 @@ async function check(page, url, output) {
       await page.locator('#'+section+'.current').waitFor({state:'hidden'});
     }
     if(id==='park' && await page.locator('#park.current').isVisible())return;
-    await click('[data-tab="'+id+'"]');
+    if(id==='home'){
+      await click('#park .park-game-banner');
+      await click('#richi-play');
+    }else await click('.park-entrance');
   };
   const stats = () => page.evaluate(() => window.petDemo.stats());
   async function pairsOnBoard() {
@@ -54,14 +57,14 @@ async function check(page, url, output) {
   await go('visitor','map/1/rest/service/rest');await visible('map');
   assert.match(await el('#map .place-info h2').textContent(),/Зона отдыха/);
   await click('#map .p-back');await visible('visitor');await tab('park');
-  await click('#duringVisit'); await go('park','feed');
+  await go('park','feed');
   const download=page.waitForEvent('download');await click('#add-reminder');
   const invitation=fs.readFileSync(await (await download).path(),'utf8');
   assert.match(invitation,/TRIGGER:-PT30M/);assert.match(invitation,/DTSTART:\d{8}T125000Z/);
   await go('feed','map/1/36'); await go('map','animal');
   await click('#animal .p-back'); await visible('map'); await click('#map .p-back'); await visible('feed');
   await tab('park'); await go('park','map'); await visible('map');
-  await tab('park'); await click('#beforeVisit'); await go('park','map');await click('#map [data-zone="2"]');
+  await tab('park'); await go('park','map');await click('#map [data-zone="2"]');
   await click('#map .leaflet-control-zoom-in');
   await click('#map .map-search-toggle');
   await el('#map .place-picker select').selectOption('11');assert.match(await el('#map .place-info h2').textContent(),/Зубр/);
@@ -76,14 +79,14 @@ async function check(page, url, output) {
   assert.ok(await page.locator('#map .place-picker option[value]:not([value=""])').count()>=22);
   await el('#map .service-picker select').selectOption('feed');
   assert.equal(await page.locator('#map .place-picker option[value]:not([value=""])').count(),2);
-  await tab('park');await click('#duringVisit');await go('park','feed');
+  await tab('park');await go('park','feed');
   await visible('feed');await el('#feed [data-event]').waitFor();
   assert.equal(await page.locator('#feed [data-event]').count(),7);
   await click('#feed [data-event=raccoons]');await go('feed','map/1/54');
   await visible('map');assert.match(await el('#map .place-info h2').textContent(),/Енот/);await snap('park-interactive-map');
   await go('map','species/enot-poloskun');await visible('species');await click('#species-place');await visible('map');
-  await tab('park');await click('#duringVisit');await go('park','feed');await snap('park-schedule');
-  await tab('park'); await go('park','animals'); await el('#animalSearch').fill('капибара');
+  await tab('park');await go('park','feed');await snap('park-schedule');
+  await tab('park'); await go('park','animals'); await click('#catalog-search-toggle'); await el('#animalSearch').fill('капибара');
   assert.equal(await page.locator('#animals .animalcard:visible').count(),1);
   await el('#animalSearch').fill('Пака');await page.locator('#animals .animalcard').filter({has:page.getByText('Пака',{exact:true})}).click();await visible('species');
   assert.match(await el('#species-name').textContent(),/Пака/);

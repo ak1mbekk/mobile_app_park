@@ -221,25 +221,20 @@ async function appearance(browser){
     for(const width of [320,390,430]){
       await page.setViewportSize({width,height:844});
       await page.evaluate(()=>window.conceptGo('park'));
-      for(const mode of ['#beforeVisit','#duringVisit']){
-        await page.locator(mode).click();
-        const menu=page.locator('#parkMenu');
-        const primary=menu.getByRole('navigation',{name:'Посещение парка'}).getByRole('link');
-        const shortcuts=menu.getByRole('navigation',{name:'Разделы парка'}).getByRole('link');
-        const before=mode==='#beforeVisit';
-        assert.deepEqual(await primary.allTextContents(),before?['Купить билеты','Карта парка']:['Карта парка','Кормления']);
-        assert.deepEqual(await shortcuts.allTextContents(),before
-          ? ['Животные','Экскурсии','Календарь кормлений','Как добраться','Для посетителей','Игра с Ричи']
-          : ['Животные','Экскурсии','Для посетителей','Игра с Ричи']);
-        const links=menu.getByRole('link');
-        assert.ok(await links.evaluateAll(items=>items.every(a=>{
-          const box=a.getBoundingClientRect();
-          return box.height>=44 && box.width>=44 && box.right<=innerWidth && box.left>=0 && a.scrollWidth<=a.clientWidth+1;
-        })),'Menu fits '+width);
-        const banner=menu.getByRole('link',{name:/Играй с Ричи/});
-        await banner.focus();
-        assert.ok(await banner.evaluate(a=>a===document.activeElement && a.getBoundingClientRect().right<=innerWidth),'Game link can be focused at '+width);
-      }
+      const menu=page.locator('#parkMenu');
+      const primary=menu.getByRole('navigation',{name:'Посещение парка'}).getByRole('link');
+      const shortcuts=menu.getByRole('navigation',{name:'Разделы парка'}).getByRole('link');
+      assert.deepEqual(await primary.allTextContents(),['Купить билеты','Карта парка']);
+      assert.deepEqual(await shortcuts.allTextContents(),['Животные','Экскурсии','Календарь кормлений','Как добраться','Для посетителей']);
+      assert.ok(await menu.locator('a[href]').evaluateAll(items=>new Set(items.map(link=>link.href)).size===items.length));
+      const links=menu.getByRole('link');
+      assert.ok(await links.evaluateAll(items=>items.every(a=>{
+        const box=a.getBoundingClientRect();
+        return box.height>=44 && box.width>=44 && box.right<=innerWidth && box.left>=0 && a.scrollWidth<=a.clientWidth+1;
+      })),'Menu fits '+width);
+      const banner=menu.getByRole('link',{name:/Играй с Ричи/});
+      await banner.focus();
+      assert.ok(await banner.evaluate(a=>a===document.activeElement && a.getBoundingClientRect().right<=innerWidth),'Game link can be focused at '+width);
       for(const route of ['park','richi','richi/progress','chest','directions','feed/raccoons','animals','map/1/36','map/1/7','map/1/8','map/2/11','map/2/24','map/2/35','species/enot-poloskun','visitor','tours','pass']){
         await page.evaluate(route=>window.conceptGo(route),route);
         const view=page.locator('#'+route.split('/')[0]+'.current');await view.waitFor();
@@ -284,7 +279,6 @@ async function cartography(browser){
 
   try {
     await p.goto(root+'#park');
-    await p.locator('#beforeVisit').click();
     await p.locator('#park [data-go="directions"]').click();
     const destinations=p.locator('#directions .direction-card');
     assert.deepEqual(await destinations.evaluateAll(links=>links.map(link=>new URL(link.href).pathname.split('/').at(-2))),['11025733579','55770037829']);
@@ -564,22 +558,20 @@ async function parkEntry(browser){
   const page=await browser.newPage();
   try{
     await page.route('https://tile.openstreetmap.org/**',route=>route.abort());
+    await page.addInitScript(()=>localStorage.setItem('park-visit-mode','inside'));
     await page.goto(root+'#park');
-    await page.locator('#duringVisit').click();
     await page.locator('#park .park-hero-art').evaluate(img=>img.decode());
-    assert.equal(await page.locator('#duringVisit').getAttribute('aria-pressed'),'true');
-    assert.equal(await page.locator('#parkMenu a[href*="tickets"]').count(),0);
+    assert.equal(await page.locator('#beforeVisit,#duringVisit,#guide-nav').count(),0);
+    assert.equal(await page.locator('#parkMenu a[href*="tickets"]').count(),1);
     await page.locator('#parkMenu [data-go="map"]').click();
     const map=page.locator('#map.current');
     await map.locator('[data-zone="1"][aria-pressed="true"]').waitFor();
     await map.locator('.p-back').click();
-    await page.locator('#beforeVisit').click();
     await page.locator('#parkMenu [data-go="map"]').click();
     await map.locator('[data-zone="2"]').click();
     await map.locator('[data-zone="2"][aria-pressed="true"]').waitFor();
 
     await map.locator('.p-back').click();
-    await page.locator('#duringVisit').click();
     await page.locator('#parkMenu [data-go="feed"]').click();
     await page.locator('#feed.current [data-event="raccoons"]').click();
     const origin=new URL(page.url()).hash;

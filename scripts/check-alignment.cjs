@@ -167,7 +167,7 @@ async function verifyMaps(){
     await p.setViewportSize({width:390,height:844});
     await p.route('https://tile.openstreetmap.org/**',route=>route.abort());
     await p.goto(root+'index.html#park',{waitUntil:'domcontentloaded'});
-    await p.locator('#beforeVisit').click();
+    await p.locator('#park .park-game-banner').waitFor();
     assert.equal(await p.locator('#parkMenu a[href*="tickets"]').count(),1);
     await p.locator('#parkMenu [data-go="map"]').click();
     const map=p.locator('#map');

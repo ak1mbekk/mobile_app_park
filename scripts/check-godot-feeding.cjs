@@ -206,7 +206,8 @@ const logicalAsset=url=>new URL(url).pathname.split('/').pop().replace(/-[a-f0-9
       const hiddenDraws=await draws();
       await page.waitForTimeout(700);
       assert.equal(await draws(),hiddenDraws,'The hidden engine issues no WebGL draw calls');
-      await page.locator('#park.current [data-tab="home"]').tap();
+      await page.locator('#park .park-game-banner').tap();
+      await page.locator('#richi-play').tap();
       await ready('home');
       await interaction({paused:false,location:'kitchen'});
       await sameEngine();
@@ -265,7 +266,8 @@ const logicalAsset=url=>new URL(url).pathname.split('/').pop().replace(/-[a-f0-9
     await page.locator('#park.current').waitFor();
     await interaction({paused:true});
     assert.equal((await stats()).xp,before.xp);
-    await page.locator('[data-tab="home"]').click();
+    await page.locator('#park .park-game-banner').click();
+    await page.locator('#richi-play').click();
     await ready('home');
     await touchAt('touchCancel');
     await interaction({location:'kitchen',mode:'feed',paused:false,appleIdle:true});
@@ -288,7 +290,8 @@ const logicalAsset=url=>new URL(url).pathname.split('/').pop().replace(/-[a-f0-9
     assert.equal((await interaction({paused:true,mealInProgress:true})).mealPhase,pausedMeal.mealPhase);
     assert.equal(await mealCount(),previousMeals);
     assert.equal((await stats()).xp,before.xp);
-    await page.locator('[data-tab="home"]').click();
+    await page.locator('#park .park-game-banner').click();
+    await page.locator('#richi-play').click();
     await ready('home');
     await page.waitForFunction(xp=>window.petDemo.stats().xp>xp,before.xp,{timeout:45000});
     const finished=await interaction({location:'kitchen',mode:'home',paused:false});
@@ -346,7 +349,8 @@ const logicalAsset=url=>new URL(url).pathname.split('/').pop().replace(/-[a-f0-9
     const night=await stats();
     await pressControl('park');
     await page.locator('#park.current').waitFor();
-    await page.locator('[data-tab="home"]').click();
+    await page.locator('#park .park-game-banner').click();
+    await page.locator('#richi-play').click();
     await ready('home');
     assert.equal((await stats()).night,true);
     await page.reload();
@@ -380,7 +384,8 @@ const logicalAsset=url=>new URL(url).pathname.split('/').pop().replace(/-[a-f0-9
     lightUrl.hash='park';
     await light.goto(lightUrl.href);
     await light.locator('#park.current').waitFor();
-    await light.locator('[data-tab="home"]').click();
+    await light.locator('#park .park-game-banner').click();
+    await light.locator('#richi-play').click();
     await light.locator('#intro.current #open3d').waitFor();
     assert.equal(await light.locator(roomSelector).count(),0);
     assert.deepEqual(downloads,[]);

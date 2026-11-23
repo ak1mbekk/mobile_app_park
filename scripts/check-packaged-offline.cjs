@@ -71,9 +71,10 @@ async function check(browser, native, visitParkFirst, explicitLight = false, ret
     await page.goto(origin + '/' + (explicitLight ? '?view=2d' : '') + (visitParkFirst ? '#park' : ''), { waitUntil: 'domcontentloaded' });
     const demo = page.frameLocator('iframe[title="Домик у тропы и парк животных"]');
     if (visitParkFirst) {
-      await demo.locator('#park.current .back-to-game').waitFor();
+      await demo.locator('#park.current .park-game-banner').waitFor();
       assert.equal(binaries.size, 0);
-      await demo.locator('#park.current .back-to-game').tap();
+      await demo.locator('#park .park-game-banner').tap();
+      await demo.locator('#richi-play').tap();
     }
     await demo.locator(returningPlayer ? '#home.current' : '#intro.current').waitFor();
     assert.equal(await page.evaluate(() => navigator.onLine), false);

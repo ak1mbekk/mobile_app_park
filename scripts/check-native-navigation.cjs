@@ -93,7 +93,8 @@ async function main() {
       await demo.locator('#park.current').waitFor();
     }
     async function returnToGame() {
-      await demo.locator('#park.current .back-to-game').tap();
+      await demo.locator('#park .park-game-banner').tap();
+      await demo.locator('#richi-play').tap();
       return ready();
     }
     async function reloadPark(openAndReload = false) {

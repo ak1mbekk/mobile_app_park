@@ -40,7 +40,7 @@ const captureDir = process.argv[3];
       await hub.getByRole('link',{name:/Награды/}).tap();
       await page.locator('#pass.current #couponStatus').waitFor();
       await page.locator('#pass .p-back').tap();
-      await page.locator('#guide-nav [data-go="park"]').tap();
+      await page.locator('#richi-header .p-back').tap();
       await page.locator('#guide-burger').tap();
       await page.locator('.drawer-settings summary').tap();
       await page.locator('#visitor-theme').tap();

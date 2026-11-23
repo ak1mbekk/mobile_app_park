@@ -183,7 +183,8 @@ async function checkOfflineMeeting(page) {
     }
   });
   await page.locator('#map.current .p-back').tap();
-  await page.locator('[data-tab="home"]').tap();
+  await page.locator('#park .park-game-banner').tap();
+  await page.locator('#richi-play').tap();
   const intro = page.locator('#intro.current');
   await intro.waitFor();
   await page.locator('#scene3d').waitFor({ state: 'hidden' });

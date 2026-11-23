@@ -27,11 +27,10 @@
 .park-action svg, .richi-links svg, .richi-tasks svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
 .park-action .action-arrow, .richi-task>svg { width: 18px; }
 .park-directory { gap: 10px; }
-.park-visit-mode { justify-self: start; display: inline-flex; gap: 3px; padding: 2px; border-radius: 12px; background: var(--landing-tile); }
-.park-visit-mode button { min-height: 44px; padding: 7px 15px; border-radius: 10px; color: var(--muted); background: transparent; font: 550 14px/1.1 var(--zk-font); }
-.park-visit-mode button[aria-pressed="true"] { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
-.park-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
-.park-shortcuts.inside { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.park-locality { grid-column:1 / -1; margin:2px 0 0; text-align:center; color:var(--zk-caption); font:400 13px/1.5 var(--zk-font); }
+.park-shortcuts { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 7px; }
+.park-shortcuts > a {grid-column:span 2}
+.park-shortcuts > a:nth-last-child(-n+2) {grid-column:span 3}
 .park-shortcut { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 9px 4px; min-height: 77px; border-radius: 12px; text-align: center; font: 560 clamp(13px, 3.5vw, 15px)/1.15 var(--zk-font); }
 .park-shortcut svg { width: 27px; height: 27px; stroke-width: 1.65; }
 .park-game-banner { display: grid; grid-template-columns: minmax(70px, .8fr) minmax(100px, 1.2fr) 30px; align-items: center; gap: 9px; overflow: hidden; border-radius: var(--landing-radius); padding-right: 12px; background: #f5e7c9; color: #30251c; }

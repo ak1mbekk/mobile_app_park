@@ -1,8 +1,8 @@
 <!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>Домик у тропы · Парк животных</title><link rel="icon" type="image/png" href="assets/park-favicon.png"><link rel="apple-touch-icon" href="assets/park-touch-icon.png"><link rel="stylesheet" href="vendor/leaflet/leaflet.css"><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="show.css"><link rel="stylesheet" href="visitor.css"><link rel="stylesheet" href="park-and-chest.css"><link rel="stylesheet" href="vendor/park-menu/menu.css"><script src="visitor-theme.js" defer></script><link rel="stylesheet" href="mini-games.css"><link rel="stylesheet" href="guide-shell.css"><link rel="stylesheet" href="catalog-editorial.css"></head><body><div class="shell">
 <header id="guide-header" class="guide-header" hidden>
   <div class="guide-bar">
-    <a class="guide-wordmark" href="#park" data-go="park" aria-label="Парк животных · Главная"><img src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"><span>Барановичи</span></a>
-    <a class="guide-icon-button" href="#feed" data-go="feed" aria-label="Календарь кормлений"><svg class="ic" aria-hidden="true"><use href="#guide-bell"/></svg></a>
+    <a class="guide-wordmark" href="#park" data-go="park" aria-label="Парк животных · Главная"><img src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"></a>
+    <button id="guide-profile" class="guide-icon-button" type="button" data-profile aria-label="Профиль" aria-haspopup="dialog"><svg class="ic" aria-hidden="true"><use href="#guide-user"/></svg></button>
     <button id="guide-burger" class="guide-icon-button" type="button" aria-label="Открыть меню" aria-controls="guide-drawer" aria-expanded="false"><span class="burger-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>
   </div>
 </header>
@@ -289,10 +289,9 @@
 <progress id="coupon-progress" value="1" max="10" aria-label="Прогресс до награды"></progress></figcaption>
 </figure>
 <p>Тестовая касса. Оплата не списывается.</p><label class="count">Детских билетов <select id="ticketCount"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></label><label class="count">Взрослых билетов <select id="adultCount"><option selected>0</option><option>1</option><option>2</option><option>3</option></select></label><small>Демо-тарифы · детский 10 BYN, взрослый 15 BYN</small><p id="ticketTotal"></p><button id="testBuy" class="primary">Подтвердить тестовый заказ</button> <button class="secondary" id="newOrder" hidden>Новый расчёт</button></div></section></main>
-<nav id="guide-nav" aria-label="Быстрая навигация" hidden></nav>
 <dialog id="guide-drawer" aria-labelledby="guide-menu-title">
   <div class="drawer-heading">
-    <a class="guide-wordmark" data-go="park" href="#park"><img src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"><span>Барановичи</span></a>
+    <a class="guide-wordmark" data-go="park" href="#park" aria-label="Парк животных · Главная"><img src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных"></a>
     <h2 class="guide-sr" id="guide-menu-title">Меню парка</h2>
     <span id="drawer-close-slot"></span>
   </div>
