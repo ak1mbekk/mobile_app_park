@@ -14,6 +14,8 @@
     return zone===1?[x,877+y]:[455+x*1345/1009,1370+y*999/749];
   }
   function position(config,zone,point){
+    const corrected=config?.animalPositions?.[zone+'/'+point.id];
+    if(Array.isArray(corrected)&&corrected.length===2&&corrected.every(Number.isFinite))return L.latLng(corrected);
     if(point.geo)return L.latLng(point.geo[1],point.geo[0]);
     const pixel=planPixel(zone,point);
     return config&&pixel?crs.pointToLatLng(toWorld(config,...pixel),16):null;

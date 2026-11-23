@@ -223,6 +223,8 @@ html.dark #visitor-theme .sun-icon {display:block}
 #map .map-filter-hint{margin:8px 0;color:var(--ink);font-size:15px;line-height:1.4}
 #map .place-picker{display:block;margin:0}
 #animal-map-query{width:100%;min-height:44px;margin:6px 0 10px;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--paper);color:var(--ink);font:inherit}
+#map .animal-editor-pin{color:#ab441e;text-align:center;font:36px/40px sans-serif;text-shadow:0 0 3px white;cursor:grab}
+#map .edit-animal-marker{margin-top:6px}
 #animal-map-matches{display:grid;max-height:24dvh;overflow:auto;margin-bottom:8px}
 #animal-map-matches[hidden]{display:none}
 #animal-map-matches button{min-height:44px;text-align:left;padding:8px;color:var(--ink);background:var(--surface);border-bottom:1px solid var(--line)}

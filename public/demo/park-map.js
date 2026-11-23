@@ -28,6 +28,13 @@
   const views = new Map();
   const state = { zone: 1, id: '', kind: 'all', service: '' };
   let landscape, flatOnly = false;
+  let editable=false, endDrag;
+  if (['localhost','127.0.0.1'].includes(location.hostname)) {
+    fetch('/__park/animal-marker',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(capability=>{
+      editable=capability?.editable===true;
+      if (editable && selectedPlace() && !endDrag) renderCard(selectedPlace());
+    }).catch(()=>{});
+  }
   const query = host.querySelector('#animal-map-query');
   const matchesPanel = host.querySelector('#animal-map-matches');
   const visitorPlaces = places.filter(p => !p.name.startsWith('Вольер №'));
@@ -59,7 +66,7 @@
   }
   serviceOffsets.sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
   let map, layer, calibration, hitChooser;
-  let boundaryData;
+  let boundaryData, contains;
   let refreshing, redrawSurvey;
   let loading = false, mapReady = false, drawing = false, surveyFailed = false;
   let searchOpen = false, choosing = false, placeTrigger;
@@ -114,6 +121,7 @@
   }
 
   function setSearch(open, returnFocus = false) {
+    if (endDrag) {stopEditing();renderCard(selectedPlace());}
     searchOpen = open;
     hitChooser?.dismiss();
     updateSheets();
@@ -159,6 +167,14 @@
     });
   }
 
+  function attached(point){
+    const key=point.zone+'/'+point.id, coord=calibration?.animalPositions?.[key];
+    const ring=boundaryData?.enclosures[key];
+    if(!coord || !ring)return true;
+    const px=projection.toRaster(calibration,L.latLng(coord));
+    return contains(ring,[px.x/2064,px.y/2369]);
+  }
+
   function updateStatus() {
     const messages = [];
     if (search.hidden && !filterHint.hidden) messages.push(filterHint.textContent);
@@ -197,6 +213,7 @@
   }
 
   function renderCard(point) {
+    stopEditing();
     card.replaceChildren();
     card.hidden = !point;
     updateSheets();
@@ -247,6 +264,58 @@
       note.textContent = 'Известна зона. Точное место пока не подтверждено.';
       card.append(note);
     }
+    if (editable && !point.service && calibration) {
+      const edit=document.createElement('button');
+      edit.type='button';edit.className='p-link edit-animal-marker';
+      edit.textContent='Переместить метку';
+      edit.onclick=()=>startEditing(point);
+      card.append(edit);
+    }
+  }
+
+  function stopEditing(){
+    endDrag?.();
+    endDrag=null;
+  }
+
+  function startEditing(point){
+    stopEditing();
+    const title=document.createElement('h2'), note=document.createElement('p');
+    title.textContent=point.name;
+    note.setAttribute('role','status');
+    note.textContent='Перетащите оранжевую метку туда, где находится животное.';
+    const save=document.createElement('button'), cancel=document.createElement('button');
+    save.type=cancel.type='button';save.className=cancel.className='p-link';
+    save.textContent='Сохранить положение';cancel.textContent='Отмена';save.disabled=true;
+    const revision=calibration.revision;
+    let coord;
+    const changed=value=>{coord=value;save.disabled=false;};
+    const old=position(point);
+    if(landscape)endDrag=landscape.editMarker(old,changed);
+    else {
+      const start=old||map.getCenter();
+      framePlace(start,Math.max(map.getZoom(),17));
+      const pin=L.marker(start,{draggable:true,icon:L.divIcon({className:'animal-editor-pin',html:'●',iconSize:[40,40],iconAnchor:[20,20]})}).addTo(map);
+      pin.on('dragend',()=>{const {lat,lng}=pin.getLatLng();changed([lat,lng]);});
+      endDrag=()=>pin.remove();
+    }
+    card.replaceChildren(title,note,save,cancel);
+    cancel.onclick=()=>{stopEditing();show();};
+    save.onclick=async()=>{
+      if(save.disabled||!coord)return;
+      save.disabled=cancel.disabled=true;
+      const draft=endDrag;
+      try {
+        const response=await fetch('/__park/animal-marker',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({id:point.zone+'/'+point.id,coord,revision})});
+        if(response.status===409)throw Error('Карта изменилась в другой вкладке. Обновите страницу и повторите перенос.');
+        if(!response.ok)throw Error('Не удалось сохранить положение. Попробуйте ещё раз.');
+        const updated=await response.json();
+        calibration=updated;
+        try{localStorage.setItem('park-map-alignment',JSON.stringify(updated));}catch{}
+        if(endDrag===draft){stopEditing();show();}
+      }catch(error){note.textContent=error.message;save.disabled=cancel.disabled=false;}
+    };
   }
 
   function residentPortrait(src) {
@@ -486,17 +555,21 @@
       const picked = item === point;
       const ring = boundary(item);
       if (ring) {
-        const area = L.polygon(ring, {
-          pane: 'visitor-areas', className: 'place-area' + (picked ? ' picked' : ''), smoothFactor: 0, bubblingMouseEvents: false
-        });
-        const open = () => openPlace(item.id);
-        area.on('add', () => {
-          const element = area.getElement();
-          element.setAttribute('tabindex', '0');
-          element.setAttribute('role', 'button');
-          labelTarget(element, item, picked, open);
-        }).on('click', open).on('dblclick', L.DomEvent.stopPropagation).addTo(layer);
-        continue;
+        if(!attached(item)){
+          L.polygon(ring,{pane:'visitor-areas',className:'place-area',interactive:false}).addTo(layer);
+        }else{
+          const area = L.polygon(ring, {
+            pane: 'visitor-areas', className: 'place-area' + (picked ? ' picked' : ''), smoothFactor: 0, bubblingMouseEvents: false
+          });
+          const open = () => openPlace(item.id);
+          area.on('add', () => {
+            const element = area.getElement();
+            element.setAttribute('tabindex', '0');
+            element.setAttribute('role', 'button');
+            labelTarget(element, item, picked, open);
+          }).on('click', open).on('dblclick', L.DomEvent.stopPropagation).addTo(layer);
+          if(!calibration?.animalPositions?.[item.zone+'/'+item.id])continue;
+        }
       }
       const face = item.service ? guide.markerFace(item) : '';
       const icon = L.divIcon({
@@ -600,13 +673,14 @@
 
   async function readBoundaries() {
     try {
-      const [{ validBoundaries }, response] = await Promise.all([
+      const [geometry, response] = await Promise.all([
         import('./map-boundary-geometry.js'),
         fetch('map-boundaries.json', { cache: 'no-store', signal: AbortSignal.timeout(3500) })
       ]);
       if (!response.ok) return null;
       const value = await response.json();
-      return validBoundaries(value) ? value : null;
+      contains=geometry.contains;
+      return geometry.validBoundaries(value) ? value : null;
     } catch { return null; }
   }
 
@@ -656,7 +730,7 @@
         filterHint.textContent = 'В этой зоне таких мест нет.';
         status.hidden = true;
         renderCard(selectedPlace());
-        landscape.update({items,selected:next.id,zone:next.zone,position,boundary,alignment:calibration,filter:next.kind+'/'+next.service});
+        landscape.update({items,selected:next.id,zone:next.zone,position,boundary,attached,alignment:calibration,filter:next.kind+'/'+next.service});
         return;
       }
     }

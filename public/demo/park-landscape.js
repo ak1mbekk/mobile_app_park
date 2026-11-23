@@ -155,7 +155,8 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
       bounds.extend(xy);
       const ring = boundary(item)?.map(p => [p.lng,p.lat]);
       if (ring?.length) {
-        areas.push({type:'Feature',properties:props,geometry:{type:'Polygon',coordinates:[[...ring,ring[0]]]}});
+        const areaProps=payload.attached(item)?props:{chosen:false};
+        areas.push({type:'Feature',properties:areaProps,geometry:{type:'Polygon',coordinates:[[...ring,ring[0]]]}});
         addFence(ring, rails);
       }
       const photo = item.species?.map(window.parkGuide.speciesPortrait).find(Boolean);
@@ -194,11 +195,21 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
   }
   map.on('load', () => {ready=true; if(latest) update(latest);});
   map.on('click', event => {
-    if (!ready) return;
+    if (!ready || editPin) return;
     const p = event.point;
     const hit = map.queryRenderedFeatures([[p.x-7,p.y-7],[p.x+7,p.y+7]],
       {layers:['locations','survey-buildings','habitats']}).find(feature=>feature.properties.id);
     if (hit) select(hit.properties.id);
   });
-  return {update};
+  let editPin;
+  function editMarker(position,changed) {
+    const start=position ? [position.lng,position.lat] : map.getCenter();
+    map.jumpTo({center:start,padding:{top:55,bottom:150,left:0,right:0},zoom:Math.max(17,map.getZoom())});
+    const pin=new gl.Marker({draggable:true,color:'#ab441e'}).setLngLat(start).addTo(map);
+    editPin=pin;
+    pin.getElement().setAttribute('aria-label','Перетащите метку животного');
+    pin.on('dragend',()=>{const {lat,lng}=pin.getLngLat();changed([lat,lng]);});
+    return ()=>{pin.remove();editPin=null;cameraKey=null;};
+  }
+  return {update,editMarker};
 };

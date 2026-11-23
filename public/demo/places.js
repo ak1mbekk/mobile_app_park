@@ -120,11 +120,13 @@
     {zone:1,id:'16.1',x:121,y:389,plan:[207,371],name:'Валлийская овца',species:[]},
     {zone:1,id:'17',x:98,y:393,plan:[212,415],name:'Овца рацка',species:[]},
     {zone:1,id:'18',x:127,y:481,plan:[223,441],name:'Бельгийская голубая порода и коза гиргентана',species:['belgijskaya-golubaya-poroda','koza-gergentana']},
-    {zone:1,id:'19',x:23,y:388,plan:[148,421],name:'Обыкновенный канюк',species:[]},
-    {zone:1,id:'20',x:23,y:406,plan:[157,437],name:'Филин',species:['filin']},
-    {zone:1,id:'21',x:25,y:438,plan:[163,451],name:'Камерунская коза',species:[]},
-    {zone:1,id:'22',x:27,y:479,plan:[172,469],name:'Овца уэссан',species:[]},
-    {zone:1,id:'23',x:27,y:499,plan:[181,488],name:'Полярная сова',species:['polyarnaya-sova']},
+    // The technical drawing prints 19–23 on the parking side of the perimeter.
+    // Use the park's annotated map for 19, 21 and 23; the other two await placement.
+    {zone:1,id:'19',x:23,y:388,plan:[163.5,418.7],name:'Обыкновенный канюк',species:[]},
+    {zone:1,id:'20',x:23,y:406,name:'Филин',species:['filin']},
+    {zone:1,id:'21',x:25,y:438,plan:[181.4,447.9],name:'Камерунская коза',species:[]},
+    {zone:1,id:'22',x:27,y:479,name:'Овца уэссан',species:[]},
+    {zone:1,id:'23',x:27,y:499,plan:[200.5,486],name:'Полярная сова',species:['polyarnaya-sova']},
     {zone:1,id:'32',x:570,y:322,plan:[541,269],name:'Азиатский буйвол',species:['vodyanoj-bujvol-(aziatskij)']},
     {zone:1,id:'33',x:503,y:342,plan:[422,249],name:'Лама',species:['lama']},
     {zone:1,id:'34',x:374,y:287,plan:[376,262],name:'Альпака',species:['alpaka']},

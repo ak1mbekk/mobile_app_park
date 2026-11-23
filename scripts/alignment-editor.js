@@ -44,6 +44,7 @@ export default function alignmentEditor() {
             if(input.revision!==previous.revision){res.writeHead(409).end();return;}
             const {raster,centerX,centerY,scale,angle}=input;
             const result={raster,revision:previous.revision+1,centerX,centerY,scale,angle};
+            if(previous.animalPositions)result.animalPositions=previous.animalPositions;
             const approaches=input.approaches===undefined?previous.approaches:input.approaches;
             if(approaches!==undefined){
               if(!approaches || typeof approaches!=='object' || Array.isArray(approaches) ||
@@ -57,6 +58,26 @@ export default function alignmentEditor() {
             publish(file,result,res);
           }catch{res.writeHead(500).end();}
       }));
+      server.middlewares.use('/__park/animal-marker',(req,res)=>{
+        if(req.method==='GET'){
+          const local=['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+          res.writeHead(local?200:403,{'Content-Type':'application/json','Cache-Control':'no-store'})
+            .end(JSON.stringify({editable:local}));return;
+        }
+        localJsonRequest(req,res,1024,input=>{
+          const {id,coord,revision}=input || {};
+          if(typeof id!=='string'||!/^[12]\/[\w.-]{1,60}$/.test(id)||!Number.isSafeInteger(revision)||
+            !Array.isArray(coord)||coord.length!==2||!coord.every(Number.isFinite)||
+            coord[0]<53.07||coord[0]>53.12||coord[1]<25.98||coord[1]>26.06){
+            res.writeHead(422).end();return;
+          }
+          try {
+            const current=JSON.parse(fs.readFileSync(file,'utf8'));
+            if(current.revision!==revision){res.writeHead(409).end();return;}
+            publish(file,{...current,revision:revision+1,animalPositions:{...current.animalPositions,[id]:coord}},res);
+          }catch{res.writeHead(500).end();}
+        });
+      });
       const boundaries=path.join(server.config.publicDir,'demo','map-boundaries.json');
       server.middlewares.use('/__park/boundaries',(req,res)=>localJsonRequest(req,res,131072,input=>{
         if(!validBoundaries(input)){res.writeHead(422).end();return;}
