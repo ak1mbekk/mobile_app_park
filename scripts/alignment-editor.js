@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { validBoundaries } from '../public/demo/map-boundary-geometry.js';
+import { validGuestPaths } from '../public/demo/map-guest-geometry.js';
 
 function localJsonRequest(req,res,limit,save) {
   const address=req.socket.remoteAddress;
@@ -79,6 +80,20 @@ export default function alignmentEditor() {
         });
       });
       const boundaries=path.join(server.config.publicDir,'demo','map-boundaries.json');
+      const guestPaths=path.join(server.config.publicDir,'demo','map-guest-paths.json');
+      server.middlewares.use('/__park/guest-paths',(req,res)=>localJsonRequest(req,res,512,input=>{
+        const {id,status,revision}=input || {};
+        if(typeof id!=='string' || !['plan','open','closed'].includes(status) ||
+           !Number.isSafeInteger(revision)){res.writeHead(422).end();return;}
+        try{
+          const previous=JSON.parse(fs.readFileSync(guestPaths,'utf8'));
+          if(!validGuestPaths(previous)){res.writeHead(500).end();return;}
+          if(revision!==previous.revision){res.writeHead(409).end();return;}
+          if(!previous.paths.some(p=>p.id===id)){res.writeHead(404).end();return;}
+          const paths=previous.paths.map(p=>p.id===id ? {...p,status} : p);
+          publish(guestPaths,{revision:revision+1,paths},res);
+        }catch{res.writeHead(500).end();}
+      }));
       server.middlewares.use('/__park/boundaries',(req,res)=>localJsonRequest(req,res,131072,input=>{
         if(!validBoundaries(input)){res.writeHead(422).end();return;}
         try{

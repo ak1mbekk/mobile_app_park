@@ -21,6 +21,15 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
     layer('roads', 'line', 'road', { 'line-color': '#fff2d8', 'line-width': width(1.8, 22) }),
     layer('walk-edge', 'line', 'walk', { 'line-color': '#c6b695', 'line-width': width(1.8, 12) }),
     layer('walks', 'line', 'walk', { 'line-color': '#fff6df', 'line-width': width(1.2, 10) }),
+    ...[
+      ['guest-path-edge', '#fff7dc', width(6, 12)],
+      ['guest-path-plan', '#11605e', width(3.8, 8)],
+      ['guest-path-open', '#11605e', width(3.8, 8)]
+    ].map(([id,color,lineWidth]) => ({
+      id,type:'line',source:'guestPaths',layout:{'line-cap':'round','line-join':'round'},
+      ...(id === 'guest-path-edge' ? {} : {filter:['==',['get','status'],id === 'guest-path-open' ? 'open' : 'plan']}),
+      paint:{'line-color':color,'line-width':lineWidth,...(id === 'guest-path-plan' ? {'line-dasharray':[2,1.4]} : {})}
+    })),
     { id: 'habitats', type: 'fill', source: 'areas', paint: {
       'fill-color': ['case', ['get', 'chosen'], '#efae58', '#78995e'], 'fill-opacity': 0.28 } },
     { id: 'habitat-edges', type: 'line', source: 'areas', paint: {
@@ -57,7 +66,7 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
         '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'),
         survey:{type:'image',url:'assets/park-survey.webp',coordinates:surveyCorners(alignment)},
         points: source(collection([])), areas: source(collection([])), rails:source(collection([])),
-        pavilions:source(collection([]))}, layers}
+        pavilions:source(collection([])),guestPaths:source(collection([]))}, layers}
   });
   map.addControl(new gl.AttributionControl({compact:false}), 'bottom-left');
   map.addControl(new gl.NavigationControl({visualizePitch:true}), 'bottom-right');
@@ -138,6 +147,10 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
     latest = payload;
     if (!ready || stopped) return;
     const {items, selected, zone, position, boundary} = payload;
+    map.getSource('guestPaths').setData(collection(payload.paths.map(path => ({
+      type:'Feature',properties:{status:path.status},geometry:{type:'LineString',
+        coordinates:path.line.map(ll=>[ll.lng,ll.lat])}
+    }))));
     if (payload.alignment !== surveyAlignment) {
       surveyAlignment = payload.alignment;
       map.getSource('survey').setCoordinates(surveyCorners(surveyAlignment));

@@ -175,6 +175,14 @@ html.dark #visitor-theme .sun-icon {display:block}
   --map-bottom:calc(20px + env(safe-area-inset-bottom,0px));
 }
 #map .park-surface{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;background:#dae2c8;isolation:isolate}
+#map .guest-path-key{position:absolute;z-index:409;left:var(--map-left);bottom:calc(var(--map-bottom) + 6px);max-width:min(250px, calc(100% - 85px));border-radius:12px;background:var(--surface);color:var(--ink);box-shadow:var(--zk-shadow-control);font:500 13px/1.35 var(--zk-font)}
+#map .guest-path-key summary{display:flex;align-items:center;gap:8px;min-height:42px;padding:0 12px;cursor:pointer;font-weight:600}
+#map .guest-path-key summary::before,#map .guest-path-key i{content:"";display:inline-block;width:22px;border-top:3px dashed #11605e}
+#map .guest-path-key i{margin-right:6px;vertical-align:middle}
+#map .guest-path-key [data-open] i,#map .guest-path-key:has([data-plan][hidden]) summary::before{border-top-style:solid}
+#map .guest-path-key:has([data-missing]:not([hidden])) summary::before{display:none}
+#map .guest-path-key p{margin:0;padding:0 12px 9px}
+#map:has(.map-result:not([hidden])) .guest-path-key,#map:has(#map-search:not([hidden])) .guest-path-key{display:none}
 #map .visitor-map-head{
   position:absolute;z-index:500;top:var(--map-top);
   left:var(--map-left);right:var(--map-right);

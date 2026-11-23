@@ -6,6 +6,8 @@
 #boundary-layer{position:absolute;top:0;left:0;width:2064px;height:2369px;transform-origin:0 0;pointer-events:none}
 #boundary-layer polygon,#boundary-layer polyline{stroke:#f36d27;stroke-width:2.5;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 #boundary-layer polygon{fill:#f36d2744}#boundary-layer polyline{fill:none}
+#guest-path-layer{position:absolute;top:0;left:0;width:2064px;height:2369px;transform-origin:0 0;pointer-events:none}
+#guest-path-layer polyline{stroke:#11605e;stroke-width:4;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;fill:none}
 #boundary-layer circle{fill:#fff;stroke:#8d3616;stroke-width:1.2;vector-effect:non-scaling-stroke}
 .boundary-actions{display:grid;gap:5px}.boundary-actions button{text-align:left}
 aside{padding:20px;overflow:auto;background:rgb(var(--zk-card));border-left:1px solid rgb(var(--zk-line))}h1{font-size:23px;margin:0}p{color:rgb(var(--zk-stone));margin:10px 0 18px}label{display:grid;gap:4px;font-weight:550;margin:12px 0}

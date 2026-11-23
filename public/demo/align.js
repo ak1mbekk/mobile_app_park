@@ -1,5 +1,6 @@
 import { setupBoundaryEditor } from './align-boundaries.js';
 import { height, width } from './map-boundary-geometry.js';
+import { validGuestPaths } from './map-guest-geometry.js';
 
 (() => {
   const el=id=>document.getElementById(id);
@@ -18,6 +19,63 @@ import { height, width } from './map-boundary-geometry.js';
     view=crs.latLngToPoint(window.parkProjection.position(draft,p.zone,p),16);
     approachControls();updateBase();
   },draw);
+  let guestData, savingPath = false;
+  const pathSection = el('path-editor'), pathPicker = el('path-place'), access = el('path-access');
+  const pathLayer = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  pathLayer.id = 'guest-path-layer';
+  pathLayer.setAttribute('viewBox','0 0 2064 2369');
+  const routeLine = document.createElementNS(pathLayer.namespaceURI,'polyline');
+  pathLayer.append(routeLine);
+  el('drag-area').append(pathLayer);
+  const selectedPath = () => guestData?.paths.find(p => p.id === pathPicker.value);
+  function pathControls() {
+    pathPicker.disabled = access.disabled = savingPath || !selectedPath();
+    el('path-save').disabled = savingPath || !selectedPath() || selectedPath().status === access.value;
+  }
+  function viewPath() {
+    const path = selectedPath();
+    if (!path || !draft || !pathSection.open) return;
+    placing = false;
+    el('boundary-editor').open = false;
+    access.value = path.status;
+    el('region').value = path.zone;
+    const xs = path.points.map(p=>p[0]), ys = path.points.map(p=>p[1]);
+    view = toWorld(draft,(Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2);
+    el('zoom').value = 17;
+    routeLine.setAttribute('points',path.points.map(p=>p.join(',')).join(' '));
+    pathControls();
+    approachControls();
+    updateBase();
+  }
+  pathSection.ontoggle = () => { if(pathSection.open) viewPath(); draw(); };
+  pathPicker.onchange = () => {el('path-note').textContent=''; viewPath();};
+  access.onchange = pathControls;
+  el('path-save').onclick = async () => {
+    if (savingPath || !selectedPath()) return;
+    savingPath = true;
+    pathControls();
+    try {
+      const res = await fetch('/__park/guest-paths',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({revision:guestData.revision,id:pathPicker.value,status:access.value})});
+      if(res.status===409) throw Error('Данные уже изменились в другой вкладке. Обновите страницу.');
+      if(!res.ok) throw Error('Сохранение доступно на локальном сервере парка.');
+      const updated = await res.json();
+      if(!validGuestPaths(updated)) throw Error('Не удалось проверить ответ сервера.');
+      guestData = updated;
+      el('path-note').textContent = 'Доступ сохранён.';
+    } catch(error) {el('path-note').textContent = error.message;}
+    savingPath = false;
+    pathControls();
+  };
+  pathControls();
+  if (location.hash === '#path-editor') pathSection.open = true;
+  fetch('map-guest-paths.json',{cache:'no-store'}).then(r=>r.json()).then(data=>{
+    if(!validGuestPaths(data)) throw Error();
+    guestData = data;
+    for(const p of data.paths) pathPicker.add(new Option(window.parkGuide.zones[p.zone].name+' · '+p.name,p.id));
+    pathControls();
+    viewPath();
+  }).catch(()=>{el('path-note').textContent='Не удалось загрузить дорожки.';});
   function approachControls(){
     const coord=draft?.approaches?.[picker.value];
     el('place-approach').disabled=!draft||!picker.value||saving;
@@ -37,7 +95,9 @@ import { height, width } from './map-boundary-geometry.js';
     const box=el('workspace'), f=factor(), corner=toWorld(draft,0,0).subtract(view).multiplyBy(f);
     const transform='translate('+(box.clientWidth/2+corner.x)+'px,'+(box.clientHeight/2+corner.y)+'px) rotate('+draft.angle+'deg) scale('+draft.scale*f+')';
     el('survey').style.transform=transform;
-    el('survey').style.opacity=boundaries.open?1:Number(el('opacity').value)/100;
+    pathLayer.style.transform=transform;
+    pathLayer.style.display=pathSection.open?'block':'none';
+    el('survey').style.opacity=boundaries.open||pathSection.open?1:Number(el('opacity').value)/100;
     el('drag-area').style.cursor=placing||boundaries.drawing?'crosshair':'';
     boundaries.draw(transform);
     el('save').disabled=saving || !el('scale').validity.valid || !el('angle').validity.valid ||
@@ -45,7 +105,8 @@ import { height, width } from './map-boundary-geometry.js';
   }
   function updateBase(){
     const point=approachCandidate||draft?.approaches?.[picker.value];
-    el('base-map').src=widget(crs.pointToLatLng(view,16),Number(el('zoom').value),point?[L.latLng(point)]:[]);
+    if (location.hash !== '#path-editor')
+      el('base-map').src=widget(crs.pointToLatLng(view,16),Number(el('zoom').value),point?[L.latLng(point)]:[]);
     draw();
   }
   function restore(){
@@ -65,7 +126,7 @@ import { height, width } from './map-boundary-geometry.js';
     approachControls();updateBase();
   };
   el('place-approach').onclick=()=>{
-    if(!placing)el('boundary-editor').open=false;
+    if(!placing){el('boundary-editor').open=false;pathSection.open=false;}
     placing=!placing;approachControls();
   };
   el('confirm-approach').onclick=()=>{
@@ -90,7 +151,7 @@ import { height, width } from './map-boundary-geometry.js';
     else draft.angle=Number(el(key).value);
     draw();
   };
-  const movingView=()=>boundaries.open||el('move').value==='view';
+  const movingView=()=>boundaries.open||pathSection.open||el('move').value==='view';
   function shift(dx,dy){
     if(movingView())view=view.subtract(L.point(dx,dy).divideBy(factor()));
     else {draft.centerX+=dx/factor();draft.centerY+=dy/factor();}
@@ -143,5 +204,5 @@ import { height, width } from './map-boundary-geometry.js';
   };
   new ResizeObserver(draw).observe(el('workspace'));updateBase();
   fetch('map-alignment.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();})
-    .then(value=>{saved=value;restore();}).catch(()=>{el('status').textContent='Не удалось открыть файл привязки.';});
+    .then(value=>{saved=value;restore();viewPath();}).catch(()=>{el('status').textContent='Не удалось открыть файл привязки.';});
 })();

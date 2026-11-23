@@ -1,6 +1,6 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '46';
+const version = prefix + '47';
 const base = new URL(self.registration.scope);
 const shell = [
   'guide-shell.css','guide-shell.js','catalog-editorial.css','richi-hub.js',
@@ -8,7 +8,7 @@ const shell = [
   'index.html','base.css','show.css','visitor.css','park-and-chest.css','vendor/park-menu/menu.css','vendor/park-menu/menu.js','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
   'assets/nav-veranda.svg','assets/nav-kitchen.svg','assets/nav-bath.svg','assets/shop-cushion.webp',
   'places.js','routing.js','catalog.js','map-projection.js','park-map.js','park-landscape.js','vendor/maplibre/maplibre-gl.js','vendor/maplibre/maplibre-gl.css','assets/park-landscape.geojson','park-schedule.js','feedings.js',
-  'assets/park-survey.webp','map-boundaries.json','map-boundary-geometry.js',
+  'assets/park-survey.webp','map-boundaries.json','map-boundary-geometry.js','map-guest-paths.json','map-guest-geometry.js',
   'guide-offline.js','family.js','meeting.js','home.js','show.js','match.js','pet-reactions.js','room-ambience.js',
   'assets/avatar-raccoon.webp','assets/avatar-bison.webp','assets/park-wordmark.webp','assets/woven-diamonds.svg','assets/linen-weave.svg','assets/richi-reward.webp',
   'assets/first-veranda.webp','assets/fruit.webp','assets/named-veranda.webp','assets/threshold-morning.webp',
@@ -89,6 +89,10 @@ self.addEventListener('fetch',event=>{
     }
     try {
       const response=await fetch(req);
+      if(response.ok && path==='map-guest-paths.json'){
+        const data=await response.clone().json();
+        if(Number.isSafeInteger(data?.revision) && Array.isArray(data.paths))await cache.put(req,response.clone());
+      }
       if(response.ok && path==='map-alignment.json'){
         if(await validAlignmentResponse(response))await cache.put(req,response.clone());
         else return (await cache.match(key)) || response;

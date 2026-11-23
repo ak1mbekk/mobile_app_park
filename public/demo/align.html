@@ -19,6 +19,11 @@
 <button id="confirm-approach" type="button" hidden>Подтвердить гостевой подход</button>
 <button id="remove-approach" type="button" hidden>Убрать точку</button>
 <p id="approach-note" role="status"></p></details>
+<details id="path-editor"><summary>Гостевые дорожки</summary>
+<label>Участок <select id="path-place"></select></label>
+<label>Доступ <select id="path-access"><option value="plan">По схеме посетителя</option><option value="open">Проход подтверждён парком</option><option value="closed">Проход закрыт</option></select></label>
+<button type="button" id="path-save" disabled>Сохранить доступ</button>
+<p id="path-note" role="status"></p></details>
 <details id="boundary-editor"><summary>Границы вольеров</summary>
 <label>Вольер <select id="boundary-place"><option value="">Выберите вольер</option></select></label>
 <p>На техническом плане отметьте вершины по видимой ограде. При сохранении контур замыкается и публикуется отдельно от геопривязки.</p>

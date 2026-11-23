@@ -67,6 +67,22 @@
   serviceOffsets.sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
   let map, layer, calibration, hitChooser;
   let boundaryData, contains;
+  let guestData;
+  function guestPaths() {
+    return (guestData?.paths || []).filter(p => p.zone === state.zone && p.status !== 'closed')
+      .map(path => ({status:path.status,line:path.points.map(([x,y]) => calibration
+        ? projection.crs.pointToLatLng(projection.toWorld(calibration,x,y),16) : L.latLng(-y,x))}));
+  }
+
+  async function readGuestPaths() {
+    try {
+      const [schema,response] = await Promise.all([import('./map-guest-geometry.js'),
+        fetch('map-guest-paths.json',{cache:'no-store',signal:AbortSignal.timeout(3500)})]);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return schema.validGuestPaths(data) ? data : null;
+    } catch { return null; }
+  }
   let refreshing, redrawSurvey;
   let loading = false, mapReady = false, drawing = false, surveyFailed = false;
   let searchOpen = false, choosing = false, placeTrigger;
@@ -527,6 +543,12 @@
     map.invalidateSize({ pan: false });
     hitChooser.dismiss();
     layer.clearLayers();
+    for (const path of guestPaths()) {
+      const options = {interactive:false,lineCap:'round',lineJoin:'round',pane:'visitor-paths'};
+      L.polyline(path.line,{...options,color:'#fff7dc',weight:7}).addTo(layer);
+      L.polyline(path.line,{...options,color:'#11605e',weight:4,
+        dashArray:path.status==='plan' ? '8 6' : null}).addTo(layer);
+    }
     markers.clear();
     const matches = local().filter(visible);
     for (const roof of guide.surveyBuildings.filter(b=>b.zone===state.zone)) {
@@ -613,6 +635,7 @@
       attributionControl: Boolean(calibration), zoomControl: false, zoomAnimation: false
     });
     map.createPane('visitor-areas').style.zIndex = '620';
+    map.createPane('visitor-paths').style.zIndex = '410';
     map.createPane('visitor-services').style.zIndex = '630';
     map.attributionControl?.setPrefix(false).setPosition('bottomleft');
     const zoomControl = L.control.zoom({ position: 'topright', zoomInTitle: 'Увеличить', zoomOutTitle: 'Уменьшить' }).addTo(map);
@@ -702,14 +725,20 @@
     if (calibration === undefined) {
       if (!loading) {
         loading = true;
-        Promise.all([readAlignment(), readBoundaries()]).then(([value, boundaries]) => {
+        Promise.all([readAlignment(), readBoundaries(), readGuestPaths()]).then(([value, boundaries, paths]) => {
           calibration = value;
           boundaryData = boundaries;
+          guestData = paths;
           show();
         });
       }
       return;
     }
+    const paths = guestPaths();
+    const legend = host.querySelector('.guest-path-key');
+    legend.querySelector('[data-plan]').hidden = !paths.some(p => p.status === 'plan');
+    legend.querySelector('[data-open]').hidden = !paths.some(p => p.status === 'open');
+    legend.querySelector('[data-missing]').hidden = paths.length > 0;
     if (calibration && !flatOnly && window.createParkLandscape) {
       if (!landscape) {
         try {
@@ -730,7 +759,7 @@
         filterHint.textContent = 'В этой зоне таких мест нет.';
         status.hidden = true;
         renderCard(selectedPlace());
-        landscape.update({items,selected:next.id,zone:next.zone,position,boundary,attached,alignment:calibration,filter:next.kind+'/'+next.service});
+        landscape.update({items,paths,selected:next.id,zone:next.zone,position,boundary,attached,alignment:calibration,filter:next.kind+'/'+next.service});
         return;
       }
     }
@@ -741,12 +770,14 @@
 
   function refreshAlignment() {
     if (refreshing || (!map && !landscape) || !document.getElementById('map').classList.contains('current')) return;
-    refreshing = Promise.all([readAlignment(), readBoundaries()]).then(([next, boundaries]) => {
+    refreshing = Promise.all([readAlignment(), readBoundaries(), readGuestPaths()]).then(([next, boundaries, paths]) => {
       const recovered = next && !calibration;
       const alignmentChanged = next && (recovered || ['revision', 'centerX', 'centerY', 'scale', 'angle']
         .some(key => next[key] !== calibration[key]));
       const boundariesChanged = boundaries && boundaries.revision !== boundaryData?.revision;
-      if (!alignmentChanged && !boundariesChanged) return;
+      const pathsChanged = (paths?.revision ?? null) !== (guestData?.revision ?? null);
+      if (!alignmentChanged && !boundariesChanged && !pathsChanged) return;
+      guestData = paths;
       if (alignmentChanged) calibration = next;
       if (boundariesChanged) boundaryData = boundaries;
       if (recovered) {
@@ -777,7 +808,10 @@
   }).observe(surface);
 
   document.addEventListener('conceptscreen', event => {
-    if (event.detail === 'map') show();
+    if (event.detail === 'map') {
+      if (map || landscape) refreshAlignment();
+      show();
+    }
     else setSearch(false);
   });
   document.addEventListener('parkcatalogready', () => {
