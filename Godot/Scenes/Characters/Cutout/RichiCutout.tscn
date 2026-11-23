@@ -1,0 +1,95 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Characters/Cutout/CutoutWalkRig.tscn" id="Rig"]
+[ext_resource type="Texture2D" path="res://Scenes/Characters/Cutout/Art/richi-parts.webp" id="Paint"]
+
+[sub_resource type="AtlasTexture" id="Head"]
+atlas = ExtResource("Paint")
+region = Rect2(2, 2, 150, 139)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Torso"]
+atlas = ExtResource("Paint")
+region = Rect2(156, 2, 93, 132)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Tail"]
+atlas = ExtResource("Paint")
+region = Rect2(254, 2, 104, 82)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="UpperArm"]
+atlas = ExtResource("Paint")
+region = Rect2(2, 148, 33, 56)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Forearm"]
+atlas = ExtResource("Paint")
+region = Rect2(42, 148, 33, 47)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Hand"]
+atlas = ExtResource("Paint")
+region = Rect2(82, 148, 33, 32)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Thigh"]
+atlas = ExtResource("Paint")
+region = Rect2(135, 148, 48, 65)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Shin"]
+atlas = ExtResource("Paint")
+region = Rect2(192, 148, 48, 52)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Foot"]
+atlas = ExtResource("Paint")
+region = Rect2(249, 148, 48, 26)
+filter_clip = true
+
+[node name="RichiCutout" instance=ExtResource("Rig")]
+torso_texture = SubResource("Torso")
+torso_pivot = Vector2(0.5, 0.83)
+head_texture = SubResource("Head")
+head_pivot = Vector2(0.50, 0.93)
+head_offset = Vector2(1, -103)
+register_head_turn = true
+head_eye_left = Vector2(0.45, 0.575)
+head_eye_right = Vector2(0.694, 0.615)
+head_nose = Vector2(0.594, 0.74)
+head_ears = Vector4(0.255, 0.17, 0.825, 0.24)
+head_ear_tips = Vector2(0.01, 0.11)
+tail_texture = SubResource("Tail")
+tail_pivot = Vector2(0.86, 0.13)
+tail_offset = Vector2(-17, -10)
+thigh_texture = SubResource("Thigh")
+thigh_pivot = Vector2(0.53, 0.185)
+shin_texture = SubResource("Shin")
+shin_pivot = Vector2(0.44, 0.25)
+foot_texture = SubResource("Foot")
+foot_sole_pivot = Vector2(0.46, 0.94)
+knee_cap_region = Rect2i(9, 1, 24, 24)
+thigh_length = 41.0
+shin_length = 32.0
+ankle_above_sole = 17.0
+hip_span = 36.0
+far_tint = Color(0.80, 0.80, 0.79, 1)
+upper_arm_texture = SubResource("UpperArm")
+upper_arm_pivot = Vector2(0.52, 0.17)
+forearm_texture = SubResource("Forearm")
+forearm_pivot = Vector2(0.50, 0.17)
+hand_texture = SubResource("Hand")
+hand_pivot = Vector2(0.47, 0.22)
+shoulder_offset = Vector2(0, -87)
+shoulder_span = 64.0
+idle_arm_spread_degrees = 25.0
+upper_arm_length = 38.0
+forearm_length = 33.0
+elbow_bend_degrees = 5.0
+step_length = 34.0
+swing_height = 12.0
+stance_width = 36.0
+standing_extension = 0.963
+arm_swing_degrees = 19.0
+preview_standing_pose = true

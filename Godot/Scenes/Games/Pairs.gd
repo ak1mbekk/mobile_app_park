@@ -15,11 +15,12 @@ var opened: Array = []
 var paired: Array = []
 var moves := 0
 var finished := false
+var latest_pair := ""
 
 
 func _ready() -> void:
     %Again.pressed.connect(_new_round)
-    %Chest.pressed.connect(func(): menu_requested.emit())
+    resized.connect(fit_tile_board.bind(%Board))
 
 
 func restore(record: Dictionary) -> void:
@@ -78,6 +79,7 @@ func _new_round() -> void:
     paired.clear()
     moves = 0
     finished = false
+    latest_pair = ""
     _save_round()
     _make_grid()
     _paint()
@@ -89,6 +91,7 @@ func _make_grid() -> void:
         tile.queue_free()
     %Grid.columns = 4 if cards.size() == 12 else 3
     %Board.ratio = 1.02 if cards.size() == 12 else 1.26
+    fit_tile_board(%Board)
     for index in cards.size():
         var tile := TILE.instantiate()
         tile.pressed.connect(_flip.bind(index))
@@ -99,16 +102,22 @@ func _make_grid() -> void:
 func _flip(index: int) -> void:
     if finished or opened.size() == 2 or paired.has(cards[index]) or opened.has(index):
         return
+    latest_pair = ""
     opened.append(index)
     if opened.size() == 2:
         moves += 1
         if cards[int(opened[0])] == cards[index]:
             paired.append(cards[index])
+            latest_pair = cards[index]
             opened.clear()
             finished = paired.size() * 2 == cards.size()
     _save_round()
     _paint()
     %Grid.get_child(index).reveal()
+    if not latest_pair.is_empty():
+        for matched_index in cards.size():
+            if cards[matched_index] == latest_pair:
+                %Grid.get_child(matched_index).mark_pair()
     if opened.size() == 2:
         _close_mismatch()
 
@@ -151,5 +160,7 @@ func _update_result() -> void:
         %Hint.text = "Эти звери разные"
     elif opened.size() == 1:
         %Hint.text = ANIMALS[cards[int(opened[0])]][0] + " · найди пару"
+    elif not latest_pair.is_empty():
+        %Hint.text = "Есть пара! " + str(ANIMALS[latest_pair][0])
     else:
         %Hint.text = "Открывай по две карточки."

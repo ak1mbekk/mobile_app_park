@@ -244,53 +244,46 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 wait_time = 30.0
 
-[node name="Dock" type="PanelContainer" parent="Интерфейс"]
+[node name="Dock" type="VBoxContainer" parent="Интерфейс/Header/Contents"]
 unique_name_in_owner = true
-anchor_right = 1.0
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_top = -92.0
-offset_bottom = -92.0
-grow_vertical = 0
-theme = SubResource("HomeTheme")
-
-[node name="Content" type="VBoxContainer" parent="Интерфейс/Dock"]
+visible = false
 theme_override_constants/separation = 8
 
-[node name="Status" type="Label" parent="Интерфейс/Dock/Content"]
+[node name="Status" type="Label" parent="Интерфейс/Header/Contents/Dock"]
 unique_name_in_owner = true
 visible = false
 text = ""
-horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.91, 0.93, 0.84, 1)
+theme_override_colors/font_color = Color(0.32, 0.26, 0.19, 1)
 theme_override_font_sizes/font_size = 18
 autowrap_mode = 2
 
-[node name="GoalText" type="Label" parent="Интерфейс/Dock/Content"]
+[node name="GoalText" type="Label" parent="Интерфейс/Header/Contents/Dock"]
 unique_name_in_owner = true
 visible = false
-horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.22, 0.16, 0.10, 1)
 theme_override_font_sizes/font_size = 20
 autowrap_mode = 2
 
-[node name="GoalButtons" type="HBoxContainer" parent="Интерфейс/Dock/Content"]
+[node name="GoalButtons" type="HBoxContainer" parent="Интерфейс/Header/Contents/Dock"]
 unique_name_in_owner = true
 visible = false
 theme_override_constants/separation = 8
 
-[node name="GoalAction" type="Button" parent="Интерфейс/Dock/Content/GoalButtons"]
+[node name="GoalAction" type="Button" parent="Интерфейс/Header/Contents/Dock/GoalButtons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 54)
 size_flags_horizontal = 3
 script = ExtResource("TouchButton")
 
-[node name="GoalLater" type="Button" parent="Интерфейс/Dock/Content/GoalButtons"]
+[node name="GoalLater" type="Button" parent="Интерфейс/Header/Contents/Dock/GoalButtons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(112, 54)
 text = "Позже"
+flat = true
+theme_override_colors/font_color = Color(0.28, 0.30, 0.21, 1)
 script = ExtResource("TouchButton")
 
-[node name="Back" type="Button" parent="Интерфейс/Dock/Content"]
+[node name="Back" type="Button" parent="Интерфейс/Header/Contents/Dock"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 58)

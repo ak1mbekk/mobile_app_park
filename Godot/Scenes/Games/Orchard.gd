@@ -18,8 +18,14 @@ var basket_tilt := 0.0
 
 func _ready() -> void:
     %Again.pressed.connect(_new_round)
-    %Chest.pressed.connect(func(): menu_requested.emit())
-    set_process(false)
+    visibility_changed.connect(_sync_activity)
+    _sync_activity()
+
+
+func _sync_activity() -> void:
+    set_process(running and is_visible_in_tree())
+    if not is_processing():
+        finger = -1
 
 
 func restore(record: Dictionary) -> void:
@@ -35,7 +41,8 @@ func restore(record: Dictionary) -> void:
     fall = float(record.fall)
     kind = record.get("kind", "apple")
     running = not record.finished
-    set_process(running)
+    %Backdrop.aim_at(basket_position)
+    _sync_activity()
     _paint()
 
 
@@ -72,6 +79,7 @@ func _new_round() -> void:
     errors = 0
     finger = -1
     basket_position = 0.5
+    %Backdrop.aim_at(basket_position)
     basket_tilt = 0.0
     if feedback_tween:
         feedback_tween.kill()
@@ -79,7 +87,7 @@ func _new_round() -> void:
     running = true
     _drop()
     _save_round()
-    set_process(true)
+    _sync_activity()
     _paint()
 
 
@@ -106,6 +114,10 @@ func _land() -> void:
         _flash("catch")
     elif grabbed or kind == "apple":
         errors += 1
+        var heart: Label = %Lives.get_child(LIVES - errors)
+        heart.pivot_offset = heart.size * 0.5
+        heart.scale = Vector2.ONE * 1.28
+        heart.create_tween().tween_property(heart, "scale", Vector2.ONE, 0.22)
         %Hint.text = _error_text()
         _flash("rattle" if grabbed else "ground")
     else:
@@ -156,6 +168,7 @@ func _save_round() -> void:
 
 
 func _draw_field() -> void:
+    %Walker.follow_basket(basket_position)
     %Field.fruit_x = spot
     %Field.basket_x = basket_position
     %Field.basket_tilt = basket_tilt
@@ -183,7 +196,6 @@ func _update_result() -> void:
     %Again.visible = not running
     %Again.text = "Ещё раз" if errors == LIVES else "Начать"
     %Again.icon = REPLAY_ICON if errors == LIVES else null
-    %Chest.visible = not running and errors == LIVES
     if running:
         return
     var payout := reward_text()
@@ -214,7 +226,9 @@ func _input(event: InputEvent) -> void:
 func _handle_pointer(point: Vector2, pointer: int, pressed: bool, field: Rect2) -> void:
     if pressed and finger == -1 and field.has_point(point):
         finger = pointer
-        _move_basket((point.x - field.position.x) / field.size.x)
+        var fraction := (point.x - field.position.x) / field.size.x
+        %Backdrop.touch_bank(fraction)
+        _move_basket(fraction)
         get_viewport().set_input_as_handled()
     elif not pressed and pointer == finger:
         finger = -1
@@ -226,4 +240,5 @@ func _move_basket(position: float) -> void:
     var offset := next_position - basket_position
     basket_tilt = clampf(basket_tilt + offset * 3.6, -0.28, 0.28)
     basket_position = next_position
+    %Backdrop.aim_at(basket_position)
     _draw_field()

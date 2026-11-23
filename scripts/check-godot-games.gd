@@ -121,7 +121,7 @@ func _test_pairs() -> void:
     await process_frame
     _expect(committed.size() == count, "Completed pairs can reopen without another reward")
     _expect(room.board.get_node("%Hint").text.contains("Листья +5"), "The authoritative reward is displayed")
-    _tap(room.board.get_node("%Chest"))
+    _tap(room.get_node("%Back"))
     _expect(room.get_node("%Picker").visible and not room.board, "The result returns to the chest menu")
     _expect(committed.size() == count, "Returning to the chest keeps the completed round")
     _tap(room.get_node("%Pairs"))
@@ -205,6 +205,14 @@ func _test_match() -> void:
     if not await _wait_for(func() -> bool: return not room.board.resolving, 8.0, "The match cascade finishes"):
         return
     _expect(room.board.bonus == earned_bonus and room.board.get_node("%Combo").visible, "The animation updates the visible bonus")
+    room.set_rounds({"match": {"id": 11, "cells": CELLS, "moves": 0, "berries": 6,
+        "bonus": 5, "finished": true, "won": false, "reward": {"leaves": 5, "xp": 0}}})
+    var before_reopen := committed.size()
+    room.open("match")
+    await process_frame
+    var losing_hint: String = room.board.get_node("%Hint").text
+    _expect(losing_hint.contains("Листья +5") and not losing_hint.contains("Опыт +0") and committed.size() == before_reopen,
+        "A lost round shows its actual five leaves without paying again or displaying zero XP")
     await _return_home()
 
 
@@ -246,11 +254,14 @@ func _test_orchard() -> void:
     room.board.spot = 0.5
     room.board._land()
     await process_frame
+    var result_field: Rect2 = room.board.get_node("%Field").get_global_rect()
     var round_id: int = room.rounds.orchard.id
     _tap(room.board.get_node("%Again"))
     _expect(room.rounds.orchard.id == round_id + 1 and room.rounds.orchard.errors == 0, "Orchard replay restores all three lives")
     _expect(room.board.get_node("%Field").harvest == 0, "The new round begins with an empty basket")
+    await process_frame
     var field: Rect2 = room.board.get_node("%Field").get_global_rect()
+    _expect(field.is_equal_approx(result_field), "Replay keeps the same field size and basket landing height")
     var first := field.get_center()
     _touch(first, true)
     var drag := InputEventScreenDrag.new()
@@ -259,6 +270,32 @@ func _test_orchard() -> void:
     root.push_input(drag, true)
     _touch(drag.position, false)
     _expect(is_equal_approx(room.board.basket_position, 0.75), "Dragging a finger moves the basket across the field")
+    var backdrop = room.board.get_node("%Backdrop")
+    _expect(is_equal_approx(backdrop.target, 0.5), "Touch aims decorative parallax through the same basket controller")
+    var bank: ShaderMaterial = backdrop.get_node("River").material
+    _expect(is_equal_approx(bank.get_shader_parameter("ripple_x"), 0.5), "The water responds at the initial touch column")
+    # Integrate an identical stationary target at two frame rates.
+    for rate in [30, 60]:
+        backdrop.drift = 0.0
+        backdrop.breeze = 0.0
+        for frame in rate:
+            backdrop._process(1.0 / rate)
+        _expect(is_equal_approx(backdrop.drift, 0.5 * (1.0 - exp(-5.5))) and is_equal_approx(backdrop.breeze, 1.0),
+            "Sway and parallax keep the same phase and response at %d FPS" % rate)
+    room.hide()
+    var hidden_time: float = backdrop.breeze
+    var suspended_fall: float = room.board.fall
+    await process_frame
+    await process_frame
+    _expect(not backdrop.is_processing() and backdrop.breeze == hidden_time and room.board.fall == suspended_fall,
+        "An invisible orchard stops both river animation and fruit simulation")
+    room.show()
+    paused = true
+    var paused_time: float = backdrop.breeze
+    await process_frame
+    await process_frame
+    paused = false
+    _expect(backdrop.breeze == paused_time, "Water and branch wind keep their phase across a pause")
     await _return_home()
 
 

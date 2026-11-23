@@ -561,8 +561,11 @@ func _sync_native_shop() -> void:
         var detail: String = ware.tier
         if ware.has("replaces"):
             detail += " · заменяет " + ware.replaces
+        var availability := SHOP_CATALOG.item_status(id, native_owned, native_placed, native_hat, native_leaves)
+        detail += "\n" + availability
         items[id] = {
             "name": ware.name, "detail": detail,
+            "availability": availability,
             "price": "Куплено" if native_owned.has(id) else SHOP_CATALOG.leaf_price(ware.price),
         }
     var confirm_label := ""
@@ -581,6 +584,8 @@ func _sync_native_shop() -> void:
             confirm_label = "Купить за " + SHOP_CATALOG.leaf_price(price)
     shop.set_state({
         "wallet": native_leaves, "selected": selected, "status": native_shop_status,
+        "growth": SHOP_CATALOG.growth_hint(native_xp),
+        "goal": SHOP_CATALOG.furniture_goal(native_owned, native_placed, native_leaves),
         "confirm_label": confirm_label, "confirm_enabled": confirm_enabled, "items": items,
     })
 
@@ -591,11 +596,10 @@ func _bed_goal() -> Dictionary:
         return {}
     if native_owned.has("bed"):
         return {"message": "Поставь лежанку, чтобы енот мог отдохнуть.", "label": "Поставить лежанку", "play": false}
-    var recipient := "Ричи" if pet_name == "Ричи" else "еноту по имени " + pet_name
-    var message := "Надо купить лежанку нашему " + recipient + "."
+    var message := pet_name + " хочет лежанку."
     if native_leaves >= BED_PRICE:
         return {"message": message, "label": "Купить лежанку за %d листиков" % BED_PRICE, "play": false}
-    return {"message": message + " Давай сыграем в игру и заработаем листики!", "label": "Сыграть", "play": true}
+    return {"message": message + " Сыграем за листики?", "label": "Сыграть", "play": true}
 
 func _take_bed_goal() -> void:
     var goal := _bed_goal()
@@ -905,9 +909,6 @@ func _refresh_controls() -> void:
     %GoalAction.text = str(goal.get("label", ""))
     %GoalButtons.visible = show_goal
     %Dock.visible = not (playing or shopping or previewing) and (status.visible or %Back.visible or show_goal)
-    var dock_edge := -92.0 if %RoomNavigation.visible else 0.0
-    %Dock.offset_top += dock_edge - %Dock.offset_bottom
-    %Dock.offset_bottom = dock_edge
 
 func _position_stations() -> void:
     var camera := get_viewport().get_camera_3d()
@@ -951,6 +952,7 @@ func _apply_furniture(furniture: Dictionary) -> void:
     kitchen.get_node("Кухонный уголок/Шкафчик/Деревянные дверцы").visible = not mint_cabinet
     var chest_visible := preview == "chest" or placed.has("chest")
     stations.get_node("Сундук с игрушками/Исходный сундук").visible = not chest_visible
+    stations.get_node("Сундук с игрушками/Дубовый сундук").visible = chest_visible
     for item: Node3D in furnishings.get_children():
         item.visible = preview == item.name or placed.has(String(item.name))
     if night:

@@ -1,6 +1,5 @@
 [gd_scene format=3]
 
-[ext_resource type="Material" path="res://Materials/OiledWood.tres" id="Oak"]
 [ext_resource type="Texture2D" path="res://Art/Textures/WindowLinen.png" id="Weave"]
 
 [sub_resource type="StandardMaterial3D" id="Fabric"]
@@ -46,22 +45,6 @@ outer_radius = 0.031
 rings = 20
 ring_segments = 8
 
-[sub_resource type="BoxMesh" id="Chest"]
-material = ExtResource("Oak")
-size = Vector3(0.35, 0.19, 0.25)
-
-[sub_resource type="BoxMesh" id="Lid"]
-material = ExtResource("Oak")
-size = Vector3(0.364, 0.047, 0.263)
-
-[sub_resource type="BoxMesh" id="Latch"]
-material = SubResource("Brass")
-size = Vector3(0.047, 0.067, 0.015)
-
-[sub_resource type="BoxMesh" id="Strap"]
-material = SubResource("Brass")
-size = Vector3(0.024, 0.006, 0.263)
-
 [node name="Обстановка" type="Node3D"]
 
 [node name="cushion" type="MeshInstance3D" parent="."]
@@ -98,29 +81,3 @@ position = Vector3(0, 0.105, 0.035)
 light_color = Color(1, 0.70, 0.32, 1)
 light_energy = 0.29
 omni_range = 0.64
-
-[node name="chest" type="Node3D" parent="."]
-visible = false
-position = Vector3(0.225, 0, 1.77)
-rotation = Vector3(0, -0.52, 0)
-scale = Vector3(0.61, 0.61, 0.61)
-
-[node name="Корпус" type="MeshInstance3D" parent="chest"]
-position = Vector3(0, 0.097, 0)
-mesh = SubResource("Chest")
-
-[node name="Крышка" type="MeshInstance3D" parent="chest"]
-position = Vector3(0, 0.207, 0)
-mesh = SubResource("Lid")
-
-[node name="Защёлка" type="MeshInstance3D" parent="chest"]
-position = Vector3(0, 0.18, 0.132)
-mesh = SubResource("Latch")
-
-[node name="Левый пояс" type="MeshInstance3D" parent="chest"]
-position = Vector3(-0.118, 0.233, 0)
-mesh = SubResource("Strap")
-
-[node name="Правый пояс" type="MeshInstance3D" parent="chest"]
-position = Vector3(0.118, 0.233, 0)
-mesh = SubResource("Strap")

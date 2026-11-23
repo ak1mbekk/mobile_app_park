@@ -20,6 +20,10 @@ func _ready() -> void:
     %Confirm.pressed.connect(_confirm)
     for id in CATALOG.HATS + CATALOG.FURNITURE:
         get_node("%" + id).pressed.connect(_select.bind(id))
+    var furniture := CATALOG.FURNITURE.duplicate()
+    furniture.sort_custom(func(a, b): return CATALOG.ITEMS[a].price < CATALOG.ITEMS[b].price)
+    for index in furniture.size():
+        %FurnitureList.move_child(get_node("%" + furniture[index]), index)
     _show_group(true)
 
 
@@ -62,7 +66,7 @@ func _show_group(hats: bool) -> void:
     %FurnitureList.visible = not hats
     %Hats.set_pressed_no_signal(hats)
     %Furniture.set_pressed_no_signal(not hats)
-    %Catalog.offset_top = -370.0 if hats else -771.0
+    %Catalog.offset_top = -minf(size.y * 0.88, 920.0)
 
 
 func _render() -> void:
@@ -75,10 +79,14 @@ func _render() -> void:
             continue
         var title := str(item.get("name", ""))
         var price := str(item.get("price", ""))
-        var rarity := str(item.get("detail", "")).get_slice(" · ", 0)
+        var rarity := str(item.get("detail", "")).get_slice("\n", 0).get_slice(" · ", 0)
+        var availability := str(item.get("availability", ""))
         row.get_node("Name").text = title
         row.get_node("Price").text = price + "\n" + rarity
-        row.accessibility_name = " · ".join([title, price, rarity])
+        row.get_node("Availability").text = availability
+        row.accessibility_name = " · ".join([title, price, rarity, availability])
+    %Growth.text = str(state.get("growth", ""))
+    %Goal.text = str(state.get("goal", ""))
     var wallet := "Листья %d" % int(state.get("wallet", 0))
     %Wallet.text = wallet
     %DetailWallet.text = wallet

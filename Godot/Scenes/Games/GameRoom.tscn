@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://Scenes/Games/GameRoom.gd" id="1"]
 [ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="2"]
@@ -8,9 +8,76 @@
 [ext_resource type="Texture2D" path="res://Scenes/Games/Art/piece-0.webp" id="6"]
 [ext_resource type="Texture2D" path="res://Scenes/Games/Art/fruit.webp" id="7"]
 [ext_resource type="Texture2D" path="res://Art/Textures/Models/Runner/linen_basecolor.jpg" id="8"]
-[ext_resource type="Texture2D" path="res://Scenes/Games/Art/game-toy-lemur.webp" id="9"]
-[ext_resource type="Texture2D" path="res://Scenes/Games/Art/piece-1.webp" id="10"]
-[ext_resource type="Texture2D" path="res://Scenes/Games/Art/piece-2.webp" id="11"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/harvest-basket.webp" id="Basket"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/pine-cone.webp" id="Cone"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/game-back.svg" id="Back"]
+
+[sub_resource type="StyleBoxFlat" id="BackDisc"]
+bg_color = Color(0.92, 0.85, 0.71, 1)
+corner_radius_top_left = 38
+corner_radius_top_right = 38
+corner_radius_bottom_left = 38
+corner_radius_bottom_right = 38
+
+[sub_resource type="StyleBoxFlat" id="BackDown"]
+bg_color = Color(0.84, 0.76, 0.60, 1)
+corner_radius_top_left = 38
+corner_radius_top_right = 38
+corner_radius_bottom_left = 38
+corner_radius_bottom_right = 38
+
+[sub_resource type="StyleBoxFlat" id="BackFocus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52, 0.52, 0.34, 1)
+corner_radius_top_left = 38
+corner_radius_top_right = 38
+corner_radius_bottom_left = 38
+corner_radius_bottom_right = 38
+
+[sub_resource type="AtlasTexture" id="BasketFrame"]
+atlas = ExtResource("Basket")
+region = Rect2(0, 0, 216, 216)
+
+[sub_resource type="StyleBoxFlat" id="PairsPaper"]
+bg_color = Color(0.96, 0.89, 0.73, 1)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_left = 15
+corner_radius_bottom_right = 15
+
+[sub_resource type="StyleBoxFlat" id="MatchPaper"]
+bg_color = Color(0.94, 0.82, 0.76, 1)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_left = 15
+corner_radius_bottom_right = 15
+
+[sub_resource type="StyleBoxFlat" id="OrchardPaper"]
+bg_color = Color(0.84, 0.88, 0.70, 1)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_left = 15
+corner_radius_bottom_right = 15
+
+[sub_resource type="StyleBoxFlat" id="BerryTray"]
+bg_color = Color(0.38, 0.22, 0.13, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.66, 0.45, 0.27, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+content_margin_left = 5
+content_margin_top = 5
+content_margin_right = 5
+content_margin_bottom = 5
 
 [node name="GameRoom" type="Control"]
 layout_mode = 3
@@ -58,10 +125,16 @@ theme_override_constants/separation = 16
 
 [node name="Back" type="Button" parent="Margin/Page"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(140, 74)
+custom_minimum_size = Vector2(76, 76)
 layout_mode = 2
 size_flags_horizontal = 0
-text = "В домик"
+theme_override_styles/normal = SubResource("BackDisc")
+theme_override_styles/hover = SubResource("BackDown")
+theme_override_styles/pressed = SubResource("BackDown")
+theme_override_styles/focus = SubResource("BackFocus")
+accessibility_name = "Назад в домик"
+icon = ExtResource("Back")
+icon_alignment = 1
 script = ExtResource("2")
 
 [node name="Board" type="VBoxContainer" parent="Margin/Page"]
@@ -94,84 +167,106 @@ stretch_mode = 5
 
 [node name="Pairs" type="Button" parent="Margin/Page/Board/Picker"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 154)
+custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 theme_type_variation = &"GameChoice"
-accessibility_name = "Найди пару. Открой одинаковых зверей."
+theme_override_styles/normal = SubResource("PairsPaper")
+accessibility_name = "Найди пару. Открой двух одинаковых зверей."
 script = ExtResource("2")
 
 [node name="Copy" type="VBoxContainer" parent="Margin/Page/Board/Picker/Pairs"]
 layout_mode = 1
-anchor_right = 0.49
+anchor_right = 0.55
 anchor_bottom = 1.0
-offset_left = 20.0
+offset_left = 22.0
 mouse_filter = 2
 alignment = 1
+theme_override_constants/separation = 6
 
 [node name="Name" type="Label" parent="Margin/Page/Board/Picker/Pairs/Copy"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 31
+theme_override_font_sizes/font_size = 33
 text = "Найди пару"
 
 [node name="Help" type="Label" parent="Margin/Page/Board/Picker/Pairs/Copy"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Открой одинаковых зверей"
+theme_override_font_sizes/font_size = 23
+text = "Открой двух одинаковых зверей"
 autowrap_mode = 2
 
-[node name="Lemur" type="TextureRect" parent="Margin/Page/Board/Picker/Pairs"]
+[node name="First" type="TextureRect" parent="Margin/Page/Board/Picker/Pairs"]
 layout_mode = 1
-anchor_left = 0.60
-anchor_right = 0.82
-anchor_top = 0.09
-anchor_bottom = 0.89
-mouse_filter = 2
-texture = ExtResource("9")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Raccoon" type="TextureRect" parent="Margin/Page/Board/Picker/Pairs"]
-layout_mode = 1
-anchor_left = 0.75
-anchor_right = 0.97
-anchor_top = 0.16
-anchor_bottom = 0.93
+anchor_left = 0.55
+anchor_top = 0.14
+anchor_right = 0.76
+anchor_bottom = 0.87
 mouse_filter = 2
 texture = ExtResource("5")
 expand_mode = 1
 stretch_mode = 5
+rotation = -0.055
 
-[node name="More" type="HBoxContainer" parent="Margin/Page/Board/Picker"]
-layout_mode = 2
-theme_override_constants/separation = 14
-
-[node name="Match" type="Button" parent="Margin/Page/Board/Picker/More"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 174)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"GameChoice"
-accessibility_name = "Три в ряд. Собери девять ягод."
-script = ExtResource("2")
-
-[node name="Fruit" type="HBoxContainer" parent="Margin/Page/Board/Picker/More/Match"]
+[node name="Second" type="TextureRect" parent="Margin/Page/Board/Picker/Pairs"]
 layout_mode = 1
-anchor_left = 0.10
-anchor_right = 0.90
-anchor_top = 0.10
-anchor_bottom = 0.55
+anchor_left = 0.75
+anchor_top = 0.14
+anchor_right = 0.96
+anchor_bottom = 0.87
 mouse_filter = 2
-theme_override_constants/separation = 5
-
-[node name="First" type="TextureRect" parent="Margin/Page/Board/Picker/More/Match/Fruit"]
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
-texture = ExtResource("10")
+texture = ExtResource("5")
 expand_mode = 1
 stretch_mode = 5
+rotation = 0.055
 
-[node name="Second" type="TextureRect" parent="Margin/Page/Board/Picker/More/Match/Fruit"]
+[node name="Match" type="Button" parent="Margin/Page/Board/Picker"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+theme_type_variation = &"GameChoice"
+theme_override_styles/normal = SubResource("MatchPaper")
+accessibility_name = "Три в ряд. Собери 9 ягод малины."
+script = ExtResource("2")
+
+[node name="Copy" type="VBoxContainer" parent="Margin/Page/Board/Picker/Match"]
+layout_mode = 1
+anchor_right = 0.55
+anchor_bottom = 1.0
+offset_left = 22.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="Name" type="Label" parent="Margin/Page/Board/Picker/Match/Copy"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 33
+text = "Три в ряд"
+
+[node name="Help" type="Label" parent="Margin/Page/Board/Picker/Match/Copy"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 23
+text = "Собери 9 ягод малины"
+autowrap_mode = 2
+
+[node name="MiniBoard" type="AspectRatioContainer" parent="Margin/Page/Board/Picker/Match"]
+layout_mode = 1
+anchor_left = 0.55
+anchor_top = 0.16
+anchor_right = 0.95
+anchor_bottom = 0.84
+mouse_filter = 2
+ratio = 2.95
+
+[node name="Tray" type="PanelContainer" parent="Margin/Page/Board/Picker/Match/MiniBoard"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("BerryTray")
+
+[node name="Row" type="HBoxContainer" parent="Margin/Page/Board/Picker/Match/MiniBoard/Tray"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="Berry0" type="TextureRect" parent="Margin/Page/Board/Picker/Match/MiniBoard/Tray/Row"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
@@ -179,73 +274,84 @@ texture = ExtResource("6")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Third" type="TextureRect" parent="Margin/Page/Board/Picker/More/Match/Fruit"]
+[node name="Berry1" type="TextureRect" parent="Margin/Page/Board/Picker/Match/MiniBoard/Tray/Row"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
-texture = ExtResource("11")
+texture = ExtResource("6")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Copy" type="VBoxContainer" parent="Margin/Page/Board/Picker/More/Match"]
-layout_mode = 1
-anchor_top = 0.56
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 14.0
-offset_right = -10.0
-mouse_filter = 2
-
-[node name="Name" type="Label" parent="Margin/Page/Board/Picker/More/Match/Copy"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 29
-text = "Три в ряд"
-
-[node name="Help" type="Label" parent="Margin/Page/Board/Picker/More/Match/Copy"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Собери девять ягод"
-autowrap_mode = 2
-
-[node name="Orchard" type="Button" parent="Margin/Page/Board/Picker/More"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 174)
+[node name="Berry2" type="TextureRect" parent="Margin/Page/Board/Picker/Match/MiniBoard/Tray/Row"]
 layout_mode = 2
 size_flags_horizontal = 3
+mouse_filter = 2
+texture = ExtResource("6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Orchard" type="Button" parent="Margin/Page/Board/Picker"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
 theme_type_variation = &"GameChoice"
-accessibility_name = "Лови яблоки. Веди корзинку."
+theme_override_styles/normal = SubResource("OrchardPaper")
+accessibility_name = "Лови яблоки. Лови яблоки, пропускай шишки."
 script = ExtResource("2")
 
-[node name="Apple" type="TextureRect" parent="Margin/Page/Board/Picker/More/Orchard"]
+[node name="Copy" type="VBoxContainer" parent="Margin/Page/Board/Picker/Orchard"]
 layout_mode = 1
-anchor_left = 0.30
-anchor_right = 0.70
-anchor_top = 0.06
-anchor_bottom = 0.55
+anchor_right = 0.55
+anchor_bottom = 1.0
+offset_left = 22.0
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="Name" type="Label" parent="Margin/Page/Board/Picker/Orchard/Copy"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 33
+text = "Лови яблоки"
+
+[node name="Help" type="Label" parent="Margin/Page/Board/Picker/Orchard/Copy"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 23
+text = "Лови яблоки, пропускай шишки"
+autowrap_mode = 2
+
+[node name="Cone" type="TextureRect" parent="Margin/Page/Board/Picker/Orchard"]
+layout_mode = 1
+anchor_left = 0.83
+anchor_top = 0.14
+anchor_right = 0.955
+anchor_bottom = 0.48
+mouse_filter = 2
+texture = ExtResource("Cone")
+expand_mode = 1
+stretch_mode = 5
+rotation = 0.09
+
+[node name="Apple" type="TextureRect" parent="Margin/Page/Board/Picker/Orchard"]
+layout_mode = 1
+anchor_left = 0.61
+anchor_top = 0.08
+anchor_right = 0.76
+anchor_bottom = 0.47
 mouse_filter = 2
 texture = ExtResource("7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Copy" type="VBoxContainer" parent="Margin/Page/Board/Picker/More/Orchard"]
+[node name="Basket" type="TextureRect" parent="Margin/Page/Board/Picker/Orchard"]
 layout_mode = 1
-anchor_top = 0.56
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 14.0
-offset_right = -10.0
+anchor_left = 0.54
+anchor_top = 0.37
+anchor_right = 0.84
+anchor_bottom = 0.99
 mouse_filter = 2
-
-[node name="Name" type="Label" parent="Margin/Page/Board/Picker/More/Orchard/Copy"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 29
-text = "Лови яблоки"
-
-[node name="Help" type="Label" parent="Margin/Page/Board/Picker/More/Orchard/Copy"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Веди корзинку"
-autowrap_mode = 2
+texture = SubResource("BasketFrame")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Ball" type="Button" parent="Margin/Page/Board/Picker"]
 unique_name_in_owner = true

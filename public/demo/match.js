@@ -1,6 +1,9 @@
 (() => {
   const board = document.getElementById('matchBoard');
   const hint = document.getElementById('matchHint');
+  const end = document.getElementById('matchEnd');
+  const again = document.getElementById('matchAgain');
+  const instructions = 'Поменяй соседние плоды местами.';
   const names = ['Малина','Груша','Яблоко','Орех','Слива'];
   const width=6, target=9;
   let cells=[], selected=-1, moves=12, berries=0, resolving=false, finished=false, pointer=null;
@@ -73,29 +76,45 @@
     return board;
   }
   function paint(){
-    board.replaceChildren(...cells.map((n,i)=>{
-      const b=document.createElement('button');b.className='piece'+(i===selected?' chosen':'');
-      b.dataset.cell=i;b.setAttribute('aria-label',names[n]+', ряд '+(1+Math.floor(i/width))+', место '+(1+i%width));
-      const img=document.createElement('img');img.alt='';img.draggable=false;img.src='assets/piece-'+n+'.webp';b.append(img);return b;
-    }));
+    const focusWasOnBoard = board.contains(document.activeElement);
+    if(board.childElementCount!==cells.length){
+      board.replaceChildren(...cells.map((_,i)=>{
+        const button=document.createElement('button');
+        button.type='button';button.className='piece';button.dataset.cell=i;
+        const image=document.createElement('img');image.alt='';image.draggable=false;
+        button.append(image);return button;
+      }));
+    }
+    cells.forEach((n,i)=>{
+      const button=board.children[i],image=button.firstElementChild;
+      button.classList.toggle('chosen',i===selected);
+      button.classList.remove('pop');
+      button.setAttribute('aria-pressed',String(i===selected));
+      button.setAttribute('aria-label',names[n]+', ряд '+(1+Math.floor(i/width))+', место '+(1+i%width));
+      button.disabled=finished;
+      const src='assets/piece-'+n+'.webp';
+      if(image.getAttribute('src')!==src)image.src=src;
+    });
     document.getElementById('matchGoal').textContent='Малина '+Math.min(target,berries)+' из '+target;
     document.getElementById('matchMoves').textContent='Ходы: '+moves;
-    document.getElementById('matchEnd').hidden=!finished;
+    end.hidden=!finished;
+    if(finished&&focusWasOnBoard)again.focus({preventScroll:true});
   }
   function start(){
     const prior=window.petDemo.stats().match?.id;
     roundId=Number.isSafeInteger(prior)&&prior>0?prior+1:1;
     cells=fillPlayable();selected=-1;moves=12;berries=0;bonus=0;finished=false;resolving=false;
     window.petDemo.storeGame('match',{id:roundId,cells:cells.slice(),moves,berries,bonus,finished,won:false});
-    hint.textContent='Поменяй соседние плоды местами.';paint();
+    hint.textContent=instructions;paint();
   }
   function outcome(){
-    if(berries>=target){
-      const reward=window.petDemo.stats().match?.reward;
-      return reward?'Корзинка полна! Листья +'+reward.leaves+' · Опыт +'+reward.xp:'Корзинка полна!';
-    }
-    if(moves===0)return 'Ходы закончились. Попробуешь ещё?';
-    return 'Поменяй соседние плоды местами.';
+    if(berries<target&&moves>0)return instructions;
+    const reward=window.petDemo.stats().match?.reward;
+    const headline=berries>=target?'Корзинка полна!':'Ходы закончились. Попробуешь ещё?';
+    const items=[];
+    if(reward?.leaves>0)items.push('Листья +'+reward.leaves);
+    if(reward?.xp>0)items.push('Опыт +'+reward.xp);
+    return items.length?headline+'\n'+items.join(' · '):headline;
   }
   function restore(){
     const game=window.petDemo.stats().match;
@@ -132,9 +151,9 @@
   }
   async function choose(i){
     if(resolving||finished)return;
-    if(selected===i){selected=-1;paint();return;}
+    if(selected===i){selected=-1;hint.textContent=instructions;paint();return;}
     const distance=selected<0?0:Math.abs(i%width-selected%width)+Math.abs(Math.floor(i/width)-Math.floor(selected/width));
-    if(distance!==1){selected=i;paint();return;}
+    if(distance!==1){selected=i;hint.textContent=names[cells[i]]+' · Выбери соседний плод.';paint();return;}
     const previous=selected;selected=-1;resolving=true;
     const next=cells.slice();swap(next,previous,i);
     let lines=findLines(next);
@@ -192,6 +211,6 @@
     const end=Number(cell.dataset.cell);if(start!==end)selected=start;choose(end);
   });
   board.addEventListener('click',e=>{if(e.detail===0&&e.target.closest('[data-cell]'))choose(Number(e.target.closest('[data-cell]').dataset.cell));});
-  document.getElementById('matchAgain').onclick=start;
+  again.onclick=()=>{start();board.firstElementChild?.focus({preventScroll:true});};
   document.addEventListener('conceptscreen',e=>{if(e.detail==='match'&&!cells.length)restore();});
 })();

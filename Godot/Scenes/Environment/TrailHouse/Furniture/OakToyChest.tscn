@@ -1,0 +1,46 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://Materials/OiledWood.tres" id="Oak"]
+
+[sub_resource type="StandardMaterial3D" id="Brass"]
+albedo_color = Color(0.56, 0.39, 0.23, 1)
+metallic = 0.45
+roughness = 0.48
+
+[sub_resource type="BoxMesh" id="Chest"]
+material = ExtResource("Oak")
+size = Vector3(0.35, 0.19, 0.25)
+
+[sub_resource type="BoxMesh" id="Lid"]
+material = ExtResource("Oak")
+size = Vector3(0.364, 0.047, 0.263)
+
+[sub_resource type="BoxMesh" id="Latch"]
+material = SubResource("Brass")
+size = Vector3(0.047, 0.067, 0.015)
+
+[sub_resource type="BoxMesh" id="Strap"]
+material = SubResource("Brass")
+size = Vector3(0.024, 0.006, 0.263)
+
+[node name="Дубовый сундук" type="Node3D"]
+
+[node name="Корпус" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.097, 0)
+mesh = SubResource("Chest")
+
+[node name="Крышка" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.207, 0)
+mesh = SubResource("Lid")
+
+[node name="Защёлка" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.18, 0.132)
+mesh = SubResource("Latch")
+
+[node name="Левый пояс" type="MeshInstance3D" parent="."]
+position = Vector3(-0.118, 0.233, 0)
+mesh = SubResource("Strap")
+
+[node name="Правый пояс" type="MeshInstance3D" parent="."]
+position = Vector3(0.118, 0.233, 0)
+mesh = SubResource("Strap")

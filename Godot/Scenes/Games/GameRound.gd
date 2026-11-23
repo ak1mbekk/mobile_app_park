@@ -1,7 +1,6 @@
 extends VBoxContainer
 
 signal round_saved(round: Dictionary)
-signal menu_requested
 
 var round_id := 0
 var revision := 0
@@ -38,9 +37,18 @@ func commit(record: Dictionary) -> void:
 
 
 func reward_text() -> String:
-    if reward.is_empty():
-        return ""
-    return "Листья +%d · Опыт +%d" % [reward.get("leaves", 0), reward.get("xp", 0)]
+    var parts := PackedStringArray()
+    for key in ["leaves", "xp"]:
+        var amount := int(reward.get(key, 0))
+        if amount > 0:
+            parts.append(("Листья +%d" if key == "leaves" else "Опыт +%d") % amount)
+    return " · ".join(parts)
+
+
+func fit_tile_board(board: AspectRatioContainer) -> void:
+    # Keep the result next to the board, without stretching cards on tall phones.
+    if size.x > 0:
+        board.custom_minimum_size.y = ceilf(size.x / board.ratio)
 
 
 func _update_result() -> void:

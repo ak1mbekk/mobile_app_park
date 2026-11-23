@@ -1,27 +1,46 @@
+.shell:has(:is(#game, #win, #match, #catch).current) > .game-wayfinding {
+  display: none;
+}
+
 #chest .gamepad {
   padding-bottom: max(56px, env(safe-area-inset-bottom));
 }
 
-#chest .toylist button {
-  gap: 4px;
+#chest .toylist {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
 }
 
+#chest .toylist button,
 #chest .toylist .toy-pairs {
-  min-height: clamp(129px, 39vw, 168px);
-  background: radial-gradient(ellipse at 85% 95%, #ead4a8, transparent 65%), var(--linen);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(108px, 44%);
+  grid-template-areas: "description preview";
+  align-items: center;
+  min-height: 86px;
+  gap: 0;
 }
 
-#chest .toy-pairs .toy-description {
-  width: 59%;
+#chest .toylist .toy-description {
+  grid-area: description;
+  width: auto;
+  padding: 10px 8px 11px 14px;
 }
 
-#chest .toy-match .toy-description,
-#chest .toy-orchard .toy-description {
-  padding-bottom: 12px;
+#chest .toylist strong {
+  font-size: clamp(17px, 5.2vw, 21px);
+}
+
+#chest :is(.playing-cards, .mini-board, .apple-branch) {
+  grid-area: preview;
+  height: clamp(86px, 23vw, 106px);
+  align-self: stretch;
 }
 
 #chest .playing-cards {
-  inset: 0 0 0 50%;
+  position: relative;
+  inset: auto;
+  background: #ede1cb;
 }
 
 #chest .playing-cards img {
@@ -44,29 +63,43 @@
   transform: rotate(6deg);
 }
 
-#chest .mini-board,
-#chest .apple-branch {
-  height: clamp(80px, 27vw, 112px);
-}
-
 #chest .mini-board {
-  padding: 4px 16%;
-  background: #895b3e;
+  padding: 5px max(17%, calc((100% - 104px) / 2));
+  background: #754c34;
+}
+
+#chest .mini-board .same-fruit {
+  outline: 1px solid #f4cf86;
+  outline-offset: -1px;
 }
 
 #chest .apple-branch {
-  background: radial-gradient(ellipse at 50% 70%, #dce4a5, transparent 70%), #a9bd86;
+  background: #a9bd86 url("assets/orchard.webp") center 36% / cover;
 }
 
-#chest .apple-branch img {
-  inset: 10% auto auto 22%;
-  width: 56%;
-  height: 80%;
+#chest .orchard-preview-basket {
+  position: absolute;
+  z-index: 1;
+  bottom: -12%;
+  left: 50%;
+  width: clamp(60px, 22vw, 92px);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  background: url("assets/harvest-basket.webp") left center / 400% 100% no-repeat;
+  filter: drop-shadow(0 3px 3px #342a2354);
 }
 
-#chest .toy-match strong,
-#chest .toy-orchard strong {
-  font-size: clamp(17px, 5vw, 20px);
+#chest .apple-branch .orchard-preview-apple {
+  inset: 6% auto auto 22%;
+  width: 29%;
+  height: 46%;
+}
+
+#chest .apple-branch .orchard-preview-cone {
+  inset: 11% 17% auto auto;
+  width: 23%;
+  height: 37%;
+  transform: rotate(19deg);
 }
 
 #chest .ball-shop {
@@ -95,8 +128,18 @@
   font-size: clamp(30px, 9vw, 42px);
 }
 
+#game #pairs-feedback {
+  min-height: 2.9em;
+  margin-block-end: 0;
+}
+
+#game .tile.mismatch {
+  box-shadow: inset 0 0 0 2px #aa603d, 0 3px 0 #1d2b22;
+  border-color: #d5875c;
+}
+
 #game .boardBox {
-  margin-block: clamp(14px, 4dvh, 32px) 0;
+  margin-block: clamp(8px, 2dvh, 14px) 0;
   padding: 0;
 }
 
@@ -242,6 +285,9 @@
 
 #win .win-actions button .ic,
 #game .gamebar .ic,
+#chest .backbtn .ic,
+#match .gameline .ic,
+#catch .gameline .ic,
 #match #matchEnd .ic,
 #catch .catch-actions .ic {
   flex: none;
@@ -251,7 +297,37 @@
 }
 
 #catch #catchSheet {
-  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+#catch .gameline {
+  top: calc(12px + env(safe-area-inset-top, 0px));
+}
+
+#catchField {
+  top: calc(63px + env(safe-area-inset-top, 0px));
+  bottom: calc(49px + env(safe-area-inset-bottom, 0px));
+}
+
+#catch .orchard-lives {
+  align-items: center;
+  min-height: 36px;
+}
+
+#catch .orchard-lives svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+#catch .orchard-lives svg.spent {
+  fill: none;
+}
+
+#catch:has(#catchSheet:not([hidden])) .orchard-feedback {
+  visibility: hidden;
 }
 
 #catch .catch-actions {
@@ -260,6 +336,35 @@
 
 #match #matchEnd .secondary {
   color: #382c20;
+}
+
+#match .gamepad {
+  width: min(100%, 440px);
+  margin-inline: auto;
+}
+
+#match .gameline span,
+#catch .gameline span {
+  font-variant-numeric: tabular-nums;
+}
+
+#match #matchHint {
+  min-height: 2.9em;
+}
+
+#match:has(#matchEnd:not([hidden])) #matchHint {
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #ede1c8;
+  color: #493722;
+  white-space: pre-line;
+}
+
+#match .piece:focus-visible,
+#match .gameline button:focus-visible,
+#catch .gameline button:focus-visible {
+  outline: 2px solid #fff6d4;
+  outline-offset: -3px;
 }
 
 #catch .catch-actions button:focus-visible {

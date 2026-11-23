@@ -1,0 +1,152 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scenes/Characters/Cutout/CutoutWalkRig.gd" id="1_walk"]
+
+[node name="CutoutWalkRig" type="Node2D"]
+script = ExtResource("1_walk")
+
+[node name="Skeleton2D" type="Skeleton2D" parent="."]
+
+[node name="Pelvis" type="Bone2D" parent="Skeleton2D"]
+position = Vector2(0, -80.79044)
+rest = Transform2D(1, 0, 0, 1, 0, -80.79044)
+auto_calculate_length_and_angle = false
+length = 14
+bone_angle = -1.5707963267948966
+
+[node name="Tail" type="Bone2D" parent="Skeleton2D/Pelvis"]
+z_index = -2
+position = Vector2(-9, -8)
+rest = Transform2D(1, 0, 0, 1, -9, -8)
+auto_calculate_length_and_angle = false
+length = 22
+bone_angle = 3.141592653589793
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/Tail"]
+
+[node name="FarShoulder" type="Bone2D" parent="Skeleton2D/Pelvis"]
+position = Vector2(0, -41)
+rest = Transform2D(1, 0, 0, 1, 0, -41)
+auto_calculate_length_and_angle = false
+length = 26
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/FarShoulder"]
+
+[node name="Forearm" type="Bone2D" parent="Skeleton2D/Pelvis/FarShoulder"]
+position = Vector2(0, 26)
+rotation = 0.104719758
+rest = Transform2D(0.9945219, 0.10452847, -0.10452847, 0.9945219, 0, 26)
+auto_calculate_length_and_angle = false
+length = 23
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/FarShoulder/Forearm"]
+
+[node name="Hand" type="Bone2D" parent="Skeleton2D/Pelvis/FarShoulder/Forearm"]
+position = Vector2(0, 23)
+rest = Transform2D(1, 0, 0, 1, 0, 23)
+auto_calculate_length_and_angle = false
+length = 11
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/FarShoulder/Forearm/Hand"]
+
+[node name="FarThigh" type="Bone2D" parent="Skeleton2D/Pelvis"]
+z_index = -1
+rotation = -0.48176667
+rest = Transform2D(0.88617773, -0.46334548, 0.46334548, 0.88617773, 0, 0)
+auto_calculate_length_and_angle = false
+length = 42
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/FarThigh"]
+
+[node name="Shin" type="Bone2D" parent="Skeleton2D/Pelvis/FarThigh"]
+position = Vector2(0, 42)
+rotation = 0.7533096100000001
+rest = Transform2D(0.72942891, 0.68405663, -0.68405663, 0.72942891, 0, 42)
+auto_calculate_length_and_angle = false
+length = 39
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/FarThigh/Shin"]
+
+[node name="KneeCap" type="Sprite2D" parent="Skeleton2D/Pelvis/FarThigh/Shin"]
+
+[node name="Foot" type="Bone2D" parent="Skeleton2D/Pelvis/FarThigh/Shin"]
+position = Vector2(0, 39)
+rotation = -0.27154294
+rest = Transform2D(0.9633582, -0.26821816, 0.26821816, 0.9633582, 0, 39)
+auto_calculate_length_and_angle = false
+length = 11
+bone_angle = 0
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/FarThigh/Shin/Foot"]
+position = Vector2(0, 6)
+
+[node name="Torso" type="Sprite2D" parent="Skeleton2D/Pelvis"]
+
+[node name="Head" type="Sprite2D" parent="Skeleton2D/Pelvis"]
+position = Vector2(0, -51)
+
+[node name="NearThigh" type="Bone2D" parent="Skeleton2D/Pelvis"]
+z_index = -1
+rotation = -0.24224587
+rest = Transform2D(0.97080168, -0.23988352, 0.23988352, 0.97080168, 0, 0)
+auto_calculate_length_and_angle = false
+length = 42
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/NearThigh"]
+
+[node name="Shin" type="Bone2D" parent="Skeleton2D/Pelvis/NearThigh"]
+position = Vector2(0, 42)
+rotation = 0.75330962
+rest = Transform2D(0.7294289, 0.68405663, -0.68405663, 0.7294289, 0, 42)
+auto_calculate_length_and_angle = false
+length = 39
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/NearThigh/Shin"]
+
+[node name="KneeCap" type="Sprite2D" parent="Skeleton2D/Pelvis/NearThigh/Shin"]
+
+[node name="Foot" type="Bone2D" parent="Skeleton2D/Pelvis/NearThigh/Shin"]
+position = Vector2(0, 39)
+rotation = -0.51106375
+rest = Transform2D(0.87222472, -0.48910535, 0.48910535, 0.87222472, 0, 39)
+auto_calculate_length_and_angle = false
+length = 11
+bone_angle = 0
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/NearThigh/Shin/Foot"]
+position = Vector2(0, 6)
+
+[node name="NearShoulder" type="Bone2D" parent="Skeleton2D/Pelvis"]
+position = Vector2(0, -41)
+rest = Transform2D(1, 0, 0, 1, 0, -41)
+auto_calculate_length_and_angle = false
+length = 26
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/NearShoulder"]
+
+[node name="Forearm" type="Bone2D" parent="Skeleton2D/Pelvis/NearShoulder"]
+position = Vector2(0, 26)
+rotation = 0.104719758
+rest = Transform2D(0.9945219, 0.10452847, -0.10452847, 0.9945219, 0, 26)
+auto_calculate_length_and_angle = false
+length = 23
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/NearShoulder/Forearm"]
+
+[node name="Hand" type="Bone2D" parent="Skeleton2D/Pelvis/NearShoulder/Forearm"]
+position = Vector2(0, 23)
+rest = Transform2D(1, 0, 0, 1, 0, 23)
+auto_calculate_length_and_angle = false
+length = 11
+bone_angle = 1.5707963267948966
+
+[node name="Art" type="Sprite2D" parent="Skeleton2D/Pelvis/NearShoulder/Forearm/Hand"]

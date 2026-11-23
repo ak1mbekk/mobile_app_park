@@ -28,10 +28,10 @@ script = ExtResource("Script")
 toy_actions = ExtResource("Actions")
 
 [node name="Метка" type="Marker3D" parent="."]
-position = Vector3(-0.105, 0.065, 0.93)
+position = Vector3(-0.105, 0.065, 1.35)
 
 [node name="Мяч" type="MeshInstance3D" parent="."]
-position = Vector3(-0.105, 0.065, 0.93)
+position = Vector3(-0.105, 0.065, 1.35)
 scale = Vector3(0.60, 0.60, 0.60)
 mesh = SubResource("BallMesh")
 

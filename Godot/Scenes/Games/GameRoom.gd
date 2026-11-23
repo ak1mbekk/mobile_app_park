@@ -81,14 +81,13 @@ func _select(game: String) -> void:
         board = null
     active_game = game
     %Picker.visible = game.is_empty()
-    %Back.text = "В домик" if game.is_empty() else "К сундуку"
+    %Back.accessibility_name = "Назад в домик" if game.is_empty() else "Назад к сундуку"
     if game.is_empty():
         %Pairs.grab_focus()
         return
     board = GAMES[game].instantiate()
     %Board.add_child(board)
     board.round_saved.connect(_store_round.bind(game))
-    board.menu_requested.connect(_back)
     board.restore(rounds.get(game, {}))
     %Back.grab_focus()
 

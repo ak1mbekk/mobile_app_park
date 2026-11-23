@@ -37,11 +37,20 @@ func _run() -> void:
         return
 
     _check_catalog_parity()
+    _expect(CATALOG.growth_hint(89).contains("до юного: 1 XP"), "The last XP before youth is visible")
+    _expect(CATALOG.growth_hint(90).contains("Юный · уровень 4"), "Youth opens at level four")
+    _expect(CATALOG.growth_hint(269).contains("до взрослого: 1 XP"), "The last XP before adulthood is visible")
+    _expect(CATALOG.growth_hint(270).contains("Взрослый · уровень 10"), "Adulthood opens at level ten")
+    _expect(CATALOG.furniture_goal([], [], 0).contains("Лежанка · 5 листьев. Ещё 5 листьев"), "The first goal retains the five-leaf bed")
+    _expect(CATALOG.furniture_goal(["bed"], ["bed"], 9).contains("Вышитая подушка · 15 листьев. Ещё 6 листьев"), "The next attainable furniture uses the actual remaining balance")
+    _expect(CATALOG.furniture_goal(CATALOG.FURNITURE, ["settee"], 0).contains("Вся мебель собрана"), "Completed collections do not promise nonexistent upgrades")
     _open_cabin()
     _expect(cabin.native_placed.has("bed") and cabin.native_owned.has("bed"), "The old bed save retains ownership and placement")
     _expect(cabin.get_node("Спальня/Лежанка").visible, "The migrated bed is shown in the room")
     _press(cabin, "Shop")
     _expect(cabin.shop.visible, "The house shop opens")
+    _expect(cabin.shop.get_node("%bed/Availability").text == "Установлено", "Owned and installed furniture are distinguished")
+    _expect(cabin.shop.get_node("%cap/Availability").text == "Ещё 1 лист", "The catalog shows an exact one-leaf shortfall")
     for id: String in CATALOG.ITEMS:
         var ware: Dictionary = CATALOG.ITEMS[id]
         var label: Label = cabin.shop.get_node("%" + id).get_node("Price")

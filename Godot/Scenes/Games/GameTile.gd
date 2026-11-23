@@ -30,3 +30,10 @@ func reveal() -> void:
     face.pivot_offset = face.size * 0.5
     face.scale.x = 0.14
     create_tween().tween_property(face, "scale:x", 1.0, 0.17).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+func mark_pair() -> void:
+    var check: TextureRect = $Matched/Check
+    check.pivot_offset = check.size * 0.5
+    check.scale = Vector2.ONE * 0.6
+    create_tween().tween_property(check, "scale", Vector2.ONE, 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

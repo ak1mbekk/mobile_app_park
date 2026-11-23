@@ -75,10 +75,10 @@
 </section>
 <section id="game" class="screen felt" aria-labelledby="pairs-title">
 <div class="gamepad"><header class="gamebar"><button class="backbtn" data-go="chest" type="button" aria-label="К сундуку"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 10V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7h18"/><rect x="10" y="9" width="4" height="5" rx="1"/></svg></button><span class="pairprogress" id="aki-pairs" aria-live="polite">0 из 6 пар</span></header>
-<h1 class="gameTitle" id="pairs-title">Найди пару</h1><p class="gameHelp">Открой двух одинаковых зверей.</p><div class="boardBox"><div class="tiles" id="aki-board" aria-label="Карточки животных"></div></div>
+<h1 class="gameTitle" id="pairs-title">Найди пару</h1><p class="gameHelp" id="pairs-feedback" role="status">Открой двух одинаковых зверей.</p><div class="boardBox"><div class="tiles" id="aki-board" aria-label="Карточки животных"></div></div>
 <div class="gamefoot"><span id="aki-moves">Ходов: 0</span></div></div></section>
 <section id="win" class="screen felt" aria-labelledby="aki-win-title"><div class="win-pad">
-<h1 class="gameTitle" id="aki-win-title">Все пары найдены!</h1><p id="pair-result-moves"></p>
+<h1 class="gameTitle" id="aki-win-title" tabindex="-1">Все пары найдены!</h1><p id="pair-result-moves"></p>
 <div class="reward"><b><svg class="ic" aria-hidden="true"><use href="#aki-leaf"/></svg><span id="pair-result-leaves"></span></b><b id="pair-xp"></b></div>
 <div class="win-actions">
   <button type="button" id="aki-replay"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 1 1 2 7M4 11V5m0 6h6"/></svg>Ещё раз</button>
@@ -111,10 +111,10 @@
       <p class="map-status" role="status">Загружаем карту…</p>
       <section class="visitor-map-sheet" id="map-search" aria-labelledby="map-search-title" hidden>
         <div class="map-search-heading">
-          <h2 id="map-search-title" tabindex="-1">Найти место</h2>
+          <h2 id="map-search-title" tabindex="-1">Животные и места</h2>
           <button class="map-search-close" type="button" aria-label="Закрыть поиск"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
         </div>
-        <div class="map-filters" role="group" aria-label="Места на карте"><button type="button" data-kind="all">Все места</button><button type="button" data-kind="animals">Вольеры</button><button type="button" data-kind="service">Инфраструктура</button></div>
+        <div class="map-filters" role="group" aria-label="Места на карте"><button type="button" data-kind="all">Все места</button><button type="button" data-kind="animals">Животные</button><button type="button" data-kind="service">Инфраструктура</button></div>
         <label class="service-picker" hidden><span>Тип места</span><select><option value="">Все типы</option></select></label>
         <label class="place-picker"><span class="sr">Место</span><select><option value="">Выберите место</option></select></label>
         <div class="map-offline">
@@ -211,21 +211,21 @@
 <button id="rinse" class="jug" aria-label="Поднести кувшин и полить Ричи. С клавиатуры удерживайте пробел." hidden><img src="assets/bath-jug.svg" alt="" draggable="false"></button>
 <button id="bathDone" class="finish" data-go="home" hidden>В домик</button></section>
 <section id="chest" class="screen toy-chest"><div class="gamepad">
-<button class="backbtn" data-go="home" aria-label="В домик">‹</button><h1>Сундук с играми</h1>
+<button class="backbtn" type="button" data-go="home" aria-label="В домик"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1>Сундук с играми</h1>
 <div class="toylist">
-<button data-go="game" class="toy-pairs"><span class="playing-cards" aria-hidden="true"><img loading="lazy" src="assets/game-toy-lemur.webp" alt=""><img loading="lazy" src="assets/game-toy-raccoon.webp" alt=""></span><span class="toy-description"><strong>Найди пару</strong><small>Открой одинаковых зверей</small></span></button>
-<button data-go="match" class="toy-match"><span class="mini-board" aria-hidden="true"><img loading="lazy" src="assets/piece-1.webp" alt=""><img loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-2.webp" alt=""><img loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-2.webp" alt=""><img loading="lazy" src="assets/piece-3.webp" alt=""><img loading="lazy" src="assets/piece-1.webp" alt=""></span><span class="toy-description"><strong>Три в ряд</strong><small>Собери девять ягод</small></span></button>
-<button data-go="catch" class="toy-orchard"><span class="apple-branch" aria-hidden="true"><img loading="lazy" src="assets/fruit.webp" alt=""></span><span class="toy-description"><strong>Лови яблоки</strong><small>Веди корзинку под ветками</small></span></button></div>
+<button type="button" data-go="game" class="toy-pairs"><span class="playing-cards" aria-hidden="true"><img loading="lazy" src="assets/game-toy-raccoon.webp" alt=""><img loading="lazy" src="assets/game-toy-raccoon.webp" alt=""></span><span class="toy-description"><strong>Найди пару</strong><small>Открой одинаковых зверей</small></span></button>
+<button type="button" data-go="match" class="toy-match"><span class="mini-board" aria-hidden="true"><img loading="lazy" src="assets/piece-1.webp" alt=""><img loading="lazy" src="assets/piece-4.webp" alt=""><img loading="lazy" src="assets/piece-2.webp" alt=""><img class="same-fruit" loading="lazy" src="assets/piece-0.webp" alt=""><img class="same-fruit" loading="lazy" src="assets/piece-0.webp" alt=""><img class="same-fruit" loading="lazy" src="assets/piece-0.webp" alt=""><img loading="lazy" src="assets/piece-2.webp" alt=""><img loading="lazy" src="assets/piece-3.webp" alt=""><img loading="lazy" src="assets/piece-1.webp" alt=""></span><span class="toy-description"><strong>Три в ряд</strong><small>Собери 9 ягод малины</small></span></button>
+<button type="button" data-go="catch" class="toy-orchard"><span class="apple-branch" aria-hidden="true"><span class="orchard-preview-basket"></span><img class="orchard-preview-apple" loading="lazy" src="assets/fruit.webp" alt=""><img class="orchard-preview-cone" loading="lazy" src="assets/pine-cone.webp" alt=""></span><span class="toy-description"><strong>Лови яблоки</strong><small>Пропускай шишки</small></span></button></div>
 <button id="buy-ball" class="ball-shop"><img loading="lazy" src="assets/rope-ball.webp" alt=""><span>Плетёный мяч<small id="ball-price"></small></span></button><p id="toy-notice" role="status"></p></div></section>
-<section id="match" class="screen toy-chest"><div class="gamepad"><div class="gameline"><button class="backbtn" data-go="chest" aria-label="К игрушкам">‹</button><span id="matchGoal"></span><span id="matchMoves"></span></div>
+<section id="match" class="screen toy-chest" aria-labelledby="match-title"><div class="gamepad"><div class="gameline"><button class="backbtn" type="button" data-go="chest" aria-label="К сундуку"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><span id="matchGoal"></span><span id="matchMoves"></span></div><h1 class="sr" id="match-title">Три в ряд</h1>
 <div id="matchBoard" aria-label="Поле с плодами"></div><p id="matchHint" class="gameHelp" aria-live="polite"></p>
 <div id="matchEnd" class="game-end" hidden>
   <button type="button" class="primary" id="matchAgain"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11a8 8 0 1 1 2 7M4 11V5m0 6h6"/></svg>Ещё раз</button>
   <button type="button" class="secondary" data-go="chest"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7h18"/><rect x="10" y="9" width="4" height="5" rx="1"/></svg>К сундуку</button>
 </div></div></section>
-<section id="catch" class="screen orchard"><div class="gameline"><button class="backbtn" data-go="chest" aria-label="К игрушкам">‹</button><span id="catchScore">Яблоки 0 · Попытки 3</span></div>
+<section id="catch" class="screen orchard" aria-label="Лови яблоки"><div class="gameline"><button class="backbtn" type="button" data-go="chest" aria-label="К сундуку"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><span id="catchScore">Яблоки 0</span></div>
 <div id="catchField" tabindex="0" role="application" aria-label="Двигай корзинку пальцем или стрелками"><img loading="lazy" id="fallFruit" src="assets/fruit.webp" alt="" hidden><div id="basket" aria-hidden="true"></div></div>
-<div class="sheet" id="catchSheet"><h2 id="catchTitle">Лови яблоки</h2><p id="catchTip">Веди корзинку пальцем. Собирай яблоки и пропускай шишки. У тебя три попытки.</p><div class="catch-actions">
+<div class="sheet" id="catchSheet"><h2 id="catchTitle" tabindex="-1">Лови яблоки</h2><p id="catchTip">Двигай корзинку пальцем или стрелками. Лови яблоки и пропускай шишки. У тебя три жизни.</p><div class="catch-actions">
   <button type="button" class="primary" id="catchStart"><svg class="ic" id="catchAgainIcon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M4 11a8 8 0 1 1 2 7M4 11V5m0 6h6"/></svg><span id="catchStartLabel">Начать</span></button>
   <button type="button" class="secondary" id="catchChest" data-go="chest" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7h18"/><rect x="10" y="9" width="4" height="5" rx="1"/></svg>К сундуку</button>
 </div></div></section>

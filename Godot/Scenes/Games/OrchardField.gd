@@ -11,6 +11,7 @@ const MOUTH_HALF := 78.0 / 216.0
 const APPLE_LANDING := [Vector2(-0.494, 0.449), Vector2(-0.428, 0.455)]
 const CONE_LANDING := [Vector2(-0.386, 0.285), Vector2(-0.417, 0.481)]
 @export var basket_atlas: Texture2D
+@export var ground_shadow: Texture2D
 
 var fruit_x := 0.5
 var basket_x := 0.5
@@ -45,6 +46,8 @@ func _draw() -> void:
     var pulse := 1.0 - flash
     var tilt := basket_tilt if fruit_visible else basket_tilt * flash
     var squash := Vector2.ONE
+    var ground_y := size.y - basket_width * 0.07
+    _draw_shadow(Vector2(basket.x, ground_y), basket_width * 0.96, 1.0)
     if flash > 0.0:
         if effect == "catch":
             basket.y += sin(pulse * TAU) * flash * 13.0
@@ -57,6 +60,8 @@ func _draw() -> void:
     if fruit_visible:
         var texture := CONE if cone else APPLE
         var fall_phase := clampf(inverse_lerp(RELEASE, 1.0, fall), 0, 1)
+        if fall_phase > 0.35:
+            _draw_shadow(Vector2(anchor.x, ground_y), width * (1.12 - fall_phase * 0.31), fall_phase * 0.8)
         _draw_twig(anchor, width)
         var center := anchor.lerp(Vector2(anchor.x, basket.y), fall_phase * fall_phase)
         var angle := sin(fall * 27.0) * 0.12 if fall < RELEASE else (1.0 if fruit_x < 0.5 else -1.0) * fall_phase * TAU * LANDING_TURNS
@@ -66,6 +71,11 @@ func _draw() -> void:
     draw_set_transform(basket, tilt, squash)
     draw_texture_rect_region(basket_atlas, Rect2(-basket_width * 0.5, -basket_width * 0.32, basket_width, basket_width), source)
     draw_set_transform(Vector2.ZERO)
+
+
+func _draw_shadow(center: Vector2, width: float, opacity: float) -> void:
+    var span := Vector2(width, width * 0.19)
+    draw_texture_rect(ground_shadow, Rect2(center - span * 0.5, span), false, Color(1, 1, 1, opacity))
 
 
 func _draw_twig(anchor: Vector2, width: float) -> void:

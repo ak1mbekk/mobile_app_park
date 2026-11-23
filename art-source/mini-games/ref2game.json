@@ -1,0 +1,5 @@
+{
+  "style_bible": "style_bible.txt",
+  "style_ref": ["../../docs/showcase/room-studies/settings/river.webp"],
+  "generator": {"tool": "imagegen", "alpha": "native"}
+}

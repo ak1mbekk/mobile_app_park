@@ -92,7 +92,6 @@
   const placed=new Set(wares.filter(w=>w.group==='decor'&&owned.has(w.id)&&Array.isArray(saved.placed)&&saved.placed.includes(w.id)).map(w=>w.id));
   // Earlier saves could have both beds installed. Those rooms showed the settee.
   if(placed.has('settee')&&placed.delete('bed'))saved.placed=[...placed];
-  const collectibles=new Set(['cushion','lantern']);
   const canSleep=()=>placed.has('bed')||placed.has('settee');
   saved.starterRoundRewarded=saved.starterRoundRewarded===true||
     ['pairs','match','orchard'].some(game=>saved[game]?.finished===true);
@@ -252,10 +251,9 @@
   function bedGoal(){
     if(!saved.onboardingDone||saved.night||canSleep()||bedGoalDismissed)return null;
     if(owned.has('bed'))return {message:'Поставь лежанку, чтобы енот мог отдохнуть.',label:'Поставить лежанку',play:false};
-    const name=saved.name==='Ричи'?'Ричи':'еноту по имени '+saved.name;
-    const message='Надо купить лежанку нашему '+name+'.';
+    const message=saved.name+' хочет лежанку.';
     return saved.leaves>=bedPrice?{message,label:'Купить лежанку за 5 листиков',play:false}:
-      {message:message+' Давай сыграем в игру и заработаем листики!',label:'Сыграть',play:true};
+      {message:message+' Сыграем за листики?',label:'Сыграть',play:true};
   }
   function buyBed(){
     const goal=bedGoal();
@@ -373,30 +371,57 @@
     setShopPreview(null);
     $('shop-preview').hidden=true;
     $('shop-balance').textContent=saved.leaves+' '+leafWord(saved.leaves);
+    let progress=$('shop-progress');
+    if(!progress){
+      progress=document.createElement('div');progress.id='shop-progress';
+      progress.style.cssText='padding:12px 0;font-size:14px;line-height:1.5;white-space:pre-line';
+      $('shop-list').before(progress);
+    }
+    progress.textContent=growthHint()+'\n'+furnitureGoal()+'\nМебель доступна на любом уровне. XP — за пополнение потребностей.';
     for(const b of document.querySelectorAll('[data-shop-group]'))b.setAttribute('aria-pressed',String(b.dataset.shopGroup===shopGroup));
-    $('shop-list').replaceChildren(...wares.filter(w=>w.group===shopGroup).map(w=>{
+    $('shop-list').replaceChildren(...wares.filter(w=>w.group===shopGroup).sort((a,b)=>a.price-b.price).map(w=>{
       const card=document.createElement('button');card.className='shop-item';card.type='button';
       const pic=new Image();pic.alt='';pic.src='assets/shop-'+w.id+'.webp';
       const copy=document.createElement('span'),name=document.createElement('strong'),tier=document.createElement('small'),price=document.createElement('span');
-      name.textContent=w.name;tier.textContent=w.tier+(w.replaces?' · заменяет '+w.replaces:'');copy.append(tier,name);
+      name.textContent=w.name;tier.textContent=w.tier+(w.replaces?' · заменяет '+w.replaces:'');
+      const status=document.createElement('small');status.textContent=itemStatus(w);copy.append(tier,name,status);
       price.textContent=owned.has(w.id)?'Куплено':w.price+' '+leafWord(w.price);card.append(pic,copy,price);
       card.onclick=()=>previewWare(w);return card;
     }));
     if(!$('cottage-shop').open)$('cottage-shop').showModal();
   }
   function leafWord(n){const d=n%10;return n%100>=11&&n%100<=14?'листьев':d===1?'лист':d>=2&&d<=4?'листа':'листьев';}
+  function growthHint(){
+    const level=1+Math.floor(saved.xp/30);
+    if(saved.xp<90)return `Малыш · уровень ${level} · до юного: ${90-saved.xp} XP (ур. 4)`;
+    if(saved.xp<270)return `Юный · уровень ${level} · до взрослого: ${270-saved.xp} XP (ур. 10)`;
+    return `Взрослый · уровень ${level} · все 3 ступени роста открыты`;
+  }
+  function itemStatus(w){
+    if(owned.has(w.id))return (w.group==='hat'?saved.hat===w.id:placed.has(w.id))?(w.group==='hat'?'Надето':'Установлено'):'В коллекции';
+    const missing=Math.max(0,w.price-saved.leaves);
+    return missing?'Ещё '+missing+' '+leafWord(missing):'Можно купить';
+  }
+  function furnitureGoal(){
+    const current=placed.has('settee')?'Диван у окна':placed.has('bed')?'Лежанка':'без лежанки';
+    const next=wares.filter(w=>w.group==='decor'&&!owned.has(w.id)).sort((a,b)=>a.price-b.price)[0];
+    const summary='Место для сна: '+current+'. ';
+    return summary+(next?'Следующая покупка: '+next.name+' · '+next.price+' '+leafWord(next.price)+'. '+itemStatus(next)+'.':'Вся мебель собрана — меняй обстановку бесплатно.');
+  }
   function confirmLabel(ware){
     if(!owned.has(ware.id))return 'Купить за '+ware.price+' '+leafWord(ware.price);
     const inUse=ware.group==='hat'?saved.hat===ware.id:placed.has(ware.id);
-    return inUse?'Убрать':ware.group==='hat'?'Надеть':'Поставить';
+    return inUse?(ware.group==='hat'?'Снять':'Убрать'):ware.group==='hat'?'Надеть':'Поставить';
   }
   function shopSnapshot(){
     return {
       wallet:saved.leaves,selected:preview?.id??'',status:shopStatus,
+      growth:growthHint(),goal:furnitureGoal(),
       confirm_label:preview?confirmLabel(preview):'',
       confirm_enabled:!!preview&&(owned.has(preview.id)||saved.leaves>=preview.price),
       items:Object.fromEntries(wares.map(ware=>[ware.id,{
-        name:ware.name,detail:ware.tier+(ware.replaces?' · заменяет '+ware.replaces:''),
+        name:ware.name,detail:ware.tier+(ware.replaces?' · заменяет '+ware.replaces:'')+'\n'+itemStatus(ware),
+        availability:itemStatus(ware),
         price:owned.has(ware.id)?'Куплено':ware.price+' '+leafWord(ware.price)
       }]))
     };
@@ -410,10 +435,9 @@
   function previewWare(w){
     $('cottage-shop').close();setShopPreview(w);$('shop-preview').hidden=false;
     $('preview-name').textContent=w.name;
-    $('preview-price').textContent=owned.has(w.id)?w.tier:w.tier+' · В кошельке '+saved.leaves+' '+leafWord(saved.leaves);
-    const collected=collectibles.has(w.id)&&owned.has(w.id);
-    $('shop-confirm').disabled=collected||(!owned.has(w.id)&&saved.leaves<w.price);
-    $('shop-confirm').textContent=collected?'В коллекции':confirmLabel(w);
+    $('preview-price').textContent=w.tier+' · '+itemStatus(w)+(w.replaces?' · заменяет '+w.replaces:'');
+    $('shop-confirm').disabled=!owned.has(w.id)&&saved.leaves<w.price;
+    $('shop-confirm').textContent=confirmLabel(w);
     $('shop-cancel').focus();
   }
   $('shop-open').onclick=openShop;
@@ -743,15 +767,15 @@
     cards=shuffle([...species,...species]);opened=[];paired=new Set();moves=0;
     locked=false;winShown=false;storeRound();resumeGame();
   }
-  function resumeGame() {
-    clearTimeout(gameTimer);paintBoard();
+  function resumeGame(message) {
+    clearTimeout(gameTimer);paintBoard(message);
     if(paired.size===cards.length/2){
       gameTimer=setTimeout(()=>{if(active==='game')route('win');},550);
     }else if(opened.length===2){
-      gameTimer=setTimeout(()=>{opened=[];locked=false;storeRound();paintBoard();},750);
+      gameTimer=setTimeout(()=>{opened=[];locked=false;storeRound();paintBoard('Карточки закрылись. Выбери новую пару.');},750);
     }
   }
-  function paintBoard() {
+  function paintBoard(message) {
     const board=$('aki-board');
     const focused=board.contains(document.activeElement)?document.activeElement.dataset.index:null;
     board.classList.toggle('six-pairs',cards.length===12);
@@ -759,14 +783,21 @@
     cards.forEach((species,i)=>{
       const matched=paired.has(species),visible=matched||opened.includes(i);
       const b=document.createElement('button');b.type='button';b.dataset.index=String(i);
-      b.className='tile'+(visible?' face':'')+(matched?' match':'');b.disabled=matched;
+      const mismatch=opened.length===2&&opened.includes(i);
+      b.className='tile'+(visible?' face':'')+(matched?' match':'')+(mismatch?' mismatch':'');b.disabled=matched;
       b.setAttribute('aria-label',visible?names[species]+(matched?', пара найдена':''):'Открыть карточку '+(i+1));
       b.innerHTML=visible
         ? '<span class="front" aria-hidden="true"><img alt="" src="assets/game-toy-'+species+'.webp"><span>'+names[species]+'</span></span>'
         : '<span class="reverse" aria-hidden="true"><i><svg class="ic"><use href="#aki-paw"/></svg></i></span>';
       b.onclick=()=>flip(i);board.appendChild(b);
     });
-    if(focused!=null)board.querySelector('[data-index="'+focused+'"]:not(:disabled)')?.focus({preventScroll:true});
+    if(focused!=null){
+      const next=board.querySelector('[data-index="'+focused+'"]:not(:disabled)')||board.querySelector('.tile:not(:disabled)');
+      next?.focus({preventScroll:true});
+    }
+    const feedback=opened.length===2?'Эти звери разные. Карточки закроются.':
+      opened.length===1?names[cards[opened[0]]]+' · Найди такую же карточку.':'Открой двух одинаковых зверей.';
+    $('pairs-feedback').textContent=message||feedback;
     $('aki-pairs').textContent=paired.size+' из '+(cards.length/2)+' пар';$('aki-moves').textContent='Ходов: '+moves;
   }
   function showPairResults(){
@@ -779,6 +810,7 @@
     $('pair-xp').hidden=!xp;
     winShown=true;
     storeRound();
+    $('aki-win-title').focus({preventScroll:true});
   }
   function flip(i) {
     if(document.hidden||active!=='game'||locked||opened.includes(i)||paired.has(cards[i]))return;
@@ -786,15 +818,18 @@
     if(opened.length===1){storeRound();paintBoard();return;}
     moves++;
     if(cards[opened[0]]===cards[i]){
-      paired.add(cards[i]);opened=[];paintBoard();
+      paired.add(cards[i]);opened=[];paintBoard('Пара найдена: '+names[cards[i]]);
       recordRound();
-      if(paired.size===cards.length/2){locked=true;gameReward();resumeGame();}
+      if(paired.size===cards.length/2){locked=true;gameReward();resumeGame('Все пары найдены!');}
       else save();
     }else{
       locked=true;storeRound();resumeGame();
     }
   }
-  $('aki-replay').onclick=()=>{cards=[];route('game');};
+  $('aki-replay').onclick=()=>{
+    cards=[];route('game');
+    if(active==='game')$('aki-board').firstElementChild?.focus({preventScroll:true});
+  };
   function enter(id) {
     const kitchenRoute=id==='home'&&location.hash==='#home/kitchen';
     if(kitchenRoute&&saved.night){window.conceptReplace('home');return;}

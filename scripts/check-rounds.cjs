@@ -89,6 +89,9 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
         await page.locator('#catchStart').click();
         assert.equal(await page.locator('#basket').evaluate(el=>el.style.backgroundPositionX),'0%');
       }
+      assert.ok(await page.locator('[data-tab="park"]').isHidden());
+      await page.locator('#catch.current .gameline [data-go="chest"]').click();
+      await page.locator('#chest.current').waitFor();
       await page.locator('[data-tab="park"]').click();await page.locator('#park.current').waitFor();
       const paused=(await stats()).orchard;
       await page.clock.runFor(1200);
@@ -144,13 +147,14 @@ const cells=[0,1,2,3,4,0, 1,2,3,0,0,1, 2,3,4,0,1,2,
       id:3,attempt:2,caught:0,errors:2,kind:'apple',position:.09,spot:.5,fall:.97,finished:false,won:false,
     },'catch',false);
     await page.clock.runFor(550);
-    await page.getByText('Урожай собран',{exact:true}).waitFor();
+    await page.getByText('Раунд окончен',{exact:true}).waitFor();
     const starter=await stats();
     assert.equal(starter.orchard.won,false);
     assert.equal(starter.orchard.reward.leaves,5);
     assert.equal(starter.leaves,5);
+    assert.match(await page.locator('#catchTip').textContent(),/Листья \+5/);
     await page.reload();
-    await page.getByText('Урожай собран',{exact:true}).waitFor();
+    await page.getByText('Раунд окончен',{exact:true}).waitFor();
     assert.equal((await stats()).leaves,5);
 
     await loadRound('orchard',{

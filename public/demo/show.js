@@ -107,7 +107,10 @@
   basket.textContent='';
   lives.className='orchard-lives';lives.setAttribute('role','group');lives.setAttribute('aria-label','Жизни: 3 из 3');
   lives.append(...Array.from({length:3},()=>{
-    const heart=document.createElement('span');heart.textContent='♥';heart.setAttribute('aria-hidden','true');return heart;
+    const heart=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    const shape=document.createElementNS(heart.namespaceURI,'use');
+    heart.setAttribute('viewBox','0 0 24 24');heart.setAttribute('aria-hidden','true');
+    shape.setAttribute('href','#heart-symbol');heart.append(shape);return heart;
   }));
   id('catchScore').after(lives);
   const fruitUrl=item=>item==='cone'?'assets/pine-cone.webp':'assets/fruit.webp';
@@ -202,14 +205,21 @@
     basket.style.backgroundPositionX = (Math.min(caught, 3) * 100 / 3) + '%';
     id('catchScore').textContent='Яблоки '+caught;
     lives.setAttribute('aria-label','Жизни: '+(3-errors)+' из 3');
-    Array.from(lives.children).forEach((heart,index)=>{heart.textContent=index<3-errors?'♥':'♡';});
-    id('catchSheet').hidden=running||Boolean(feedback);showFruit();
+    Array.from(lives.children).forEach((heart,index)=>heart.classList.toggle('spent',index>=3-errors));
+    const sheet=id('catchSheet');
+    sheet.hidden=running||Boolean(feedback);showFruit();
     if(!running){
-      id('catchTitle').textContent='Урожай собран';
-      id('catchTip').textContent=(orchardTip.textContent?orchardTip.textContent+' · ':'')+'Яблоки: '+caught+(reward?' · Листья +'+reward.leaves+' · Опыт +'+reward.xp:'');
+      const title=id('catchTitle');
+      title.textContent=caught?'Урожай собран':'Раунд окончен';
+      const result=['Яблоки: '+caught];
+      if(orchardTip.textContent)result.unshift(orchardTip.textContent);
+      if(reward?.leaves>0)result.push('Листья +'+reward.leaves);
+      if(reward?.xp>0)result.push('Опыт +'+reward.xp);
+      id('catchTip').textContent=result.join(' · ');
       id('catchStartLabel').textContent='Ещё раз';
       id('catchAgainIcon').removeAttribute('hidden');
       id('catchChest').hidden=false;
+      if(!sheet.hidden&&document.activeElement===field)title.focus({preventScroll:true});
     }
   }
   function restoreOrchard(){
@@ -245,7 +255,7 @@
           caught++;showImpact('catch','Яблоко поймано');
         }else if(grabbed||kind==='apple'){
           errors++;
-          showImpact(grabbed?'rattle':'ground',grabbed?'Поймана шишка':'Яблоко упало');
+          showImpact(grabbed?'rattle':'ground',grabbed?'Поймана шишка. Потеряна жизнь.':'Яблоко упало. Потеряна жизнь.');
         }else{
           orchardTip.textContent='Шишка пролетела мимо';
         }

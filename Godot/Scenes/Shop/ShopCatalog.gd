@@ -29,3 +29,36 @@ static func leaf_price(price: int) -> String:
         elif price % 10 in [2, 3, 4]:
             unit = "листа"
     return "%d %s" % [price, unit]
+
+
+static func growth_hint(xp: int) -> String:
+    var level := 1 + floori(xp / 30.0)
+    if xp < 90:
+        return "Малыш · уровень %d · до юного: %d XP (ур. 4)" % [level, 90 - xp]
+    if xp < 270:
+        return "Юный · уровень %d · до взрослого: %d XP (ур. 10)" % [level, 270 - xp]
+    return "Взрослый · уровень %d · все 3 ступени роста открыты" % level
+
+
+static func item_status(id: String, owned: Array, placed: Array, hat: String, leaves: int) -> String:
+    if owned.has(id):
+        var installed := hat == id if id in HATS else placed.has(id)
+        return ("Надето" if id in HATS else "Установлено") if installed else "В коллекции"
+    var missing := maxi(0, int(ITEMS[id].price) - leaves)
+    return "Можно купить" if missing == 0 else "Ещё " + leaf_price(missing)
+
+
+static func furniture_goal(owned: Array, placed: Array, leaves: int) -> String:
+    var current := "без лежанки"
+    if placed.has("settee"):
+        current = "Диван у окна"
+    elif placed.has("bed"):
+        current = "Лежанка"
+    var next := ""
+    for id: String in FURNITURE:
+        if not owned.has(id) and (next.is_empty() or ITEMS[id].price < ITEMS[next].price):
+            next = id
+    var summary := "Место для сна: " + current + ". "
+    if next.is_empty():
+        return summary + "Вся мебель собрана — меняй обстановку бесплатно."
+    return summary + "Следующая покупка: " + ITEMS[next].name + " · " + leaf_price(ITEMS[next].price) + ". " + item_status(next, owned, placed, "", leaves) + "."
