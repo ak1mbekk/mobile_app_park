@@ -166,6 +166,46 @@ async function zoomSelectedPlace(browser){
   }finally{await page.close();}
 }
 
+async function filteredMapResults(browser) {
+  for (const [width, height] of [[320, 568], [390, 844], [430, 932]]) {
+    const page = await browser.newPage({ viewport: { width, height }, hasTouch: true, isMobile: true });
+    try {
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 47, bottom: 34 } });
+      await page.route('https://tile.openstreetmap.org/**', route => route.abort());
+      await page.goto(root + '#map/2/service/gift');
+      const map = page.locator('#map.current');
+      await map.locator('.visitor-survey').evaluate(image => image.decode());
+      const empty = 'В списке этой зоны таких мест нет.';
+      const listOnly = 'Для этих мест пока нет отметок на карте. Они доступны в списке.';
+      const hint = map.locator('.map-filter-hint');
+      const picker = map.locator('.place-picker select');
+      assert.equal(await map.locator('.map-status').innerText(), empty);
+      await openMapSearch(map);
+      assert.equal(await hint.innerText(), empty);
+      assert.ok(await picker.isHidden());
+      const sheet = await map.locator('#map-search').boundingBox();
+      const toolbar = await map.locator('.visitor-map-head').boundingBox();
+      assert.ok(toolbar.y >= 47 && toolbar.y + toolbar.height < sheet.y);
+      assert.ok(sheet.y + sheet.height <= height - 34);
+
+      await map.locator('[data-zone="1"]').tap();
+      assert.equal(await map.locator('.service-picker select').inputValue(), 'gift');
+      assert.equal(await hint.innerText(), listOnly);
+      assert.ok(await picker.isEnabled());
+      await picker.selectOption('souvenirs');
+      await map.getByRole('heading', { name: 'Сувениры у входа' }).waitFor();
+      await map.getByRole('button', { name: 'Закрыть карточку места' }).tap();
+      assert.equal(await picker.evaluate(element => document.activeElement === element), true);
+      await map.locator('.service-picker select').selectOption('wc');
+      assert.ok(await hint.isHidden());
+      assert.ok(await map.locator('.place-marker.service').count() > 0);
+    } finally {
+      await page.close();
+    }
+  }
+}
+
 async function appearance(browser){
   for(const colorScheme of ['light','dark']){
     const context=await browser.newContext({colorScheme,viewport:{width:390,height:844},locale:'ru-RU'});
@@ -719,7 +759,7 @@ async function mapShell(browser,appRoot){
 (async()=>{
   if(output)fs.mkdirSync(output,{recursive:true});
   const b=await chromium.launch({executablePath:process.env.BROWSER_EXE,headless:true});
-  try{await firstVisitScripts(b);await coldCafeEntry(b);await fullScreenMap(b);await zoomSelectedPlace(b);await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await closeServiceMarkers(b);await nestedMapBack(b);await availability(b);await offline(b);
+  try{await firstVisitScripts(b);await coldCafeEntry(b);await fullScreenMap(b);await zoomSelectedPlace(b);await filteredMapResults(b);await appearance(b);await parkEntry(b);await cartography(b);await markerHitTesting(b);await closeServiceMarkers(b);await nestedMapBack(b);await availability(b);await offline(b);
     if(process.argv[4]){await calendarShell(b,process.argv[4]);await mapShell(b,process.argv[4]);console.log('PASS calendar and canonical map shells, exact Back and editor link');}
     console.log('PASS visitor themes, 3 widths, zone destinations, canonical map and touch targets, programme retries, cancellation, empty day, restored offline guide');}
   finally{await b.close()}

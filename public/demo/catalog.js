@@ -18,7 +18,29 @@
   window.parkGuide.speciesPhoto=slug=>bySlug.get(slug)?.thumbnail;
   let entries = [];
   let selectedGroup = 'Все';
+  let returnCard = '';
+  let focusPending = false;
   const headings = new Map();
+
+  // Keep filters on the catalogue's own history entry. A new visit starts clean,
+  // while Back (including after a detail/map reload) restores this exact visit.
+  function saveSelection() {
+    if (!section.classList.contains('current')) return;
+    history.replaceState({...history.state,catalogState:{query:search.value,group:selectedGroup,card:returnCard}},'');
+  }
+  function restoreSelection() {
+    const state=history.state?.catalogState;
+    search.value=typeof state?.query==='string'?state.query:'';
+    selectedGroup=groupOrder.includes(state?.group)?state.group:'Все';
+    returnCard=typeof state?.card==='string'?state.card:'';
+  }
+  function restoreFocus() {
+    if (!focusPending || !section.classList.contains('current')) return;
+    const card=entries.find(entry=>!entry.card.hidden && entry.card.dataset.go===returnCard)?.card;
+    if (returnCard && !card && !cardsReady && catalogRequest) return;
+    focusPending=false;
+    (card || document.getElementById('catalog-title')).focus();
+  }
 
   function indexCards() {
     entries = [...grid.querySelectorAll('.animalcard')].map(card => {
@@ -38,7 +60,7 @@
       fragment.append(heading,...entries.filter(entry=>entry.group===group).map(entry=>entry.card));
     }
     grid.replaceChildren(fragment);
-    if(!groups.includes(selectedGroup)) selectedGroup='Все';
+    if(bySlug.size && !groups.includes(selectedGroup)) selectedGroup='Все';
     classes.replaceChildren(...['Все',...groups].map(group=>{
       const control=document.createElement('button');
       control.type='button';control.textContent=group;
@@ -69,7 +91,11 @@
   classes.addEventListener('click',event=>{
     const button=event.target.closest('button[data-group]');
     if(!button)return;
-    selectedGroup=button.dataset.group;filter();
+    selectedGroup=button.dataset.group;returnCard='';filter();saveSelection();
+  });
+  grid.addEventListener('click',event=>{
+    const card=event.target.closest('.animalcard[data-go]');
+    if(card){returnCard=card.dataset.go;saveSelection();}
   });
   function detail(loading = false) {
     const entry = bySlug.get(location.hash.slice('#species/'.length));
@@ -131,8 +157,9 @@
     }
     return button;
   }
-  search.addEventListener('input', filter);
-  document.getElementById('animalReset').onclick=()=>{search.value='';selectedGroup='Все';filter();search.focus();};
+  search.addEventListener('input',()=>{returnCard='';filter();saveSelection();});
+  document.getElementById('animalReset').onclick=()=>{search.value='';selectedGroup='Все';returnCard='';filter();saveSelection();search.focus();};
+  if(location.hash==='#animals')restoreSelection();
   indexCards();
   function showCatalogCards() {
     if (cardsReady || !bySlug.size) return;
@@ -142,6 +169,7 @@
     grid.replaceChildren(...sorted.map(makeCard));
     indexCards();
     cardsReady = true;
+    restoreFocus();
   }
   async function loadCatalog() {
     try {
@@ -155,7 +183,7 @@
       // Keep the six bundled cards. Re-entering the section can retry after a network failure.
       catalogRequest = null;
     }
-    if (section.classList.contains('current')) showCatalogCards();
+    if (section.classList.contains('current')) {showCatalogCards();restoreFocus();}
     if (document.getElementById('species').classList.contains('current')) detail();
   }
   document.addEventListener('conceptscreen', event => {
@@ -163,7 +191,10 @@
     if (!['animals','species','map'].includes(screen)) return;
     const canLoad = location.protocol !== 'file:';
     if (screen === 'species') detail(canLoad && !bySlug.size);
-    if (screen === 'animals') showCatalogCards();
+    if (screen === 'animals') {
+      restoreSelection();showCatalogCards();filter();focusPending=true;
+      requestAnimationFrame(restoreFocus);
+    } else focusPending=false;
     if (canLoad && !catalogRequest) catalogRequest = loadCatalog();
   });
 })();

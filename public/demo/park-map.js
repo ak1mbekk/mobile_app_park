@@ -12,6 +12,11 @@
   const serviceField = search.querySelector('.service-picker');
   const serviceSelect = serviceField.querySelector('select');
   const status = host.querySelector('.map-status');
+  const filterHint = document.createElement('p');
+  filterHint.className = 'map-filter-hint';
+  filterHint.setAttribute('role', 'status');
+  filterHint.hidden = true;
+  picker.parentElement.before(filterHint);
   const toolbar = host.querySelector('.visitor-map-head');
   const zoneButtons = host.querySelectorAll('[data-zone]');
   const kindButtons = search.querySelectorAll('[data-kind]');
@@ -74,6 +79,7 @@
     search.hidden = !searchOpen || choosing;
     result.hidden = searchOpen || choosing || card.hidden;
     searchToggle.setAttribute('aria-expanded', String(!search.hidden));
+    if (mapReady) updateStatus();
   }
 
   function setSearch(open, returnFocus = false) {
@@ -124,7 +130,8 @@
 
   function updateStatus() {
     const messages = [];
-    if (surveyFailed) messages.push('Изображение карты не загрузилось. Места доступны в списке.');
+    if (search.hidden && !filterHint.hidden) messages.push(filterHint.textContent);
+    else if (surveyFailed) messages.push('Изображение карты не загрузилось. Места доступны в списке.');
     else if (!calibration) messages.push('Открыта локальная карта. Географические точки сейчас недоступны.');
     else if (!navigator.onLine || failedTiles.size) messages.push('Открыта локальная карта парка.');
     status.textContent = messages.join(' ');
@@ -381,9 +388,10 @@
     hitChooser.dismiss();
     layer.clearLayers();
     markers.clear();
+    const matches = local().filter(visible);
     picker.replaceChildren(new Option('Выберите место', ''));
     const groups = new Map();
-    for (const item of local().filter(visible)) {
+    for (const item of matches) {
       const ll = position(item);
       const groupLabel = item.service || 'Животные';
       if (!groups.has(groupLabel)) {
@@ -428,7 +436,13 @@
     }
     if (point && !visible(point)) picker.append(new Option(label(point), point.id));
     picker.value = point?.id || '';
-    picker.disabled = false;
+    picker.disabled = picker.options.length === 1;
+    picker.parentElement.hidden = picker.disabled;
+    filterHint.hidden = state.kind === 'all' || Boolean(point) || layer.getLayers().length > 0;
+    filterHint.textContent = filterHint.hidden ? '' : matches.length
+      ? 'Для этих мест пока нет отметок на карте. Они доступны в списке.'
+      : 'В списке этой зоны таких мест нет.';
+    updateStatus();
     renderCard(point);
     restoreCamera(point && position(point));
     layoutServices();

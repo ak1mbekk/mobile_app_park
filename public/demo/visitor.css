@@ -220,6 +220,7 @@ html.dark #visitor-theme .sun-icon {display:block}
 #map .map-filters{display:grid;grid-template-columns:.88fr .88fr 1.24fr;gap:5px;margin-bottom:8px}
 #map .map-filters button{min-width:0;padding:4px;font-size:13px}
 #map .service-picker{margin:0 0 8px}
+#map .map-filter-hint{margin:8px 0;color:var(--ink);font-size:15px;line-height:1.4}
 #map .place-picker{display:block;margin:0}
 #map .place-picker select{
   width:100%;min-width:0;min-height:48px;padding:0 8px 0 12px;
