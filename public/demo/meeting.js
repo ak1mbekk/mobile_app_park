@@ -7,6 +7,13 @@
   const caption = document.querySelector('#opening-caption');
   const progress = document.querySelector('#opening-progress');
   const close = document.querySelector('#close3d');
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.id = 'retry3d';
+  retry.className = 'primary';
+  retry.textContent = 'Повторить загрузку';
+  retry.hidden = true;
+  progress.after(retry);
   const intro = document.getElementById('intro');
   const home = document.getElementById('home');
   const preference = new URLSearchParams(location.search).get('view');
@@ -160,6 +167,7 @@
     pauseFrames = undefined;
     offerOnLoad = false;
     homeStatePending = false;
+    retry.hidden = true;
     container.hidden = true;
     coverRoom(null);
     if (room?.classList.contains('current')) {
@@ -179,6 +187,7 @@
     offerOnLoad = offerApple;
     close.hidden = false;
     close.textContent = 'Лёгкая версия';
+    retry.hidden = true;
     loading.removeAttribute('data-finished');
     loading.removeAttribute('aria-hidden');
     caption.textContent = 'Загружаем домик…';
@@ -281,7 +290,12 @@
       ready = false;
       frame.inert = true;
       frame.title = 'Домик у тропы в 3D';
-      close.hidden = true;
+      loading.removeAttribute('data-finished');
+      loading.removeAttribute('aria-hidden');
+      caption.textContent = 'Загружаем домик…';
+      progress.hidden = false;
+      progress.removeAttribute('value');
+      close.hidden = false;
       pauseFrames?.(false);
       frame.contentWindow.setParkEnterHome();
       return;
@@ -317,9 +331,33 @@
     try { sessionStorage.setItem('park-light-meeting', '1'); } catch {}
     leave();
   };
+  retry.onclick = () => {
+    const loader = frame?.contentWindow?.parkHomePack;
+    if (!loader || ready) return;
+    retry.hidden = true;
+    caption.textContent = 'Загружаем домик…';
+    progress.hidden = false;
+    progress.removeAttribute('value');
+    void loader.ensure().catch(() => {});
+  };
 
   window.addEventListener('message', async event => {
     if (event.origin !== location.origin || !frame || event.source !== frame.contentWindow) return;
+    if (!ready && ['animal-park:home-loading', 'animal-park:home-load-failed'].includes(event.data)) {
+      clearTimeout(timeout);
+      progressObserver?.disconnect();
+      const failed = event.data === 'animal-park:home-load-failed';
+      loading.removeAttribute('data-finished');
+      loading.removeAttribute('aria-hidden');
+      close.hidden = false;
+      retry.hidden = !failed;
+      progress.hidden = failed;
+      progress.removeAttribute('value');
+      caption.textContent = failed
+        ? 'Не удалось загрузить домик. Повтори загрузку или продолжи в лёгкой версии.'
+        : 'Загружаем домик…';
+      return;
+    }
     if (!ready && event.data === (room.id === 'intro' ? 'animal-park:scene-ready' : 'animal-park:home-ready')) {
       const readyFrame = frame;
       booted = true;
@@ -327,6 +365,7 @@
       if (room.id === 'home') await window.petDemo.recoverNativeRound();
       if (frame !== readyFrame) return;
       ready = true;
+      retry.hidden = true;
       pauseFrames ??= controlFrameLoop(frame.contentWindow);
       homeStatePending = room === home;
       frame.inert = false;
@@ -340,6 +379,16 @@
       return;
     }
     if (!ready) return;
+    if (event.data === 'animal-park:intro-rendered' && room === intro) {
+      const renderedFrame = frame;
+      // Godot has drawn a frame; allow the host to paint the uncovered canvas.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (frame === renderedFrame && ready && room === intro && !document.hidden && intro.classList.contains('current')) {
+          frame.contentWindow.dispatchEvent(new Event('park-intro-visible'));
+        }
+      }));
+      return;
+    }
     if (event.data === 'animal-park:meal-finished') {
       if (room.id === 'intro') {
         window.petDemo.finishMeeting();

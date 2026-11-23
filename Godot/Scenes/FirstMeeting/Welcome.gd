@@ -15,6 +15,8 @@ var pet_name := DEFAULT_NAME
 var web_pause_callback: JavaScriptObject
 var web_home_callback: JavaScriptObject
 const HOME_SCENE := "res://Scenes/Levels/Home.tscn"
+const HomePack = preload("res://Scenes/Levels/HomePack.gd")
+var entering_home := false
 
 func _ready() -> void:
     if not introduction_enabled:
@@ -43,6 +45,8 @@ func _ready() -> void:
         browser.setParkScenePaused = web_pause_callback
         browser.setParkEnterHome = web_home_callback
         _notify_host("scene-ready")
+        await RenderingServer.frame_post_draw
+        _notify_host("intro-rendered")
         return
     var save := ConfigFile.new()
     if save.load(save_path) == OK:
@@ -76,7 +80,12 @@ func _after_meal() -> void:
     _open_name_panel()
 
 func _has_web_host() -> bool:
-    return OS.has_feature("web") and JavaScriptBridge.eval("window.parent !== window && new URLSearchParams(location.search).get('host') === 'animal-park'")
+    return OS.has_feature("web") and JavaScriptBridge.eval("""(() => {
+        try {
+            return parent !== window && parent.location.origin === location.origin &&
+                new URLSearchParams(location.search).get('host') === 'animal-park';
+        } catch (_) { return false; }
+    })()""")
 
 func _sync_pause(args: Array) -> void:
     if args.size() == 1 and args[0] is bool:
@@ -116,8 +125,15 @@ func _confirm_name(value: String) -> void:
     _complete()
 
 func _complete() -> void:
+    if entering_home:
+        return
+    entering_home = true
     confirmed = true
     panel.hide()
+    if not await HomePack.ensure_home(get_tree()):
+        entering_home = false
+        confirmed = false
+        return
     get_tree().change_scene_to_file.call_deferred(HOME_SCENE)
 
 func _process(_delta: float) -> void:

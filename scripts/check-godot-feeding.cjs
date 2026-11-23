@@ -1,6 +1,9 @@
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
-const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
+const engineAsset=/\/meeting3d\/(?:index(?:-[a-f0-9]{64})?\.(?:html|pck|wasm)|home(?:-[a-f0-9]{64})?\.pck)$/;
+const binaryAsset=/\/meeting3d\/(?:index(?:-[a-f0-9]{64})?\.(?:pck|wasm)|home(?:-[a-f0-9]{64})?\.pck)$/;
+const homeAsset=/\/meeting3d\/home(?:-[a-f0-9]{64})?\.pck$/;
+const logicalAsset=url=>new URL(url).pathname.split('/').pop().replace(/-[a-f0-9]{64}(?=\.)/,'');
 
 (async()=>{
   const browser=await chromium.launch({executablePath:process.env.BROWSER_EXE,
@@ -12,6 +15,17 @@ const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
       Object.defineProperty(Element.prototype,'moveBefore',{configurable:true,value:undefined});
       if(location.pathname.includes('/meeting3d/')){
         window.testDrawCount=0;
+        window.testIntroVisible=false;
+        window.testHomeFetches=[];
+        window.addEventListener('park-intro-visible',()=>{window.testIntroVisible=true;});
+        const fetchOriginal=window.fetch.bind(window);
+        window.fetch=(input,...options)=>{
+          const source=new URL(typeof input==='string'?input:input instanceof URL?input.href:input.url,location.href);
+          if(/\/home(?:-[a-f0-9]{64})?\.pck$/.test(source.pathname)){
+            window.testHomeFetches.push({visible:window.testIntroVisible,draws:window.testDrawCount});
+          }
+          return fetchOriginal(input,...options);
+        };
         for(const operation of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced','clear']){
           const prototype=WebGL2RenderingContext.prototype;
           const draw=prototype[operation];
@@ -27,8 +41,7 @@ const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
     const errors=[];
     const loads=[];
     page.on('request',request=>{
-      const asset=engineAsset.exec(new URL(request.url()).pathname);
-      if(asset)loads.push(asset[1]);
+      if(engineAsset.test(new URL(request.url()).pathname))loads.push(logicalAsset(request.url()));
     });
     page.on('pageerror',e=>errors.push(e.message));
     page.on('console',message=>{
@@ -38,13 +51,18 @@ const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
     if(root.pathname.endsWith('/'))root.pathname+=root.pathname.endsWith('/demo/')?'index.html':'demo/index.html';
     const roomSelector='#scene3d iframe';
     const ready=async(scene)=>{
-      await page.locator('#'+scene+'.current').waitFor({timeout:90000});
-      await page.locator('#scene3d:not([hidden]) iframe:not([inert])').waitFor({timeout:90000});
-      await page.waitForFunction(scene=>{
-        const iframe=document.querySelector('#scene3d iframe');
-        return scene==='home'?typeof iframe?.contentWindow.setParkHomeState==='function':
-          typeof iframe?.contentWindow.setParkScenePaused==='function';
-      },scene,{timeout:90000});
+      try{
+        await page.locator('#'+scene+'.current').waitFor({timeout:90000});
+        await page.locator('#scene3d:not([hidden]) iframe:not([inert])').waitFor({timeout:90000});
+        await page.waitForFunction(scene=>{
+          const iframe=document.querySelector('#scene3d iframe');
+          return scene==='home'?typeof iframe?.contentWindow.setParkHomeState==='function':
+            typeof iframe?.contentWindow.setParkScenePaused==='function';
+        },scene,{timeout:90000});
+      }catch(cause){
+        const notice=await page.locator('#scene3d iframe').evaluate(frame=>frame.contentDocument?.querySelector('#status-notice')?.textContent).catch(()=>null);
+        throw new Error('Godot '+scene+' did not become ready: '+JSON.stringify({loads,errors,notice}),{cause});
+      }
     };
     const point=(box,x,y)=>({x:box.x+box.width*x,y:box.y+box.height*y});
     const box=()=>page.locator(roomSelector).boundingBox();
@@ -136,12 +154,17 @@ const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
     root.searchParams.set('view','3d');
     root.searchParams.set('test','interaction');
     root.hash='home';
+    if(process.env.PARK_FEEDING_CACHE_ONLY==='1'){
+      await page.close();
+      await checkHomeRetry(browser,root);
+      return;
+    }
     await page.goto(root.href);
     await ready('intro');
     assert.equal(new URL(page.url()).hash,'#intro');
     await page.locator(roomSelector).evaluate(iframe=>{iframe.contentWindow.testMeetingEngine=true;});
     const introLoads=loads.slice();
-    assert.equal(introLoads.filter(type=>type==='html').length,1);
+    assert.deepEqual(introLoads.filter(type=>type!=='home.pck').sort(),['index.html','index.pck','index.wasm']);
     if(process.env.PARK_CAPTURE_INTRO){
       await page.locator('#loading3d[data-finished]').waitFor({state:'attached'});
       await page.screenshot({path:process.env.PARK_CAPTURE_INTRO});
@@ -158,9 +181,15 @@ const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
     await page.locator('#aki-name-input').fill('Аки');
     await page.locator('#aki-name-form button').click();
     await ready('home');
+    const homeLoads=loads.slice();
+    assert.deepEqual(homeLoads.slice().sort(),['home.pck','index.html','index.pck','index.wasm'],
+      'Exactly one home pack is added to the existing opening engine');
+    const homeFetches=await page.locator(roomSelector).evaluate(iframe=>iframe.contentWindow.testHomeFetches);
+    assert.equal(homeFetches.length,1,'One successful home download, including any deferred prefetch');
+    assert.ok(homeFetches.every(fetch=>fetch.visible&&fetch.draws>0),'Home downloads only after a rendered, visibly playable intro');
     async function sameEngine(){
       assert.equal(await page.locator(roomSelector).evaluate(iframe=>iframe.contentWindow.testMeetingEngine),true);
-      assert.deepEqual(loads,introLoads,'The original engine document and binaries are reused');
+      assert.deepEqual(loads,homeLoads,'Intro-to-home and Park navigation reuse the engine and both loaded packs');
     }
     await sameEngine();
     assert.equal((await stats()).name,'Аки');
@@ -193,6 +222,8 @@ const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
       await parkTab.close();
       assert.deepEqual(errors,[]);
       console.log('PASS parked kitchen pauses rendering, resumes the same scene and does not start in a new Park tab');
+      await page.close();
+      await checkHomeRetry(browser,root);
       return;
     }
 
@@ -340,7 +371,7 @@ const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
     const light=await browser.newPage();
     const downloads=[];
     light.on('request',r=>{
-      if(r.method()==='GET' && /\/meeting3d\/index(?:-[a-f0-9]{64})?\.(pck|wasm)$/.test(new URL(r.url()).pathname))downloads.push(r.url());
+      if(r.method()==='GET' && binaryAsset.test(new URL(r.url()).pathname))downloads.push(r.url());
     });
     await light.addInitScript(()=>Object.defineProperty(navigator,'connection',{value:{saveData:true}}));
     const lightUrl=new URL(root);
@@ -354,5 +385,128 @@ const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
     assert.equal(await light.locator(roomSelector).count(),0);
     assert.deepEqual(downloads,[]);
     console.log('PASS Godot kitchen, hunger, touch feeding, pause, name, wash, sleep/reload/wake, profile, saved rewards, and light mode');
+    await page.close();
+    await light.close();
+    await checkHomeRetry(browser,root);
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
+async function checkHomeRetry(browser,root){
+  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  try{
+    await context.addInitScript(()=>{
+      if(location.pathname.includes('/meeting3d/')){
+        window.testDeliveryTrace=[];
+        const fetchOriginal=window.fetch.bind(window);
+        window.fetch=(input,...options)=>{
+          const url=typeof input==='string'?input:input instanceof URL?input.href:input.url;
+          if(/home.*\.pck$/.test(url))window.testDeliveryTrace.push({kind:'fetch',url,state:window.parkHomePack?.state});
+          return fetchOriginal(input,...options);
+        };
+        const match=Cache.prototype.match;
+        Cache.prototype.match=async function(request,...options){
+          const response=await match.call(this,request,...options);
+          const key=typeof request==='string'?request:request instanceof URL?request.href:request.url;
+          if(/home.*\.pck$/.test(key))window.testDeliveryTrace.push({kind:'match',key,found:!!response,source:response?.url});
+          return response;
+        };
+        let homeLoader;
+        Object.defineProperty(window,'parkHomePack',{configurable:true,get:()=>homeLoader,set:loader=>{
+          homeLoader=loader;
+          const reject=loader.rejectMount;
+          loader.rejectMount=function(...args){window.testDeliveryTrace.push({kind:'reject',stack:new Error().stack});return reject.apply(this,args);};
+        }});
+      }
+      if(!location.pathname.endsWith('/demo/index.html')||localStorage.getItem('aki-concept-demo'))return;
+      localStorage.setItem('aki-concept-demo',JSON.stringify({name:'Ричи',onboardingDone:true,mealFinished:true,
+        leaves:0,xp:90,food:70,clean:70,energy:45,joy:70,owned:['bed'],placed:['bed'],updated:Date.now()}));
+    });
+    let homeAttempts=0,denyHome=true;
+    await context.route(homeAsset,route=>{
+      homeAttempts++;
+      return denyHome?route.fulfill({status:503,contentType:'text/plain',body:'Home pack temporarily unavailable'}):route.continue();
+    });
+    const page=await context.newPage();
+    const requests=[],errors=[];
+    page.on('request',request=>{if(engineAsset.test(new URL(request.url()).pathname))requests.push(logicalAsset(request.url()));});
+    page.on('pageerror',error=>errors.push(error.message));
+    await page.goto(root.href,{waitUntil:'domcontentloaded'});
+    await page.locator('#retry3d').waitFor({state:'visible',timeout:120000});
+    const failedAttempts=homeAttempts;
+    assert.ok(failedAttempts>=1,'The unavailable home pack produces a visible recovery action');
+    denyHome=false;
+    await page.locator('#scene3d iframe').evaluate(frame=>{frame.contentWindow.retryEngineIdentity=true;});
+    await page.locator('#retry3d').tap();
+    const homeReady=()=>page.waitForFunction(()=>{
+      const frame=document.querySelector('#scene3d iframe');
+      return typeof frame?.contentWindow?.setParkHomeState==='function'&&!frame.inert&&!frame.contentDocument.querySelector('#status');
+    },null,{timeout:120000});
+    await homeReady();
+    assert.equal(homeAttempts,failedAttempts+1,'The visible retry button issues one new request');
+    assert.equal(await page.locator('#scene3d iframe').evaluate(frame=>frame.contentWindow.retryEngineIdentity),true,
+      'Retry retains the already running engine');
+    assert.equal(requests.filter(name=>name==='index.wasm').length,1);
+    assert.equal(requests.filter(name=>name==='index.pck').length,1);
+    // Wait for asynchronous Cache Storage writes to complete; elapsed time alone
+    // never proves that a binary was cached successfully.
+    await page.waitForFunction(async()=>{
+      const frame=document.querySelector('#scene3d iframe');
+      const base=new URL('./',frame.src);
+      const source=frame.contentDocument.querySelector('script[src="delivery.js"]').dataset;
+      const cache=await caches.open('animal-park-godot:'+base.href);
+      const expected=[['index.pck',source.pack],['index.wasm',source.wasm],['home.pck',source.home]];
+      const keys=(await cache.keys()).map(key=>new URL(key.url).pathname.split('/').pop()).sort();
+      if(JSON.stringify(keys)!==JSON.stringify(['home.pck','index.pck','index.wasm']))return false;
+      for(const [name,hashed] of expected){
+        const saved=await cache.match(new URL(name,base));
+        if(saved?.status!==200||saved.url!==new URL(hashed,base).href)return false;
+      }
+      return true;
+    },null,{timeout:120000});
+    const cachedDigests=await page.evaluate(async()=>{
+      const frame=document.querySelector('#scene3d iframe');
+      const base=new URL('./',frame.src);
+      const cache=await caches.open('animal-park-godot:'+base.href);
+      const results=[];
+      for(const name of ['index.pck','index.wasm','home.pck']){
+        const response=await cache.match(new URL(name,base));
+        const bytes=await response.arrayBuffer();
+        const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(value=>value.toString(16).padStart(2,'0')).join('');
+        results.push({name,hash,source:response.url});
+      }
+      return results;
+    });
+    for(const cached of cachedDigests)assert.ok(cached.source.includes('-'+cached.hash+'.'),
+      'The complete decoded cached bytes match their source hash: '+JSON.stringify(cached));
+    const previous=requests.length;
+    await page.reload({waitUntil:'domcontentloaded'});
+    await homeReady();
+    const currentSources=await page.locator('#scene3d iframe').evaluate(frame=>{
+      const data=frame.contentDocument.querySelector('script[src="delivery.js"]').dataset;
+      return [data.pack,data.wasm,data.home];
+    });
+    assert.deepEqual(currentSources,cachedDigests.map(cached=>new URL(cached.source).pathname.split('/').pop()),
+      'The served build must remain unchanged during a warm-cache check');
+    const trace=await page.locator('#scene3d iframe').evaluate(frame=>frame.contentWindow.testDeliveryTrace);
+    assert.deepEqual(requests.slice(previous),['index.html'],'Reload reuses all three stable cache keys without binary GETs: '+JSON.stringify(trace));
+    assert.equal(homeAttempts,failedAttempts+1,'The previous 503 was replaced by the completed successful home response');
+    // Seed the canonical home slot with a successful response from an older URL.
+    // A version mismatch must refresh just home, preserving the intro and WASM.
+    const oldHome=new URL('meeting3d/home-'+ '0'.repeat(64)+'.pck',root).href;
+    await context.route(oldHome,route=>route.fulfill({status:200,contentType:'application/octet-stream',body:'old home pack'}));
+    await page.evaluate(async oldHome=>{
+      const frame=document.querySelector('#scene3d iframe');
+      const base=new URL('./',frame.src);
+      const cache=await caches.open('animal-park-godot:'+base.href);
+      await cache.put(new URL('home.pck',base),await fetch(oldHome));
+    },oldHome);
+    const beforeUpgrade=requests.length;
+    await page.reload({waitUntil:'domcontentloaded'});
+    await homeReady();
+    assert.deepEqual(requests.slice(beforeUpgrade).sort(),['home.pck','index.html'],
+      'A stale home cache refreshes only home while retaining intro and WASM');
+    assert.equal(homeAttempts,failedAttempts+2);
+    assert.deepEqual(errors,[]);
+    console.log('PASS home-pack failure, explicit retry in the same engine, stable cache slots, no-download warm reload and isolated stale-home refresh');
+  }finally{await context.close();}
+}

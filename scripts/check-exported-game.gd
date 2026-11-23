@@ -3,6 +3,12 @@ extends SceneTree
 ## Run with --headless --main-pack <exported index.pck> --script <absolute path to this file>.
 ## This reads assets from the actual game package, including export remaps.
 func _initialize() -> void:
+    var args := OS.get_cmdline_user_args()
+    if args.size() == 2 and args[0] == "--home-pack":
+        if not ProjectSettings.load_resource_pack(args[1], false):
+            printerr("Could not mount home resource pack: ", args[1])
+            quit(1)
+            return
     var missing := PackedStringArray()
     for resource in [
         "res://Scenes/Levels/FirstMeeting.tscn", "res://Scenes/Levels/Home.tscn",

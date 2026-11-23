@@ -6,9 +6,9 @@ import { pipeline } from 'node:stream/promises';
 import { constants, createBrotliCompress, createGzip } from 'node:zlib';
 
 const directory = 'demo/meeting3d';
-const binaries = ['pck', 'wasm'];
-const versioned = /^\/index-([a-f0-9]{64})\.(pck|wasm)$/;
-const legacy = /^\/index\.(pck|wasm)$/;
+const binaries = ['index.pck', 'index.wasm', 'home.pck'];
+const versioned = /^\/(index|home)-([a-f0-9]{64})\.(pck|wasm)$/;
+const legacy = /^\/(index\.pck|index\.wasm|home\.pck)$/;
 const loader = /<script src="index\.js"><\/script>/;
 
 function acceptedEncodings(header = '') {
@@ -54,12 +54,13 @@ async function collect(stream) {
   return Buffer.concat(chunks);
 }
 
-function injectBootstrap(html, [pack, wasm]) {
+function injectBootstrap(html, [pack, wasm, home]) {
   // The host already displays this portrait during boot. Reuse its WebP in
   // the engine frame so its hidden splash doesn't fetch another full-size PNG.
-  return html.replace(/(<img id="status-splash"[^>]*\bsrc=")index\.png"/, '$1../assets/threshold-morning.webp"')
+  return html.replace(/<script src="delivery\.js"[^>]*><\/script>\s*/, '')
+    .replace(/(<img id="status-splash"[^>]*\bsrc=")index\.png"/, '$1../assets/threshold-morning.webp"')
     .replace(loader, script =>
-    `<script src="delivery.js" data-pack="${pack}" data-wasm="${wasm}"></script>\n\t\t${script}`);
+    `<script src="delivery.js" data-pack="${pack}" data-wasm="${wasm}" data-home="${home}"></script>\n\t\t${script}`);
 }
 
 async function withFile(filename, use) {
@@ -92,9 +93,10 @@ export default function godotDelivery() {
   }
 
   function packedFiles(game) {
-    return Promise.all(binaries.map(ext => {
-      const filename = path.join(game, `index.${ext}`);
-      return withFile(filename, async (file, stat) => `index-${await fingerprint(filename, file, stat)}.${ext}`);
+    return Promise.all(binaries.map(name => {
+      const filename = path.join(game, name);
+      const {name: stem, ext} = path.parse(name);
+      return withFile(filename, async (file, stat) => `${stem}-${await fingerprint(filename, file, stat)}${ext}`);
     }));
   }
 
@@ -102,11 +104,11 @@ export default function godotDelivery() {
     // Keep only representations of the current version of each binary in RAM.
     // This also shares compression work across requests for the same version.
     const encodedFiles = new Map();
-    function prepare(file, ext, validator, encoding) {
-      let current = encodedFiles.get(ext);
+    function prepare(file, name, validator, encoding) {
+      let current = encodedFiles.get(name);
       if (current?.validator !== validator) {
         current = { validator, variants: new Map() };
-        encodedFiles.set(ext, current);
+        encodedFiles.set(name, current);
       }
       const variants = current.variants;
       if (!variants.has(encoding)) {
@@ -125,16 +127,15 @@ export default function godotDelivery() {
 
     async function warmBrotli() {
       const names = built
-        ? [...(await readFile(path.join(game, 'index.html'), 'utf8')).matchAll(/data-(?:pack|wasm)="(index-[a-f0-9]{64}\.(?:pck|wasm))"/g)]
+        ? [...(await readFile(path.join(game, 'index.html'), 'utf8')).matchAll(/data-(?:pack|wasm|home)="((?:index|home)-[a-f0-9]{64}\.(?:pck|wasm))"/g)]
           .map(match => match[1])
-        : binaries.map(ext => `index.${ext}`);
+        : binaries;
       await Promise.all(names.map(name => {
         const filename = path.join(game, name);
         return withFile(filename, async (file, stat) => {
-          const [, validator, ext] = built
-            ? versioned.exec('/' + name)
-            : [null, await fingerprint(filename, file, stat), path.extname(name).slice(1)];
-          await prepare(file, ext, validator, 'br');
+          const hit = built && versioned.exec('/' + name);
+          await prepare(file, hit ? hit[1] + '.' + hit[3] : name,
+            hit ? hit[2] : await fingerprint(filename, file, stat), 'br');
         });
       }));
     }
@@ -161,13 +162,14 @@ export default function godotDelivery() {
 
         if (!version && !original) return next();
         res.appendHeader('Vary', 'Accept-Encoding');
-        const ext = version?.[2] || original[1];
-        const filename = path.join(game, built ? resource.slice(1) : `index.${ext}`);
+        const name = version ? version[1] + '.' + version[3] : original[1];
+        if (!binaries.includes(name)) return res.writeHead(404).end();
+        const filename = path.join(game, built ? resource.slice(1) : name);
         await withFile(filename, async (file, stat) => {
           if (!stat.isFile()) throw Object.assign(new Error('Godot resource unavailable'), { code: 'ENOENT' });
           if (res.destroyed) return;
-          const validator = built ? version[1] : await fingerprint(filename, file, stat);
-          if (version && version[1] !== validator) {
+          const validator = built ? version[2] : await fingerprint(filename, file, stat);
+          if (version && version[2] !== validator) {
             return res.writeHead(404, { 'Cache-Control': 'no-store' }).end();
           }
           if (res.destroyed) return;
@@ -191,9 +193,9 @@ export default function godotDelivery() {
           if (range === null) {
             return res.writeHead(416, { ...headers, 'Content-Range': `bytes */${stat.size}` }).end();
           }
-          headers['Content-Type'] = ext === 'wasm' ? 'application/wasm' : 'application/octet-stream';
+          headers['Content-Type'] = name === 'index.wasm' ? 'application/wasm' : 'application/octet-stream';
           if (compressed) {
-            const body = await prepare(file, ext, validator, encoding);
+            const body = await prepare(file, name, validator, encoding);
             if (res.destroyed) return;
             headers['Content-Encoding'] = encoding;
             if (req.method === 'HEAD') return res.writeHead(200, { ...headers, 'Content-Length': body.length }).end();
@@ -237,7 +239,7 @@ export default function godotDelivery() {
       const html = await readFile(page, 'utf8');
       if (!loader.test(html)) return;
       const files = await packedFiles(game);
-      await Promise.all(files.map((file, i) => rename(path.join(game, `index.${binaries[i]}`), path.join(game, file))));
+      await Promise.all(files.map((file, i) => rename(path.join(game, binaries[i]), path.join(game, file))));
       await writeFile(page, injectBootstrap(html, files));
     },
   };

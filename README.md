@@ -28,7 +28,7 @@ npm run dev -- --host 127.0.0.1 --port 8168 --strictPort
 
 ### Исходники и проверки
 
-Сцены находятся в [Godot/Scenes](Godot/Scenes). В Godot 4.7.2 с шаблоном Web откройте `Godot/project.godot`, затем используйте экспорт Web. Браузерный комплект Godot хранится в `public/demo/meeting3d`. Путеводитель использует исходный модуль карты, Leaflet, локальный растр и справочные данные. Меню находится в `src/park-menu.tsx` и `src/components/ui/menu-vertical.tsx`.
+Сцены находятся в [Godot/Scenes](Godot/Scenes). Для веб-сборки нужны Godot 4.7.2, шаблон Web и Node. Команда `node scripts/build-godot-web.mjs --output public/demo/meeting3d` собирает и проверяет отдельные пакеты знакомства и дома. [Сборка из чистой копии](docs/godot-web-build.md). Путеводитель использует исходный модуль карты, Leaflet, локальный растр и справочные данные. Меню находится в `src/park-menu.tsx` и `src/components/ui/menu-vertical.tsx`.
 
 `npm run build` собирает React-оболочку и веб-ресурсы. Тесты браузера используют Playwright и Chromium (исполняемый файл можно указать в `BROWSER_EXE`). Точка входа при запущенном Vite — `http://127.0.0.1:8168/demo/index.html`. Команды и критерии приведены в [ТЗ](specs/animal-park/TZ.md). Для самостоятельной проверки семейного аккаунта используйте `node scripts/check-family.cjs`: тест создаёт изолированную временную базу и два браузерных контекста.
 
