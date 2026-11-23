@@ -55,7 +55,8 @@ func _run() -> void:
         var ware: Dictionary = CATALOG.ITEMS[id]
         var label: Label = cabin.shop.get_node("%" + id).get_node("Price")
         _expect(label.text.contains(ware.tier), "%s shows rarity before selection" % id)
-        _expect(label.text.contains("Куплено" if id == "bed" else CATALOG.leaf_price(ware.price)), "%s shows ownership or price before selection" % id)
+        var expected_price := "Бесплатно" if id == "base-bath" else ("Куплено" if id == "bed" else CATALOG.leaf_price(ware.price))
+        _expect(label.text.contains(expected_price), "%s shows ownership or price before selection" % id)
         var picture: TextureRect = cabin.shop.get_node("%" + id).get_node("Picture")
         _expect(picture.texture != null, "%s has a catalog picture" % id)
 

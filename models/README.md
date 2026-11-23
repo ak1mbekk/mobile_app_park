@@ -1,6 +1,8 @@
 # Модели «Домика у тропы»
 
-Скопируйте папку `models` в корень проекта Godot, дождитесь импорта и перетащите нужный GLB или пример TSCN в свою сцену. У каждого предмета собственные меши и встроенные текстуры. В Blender предметы собраны в [четыре редактируемых исходника](../art-source/cabin). [Лист рендеров](../docs/showcase/cabin-models/models-sheet.png) и [концепт для сравнения](../specs/animal-park/art/cabin-props/cabin-props.png).
+Скопируйте папку `models` в корень проекта Godot, дождитесь импорта и перетащите нужный GLB или пример TSCN в свою сцену. У каждого предмета собственные меши и встроенные текстуры. В [папке исходников Blender](../art-source/cabin) лежат сцены предметов и отдельные файлы новых купелей. [Лист рендеров](../docs/showcase/cabin-models/models-sheet.png) и [концепт для сравнения](../specs/animal-park/art/cabin-props/cabin-props.png).
+
+Файлы пяти купелей лежат в `bath-toys`. Для купания используется один предмет за раз. Сделанные в Blender варианты содержат собственные текстуры. Воду, пену и опорную точку Ричи задаёт сцена ванной в Godot. [Деревянная](bath-toys/wooden-wash-tub.glb) · [Резная дубовая](bath-toys/bath-carved.glb) · [Эмалированная](bath-toys/enamel-bath.glb) · [Медная](bath-toys/bath-copper.glb) · [Фаянсовая](bath-toys/bath-faience.glb) · [Лист из игровой камеры](../docs/showcase/room-studies/godot/five-tubs.webp).
 
 ## Как собрать сцены
 

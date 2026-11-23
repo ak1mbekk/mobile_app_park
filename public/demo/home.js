@@ -74,6 +74,7 @@
     return {...defaults};
   }
   let saved=readProfile();
+  const baths=['base-bath','bath-carved','bath','bath-copper','bath-faience'];
   const wares=[
     {id:'cap',name:'Льняная кепка',tier:'Обычная',group:'hat',price:10},
     {id:'ranger',name:'Шляпа следопыта',tier:'Редкая',group:'hat',price:30},
@@ -83,13 +84,22 @@
     {id:'lantern',name:'Фонарь лесника',tier:'Редкий',group:'decor',price:35},
     {id:'chest',name:'Дубовый сундук',tier:'Эпический',group:'decor',price:75},
     {id:'settee',name:'Диван у окна',tier:'Редкий',group:'decor',price:40,replaces:'лежанку'},
-    {id:'bath',name:'Эмалированная купель',tier:'Редкая',group:'decor',price:55,replaces:'ванну'},
+    {id:'base-bath',name:'Деревянная купель',tier:'Базовая',group:'decor',price:0,replaces:'купель',room:'bathroom'},
+    {id:'bath-carved',name:'Резная дубовая купель',tier:'Обычная',group:'decor',price:25,replaces:'купель',room:'bathroom'},
+    {id:'bath',name:'Эмалированная купель',tier:'Редкая',group:'decor',price:55,replaces:'купель',room:'bathroom'},
+    {id:'bath-copper',name:'Медная купель',tier:'Эпическая',group:'decor',price:85,replaces:'купель',room:'bathroom'},
+    {id:'bath-faience',name:'Фаянсовая купель',tier:'Легендарная',group:'decor',price:120,replaces:'купель',room:'bathroom'},
     {id:'wallpaper',name:'Обои для кухни',tier:'Обычные',group:'decor',price:20,replaces:'отделку кухни',room:'kitchen'},
     {id:'bath-tile',name:'Плитка для ванной',tier:'Обычная',group:'decor',price:25,replaces:'отделку ванной',room:'bathroom'},
     {id:'kitchen-cabinet',name:'Мятный кухонный шкаф',tier:'Обычный',group:'decor',price:35,replaces:'кухонный шкаф',room:'kitchen'}
   ];
   const owned=new Set(wares.filter(w=>Array.isArray(saved.owned)&&saved.owned.includes(w.id)).map(w=>w.id));
   const placed=new Set(wares.filter(w=>w.group==='decor'&&owned.has(w.id)&&Array.isArray(saved.placed)&&saved.placed.includes(w.id)).map(w=>w.id));
+  const isOwned=id=>id==='base-bath'||owned.has(id);
+  const installedBath=()=>baths.find(id=>id!=='base-bath'&&placed.has(id))??'base-bath';
+  const isInstalled=w=>baths.includes(w.id)?installedBath()===w.id:w.group==='hat'?saved.hat===w.id:placed.has(w.id);
+  const bathArtwork=id=>id==='base-bath'?'assets/base-bath.webp':'assets/room-'+id+'.webp';
+  const shopArtwork=id=>id==='base-bath'?bathArtwork(id):'assets/shop-'+id+'.webp';
   // Earlier saves could have both beds installed. Those rooms showed the settee.
   if(placed.has('settee')&&placed.delete('bed'))saved.placed=[...placed];
   const canSleep=()=>placed.has('bed')||placed.has('settee');
@@ -284,7 +294,12 @@
     paintOutfit();
     $('home').classList.toggle('furnished-bed',placed.has('settee'));
     $('home').classList.toggle('furnished-floor-bed',placed.has('bed'));
-    $('wash').classList.toggle('furnished-bath',placed.has('bath'));
+    const tub=installedBath();
+    $('wash').dataset.furnishing=tub;
+    const washSuffix=tub==='base-bath'?'':'-'+tub;
+    $('wash').style.setProperty('--wash-art','url("assets/wash'+washSuffix+'.webp")');
+    $('wash').style.setProperty('--clean-art','url("assets/clean'+washSuffix+'.webp")');
+    $('wash').classList.toggle('furnished-bath',tub==='bath');
     $('ball-price').textContent=saved.ball?'Поиграть с Ричи':ballPrice+' листьев · в кошельке '+saved.leaves;
     $('aki-display').textContent = saved.name;
     $('aki-balance').textContent = String(saved.leaves);
@@ -347,24 +362,25 @@
     refreshKitchenArtwork();
     const showSettee=preview?.id==='settee'||(preview?.id!=='bed'&&placed.has('settee'));
     $('starter-chest').classList.toggle('upgraded',shown('chest'));
-    bathPreview.hidden=preview?.id!=='bath'&&preview?.room!=='bathroom';
+    bathPreview.hidden=preview?.room!=='bathroom';
     bathPreview.classList.toggle('has-bath-tile',shown('bath-tile'));
     $('wash').classList.toggle('has-bath-tile',placed.has('bath-tile'));
-    const previewVessel=$('bath-preview-vessel'), previewEnamel=shown('bath');
-    const previewSource=previewEnamel?'assets/room-bath.webp':'assets/base-bath.webp';
+    const previewVessel=$('bath-preview-vessel'), previewBath=baths.includes(preview?.id)?preview.id:installedBath();
+    const previewSource=bathArtwork(previewBath);
     if(previewVessel.getAttribute('src')!==previewSource)previewVessel.src=previewSource;
-    previewVessel.classList.toggle('upgraded',previewEnamel);
-    const vessel=$('wash-vessel'), upgraded=placed.has('bath');
-    const source=upgraded?'assets/room-bath.webp':'assets/base-bath.webp';
+    previewVessel.classList.toggle('upgraded',previewBath==='bath');
+    previewVessel.dataset.furnishing=previewBath;
+    const vessel=$('wash-vessel'), tub=installedBath();
+    const source=bathArtwork(tub);
     if(vessel.getAttribute('src')!==source)vessel.src=source;
-    vessel.alt=upgraded?'Эмалированная купель':'Деревянная купель';
-    vessel.classList.toggle('upgraded',upgraded);
-    vessel.dataset.furnishing=upgraded?'bath':'base-bath';
+    vessel.alt=wares.find(w=>w.id===tub).name;
+    vessel.classList.toggle('upgraded',tub==='bath');
+    vessel.dataset.furnishing=tub;
     const decor=wares.filter(w=>!w.room&&(w.id==='bed'||w.id==='settee')&&
       (placed.has(w.id)||preview?.id===w.id)&&
       (w.id!=='bed'||!showSettee)&&(w.id!=='settee'||showSettee));
     $('room-decor').replaceChildren(...decor.map(w=>{
-      const img=new Image();img.src='assets/'+(w.replaces?'room-':'shop-')+w.id+'.webp';img.alt='';img.dataset.furnishing=w.id;return img;
+      const img=new Image();img.loading='lazy';img.src='assets/'+(w.replaces?'room-':'shop-')+w.id+'.webp';img.alt='';img.dataset.furnishing=w.id;return img;
     }));
   }
   function openShop(){
@@ -381,11 +397,11 @@
       const card=document.createElement('button');card.className='shop-item';card.type='button';
       card.dataset.ware=w.id;
       const art=document.createElement('span');art.className='shop-art';
-      const pic=new Image();pic.alt='';pic.src='assets/shop-'+w.id+'.webp';
+      const pic=new Image();pic.alt='';pic.src=shopArtwork(w.id);
       art.append(pic);
       const copy=document.createElement('span'),name=document.createElement('strong'),tier=document.createElement('span'),price=document.createElement('b');
       name.textContent=w.name;tier.textContent=w.tier;
-      price.textContent=owned.has(w.id)?'Куплено':w.price+' '+leafWord(w.price);
+      price.textContent=w.id==='base-bath'?'Бесплатно':owned.has(w.id)?'Куплено':w.price+' '+leafWord(w.price);
       const meta=document.createElement('span');meta.className='shop-item-meta';meta.append(price,tier);
       const status=document.createElement('small');status.textContent=itemStatus(w);
       copy.append(name,meta,status);card.append(art,copy);
@@ -407,13 +423,13 @@
     return `Взрослый · уровень ${level} · все 3 ступени роста открыты`;
   }
   function itemStatus(w){
-    if(owned.has(w.id))return (w.group==='hat'?saved.hat===w.id:placed.has(w.id))?(w.group==='hat'?'Надето':'Установлено'):'В коллекции';
+    if(isOwned(w.id))return isInstalled(w)?(w.group==='hat'?'Надето':'Установлено'):'В коллекции';
     const missing=Math.max(0,w.price-saved.leaves);
     return missing?'Ещё '+missing+' '+leafWord(missing):'Можно купить';
   }
   function furnitureGoal(){
     const current=placed.has('settee')?'Диван у окна':placed.has('bed')?'Лежанка':'без лежанки';
-    const next=wares.filter(w=>w.group==='decor'&&!owned.has(w.id)).sort((a,b)=>a.price-b.price)[0];
+    const next=wares.filter(w=>w.group==='decor'&&!isOwned(w.id)).sort((a,b)=>a.price-b.price)[0];
     const summary='Место для сна: '+current+'. ';
     return {
       next:next?.name??'',
@@ -421,8 +437,9 @@
     };
   }
   function confirmLabel(ware){
+    if(ware.id==='base-bath')return isInstalled(ware)?'Установлено':'Поставить бесплатно';
     if(!owned.has(ware.id))return 'Купить за '+ware.price+' '+leafWord(ware.price);
-    const inUse=ware.group==='hat'?saved.hat===ware.id:placed.has(ware.id);
+    const inUse=isInstalled(ware);
     return inUse?(ware.group==='hat'?'Снять':'Убрать'):ware.group==='hat'?'Надеть':'Поставить';
   }
   function shopSnapshot(){
@@ -431,11 +448,11 @@
       wallet:saved.leaves,selected:preview?.id??'',status:shopStatus,
       growth:growthHint(),goal:goal.summary,next_goal:goal.next,
       confirm_label:preview?confirmLabel(preview):'',
-      confirm_enabled:!!preview&&(owned.has(preview.id)||saved.leaves>=preview.price),
+      confirm_enabled:!!preview&&(isOwned(preview.id)||saved.leaves>=preview.price)&&!(preview.id==='base-bath'&&isInstalled(preview)),
       items:Object.fromEntries(wares.map(ware=>[ware.id,{
         name:ware.name,detail:ware.tier+(ware.replaces?' · заменяет '+ware.replaces:'')+'\n'+itemStatus(ware),
         availability:itemStatus(ware),
-        price:owned.has(ware.id)?'Куплено':ware.price+' '+leafWord(ware.price)
+        price:ware.id==='base-bath'?'Бесплатно':owned.has(ware.id)?'Куплено':ware.price+' '+leafWord(ware.price)
       }]))
     };
   }
@@ -449,7 +466,7 @@
     $('cottage-shop').close();setShopPreview(w);$('shop-preview').hidden=false;
     $('preview-name').textContent=w.name;
     $('preview-price').textContent=w.tier+' · '+itemStatus(w)+(w.replaces?' · заменяет '+w.replaces:'');
-    $('shop-confirm').disabled=!owned.has(w.id)&&saved.leaves<w.price;
+    $('shop-confirm').disabled=(!isOwned(w.id)&&saved.leaves<w.price)||(w.id==='base-bath'&&isInstalled(w));
     $('shop-confirm').textContent=confirmLabel(w);
     $('shop-cancel').focus();
   }
@@ -468,11 +485,16 @@
   $('bed-goal-later').onclick=dismissBedGoal;
   function purchasePreview(){return activateWare(preview);}
   function activateWare(w){
-    if(!w||(!owned.has(w.id)&&saved.leaves<w.price))return false;
+    if(!w||(!isOwned(w.id)&&saved.leaves<w.price))return false;
     const previous={leaves:saved.leaves,hat:saved.hat,owned:[...owned],placed:[...placed]};
-    const purchased=!owned.has(w.id);
+    const purchased=!isOwned(w.id);
     if(purchased){saved.leaves-=w.price;owned.add(w.id);}
     if(w.group==='hat')saved.hat=saved.hat===w.id?null:w.id;
+    else if(baths.includes(w.id)){
+      const inUse=installedBath()===w.id;
+      baths.forEach(id=>placed.delete(id));
+      if(w.id!=='base-bath'&&!inUse)placed.add(w.id);
+    }
     else if(placed.has(w.id))placed.delete(w.id);
     else {
       if(w.id==='bed')placed.delete('settee');

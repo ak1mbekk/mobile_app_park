@@ -41,7 +41,7 @@
 <button type="button" id="rope-ball" aria-label="Покатить плетёный мяч" hidden><img loading="lazy" src="assets/rope-ball.webp" alt="" draggable="false"></button>
 <div class="pet-status"><span id="aki-display">Ричи</span><span id="aki-level">Уровень 1</span><span class="xptrack"><i id="aki-meter"></i></span><span id="aki-balance" aria-label="Листья">0</span></div>
 <button id="home-profile" data-profile type="button" aria-label="Открыть профиль" aria-haspopup="dialog"><img loading="lazy" src="assets/richi-profile.webp" width="36" height="36" alt=""></button>
-<button id="shop-open" type="button" aria-label="Лесная лавка" hidden><img src="assets/woodland-shop.svg" width="42" height="42" alt=""></button>
+<button id="shop-open" type="button" aria-label="Лесная лавка" hidden><img loading="lazy" src="assets/woodland-shop.svg" width="42" height="42" alt=""></button>
 <dialog id="cottage-shop" aria-labelledby="shop-title">
   <header>
     <button type="button" id="shop-close" aria-label="Закрыть лавку и вернуться в домик"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
@@ -215,9 +215,9 @@
 <div id="wash-entry">
   <button id="wash-start" type="button" aria-label="Искупать Ричи"><img loading="lazy" id="wash-vessel" class="wash-vessel" src="assets/base-bath.webp" alt="Деревянная купель"></button>
 </div>
-<div id="soap-area" role="button" tabindex="0" aria-label="Намылить шерсть губкой"><span class="foam" aria-hidden="true"></span></div>
+<div id="soap-area" role="button" tabindex="0" aria-label="Губка: проведи по шерсти Ричи или нажимай Enter, чтобы намылить"><span class="foam" aria-hidden="true"></span><img id="bath-sponge" src="assets/bath-sponge.webp" alt="" aria-hidden="true" draggable="false" loading="lazy"></div>
 <div class="wash-status"><p id="washHint" aria-live="polite">Потри шерсть губкой</p><progress id="scrub" max="100" value="0"></progress></div>
-<button id="rinse" class="jug" aria-label="Поднести кувшин и полить Ричи. С клавиатуры удерживайте пробел." hidden><img src="assets/bath-jug.svg" alt="" draggable="false"></button>
+<button id="rinse" class="jug" aria-label="Поднести кувшин и полить Ричи. С клавиатуры удерживайте пробел." hidden><img loading="lazy" src="assets/bath-jug.svg" alt="" draggable="false"></button>
 <button id="bathDone" class="finish" data-go="home" hidden>В домик</button></section>
 <section id="chest" class="screen toy-chest"><div class="gamepad">
 <button class="backbtn" type="button" data-go="home" aria-label="В домик"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1>Сундук с играми</h1>

@@ -11,6 +11,10 @@
 [ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-chest.webp" id="9"]
 [ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-settee.webp" id="10"]
 [ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-bath.webp" id="11"]
+[ext_resource type="Texture2D" path="res://Art/TrailHouse/base-bath.webp" id="BaseBath"]
+[ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-bath-carved.webp" id="CarvedBath"]
+[ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-bath-copper.webp" id="CopperBath"]
+[ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-bath-faience.webp" id="FaienceBath"]
 [ext_resource type="Texture2D" path="res://Art/TrailHouse/shop-bed.webp" id="12"]
 [ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-wallpaper.webp" id="13"]
 [ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-bath-tile.webp" id="14"]
@@ -327,6 +331,26 @@ metadata/picture = ExtResource("10")
 unique_name_in_owner = true
 layout_mode = 2
 metadata/picture = ExtResource("11")
+
+[node name="base-bath" parent="Catalog/Contents/Scroll/Lists/FurnitureList" instance=ExtResource("Row")]
+unique_name_in_owner = true
+layout_mode = 2
+metadata/picture = ExtResource("BaseBath")
+
+[node name="bath-carved" parent="Catalog/Contents/Scroll/Lists/FurnitureList" instance=ExtResource("Row")]
+unique_name_in_owner = true
+layout_mode = 2
+metadata/picture = ExtResource("CarvedBath")
+
+[node name="bath-copper" parent="Catalog/Contents/Scroll/Lists/FurnitureList" instance=ExtResource("Row")]
+unique_name_in_owner = true
+layout_mode = 2
+metadata/picture = ExtResource("CopperBath")
+
+[node name="bath-faience" parent="Catalog/Contents/Scroll/Lists/FurnitureList" instance=ExtResource("Row")]
+unique_name_in_owner = true
+layout_mode = 2
+metadata/picture = ExtResource("FaienceBath")
 
 [node name="wallpaper" parent="Catalog/Contents/Scroll/Lists/FurnitureList" instance=ExtResource("Row")]
 unique_name_in_owner = true

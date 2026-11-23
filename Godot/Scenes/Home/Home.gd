@@ -11,6 +11,7 @@ const PREVIEW_ROOMS := {
 }
 const FURNITURE_PREVIEWS := {
     "bed": &"bed-preview", "settee": &"settee-preview", "bath": &"bath-preview",
+    "base-bath": &"bath-preview", "bath-carved": &"bath-preview", "bath-copper": &"bath-preview", "bath-faience": &"bath-preview",
     "wallpaper": &"kitchen-preview", "kitchen-cabinet": &"kitchen-preview", "bath-tile": &"bath-preview",
 }
 const SHOP_CATALOG = preload("res://Scenes/Shop/ShopCatalog.gd")
@@ -503,7 +504,7 @@ func _commit_native_ware(id: String) -> bool:
     var ware: Dictionary = SHOP_CATALOG.ITEMS.get(id, {})
     if night or ware.is_empty():
         return false
-    var purchased := native_owned.has(id)
+    var purchased := SHOP_CATALOG.is_owned(id, native_owned)
     var price: int = ware.price
     if not purchased and native_leaves < price:
         return false
@@ -516,6 +517,12 @@ func _commit_native_ware(id: String) -> bool:
         native_owned.append(id)
     if id in SHOP_CATALOG.HATS:
         native_hat = "" if native_hat == id else id
+    elif id in SHOP_CATALOG.BATHS:
+        var was_installed := SHOP_CATALOG.bath_in_use(native_placed) == id
+        for bath_id: String in SHOP_CATALOG.BATHS:
+            native_placed.erase(bath_id)
+        if id != "base-bath" and not was_installed:
+            native_placed.append(id)
     elif native_placed.has(id):
         native_placed.erase(id)
     else:
@@ -566,17 +573,20 @@ func _sync_native_shop() -> void:
         items[id] = {
             "name": ware.name, "detail": detail,
             "availability": availability,
-            "price": "Куплено" if native_owned.has(id) else SHOP_CATALOG.leaf_price(ware.price),
+            "price": "Бесплатно" if id == "base-bath" else ("Куплено" if native_owned.has(id) else SHOP_CATALOG.leaf_price(ware.price)),
         }
     var confirm_label := ""
     var confirm_enabled := false
     if not selected.is_empty():
         var price: int = SHOP_CATALOG.ITEMS[selected].price
         var is_hat := selected in SHOP_CATALOG.HATS
-        var installed := native_hat == selected if is_hat else native_placed.has(selected)
-        var purchased := native_owned.has(selected)
+        var installed := SHOP_CATALOG.is_installed(selected, native_placed, native_hat)
+        var purchased := SHOP_CATALOG.is_owned(selected, native_owned)
         confirm_enabled = purchased or native_leaves >= price
-        if installed:
+        if selected == "base-bath":
+            confirm_label = "Установлено" if installed else "Поставить бесплатно"
+            confirm_enabled = not installed
+        elif installed:
             confirm_label = "Снять" if is_hat else "Убрать"
         elif purchased:
             confirm_label = "Надеть" if is_hat else "Поставить"
@@ -943,10 +953,10 @@ func _apply_furniture(furniture: Dictionary) -> void:
     has_sleep_furniture = placed.has("bed") or placed.has("settee")
     var had_settee := settee_in_use
     settee_in_use = preview == "settee" or (preview != "bed" and placed.has("settee"))
-    var use_enamel := preview == "bath" or placed.has("bath")
+    var selected_bath := preview if preview in SHOP_CATALOG.BATHS else SHOP_CATALOG.bath_in_use(placed)
     $Спальня/Диван.visible = settee_in_use
     $Спальня/Лежанка.visible = not settee_in_use and (preview == "bed" or placed.has("bed"))
-    bathroom.show_appearance(use_enamel)
+    bathroom.show_appearance(selected_bath)
     kitchen.get_node("Архитектура/Обои").visible = preview == "wallpaper" or placed.has("wallpaper")
     bath_room.get_node("Архитектура/Плитка").visible = preview == "bath-tile" or placed.has("bath-tile")
     var mint_cabinet := preview == "kitchen-cabinet" or placed.has("kitchen-cabinet")

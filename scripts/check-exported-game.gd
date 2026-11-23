@@ -19,6 +19,13 @@ func _initialize() -> void:
         var portrait := "res://Scenes/Games/Art/game-toy-%s.webp" % animal
         if not load(portrait) is Texture2D:
             missing.append(portrait)
+    for stage: String in ["carved", "copper", "faience"]:
+        var scene_path := "res://Scenes/Props/Furniture/%sBath.tscn" % stage.capitalize()
+        var thumb_path := "res://Scenes/Shop/Art/shop-bath-%s.webp" % stage
+        if not load(scene_path) is PackedScene:
+            missing.append(scene_path)
+        if not load(thumb_path) is Texture2D:
+            missing.append(thumb_path)
     var orchard := (load("res://Scenes/Games/Orchard.tscn") as PackedScene).instantiate()
     var cutout := orchard.get_node_or_null("PlayFrame/Board/Walker/Richi")
     if cutout == null or cutout.get_node_or_null("Skeleton2D/Pelvis/NearThigh/Shin/Foot") == null:

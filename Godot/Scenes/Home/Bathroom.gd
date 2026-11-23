@@ -59,9 +59,17 @@ func start(richi: Node3D) -> void:
     set_process_input(true)
     set_process_unhandled_input(true)
 
-func show_appearance(enamel: bool) -> void:
-    $"Купель/Деревянная купель".visible = not enamel
-    $"Купель/Эмалированная купель".visible = enamel
+func show_appearance(id: String) -> void:
+    var variants := {
+        "base-bath": $"Купель/Деревянная купель",
+        "bath-carved": $"Купель/Резная дубовая купель",
+        "bath": $"Купель/Эмалированная купель",
+        "bath-copper": $"Купель/Медная купель",
+        "bath-faience": $"Купель/Фаянсовая купель",
+    }
+    var selected := id if variants.has(id) else "base-bath"
+    for variant in variants:
+        variants[variant].visible = variant == selected
 
 func preview() -> void:
     cancel_gesture()

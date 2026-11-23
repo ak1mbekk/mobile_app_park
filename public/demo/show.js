@@ -8,26 +8,45 @@
     const arrow=document.createElement('span');arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');
     link.append(label,arrow);id('zone-directions').append(link);
   }
-  const soap=id('soap-area'),foam=soap.querySelector('.foam');
+  const soap=id('soap-area'),foam=soap.querySelector('.foam'),sponge=id('bath-sponge');
   const jug=id('rinse'), wash=id('wash'), meter=id('scrub');
   let clean=0,washed=false,stroke=null,poured=0,pourFrame=0,pourTime=0,hand=null,onFur=false,finishTimer=0;
   function scrub(amount){
     clean=Math.min(100,clean+amount);meter.value=clean;
     foam.style.opacity=String(clean/100);
     if(clean===100){
+      releaseSoap();sponge.hidden=true;soap.tabIndex=-1;soap.setAttribute('aria-disabled','true');
       jug.hidden=false;id('washHint').textContent='Кувшин готов';meter.setAttribute('aria-label','Пена на шерсти');
+      if(document.activeElement===soap)jug.focus({preventScroll:true});
     }
   }
-  soap.onpointerdown=e=>{if(clean>=100)return;stroke={id:e.pointerId,x:e.clientX,y:e.clientY};soap.setPointerCapture(e.pointerId);};
+  const canScrub=()=>clean<100&&!washed&&!document.hidden&&wash.classList.contains('current')&&wash.classList.contains('washing');
+  const insideCoat=(x,y,rect)=>x>=rect.left&&x<=rect.right&&y>=rect.top&&y<=rect.bottom;
+  function moveSoap(x,y){
+    sponge.style.translate=(x-stroke.originX)+'px '+(y-stroke.originY)+'px';
+  }
+  function releaseSoap(){
+    const pointer=stroke?.id;stroke=null;
+    if(pointer!==undefined&&soap.hasPointerCapture(pointer))soap.releasePointerCapture(pointer);
+    sponge.style.translate='';soap.classList.remove('scrubbing');
+  }
+  soap.onpointerdown=e=>{
+    if(!canScrub()||stroke||e.button!==0)return;
+    const rect=sponge.getBoundingClientRect();
+    stroke={id:e.pointerId,x:e.clientX,y:e.clientY,originX:rect.x+rect.width/2,originY:rect.y+rect.height/2};
+    soap.setPointerCapture(e.pointerId);soap.classList.add('scrubbing');moveSoap(e.clientX,e.clientY);
+  };
   soap.onpointermove=e=>{
-    if(!stroke||stroke.id!==e.pointerId||clean>=100)return;
+    if(!stroke||stroke.id!==e.pointerId)return;
+    if(!canScrub()){releaseSoap();return;}
+    moveSoap(e.clientX,e.clientY);
     const distance=Math.hypot(e.clientX-stroke.x,e.clientY-stroke.y);if(distance<2)return;
     const rect=soap.getBoundingClientRect();
-    if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom){stroke.x=e.clientX;stroke.y=e.clientY;return;}
-    stroke.x=e.clientX;stroke.y=e.clientY;scrub(distance/4);
+    const onCoat=insideCoat(e.clientX,e.clientY,rect)&&insideCoat(stroke.x,stroke.y,rect);
+    stroke.x=e.clientX;stroke.y=e.clientY;if(onCoat)scrub(distance/4);
   };
-  soap.onpointerup=soap.onpointercancel=()=>{stroke=null;};
-  soap.onkeydown=e=>{if(!washed&&(e.key==='Enter'||e.key===' ')){e.preventDefault();scrub(20);}};
+  soap.onpointerup=soap.onpointercancel=soap.onlostpointercapture=e=>{if(stroke?.id===e.pointerId)releaseSoap();};
+  soap.onkeydown=e=>{if(canScrub()&&(e.key==='Enter'||e.key===' ')){e.preventDefault();scrub(20);}};
   function releaseJug(){
     if(hand && typeof hand.id==='number' && jug.hasPointerCapture(hand.id))jug.releasePointerCapture(hand.id);
     hand=null;onFur=false;cancelAnimationFrame(pourFrame);pourTime=0;
@@ -63,9 +82,11 @@
   };
   jug.onkeyup=e=>{if(hand?.id==='keyboard'&&(e.key===' '||e.key==='Enter'))releaseJug();};
   jug.onblur=()=>{if(hand?.id==='keyboard')releaseJug();};
-  window.addEventListener('blur',releaseJug);
+  window.addEventListener('blur',()=>{releaseSoap();releaseJug();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseSoap();releaseJug();}});
   function resetBath(){
-    clearTimeout(finishTimer);releaseJug();washed=false;clean=0;poured=0;stroke=null;foam.style.opacity='0';jug.hidden=true;id('bathDone').hidden=true;
+    clearTimeout(finishTimer);releaseSoap();releaseJug();washed=false;clean=0;poured=0;foam.style.opacity='0';jug.hidden=true;id('bathDone').hidden=true;
+    sponge.hidden=false;soap.tabIndex=0;soap.removeAttribute('aria-disabled');
     meter.setAttribute('aria-label','Сколько шерсти намылено');
     id('wash').classList.remove('clean');id('scrub').hidden=false;id('scrub').value=0;id('washHint').textContent='Потри шерсть губкой';
   }
@@ -304,7 +325,7 @@
     resume();
     if(active!=='wash'){
       releaseJug();
-      stroke=null;
+      releaseSoap();
     }else if(washed){
       wash.classList.remove('washing');
       id('wash-entry').hidden=false;

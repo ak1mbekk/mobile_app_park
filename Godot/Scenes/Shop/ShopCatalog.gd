@@ -2,7 +2,8 @@ extends RefCounted
 
 const BED_PRICE := 5
 const HATS := ["cap", "ranger", "crown"]
-const FURNITURE := ["bed", "cushion", "lantern", "chest", "settee", "bath", "wallpaper", "bath-tile", "kitchen-cabinet"]
+const BATHS := ["base-bath", "bath-carved", "bath", "bath-copper", "bath-faience"]
+const FURNITURE := ["bed", "cushion", "lantern", "chest", "settee", "base-bath", "bath-carved", "bath", "bath-copper", "bath-faience", "wallpaper", "bath-tile", "kitchen-cabinet"]
 
 # The standalone catalog mirrors public/demo/home.js. Hosted play receives its catalog from the browser.
 const ITEMS := {
@@ -14,7 +15,11 @@ const ITEMS := {
     "lantern": {"name": "Фонарь лесника", "tier": "Редкий", "price": 35},
     "chest": {"name": "Дубовый сундук", "tier": "Эпический", "price": 75},
     "settee": {"name": "Диван у окна", "tier": "Редкий", "price": 40, "replaces": "лежанку"},
-    "bath": {"name": "Эмалированная купель", "tier": "Редкая", "price": 55, "replaces": "ванну"},
+    "base-bath": {"name": "Деревянная купель", "tier": "Базовая", "price": 0, "replaces": "купель"},
+    "bath-carved": {"name": "Резная дубовая купель", "tier": "Обычная", "price": 25, "replaces": "купель"},
+    "bath": {"name": "Эмалированная купель", "tier": "Редкая", "price": 55, "replaces": "купель"},
+    "bath-copper": {"name": "Медная купель", "tier": "Эпическая", "price": 85, "replaces": "купель"},
+    "bath-faience": {"name": "Фаянсовая купель", "tier": "Легендарная", "price": 120, "replaces": "купель"},
     "wallpaper": {"name": "Обои для кухни", "tier": "Обычные", "price": 20, "replaces": "отделку кухни"},
     "bath-tile": {"name": "Плитка для ванной", "tier": "Обычная", "price": 25, "replaces": "отделку ванной"},
     "kitchen-cabinet": {"name": "Мятный кухонный шкаф", "tier": "Обычный", "price": 35, "replaces": "кухонный шкаф"},
@@ -40,9 +45,26 @@ static func growth_hint(xp: int) -> String:
     return "Взрослый · уровень %d · все 3 ступени роста открыты" % level
 
 
+static func bath_in_use(placed: Array) -> String:
+    for id: String in BATHS:
+        if id != "base-bath" and placed.has(id):
+            return id
+    return "base-bath"
+
+
+static func is_owned(id: String, owned: Array) -> bool:
+    return id == "base-bath" or owned.has(id)
+
+
+static func is_installed(id: String, placed: Array, hat: String) -> bool:
+    if id in BATHS:
+        return bath_in_use(placed) == id
+    return hat == id if id in HATS else placed.has(id)
+
+
 static func item_status(id: String, owned: Array, placed: Array, hat: String, leaves: int) -> String:
-    if owned.has(id):
-        var installed := hat == id if id in HATS else placed.has(id)
+    if is_owned(id, owned):
+        var installed := is_installed(id, placed, hat)
         return ("Надето" if id in HATS else "Установлено") if installed else "В коллекции"
     var missing := maxi(0, int(ITEMS[id].price) - leaves)
     return "Можно купить" if missing == 0 else "Ещё " + leaf_price(missing)
@@ -51,7 +73,7 @@ static func item_status(id: String, owned: Array, placed: Array, hat: String, le
 static func next_furniture(owned: Array) -> String:
     var next := ""
     for id: String in FURNITURE:
-        if not owned.has(id) and (next.is_empty() or ITEMS[id].price < ITEMS[next].price):
+        if not is_owned(id, owned) and (next.is_empty() or ITEMS[id].price < ITEMS[next].price):
             next = id
     return next
 
