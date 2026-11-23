@@ -48,16 +48,21 @@ static func item_status(id: String, owned: Array, placed: Array, hat: String, le
     return "Можно купить" if missing == 0 else "Ещё " + leaf_price(missing)
 
 
+static func next_furniture(owned: Array) -> String:
+    var next := ""
+    for id: String in FURNITURE:
+        if not owned.has(id) and (next.is_empty() or ITEMS[id].price < ITEMS[next].price):
+            next = id
+    return next
+
+
 static func furniture_goal(owned: Array, placed: Array, leaves: int) -> String:
     var current := "без лежанки"
     if placed.has("settee"):
         current = "Диван у окна"
     elif placed.has("bed"):
         current = "Лежанка"
-    var next := ""
-    for id: String in FURNITURE:
-        if not owned.has(id) and (next.is_empty() or ITEMS[id].price < ITEMS[next].price):
-            next = id
+    var next := next_furniture(owned)
     var summary := "Место для сна: " + current + ". "
     if next.is_empty():
         return summary + "Вся мебель собрана — меняй обстановку бесплатно."

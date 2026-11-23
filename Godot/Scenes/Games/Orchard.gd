@@ -227,7 +227,7 @@ func _handle_pointer(point: Vector2, pointer: int, pressed: bool, field: Rect2) 
     if pressed and finger == -1 and field.has_point(point):
         finger = pointer
         var fraction := (point.x - field.position.x) / field.size.x
-        %Backdrop.touch_bank(fraction)
+        %Backdrop.touch_water(point)
         _move_basket(fraction)
         get_viewport().set_input_as_handled()
     elif not pressed and pointer == finger:

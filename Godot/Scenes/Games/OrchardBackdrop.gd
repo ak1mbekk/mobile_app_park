@@ -57,9 +57,12 @@ func aim_at(basket_fraction: float) -> void:
     target = clampf(basket_fraction * 2.0 - 1.0, -1.0, 1.0)
 
 
-func touch_bank(fraction: float) -> void:
+func touch_water(point: Vector2) -> void:
+    var bounds := river.get_global_rect()
+    if not bounds.has_area() or not bounds.has_point(point):
+        return
     ripple_age = 0.0
-    water.set_shader_parameter("ripple_x", clampf(fraction, 0.0, 1.0))
+    water.set_shader_parameter("ripple_origin", (point - bounds.position) / bounds.size)
 
 
 func _process(delta: float) -> void:

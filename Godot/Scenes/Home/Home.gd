@@ -582,9 +582,11 @@ func _sync_native_shop() -> void:
             confirm_label = "Надеть" if is_hat else "Поставить"
         else:
             confirm_label = "Купить за " + SHOP_CATALOG.leaf_price(price)
+    var next := SHOP_CATALOG.next_furniture(native_owned)
     shop.set_state({
         "wallet": native_leaves, "selected": selected, "status": native_shop_status,
         "growth": SHOP_CATALOG.growth_hint(native_xp),
+        "next_goal": SHOP_CATALOG.ITEMS[next].name if not next.is_empty() else "",
         "goal": SHOP_CATALOG.furniture_goal(native_owned, native_placed, native_leaves),
         "confirm_label": confirm_label, "confirm_enabled": confirm_enabled, "items": items,
     })

@@ -50,7 +50,7 @@ func capture() -> void:
             var target := area.position + area.size * Vector2(x, 0.80)
             if last != board.attempt:
                 if last >= 0: press(follow, false)
-                if last < 0: follow = area.get_center()
+                if last < 0: follow = area.position + area.size * Vector2(0.5, 0.665)
                 press(follow, true)
                 last = board.attempt
             var next := follow.lerp(target, 0.16)

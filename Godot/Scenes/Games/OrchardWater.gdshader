@@ -7,14 +7,22 @@ uniform vec4 sunlight : source_color = vec4(0.96, 0.92, 0.73, 1.0);
 uniform sampler2D treeline : source_color, filter_linear, repeat_disable;
 uniform float flow = 0.0;
 uniform float ripple_age = 2.0;
-uniform float ripple_x = 0.5;
+uniform vec2 ripple_origin = vec2(0.5);
 uniform float water_aspect = 0.4;
+
+vec2 banks(float x) {
+    return vec2(
+        0.17 + 0.08 * sin(x * 5.4 + 0.7) + 0.12 * x,
+        0.66 + 0.10 * sin(x * 5.7 + 1.45) + 0.035 * sin(x * 11.0 - 0.8) + 0.08 * x
+    );
+}
 
 void fragment() {
     float x = UV.x;
     float y = UV.y;
-    float far_edge = 0.17 + 0.08 * sin(x * 5.4 + 0.7) + 0.12 * x;
-    float near_edge = 0.66 + 0.10 * sin(x * 5.7 + 1.45) + 0.035 * sin(x * 11.0 - 0.8) + 0.08 * x;
+    vec2 edges = banks(x);
+    float far_edge = edges.x;
+    float near_edge = edges.y;
     float depth = clamp((y - far_edge) / (near_edge - far_edge), 0.0, 1.0);
     float shore = smoothstep(far_edge - 0.007, far_edge + 0.005, y)
                 * (1.0 - smoothstep(near_edge - 0.004, near_edge + 0.007, y));
@@ -27,11 +35,15 @@ void fragment() {
     float along = sin((18.0 + 5.0 * sin(row)) * x + 8.9 * row + sin(3.2 * row) * 7.0 + flow * 0.65);
     float across = 1.0 - smoothstep(0.04, 0.20, abs(fract(y * 35.0) - 0.5));
     float glint = smoothstep(0.82, 0.96, along) * across;
-    float ripple_center = mix(far_edge, near_edge, 0.50);
-    float ring_distance = length(vec2(x - ripple_x, (y - ripple_center) * water_aspect * 4.0));
-    float ring = 1.0 - smoothstep(0.002, 0.008, abs(ring_distance - ripple_age * 0.12));
-    ring *= smoothstep(0.06, 0.23, depth) * (1.0 - smoothstep(0.77, 0.94, depth));
-    color = mix(color, sunlight.rgb, glint * 0.25 + ring * 0.44 * (1.0 - smoothstep(0.0, 1.1, ripple_age)));
+    float ring = 0.0;
+    if (ripple_age < 1.1) {
+        vec2 origin_edges = banks(ripple_origin.x);
+        float on_water = step(origin_edges.x, ripple_origin.y) * step(ripple_origin.y, origin_edges.y);
+        float distance_to_touch = length((UV - ripple_origin) * vec2(1.0, water_aspect * 4.0));
+        ring = (1.0 - smoothstep(0.002, 0.008, abs(distance_to_touch - ripple_age * 0.12))) * on_water;
+        ring *= (1.0 - smoothstep(0.0, 1.1, ripple_age));
+    }
+    color = mix(color, sunlight.rgb, glint * 0.25 + ring * 0.44);
     color = mix(color, sunlight.rgb, smoothstep(0.965, 0.995, depth) * 0.24);
     COLOR = vec4(color, shore);
 }

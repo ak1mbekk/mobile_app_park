@@ -164,7 +164,10 @@ func _run() -> void:
 
 
 func _check_catalog_parity() -> void:
-    var source := FileAccess.get_file_as_string(ProjectSettings.globalize_path("res://../public/demo/home.js"))
+    # A packed build has no neighbouring source tree. Pass the web catalog after --.
+    var args := OS.get_cmdline_user_args()
+    var web_catalog := args[0] if not args.is_empty() else ProjectSettings.globalize_path("res://../public/demo/home.js")
+    var source := FileAccess.get_file_as_string(web_catalog)
     var pattern := RegEx.create_from_string("\\{id:'([^']+)',name:'([^']+)',tier:'([^']+)',group:'([^']+)',price:(\\d+|bedPrice)")
     var browser_items := pattern.search_all(source)
     var browser_bed_price := RegEx.create_from_string("const bedPrice=(\\d+);").search(source)

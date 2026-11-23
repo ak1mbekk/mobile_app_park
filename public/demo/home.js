@@ -368,27 +368,36 @@
     }));
   }
   function openShop(){
+    const dialog=$('cottage-shop'), returningId=preview?.id;
     setShopPreview(null);
     $('shop-preview').hidden=true;
     $('shop-balance').textContent=saved.leaves+' '+leafWord(saved.leaves);
-    let progress=$('shop-progress');
-    if(!progress){
-      progress=document.createElement('div');progress.id='shop-progress';
-      progress.style.cssText='padding:12px 0;font-size:14px;line-height:1.5;white-space:pre-line';
-      $('shop-list').before(progress);
-    }
-    progress.textContent=growthHint()+'\n'+furnitureGoal()+'\nМебель доступна на любом уровне. XP — за пополнение потребностей.';
+    const goal=furnitureGoal();
+    $('shop-progress').textContent=goal.next?'Цель · '+goal.next:'Вся мебель собрана';
+    $('shop-growth').textContent=growthHint();
+    $('shop-goal-detail').textContent=goal.summary;
     for(const b of document.querySelectorAll('[data-shop-group]'))b.setAttribute('aria-pressed',String(b.dataset.shopGroup===shopGroup));
     $('shop-list').replaceChildren(...wares.filter(w=>w.group===shopGroup).sort((a,b)=>a.price-b.price).map(w=>{
       const card=document.createElement('button');card.className='shop-item';card.type='button';
+      card.dataset.ware=w.id;
+      const art=document.createElement('span');art.className='shop-art';
       const pic=new Image();pic.alt='';pic.src='assets/shop-'+w.id+'.webp';
-      const copy=document.createElement('span'),name=document.createElement('strong'),tier=document.createElement('small'),price=document.createElement('span');
-      name.textContent=w.name;tier.textContent=w.tier+(w.replaces?' · заменяет '+w.replaces:'');
-      const status=document.createElement('small');status.textContent=itemStatus(w);copy.append(tier,name,status);
-      price.textContent=owned.has(w.id)?'Куплено':w.price+' '+leafWord(w.price);card.append(pic,copy,price);
+      art.append(pic);
+      const copy=document.createElement('span'),name=document.createElement('strong'),tier=document.createElement('span'),price=document.createElement('b');
+      name.textContent=w.name;tier.textContent=w.tier;
+      price.textContent=owned.has(w.id)?'Куплено':w.price+' '+leafWord(w.price);
+      const meta=document.createElement('span');meta.className='shop-item-meta';meta.append(price,tier);
+      const status=document.createElement('small');status.textContent=itemStatus(w);
+      copy.append(name,meta,status);card.append(art,copy);
       card.onclick=()=>previewWare(w);return card;
     }));
-    if(!$('cottage-shop').open)$('cottage-shop').showModal();
+    $('shop-list').scrollTop=0;
+    if(!dialog.open){
+      $('shop-info').hidden=true;
+      $('shop-info-toggle').setAttribute('aria-expanded','false');
+      dialog.showModal();
+      if(returningId)dialog.querySelector('[data-ware="'+returningId+'"]')?.focus();
+    }
   }
   function leafWord(n){const d=n%10;return n%100>=11&&n%100<=14?'листьев':d===1?'лист':d>=2&&d<=4?'листа':'листьев';}
   function growthHint(){
@@ -406,7 +415,10 @@
     const current=placed.has('settee')?'Диван у окна':placed.has('bed')?'Лежанка':'без лежанки';
     const next=wares.filter(w=>w.group==='decor'&&!owned.has(w.id)).sort((a,b)=>a.price-b.price)[0];
     const summary='Место для сна: '+current+'. ';
-    return summary+(next?'Следующая покупка: '+next.name+' · '+next.price+' '+leafWord(next.price)+'. '+itemStatus(next)+'.':'Вся мебель собрана — меняй обстановку бесплатно.');
+    return {
+      next:next?.name??'',
+      summary:summary+(next?'Следующая покупка: '+next.name+' · '+next.price+' '+leafWord(next.price)+'. '+itemStatus(next)+'.':'Вся мебель собрана — меняй обстановку бесплатно.')
+    };
   }
   function confirmLabel(ware){
     if(!owned.has(ware.id))return 'Купить за '+ware.price+' '+leafWord(ware.price);
@@ -414,9 +426,10 @@
     return inUse?(ware.group==='hat'?'Снять':'Убрать'):ware.group==='hat'?'Надеть':'Поставить';
   }
   function shopSnapshot(){
+    const goal=furnitureGoal();
     return {
       wallet:saved.leaves,selected:preview?.id??'',status:shopStatus,
-      growth:growthHint(),goal:furnitureGoal(),
+      growth:growthHint(),goal:goal.summary,next_goal:goal.next,
       confirm_label:preview?confirmLabel(preview):'',
       confirm_enabled:!!preview&&(owned.has(preview.id)||saved.leaves>=preview.price),
       items:Object.fromEntries(wares.map(ware=>[ware.id,{
@@ -442,6 +455,11 @@
   }
   $('shop-open').onclick=openShop;
   $('shop-cancel').onclick=openShop;$('shop-close').onclick=()=>$('cottage-shop').close();
+  $('shop-info-toggle').onclick=()=>{
+    const info=$('shop-info');
+    info.hidden=!info.hidden;
+    $('shop-info-toggle').setAttribute('aria-expanded',String(!info.hidden));
+  };
   document.querySelectorAll('[data-shop-group]').forEach(b=>b.onclick=()=>{shopGroup=b.dataset.shopGroup;openShop();});
   $('bed-goal-action').onclick=()=>{
     if(bedGoal()?.play)route('game');

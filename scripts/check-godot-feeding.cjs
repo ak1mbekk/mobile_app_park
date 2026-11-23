@@ -6,7 +6,8 @@ const engineAsset=/\/meeting3d\/index(?:-[a-f0-9]{64})?\.(html|pck|wasm)$/;
   const browser=await chromium.launch({executablePath:process.env.BROWSER_EXE,
     args:process.env.PARK_TEST_ANGLE ? ['--use-angle='+process.env.PARK_TEST_ANGLE] : ['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   try{
-    const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+    const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+    const page=await context.newPage();
     await page.addInitScript(()=>{
       Object.defineProperty(Element.prototype,'moveBefore',{configurable:true,value:undefined});
       if(location.pathname.includes('/meeting3d/')){

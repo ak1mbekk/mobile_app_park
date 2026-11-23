@@ -262,7 +262,12 @@ func _test_orchard() -> void:
     await process_frame
     var field: Rect2 = room.board.get_node("%Field").get_global_rect()
     _expect(field.is_equal_approx(result_field), "Replay keeps the same field size and basket landing height")
-    var first := field.get_center()
+    var backdrop = room.board.get_node("%Backdrop")
+    var water_rect: Rect2 = backdrop.river.get_global_rect()
+    var contact_uv := Vector2(0.5, 0.48)
+    var first := water_rect.position + water_rect.size * contact_uv
+    backdrop.touch_water(field.position + Vector2(3, 3))
+    _expect(backdrop.ripple_age >= 1.1, "Pressing the sky leaves the water undisturbed")
     _touch(first, true)
     var drag := InputEventScreenDrag.new()
     drag.index = 0
@@ -270,10 +275,9 @@ func _test_orchard() -> void:
     root.push_input(drag, true)
     _touch(drag.position, false)
     _expect(is_equal_approx(room.board.basket_position, 0.75), "Dragging a finger moves the basket across the field")
-    var backdrop = room.board.get_node("%Backdrop")
     _expect(is_equal_approx(backdrop.target, 0.5), "Touch aims decorative parallax through the same basket controller")
     var bank: ShaderMaterial = backdrop.get_node("River").material
-    _expect(is_equal_approx(bank.get_shader_parameter("ripple_x"), 0.5), "The water responds at the initial touch column")
+    _expect(contact_uv.is_equal_approx(bank.get_shader_parameter("ripple_origin")), "The water responds at the contacted point")
     # Integrate an identical stationary target at two frame rates.
     for rate in [30, 60]:
         backdrop.drift = 0.0

@@ -43,8 +43,17 @@
 <button id="home-profile" data-profile type="button" aria-label="Открыть профиль" aria-haspopup="dialog"><img loading="lazy" src="assets/richi-profile.webp" width="36" height="36" alt=""></button>
 <button id="shop-open" type="button" aria-label="Лесная лавка" hidden><img src="assets/woodland-shop.svg" width="42" height="42" alt=""></button>
 <dialog id="cottage-shop" aria-labelledby="shop-title">
-  <header><h2 id="shop-title">Лесная лавка</h2><button type="button" id="shop-close" aria-label="Закрыть">×</button></header>
-  <div class="shop-tools"><div role="group" aria-label="Каталог"><button type="button" data-shop-group="hat">Для Ричи</button><button type="button" data-shop-group="decor">Для дома</button></div><span id="shop-balance"></span></div>
+  <header>
+    <button type="button" id="shop-close" aria-label="Закрыть лавку и вернуться в домик"><svg class="ic" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+    <h2 id="shop-title">Лавка</h2>
+    <span class="shop-wallet"><svg class="ic" aria-hidden="true"><use href="#aki-leaf"/></svg><span id="shop-balance"></span></span>
+  </header>
+  <div class="shop-goal-line"><p id="shop-progress"></p><button type="button" id="shop-info-toggle" aria-expanded="false" aria-controls="shop-info">О лавке</button></div>
+  <div id="shop-info" hidden>
+    <p id="shop-growth"></p><p id="shop-goal-detail"></p>
+    <p>Мебель доступна на любом уровне. XP — за пополнение потребностей.</p>
+  </div>
+  <div class="shop-tools" role="group" aria-label="Каталог"><button type="button" data-shop-group="hat">Для Ричи</button><button type="button" data-shop-group="decor">Для дома</button></div>
   <div id="shop-list"></div>
 </dialog>
 <div id="shop-preview" class="sheet" hidden><strong id="preview-name"></strong><p id="preview-price" role="status"></p><div><button id="shop-confirm" class="primary" type="button"></button><button id="shop-cancel" type="button">Назад в лавку</button></div></div>
