@@ -1,7 +1,5 @@
 extends SceneTree
 
-const ROOM = preload("res://Scenes/Games/GameRoom.tscn")
-
 var room
 var surface
 var field: Control
@@ -16,6 +14,10 @@ func capture() -> void:
         quit(2)
         return
     var out: String = args[0]
+    if args.size() > 1 and not ProjectSettings.load_resource_pack(args[1]):
+        push_error("Cannot load the home pack containing the game chest")
+        quit(2)
+        return
     var size_px := Vector2i(390, 844)
     surface = SubViewport.new()
     surface.size = size_px
@@ -24,7 +26,7 @@ func capture() -> void:
     surface.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
     surface.render_target_update_mode = SubViewport.UPDATE_ALWAYS
     root.add_child(surface)
-    room = ROOM.instantiate()
+    room = (load("res://Scenes/Games/GameRoom.tscn") as PackedScene).instantiate()
     surface.add_child(room)
     room.open()
     for frame in 4: await process_frame

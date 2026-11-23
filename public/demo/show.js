@@ -115,7 +115,7 @@
   const field=id('catchField'),fruit=id('fallFruit'),basket=id('basket');
   let running=false,attempt=0,caught=0,position=.5,fall=0,spot=.5,frame=0,last=0,active='';
   let orchardId=0,errors=0,kind='apple',reward=null;
-  let basketTilt=0,feedback=null,pointer=null;
+  let stepDistance=0,stepIdle=0,facing=1,feedback=null,pointer=null;
   const twig=document.createElement('span'),impact=document.createElement('div');
   const landed=document.createElement('img'),lives=document.createElement('span');
   const orchardTip=document.createElement('p');
@@ -126,6 +126,11 @@
   orchardTip.className='orchard-feedback';orchardTip.setAttribute('role','status');
   field.after(orchardTip);
   basket.textContent='';
+  const catcher=document.createElement('span'),catcherArt=document.createElement('img');
+  catcher.className='orchard-catcher';catcher.setAttribute('aria-hidden','true');
+  catcherArt.alt='';catcherArt.draggable=false;
+  catcher.append(catcherArt);basket.append(catcher);
+  field.setAttribute('aria-label','Двигай Ричи с корзинкой пальцем, мышью или стрелками');
   lives.className='orchard-lives';lives.setAttribute('role','group');lives.setAttribute('aria-label','Жизни: 3 из 3');
   lives.append(...Array.from({length:3},()=>{
     const heart=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -141,16 +146,22 @@
     apple:[[-.378,.422],[-.494,.448],[-.428,.454]],
     cone:[[-.323,.337],[-.385,.285],[-.416,.480]]
   };
-  new ResizeObserver(([entry])=>{
-    // The opening of the 216px square basket tile is centred on row 68.
-    field.style.setProperty('--orchard-rim-offset',entry.contentRect.width*(1-68/216)+'px');
-  }).observe(basket);
+  function sizeCatcher(){
+    if(!field.clientWidth||!basket.offsetWidth)return;
+    // Real Cutout rig: 240×336 frame, 160px basket tile, mouth at (120,194).
+    // Raise the reference square so the same mouth anchors both the art and hits.
+    const width=parseFloat(getComputedStyle(basket).width);
+    field.style.setProperty('--orchard-rim-offset',width*(336-194)/160+'px');
+    basket.style.bottom=`calc(1% + ${width*((336-194)/160-(1-68/216))}px)`;
+    moveBasket(position);
+  }
+  const catcherResize=new ResizeObserver(sizeCatcher);
+  catcherResize.observe(basket);catcherResize.observe(field);
   function overlapsBasket(){
     // Read layout once per landing; CSS, safe areas and zoom determine actual sprite sizes.
     const rimWidth=parseFloat(getComputedStyle(basket).width);
     const itemWidth=parseFloat(getComputedStyle(fruit).width);
-    const angle=reducedMotion.matches?0:basketTilt*Math.PI/180;
-    const half=rimWidth*(78/216)*Math.cos(angle);
+    const half=rimWidth*(78/216);
     const dx=(spot-position)*field.clientWidth;
     const [left,right]=landingEdges[kind][reducedMotion.matches?0:spot<.5?1:2];
     return dx+left*itemWidth<half && dx+right*itemWidth> -half;
@@ -161,8 +172,13 @@
     if(state.reward)reward=state.reward;
   }
   function moveBasket(x){
-    const next=clamp(x,.09,.91);
-    basketTilt=clamp(basketTilt+(next-position)*206,-16,16);
+    const margin=field.clientWidth?Math.min(.5,catcher.offsetWidth/2/field.clientWidth):0;
+    const next=clamp(x,margin,1-margin);
+    const distance=(next-position)*field.clientWidth;
+    if(Math.abs(distance)>.1){
+      facing=distance<0?-1:1;
+      stepDistance+=Math.abs(distance);stepIdle=0;
+    }
     position=next;drawField();
   }
   function moveAt(e){const r=field.getBoundingClientRect();moveBasket((e.clientX-r.left)/r.width);}
@@ -171,6 +187,10 @@
     pointer=e.pointerId;field.setPointerCapture(pointer);moveAt(e);
   };
   field.onpointermove=e=>{if(pointer===e.pointerId)moveAt(e);};
+  field.onpointerup=field.onpointercancel=e=>{
+    if(pointer!==e.pointerId)return;
+    pointer=null;if(field.hasPointerCapture(e.pointerId))field.releasePointerCapture(e.pointerId);
+  };
   field.onlostpointercapture=e=>{if(pointer===e.pointerId)pointer=null;};
   field.onkeydown=e=>{
     if(running&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
@@ -186,26 +206,21 @@
     const angle=fall<.23?Math.sin(fall*27)*7:(spot<.5?1:-1)*released*310;
     fruit.style.setProperty('--spin',(reducedMotion.matches?0:angle)+'deg');
     basket.style.left=position*100+'%';
-    let tilt=basketTilt,hop=0,squash=0;
     if(feedback){
       const p=feedback.elapsed/410,fading=1-p;
       const catching=feedback.effect==='catch',ground=feedback.effect==='ground';
+      if(!ground)impact.style.left=position*100+'%';
       impact.style.opacity=fading;
       const bounce=catching?13*p:-Math.sin(Math.PI*p)*(ground?25:38);
       const drift=catching?0:(ground?21:12)*p;
       landed.style.transform=catching
         ?`translate(-50%, ${bounce}px) scale(${fading})`
         :`translate(calc(-50% + ${drift}px), ${bounce}px) rotate(${p*320}deg)`;
-      if(catching){
-        hop=Math.sin(p*2*Math.PI)*fading*12;
-        squash=fading*.12;
-      }else if(!ground){
-        tilt+=Math.sin(p*5*Math.PI)*fading*14;
-      }
     }
-    basket.style.setProperty('--tilt',(reducedMotion.matches?0:tilt)+'deg');
-    basket.style.setProperty('--hop',(reducedMotion.matches?0:hop)+'px');
-    basket.style.setProperty('--squash',reducedMotion.matches?1:1-squash);
+    const step=reducedMotion.matches||stepIdle>100||stepDistance===0?0:1+Math.floor(stepDistance/12)%4;
+    catcher.dataset.step=String(step);
+    catcherArt.style.transform=`translate(${-step*20}%, ${-Math.min(caught,3)*25}%)`;
+    catcher.style.setProperty('--facing',String(facing));
   }
   function showFruit(){
     fruit.src=fruitUrl(kind);
@@ -254,7 +269,7 @@
     errors=legacy?(round.finished?3:Math.min(2,round.attempt-round.caught)):round.errors;
     kind=legacy?'apple':round.kind;reward=round.reward??null;
     orchardId=round.id;attempt=round.attempt;caught=round.caught;fall=round.fall;spot=round.spot;
-    running=!round.finished;position=clamp(round.position,.09,.91);orchardProgress();
+    running=!round.finished;position=round.position;moveBasket(position);orchardProgress();
   }
   function tick(t){
     if(active!=='catch'||document.hidden)return;
@@ -266,7 +281,7 @@
         if(!running)orchardProgress();
       }
     }
-    basketTilt*=Math.exp(-.012*elapsed);
+    stepIdle+=elapsed;
     if(running){
       fall+=elapsed/Math.max(520,1100-attempt*27);
       if(fall>=1){
@@ -299,7 +314,7 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&running)saveOrchard();resume();});
   window.addEventListener('pagehide',()=>{if(running)saveOrchard();});
   id('catchStart').onclick=()=>{
-    orchardId++;attempt=0;caught=0;errors=0;reward=null;running=true;position=.5;basketTilt=0;
+    orchardId++;attempt=0;caught=0;errors=0;reward=null;running=true;position=.5;stepDistance=0;stepIdle=0;facing=1;
     orchardTip.textContent='';drop();
     saveOrchard();orchardProgress();resume();
     field.focus({preventScroll:true});
@@ -322,6 +337,10 @@
     if(active==='catch'&&running&&e.detail!=='catch')saveOrchard();
     active=e.detail;
     if(active==='catch'&&!orchardId)restoreOrchard();
+    if(active==='catch'){
+      if(!catcherArt.getAttribute('src'))catcherArt.src='assets/richi-orchard-catcher.webp';
+      sizeCatcher();
+    }
     resume();
     if(active!=='wash'){
       releaseJug();

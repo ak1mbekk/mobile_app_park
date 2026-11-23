@@ -230,15 +230,24 @@ func _test_orchard() -> void:
             "finished": false, "won": false,
         }})
         room.open("orchard")
+        # Keep the restored 97%-fallen drop from landing once in the awaited
+        # layout frame and again in the explicit simulation step below.
+        room.board.set_process(false)
+        await process_frame
         room.board._process(0.05)
         var result: Dictionary = room.rounds.orchard
         _expect(result.errors == scenario[2] and result.caught == scenario[3], "Orchard collision and lives case %d" % index)
-        _expect(room.board.get_node("%Field").harvest == result.caught, "The basket shows the saved harvest after landing")
+        _expect(room.board.get_node("%Walker/Richi/HeldBasket").frame == mini(3, result.caught), "Richi carries the saved harvest after landing")
         _expect(result.finished == (scenario[2] == 3), "Orchard stops at three errors")
         var hearts: HBoxContainer = room.board.get_node("%Lives")
         var full := 0
         for heart in hearts.get_children():
-            full += int(heart.text == "♥")
+            _expect(heart is TextureRect and heart.texture != null, "Life icon is a native texture, independent of fallback font")
+            var pixels: Image = heart.texture.get_image()
+            _expect(pixels.get_size() == Vector2i(48, 48), "Heart SVG decoded at its intended dimensions")
+            var filled: bool = pixels.get_pixel(24, 24).a > 0.9
+            _expect(filled == (heart.accessibility_name == "Жизнь сохранена"), "Heart pixels agree with accessible life state")
+            full += int(filled)
         _expect(hearts.get_child_count() == 3 and full == 3 - result.errors, "Orchard marks individual lost hearts")
         if not result.finished:
             room.board.fall = 0.40
@@ -250,6 +259,7 @@ func _test_orchard() -> void:
             var reason := "Яблоко упало" if scenario[0] == "apple" else "Поймана шишка"
             _expect(hint.contains(reason) and hint.contains("Листья +2"), "Final orchard feedback retains both the cause and payout")
     room.board.basket_position = 0.09
+    room.board._draw_field()
     room.board.kind = "apple"
     room.board.spot = 0.5
     room.board._land()
@@ -258,7 +268,7 @@ func _test_orchard() -> void:
     var round_id: int = room.rounds.orchard.id
     _tap(room.board.get_node("%Again"))
     _expect(room.rounds.orchard.id == round_id + 1 and room.rounds.orchard.errors == 0, "Orchard replay restores all three lives")
-    _expect(room.board.get_node("%Field").harvest == 0, "The new round begins with an empty basket")
+    _expect(room.board.get_node("%Walker/Richi/HeldBasket").frame == 0, "The new round begins with an empty basket")
     await process_frame
     var field: Rect2 = room.board.get_node("%Field").get_global_rect()
     _expect(field.is_equal_approx(result_field), "Replay keeps the same field size and basket landing height")
@@ -274,6 +284,8 @@ func _test_orchard() -> void:
     drag.position = first + Vector2(field.size.x * 0.25, 0.0)
     root.push_input(drag, true)
     _touch(drag.position, false)
+    for step in 6:
+        room.board._process(1.0 / 60.0)
     _expect(is_equal_approx(room.board.basket_position, 0.75), "Dragging a finger moves the basket across the field")
     _expect(is_equal_approx(backdrop.target, 0.5), "Touch aims decorative parallax through the same basket controller")
     var bank: ShaderMaterial = backdrop.get_node("River").material

@@ -309,6 +309,39 @@
   bottom: calc(49px + env(safe-area-inset-bottom, 0px));
 }
 
+/* One real Cutout-rendered catcher. The basket's reference square retains its
+   original 216px geometry; the sprite's 160px basket is aligned to its mouth. */
+#catchField #basket {
+  background-image: none;
+  transform: translateX(-50%);
+  filter: none;
+  transition-property: none;
+}
+
+#catchField .orchard-catcher {
+  position: absolute;
+  width: 150%;
+  height: 210%;
+  left: 50%;
+  top: -89.76852%;
+  overflow: hidden;
+  transform: translateX(-50%) scaleX(var(--facing, 1));
+  pointer-events: none;
+  transition-property: none;
+}
+
+#catchField .orchard-catcher img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 500%;
+  height: 400%;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+  transition-property: none;
+}
+
 #catch .orchard-lives {
   align-items: center;
   min-height: 36px;

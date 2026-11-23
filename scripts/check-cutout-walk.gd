@@ -382,77 +382,73 @@ func _make_walker(parent: Control) -> Control:
     var walker := Control.new()
     walker.set_script(Walker)
     walker.size = Vector2(400, 600)
-    var rig := RIG_SCENE.instantiate() as Rig
+    var rig := (load("res://Scenes/Characters/Cutout/RichiCutout.tscn") as PackedScene).instantiate() as Rig
     rig.name = "Richi"
     rig.tail_texture = load("res://Art/Brand/park-opening.png") as Texture2D
+    var basket := Sprite2D.new()
+    basket.name = "HeldBasket"
+    basket.texture = load("res://Scenes/Games/Art/harvest-basket.webp") as Texture2D
+    basket.hframes = 4
+    basket.scale = Vector2.ONE * 160.0 / 216.0
+    rig.add_child(basket)
     walker.add_child(rig)
     parent.add_child(walker)
     return walker
 
 
-func _walker_samples(fps: int) -> Array:
-    var screen := Control.new()
-    root.add_child(screen)
-    var walker := _make_walker(screen)
+func _verify_walker_grips(walker: Control) -> void:
     var rig := walker.get_node("Richi") as Rig
-    var snapshots: Array = []
-    walker.follow_basket(0.6)
-    for frame in fps * 2:
-        if frame == fps / 2:
-            walker.follow_basket(0.4)
-        walker._process(1.0 / fps)
-        _measure_pose(rig)
-        if (frame + 1) % (fps / 30) == 0:
-            snapshots.append(_positions(rig))
-    _expect(not walker.is_processing(), "Controller never slept after second target")
-    screen.free()
-    return snapshots
+    var mouth: Vector2 = walker.mouth_center()
+    for side: String in ["Near", "Far"]:
+        var wrist := rig.get_node(PELVIS + side + "Shoulder/Forearm/Hand") as Node2D
+        var expected := mouth + Vector2(61.0 if side == "Near" else -61.0, -3.0) * rig.scale
+        var local := walker.get_global_transform().affine_inverse() * wrist.global_position
+        _expect(local.distance_to(expected) < 0.25, "Held basket slipped from %s wrist by %.3f px" % [side, local.distance_to(expected)])
+    _expect(rig.is_sole_planted(true) or rig.is_sole_planted(false), "Carrying lost both foot supports")
 
 
 func _verify_walker_activity() -> void:
-    var at30 := _walker_samples(30)
-    var at60 := _walker_samples(60)
-    for frame in at30.size():
-        for part in at30[frame].size():
-            _expect(at30[frame][part].distance_to(at60[frame][part]) < TOLERANCE, "Walker arrival or retarget differs at 30/60 FPS")
     var screen := Control.new()
     root.add_child(screen)
     var walker := _make_walker(screen)
     var rig := walker.get_node("Richi") as Rig
-    walker.follow_basket(0.85)
-    walker._process(0.12)
-    walker.follow_basket(inverse_lerp(0.21, 0.79, rig.position.x / walker.size.x))
-    walker._process(0.08)
-    _move(rig, -0.001)
+    for fraction: float in [0.3, 0.4, 0.6, 0.7, 0.5, 0.2]:
+        walker.set_catcher(fraction, 2)
+        _expect(absf(walker.mouth_center().x - fraction * walker.size.x) < 0.01, "Mouth lags behind actual catcher")
+        _verify_walker_grips(walker)
+        await process_frame
+    walker.react("catch")
+    for frame in 8:
+        await process_frame
+        _verify_walker_grips(walker)
     paused = true
     var stopped := _positions(rig)
-    var tail_angle: float = rig.get_node(PELVIS + "Tail").rotation
-    var turn_progress := rig._turn_progress
+    var mouth: Vector2 = walker.mouth_center()
     for frame in 4:
         await process_frame
-    _expect(_positions(rig) == stopped, "Game pause continued the settling animation")
-    _expect(rig.get_node(PELVIS + "Tail").rotation == tail_angle, "Game pause continued tail animation")
-    _expect(rig._turn_progress == turn_progress, "Game pause continued the face turn")
+    _expect(_positions(rig) == stopped and walker.mouth_center() == mouth, "Pause continued held basket or gait")
     paused = false
-    for cycle in 5:
+    # Let the short feedback reaction finish before testing the hidden actor.
+    for frame in 30:
+        await process_frame
+    for cycle in 3:
         screen.hide()
-        _expect(not walker.is_processing() and not rig.can_process(), "Hidden screen kept actor processing")
+        _expect(not walker.is_processing() and not rig.can_process(), "Hidden orchard kept actor processing")
         stopped = _positions(rig)
-        tail_angle = rig.get_node(PELVIS + "Tail").rotation
-        turn_progress = rig._turn_progress
         for frame in 3:
             await process_frame
-        _expect(_positions(rig) == stopped and rig.get_node(PELVIS + "Tail").rotation == tail_angle, "Hidden screen advanced rig or tail")
-        _expect(rig._turn_progress == turn_progress, "Hidden screen advanced the face turn")
+        _expect(_positions(rig) == stopped, "Hidden orchard advanced carrying pose")
         screen.show()
     for frame in 60:
-        walker._process(1.0 / 60.0)
-    _expect(not walker.is_processing(), "Stationary walker kept its per-frame callback")
-    _expect(rig.is_sole_planted(true) and rig.is_sole_planted(false), "Walker did not complete standing after returning")
-    walker.follow_basket(0.1)
-    _expect(walker.is_processing(), "New basket target did not wake walker")
+        await process_frame
+    _expect(not walker.is_processing(), "Stationary catcher kept per-frame settling")
+    _expect(rig.is_sole_planted(true) and rig.is_sole_planted(false), "Catcher failed to settle both feet")
+    walker.set_catcher(0.8, 3)
+    _expect(walker.is_processing(), "Actual catcher movement failed to wake gait")
+    _verify_walker_grips(walker)
+    walker.size = Vector2(720, 320)
+    _verify_walker_grips(walker)
     screen.free()
-
 
 func _turn_samples(fps: int) -> Array:
     var rig := _make()
@@ -555,7 +551,6 @@ func _render_turn_proof(folder: String) -> void:
     print("GPU turn proof: ", output)
     viewport.free()
     quit(1 if failures else 0)
-
 
 func _run() -> void:
     var arguments := OS.get_cmdline_user_args()

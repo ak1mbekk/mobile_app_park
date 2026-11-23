@@ -4,9 +4,9 @@
 [ext_resource type="Script" path="res://Scenes/Games/TouchButton.gd" id="2"]
 [ext_resource type="Script" path="res://Scenes/Games/OrchardField.gd" id="3"]
 [ext_resource type="PackedScene" path="res://Scenes/Games/OrchardBackdrop.tscn" id="4"]
-[ext_resource type="Texture2D" path="res://Scenes/Games/Art/harvest-basket.webp" id="5"]
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Cutout/RichiCutout.tscn" id="Richi"]
 [ext_resource type="Script" path="res://Scenes/Games/OrchardWalker.gd" id="Walker"]
+[ext_resource type="Texture2D" path="res://Scenes/Games/Art/harvest-basket.webp" id="Basket"]
 
 [sub_resource type="Gradient" id="ShadowFalloff"]
 colors = PackedColorArray(0.16, 0.19, 0.10, 0.35, 0.16, 0.19, 0.10, 0)
@@ -54,23 +54,26 @@ layout_mode = 2
 theme_override_constants/separation = 6
 accessibility_name = "Осталось 3 жизни"
 
-[node name="First" type="Label" parent="Status/Stats/Lives"]
+[node name="First" type="TextureRect" parent="Status/Stats/Lives"]
+custom_minimum_size = Vector2(31, 36)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.52, 0.18, 0.12, 1)
-theme_override_font_sizes/font_size = 31
-text = "♥"
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
-[node name="Second" type="Label" parent="Status/Stats/Lives"]
+[node name="Second" type="TextureRect" parent="Status/Stats/Lives"]
+custom_minimum_size = Vector2(31, 36)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.52, 0.18, 0.12, 1)
-theme_override_font_sizes/font_size = 31
-text = "♥"
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
-[node name="Third" type="Label" parent="Status/Stats/Lives"]
+[node name="Third" type="TextureRect" parent="Status/Stats/Lives"]
+custom_minimum_size = Vector2(31, 36)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.52, 0.18, 0.12, 1)
-theme_override_font_sizes/font_size = 31
-text = "♥"
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="PlayFrame" type="PanelContainer" parent="."]
 layout_mode = 2
@@ -98,6 +101,13 @@ script = ExtResource("Walker")
 
 [node name="Richi" parent="PlayFrame/Board/Walker" instance=ExtResource("Richi")]
 
+[node name="HeldBasket" type="Sprite2D" parent="PlayFrame/Board/Walker/Richi"]
+z_index = 1
+position = Vector2(0, -103.1111)
+scale = Vector2(0.7407407, 0.7407407)
+texture = ExtResource("Basket")
+hframes = 4
+
 [node name="Контактная тень" type="Sprite2D" parent="PlayFrame/Board/Walker/Richi"]
 z_index = -3
 position = Vector2(3, -1)
@@ -106,7 +116,7 @@ texture = SubResource("GroundShadow")
 
 [node name="Field" type="Control" parent="PlayFrame/Board"]
 unique_name_in_owner = true
-z_index = 5
+z_index = 7
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -115,14 +125,13 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("3")
-basket_atlas = ExtResource("5")
 ground_shadow = SubResource("GroundShadow")
 
 [node name="Hint" type="Label" parent="."]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
-text = "Двигай корзинку, лови яблоки и пропускай шишки."
+text = "Веди Ричи за пальцем. Лови яблоки, пропускай шишки."
 autowrap_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1

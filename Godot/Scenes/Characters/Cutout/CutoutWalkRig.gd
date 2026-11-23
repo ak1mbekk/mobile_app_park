@@ -208,6 +208,7 @@ var _span := 0.0
 var _arm_angle := 0.0
 var _arm_from := 0.0
 var _arm_to := 0.0
+var _grips: Array[Vector2] = []
 var _settling := false
 var _settle_time := 0.0
 var _settle_orientation_from := 1.0
@@ -579,6 +580,9 @@ func _solve_knee(hip: Vector2, ankle: Vector2) -> Vector2:
 func _render_arm(side: int) -> void:
     var near_direction := 1.0 if side == NEAR else -1.0
     var split := shoulder_span * 0.5 * near_direction
+    if not _grips.is_empty():
+        _pose_gripping_arm(side, near_direction, split)
+        return
     var mirrored_shoulder := Vector2((shoulder_offset.x + split) * _span_orientation, shoulder_offset.y)
     var idle_angle := deg_to_rad(idle_arm_spread_degrees) * _span_orientation
     _shoulders[side].position = torso_offset + mirrored_shoulder
@@ -589,6 +593,40 @@ func _render_arm(side: int) -> void:
     _hands[side].rotation = 0.0
 
 
+## Both wrists stay on their screen side of a carried prop while the feet and face turn.
+## Grip points are in the rig's local space, measured from the ground between the feet.
+func hold_at(left_wrist: Vector2, right_wrist: Vector2) -> void:
+    _grips.assign([right_wrist, left_wrist])
+    for side in [NEAR, FAR]:
+        _render_arm(side)
+        _hand_art[side].z_index = 2
+        _orient_arm_art(side)
+
+
+func _pose_gripping_arm(side: int, outward: float, split: float) -> void:
+    var shoulder := torso_offset + shoulder_offset + Vector2(split, 0.0)
+    var offset := _grips[side] - _pelvis.position - shoulder
+    var axis := offset.normalized()
+    # The forearms reach toward the viewer. Their shorter projected length lets
+    # the elbows hang below the shoulders while the paws curl over the rim.
+    var upper := upper_arm_length * 0.94
+    var lower := clampf(offset.length() - upper + 3.0, forearm_length * 0.60, forearm_length)
+    var reach := clampf(offset.length(), absf(upper - lower) + 0.01, upper + lower - 0.01)
+    var along := (upper ** 2 - lower ** 2 + reach ** 2) / (2.0 * reach)
+    var away := sqrt(maxf(0.0, upper ** 2 - along ** 2))
+    var elbow := axis * along + Vector2(axis.y, -axis.x) * away * outward
+    var upper_angle := elbow.angle() - PI * 0.5
+    var lower_angle := (axis * reach - elbow).angle() - PI * 0.5
+    _shoulders[side].position = shoulder
+    _shoulders[side].rotation = upper_angle
+    _shoulder_art[side].scale.y = upper / upper_arm_length
+    _forearms[side].position = Vector2.DOWN * upper
+    _forearms[side].rotation = lower_angle - upper_angle
+    _forearm_art[side].scale.y = lower / forearm_length
+    _hands[side].position = Vector2.DOWN * lower
+    _hands[side].rotation = outward * 0.23 - lower_angle
+
+
 func _orient_skin() -> void:
     _orient_upper_body()
     for side in [NEAR, FAR]:
@@ -597,9 +635,14 @@ func _orient_skin() -> void:
         _orient_sprite(_shin_art[side], shin_pivot, _facing)
         _orient_sprite(_caps[side], Vector2(0.5, 0.5), _facing)
         _orient_sprite(_shoe_art[side], foot_sole_pivot, foot_heading)
-        _orient_sprite(_shoulder_art[side], upper_arm_pivot, _facing)
-        _orient_sprite(_forearm_art[side], forearm_pivot, _facing)
-        _orient_sprite(_hand_art[side], hand_pivot, _facing)
+        _orient_arm_art(side)
+
+
+func _orient_arm_art(side: int) -> void:
+    var heading := _facing if _grips.is_empty() else (-1 if side == NEAR else 1)
+    _orient_sprite(_shoulder_art[side], upper_arm_pivot, heading)
+    _orient_sprite(_forearm_art[side], forearm_pivot, heading)
+    _orient_sprite(_hand_art[side], hand_pivot, heading)
 
 
 func _pose_tail() -> void:
