@@ -111,7 +111,9 @@ export default function godotDelivery() {
       const variants = current.variants;
       if (!variants.has(encoding)) {
         const encoder = encoding === 'br'
-          ? createBrotliCompress({ params: { [constants.BROTLI_PARAM_QUALITY]: 2 } })
+          // This representation is warmed once and shared across visitors.
+          // The --actual delivery probe measures the cold pack + engine transfer.
+          ? createBrotliCompress({ params: { [constants.BROTLI_PARAM_QUALITY]: 5 } })
           : createGzip({ level: 1 });
         const source = file.createReadStream({ autoClose: false, start: 0, highWaterMark: 256 * 1024 });
         const body = pipeline(source, encoder, collect);

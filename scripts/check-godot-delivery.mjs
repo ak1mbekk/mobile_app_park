@@ -3,7 +3,8 @@ import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:f
 import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { brotliDecompressSync, gunzipSync } from 'node:zlib';
+import { fileURLToPath } from 'node:url';
+import { brotliCompressSync, brotliDecompressSync, constants, gunzipSync } from 'node:zlib';
 import { build, createServer, preview } from 'vite';
 import godotDelivery from './godot-delivery.js';
 
@@ -87,6 +88,33 @@ async function checkResponses(port, [packName, wasmName]) {
   assert.equal(refused.code, 406);
 }
 
+// Optional, measures the actual shipped binaries rather than the tiny HTTP fixtures.
+// Usage: node scripts/check-godot-delivery.mjs --actual
+async function checkShippedTransfer() {
+  const published = fileURLToPath(new URL('../public/', import.meta.url));
+  const dev = await createServer({
+    ...config(), publicDir:published, server:{ watch:null, hmr:false }, optimizeDeps:{ noDiscovery:true },
+  });
+  try {
+    await new Promise(resolve => dev.httpServer.listen(0, '127.0.0.1', resolve));
+    const port = dev.httpServer.address().port;
+    let previous = 0, wire = 0;
+    for (const name of await assets(port)) {
+      const original = await readFile(path.join(published, 'demo/meeting3d', 'index' + path.extname(name)));
+      const delivered = await send(port, name, { 'Accept-Encoding':'br' });
+      assert.equal(delivered.code, 200);
+      assert.equal(delivered.headers['content-encoding'], 'br');
+      assert.ok(brotliDecompressSync(delivered.body).equals(original));
+      previous += brotliCompressSync(original, { params:{ [constants.BROTLI_PARAM_QUALITY]:2 } }).length;
+      wire += delivered.body.length;
+    }
+    assert.ok(wire < previous, 'Actual compressed transfer must improve on the former quality-2 encoding');
+    console.log('PASS cold Web transfers (PCK + WASM, bytes):', { previous, wire, saved:previous-wire });
+  } finally {
+    await dev.close();
+  }
+}
+
 try {
   await mkdir(game, { recursive:true });
   await Promise.all([
@@ -130,6 +158,7 @@ try {
     await served.close();
   }
   console.log('PASS Godot dev and preview compression, caching validators, ranges, atomic version change and plain dist');
+  if (process.argv.includes('--actual')) await checkShippedTransfer();
 } finally {
   await rm(root, { recursive:true, force:true });
 }

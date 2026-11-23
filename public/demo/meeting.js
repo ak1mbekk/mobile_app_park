@@ -23,6 +23,7 @@
   let ready = false;
   let available;
   let pauseCallback, scenePaused;
+  let pauseFrames;
   let lighter = false;
   let offerOnLoad = false;
   let homeStatePending = false;
@@ -47,6 +48,40 @@
     scenePaused = paused;
   }
 
+  function controlFrameLoop(target) {
+    // SceneTree.paused stops gameplay, but Godot still draws the hidden room.
+    // Hold its frame callbacks while away; keep the live engine and their IDs.
+    const request = target.requestAnimationFrame.bind(target);
+    const cancel = target.cancelAnimationFrame.bind(target);
+    const pending = new Map();
+    let paused = false;
+    function schedule(job) {
+      job.waiting = false;
+      job.native = request(time => {
+        if (paused) { job.waiting = true; return; }
+        pending.delete(job.id);
+        job.callback.call(target, time);
+      });
+    }
+    target.requestAnimationFrame = callback => {
+      const job = { callback };
+      schedule(job);
+      job.id = job.native;
+      pending.set(job.id, job);
+      return job.id;
+    };
+    target.cancelAnimationFrame = id => {
+      const job = pending.get(id);
+      pending.delete(id);
+      cancel(job?.native ?? id);
+    };
+    return value => {
+      if (paused === value) return;
+      paused = value;
+      if (!paused) for (const job of pending.values()) if (job.waiting) schedule(job);
+    };
+  }
+
   function syncPause() {
     const active = room?.classList.contains('current') === true;
     const naming = ready && room === intro && document.querySelector('#name.current') !== null;
@@ -57,7 +92,11 @@
     home.toggleAttribute('data-intro-3d', visible && (room === intro || decodingRoom === intro));
     intro.toggleAttribute('data-naming-backdrop', naming);
     intro.inert = naming;
-    if (ready) setScenePaused(document.hidden || !active);
+    if (ready) {
+      const paused = document.hidden || !active;
+      setScenePaused(paused);
+      pauseFrames?.(paused);
+    }
   }
 
   function storeRound(game, round) {
@@ -118,6 +157,7 @@
     ready = false;
     pauseCallback = undefined;
     scenePaused = undefined;
+    pauseFrames = undefined;
     offerOnLoad = false;
     homeStatePending = false;
     container.hidden = true;
@@ -242,6 +282,7 @@
       frame.inert = true;
       frame.title = 'Домик у тропы в 3D';
       close.hidden = true;
+      pauseFrames?.(false);
       frame.contentWindow.setParkEnterHome();
       return;
     }
@@ -286,6 +327,7 @@
       if (room.id === 'home') await window.petDemo.recoverNativeRound();
       if (frame !== readyFrame) return;
       ready = true;
+      pauseFrames ??= controlFrameLoop(frame.contentWindow);
       homeStatePending = room === home;
       frame.inert = false;
       progressObserver?.disconnect();
