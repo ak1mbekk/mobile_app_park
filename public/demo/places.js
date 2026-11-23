@@ -20,11 +20,7 @@
     {zone:1,id:'lake49',badge:'≈',name:'Озеро у вольера № 49',x:163,y:102,detail:'Наблюдение за кормлением аистов с берега'},
     {zone:1,id:'15',badge:'15',name:'Северный олень',x:208,y:373,plan:[244,363],species:['severnyij-olen']},
     {zone:1,id:'65wc',badge:'WC',name:'Туалет у водоёма',x:558,y:74,service:'Туалеты'},
-    {zone:1,id:'rest',badge:'☕',name:'Зона отдыха · кафе',x:99,y:139,service:'Места отдыха',services:['Места отдыха','Кафе']},
-    {zone:1,id:'cafe-entry',badge:'☕',name:'Кафе у входа',x:129,y:612,service:'Кафе'},
-    {zone:1,id:'cafe-pavilion',badge:'☕',name:'Кафе у домика кузнеца',x:65,y:167,service:'Кафе'},
-    {zone:1,id:'cafe-pond',badge:'☕',name:'Кафе у водоёма с птицами',x:526,y:117,service:'Кафе'},
-    {zone:1,id:'cafe-island',badge:'☕',name:'Кафе у вольера № 24',x:641,y:401,service:'Кафе'},
+    {zone:1,id:'rest',badge:'Отдых',name:'Зона отдыха',x:99,y:139,service:'Места отдыха'},
     {zone:1,id:'food-entry',badge:'Корм',name:'Корм для животных у входа',x:152,y:612,service:'Корм для животных'},
     {zone:1,id:'food-pond',badge:'Корм',name:'Корм у водоёма рядом с № 24',x:654,y:412,service:'Корм для животных'},
     {zone:1,id:'dispenser-west',badge:'Корм',name:'Автомат с кормом у центрального водоёма',x:62,y:349,service:'Корм для животных'},
@@ -42,10 +38,6 @@
     {zone:2,id:'36',badge:'36',name:'Домашние козы',x:308,y:163,plan:[402,319],detail:'Англо-нубийская, камерунская и камори'},
     {zone:2,id:'wc',badge:'WC',name:'Туалет у вольера № 16',x:647,y:285,service:'Туалеты'},
     {zone:2,id:'parking',badge:'P',name:'Временная парковка',x:440,y:50,service:'Парковка'},
-    {zone:2,id:'cafe-deer',badge:'☕',name:'Кафе между вольерами № 16 и 17',x:638,y:232,service:'Кафе'},
-    {zone:2,id:'cafe-lake',badge:'☕',name:'Кафе у пруда рядом с № 8',x:244,y:496,service:'Кафе'},
-    {zone:2,id:'cafe-yak',badge:'☕',name:'Кафе у вольера № 24',x:562,y:206,service:'Кафе'},
-    {zone:2,id:'cafe-west',badge:'☕',name:'Кафе у вольера № 38',x:274,y:267,service:'Кафе'},
     {zone:2,id:'food-entry',badge:'Корм',name:'Корм рядом с вольером № 4',x:245,y:279,service:'Корм для животных'},
     {zone:2,id:'food-deer',badge:'Корм',name:'Корм у вольера № 15',x:576,y:248,service:'Корм для животных'},
     {zone:2,id:'rest-island',badge:'Отдых',name:'Место отдыха у острова № 30',x:431,y:190,service:'Места отдыха'},
@@ -71,14 +63,32 @@
     {zone:2,id:'osm-9868296562',name:'Туалет в южной части зоны',geo:[26.0213501,53.0904689]},
     {zone:2,id:'osm-10971056120',name:'Туалет в северной части зоны',geo:[26.0214259,53.0927221]}
   ].map(p=>({...p,badge:'WC',service:'Туалеты'})).concat([
-    // Public OpenStreetMap amenity nodes. The tourist plan uses other names;
-    // don't assign these coordinates to a printed name without a source match.
-    {zone:1,id:'osm-9868277716',name:'Точка перекуса у центрального водоёма',geo:[26.0102931,53.0963101],service:'Кафе'},
-    {zone:1,id:'osm-9868296517',name:'Точка перекуса в западной части зоны',geo:[26.0108785,53.0965494],service:'Кафе'},
-    {zone:1,id:'osm-9868296518',name:'Точка перекуса в северной части зоны',geo:[26.0133625,53.0978163],service:'Кафе'},
-    {zone:2,id:'osm-9868296561',name:'Точка перекуса в южной части зоны',geo:[26.0212333,53.0910999],service:'Кафе'},
     {zone:2,id:'osm-9847947117',name:'Беседка для отдыха',geo:[26.0239426,53.0926083],service:'Места отдыха'}
   ]);
+  // Official public mapLocations, type=cafe, checked 2026-11-23:
+  // https://animal-park.by/dopolnitelnyie-uslugi/pitanie/
+  // Preserve source slugs and exact [longitude, latitude]; no poster-pixel projection.
+  const cafes=[
+    {zone:1,id:'cafe-11',name:'Кафе у входа',geo:[26.01180407130183,53.09486532257983]},
+    {zone:1,id:'cafe-12',name:'Кафе (буйвол)',geo:[26.016451996283358,53.096626902799045]},
+    {zone:1,id:'cafe-13',name:'Кафе у пирса',geo:[26.0133403545969,53.097806338801696]},
+    {zone:1,id:'cafe-14',name:'Кафе в центре',geo:[26.010004,53.096660]},
+    {zone:1,id:'cafe-14-1',name:'Пицца',geo:[26.010135,53.096426]},
+    {zone:1,id:'cafe-15',name:'Ярмарочный домик 1',geo:[26.010577,53.096673]},
+    {zone:1,id:'cafe-15-1',name:'Ярмарочный домик 2',geo:[26.010651,53.096600]},
+    {zone:2,id:'cafe-21',name:'Фудтрак',geo:[26.02131702998618,53.09097172838789]},
+    {zone:2,id:'cafe-21-1',name:'Шашлык',geo:[26.021315,53.090871]},
+    {zone:2,id:'cafe-21-2',name:'Кафе (лес)',geo:[26.021352,53.090745]},
+    {zone:2,id:'cafe-22',name:'Кафе на лесной тропе',geo:[26.021288,53.089150]},
+    {zone:2,id:'cafe-23',name:'Кафе (павлин)',geo:[26.028002,53.091333]},
+    {zone:2,id:'cafe-24',name:'Кафе (кабанчик)',geo:[26.023469,53.092165]}
+  ].map(point=>({...point,service:'Кафе',badge:'☕'}));
+  // These old names/OSM nodes have no proven identity with an official cafe.
+  // A legacy link opens its zone's cafe filter, never an arbitrary nearby place.
+  const legacyCafeIds={
+    1:['cafe-entry','cafe-pavilion','cafe-pond','cafe-island','osm-9868277716','osm-9868296517','osm-9868296518'],
+    2:['cafe-deer','cafe-lake','cafe-yak','cafe-west','osm-9868296561']
+  };
   // Printed enclosure numbers on enclosures.png, names from the Russian legend
   // of visitor-2025-11-12.jpg. No visitor-poster pixels enter the projection.
   const numberedEnclosures=[
@@ -221,7 +231,11 @@
       hits.sort((a,b)=>a.distance-b.distance||compareIds.compare(a.point.id,b.point.id));
       choose(hits);
     }
-    return {dismiss,activate,destroy:()=>{dismiss();panel.remove();}};
+    function showGroup(points,trigger){
+      origin=trigger;
+      choose(points.map(point=>({point,distance:0})));
+    }
+    return {dismiss,activate,showGroup,destroy:()=>{dismiss();panel.remove();}};
   }
-  window.parkGuide={zones,markerFace,speciesPortrait,bindMarkerHitChooser,places:[...places,...numberedEnclosures].sort(byZoneAndNumber),geoFacilities};
+  window.parkGuide={zones,markerFace,speciesPortrait,bindMarkerHitChooser,legacyCafeIds,places:[...places,...numberedEnclosures,...cafes].sort(byZoneAndNumber),geoFacilities};
 })();

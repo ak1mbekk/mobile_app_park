@@ -44,6 +44,7 @@
   let searchOpen = false, choosing = false, placeTrigger;
   let framing = 'zone';
   const markers = new Map();
+  const cafeGroups = new Map();
   const failedTiles = new Set();
   const local = () => places.filter(point => point.zone === state.zone);
   const selectedPlace = () => local().find(point => point.id === state.id);
@@ -62,7 +63,12 @@
     const service = kind === 'service' && Object.hasOwn(serviceNames, parts[kindIndex + 1]) ? parts[kindIndex + 1] : '';
     let rememberedZone;
     try { rememberedZone = localStorage.getItem('park-map-zone'); } catch {}
-    return { zone: (zone || rememberedZone) === '2' ? 2 : 1, id, kind, service };
+    const zoneNumber = (zone || rememberedZone) === '2' ? 2 : 1;
+    if (guide.legacyCafeIds[zoneNumber]?.includes(id)) {
+      history.replaceState(history.state, '', '#map/' + zoneNumber + '/service/cafe');
+      return { zone: zoneNumber, id: '', kind: 'service', service: 'cafe' };
+    }
+    return { zone: zoneNumber, id, kind, service };
   }
 
   function navigate(next) {
@@ -349,18 +355,28 @@
   }
 
   function layoutServices() {
+    layoutCafeGroups();
     const services = [];
     const otherTargets = [];
+    const occupied = [];
     for (const [id, marker] of markers) {
       const element = marker.getElement();
       if (!element) continue;
+      if (local().find(point => point.id === id)?.service === 'Кафе') {
+        // Cafe markers stay on their published positions, including at close zoom.
+        element.classList.remove('service-offset');
+        element.style.removeProperty('--service-shift-x');
+        element.style.removeProperty('--service-shift-y');
+        if (element.style.display !== 'none') occupied.push(map.latLngToContainerPoint(marker.getLatLng()));
+        continue;
+      }
       const anchor = map.latLngToContainerPoint(marker.getLatLng());
       if (marker.options.pane === 'visitor-services') services.push({ id, anchor, element });
       else otherTargets.push(anchor);
     }
-    // Keep the selected pin on the camera's geographic anchor.
+    // Fixed cafe/group targets reserve their real screen area before other services.
+    // The selected movable service gets the closest available offset and a leader.
     services.sort((a, b) => Number(b.id === state.id) - Number(a.id === state.id));
-    const occupied = [];
     const size = map.getSize();
     const overlaps = (a, b, distance) => Math.abs(a.x - b.x) < distance && Math.abs(a.y - b.y) < distance;
     for (const { anchor, element } of services) {
@@ -379,6 +395,63 @@
       element.style.setProperty('--service-line-length', `${Math.hypot(shift.x, shift.y)}px`);
       element.style.setProperty('--service-line-angle', `${Math.atan2(-shift.y, -shift.x)}rad`);
     }
+  }
+
+  function layoutCafeGroups() {
+    cafeGroups.clear();
+    // Leaflet emits zoom/move while setView is rebuilding marker elements. A final
+    // layout after draw covers those not mounted yet; never style a detached pin.
+    const cafes = local().filter(point => point.service === 'Кафе' && markers.get(point.id)?.getElement());
+    const anchors = new Map(cafes.map(point => [point.id, map.latLngToContainerPoint(markers.get(point.id).getLatLng())]));
+    for (const point of cafes) {
+      const element = markers.get(point.id).getElement();
+      element.style.display = '';
+      element.replaceChildren(guide.markerFace(point));
+      element.removeAttribute('data-cafe-group');
+      element.setAttribute('aria-label', label(point));
+      element.title = label(point);
+    }
+    if (!calibration || map.getZoom() >= 18.5) return;
+    const pending = new Set(cafes);
+    while (pending.size) {
+      const first = pending.values().next().value;
+      const group = [first];
+      pending.delete(first);
+      for (let i = 0; i < group.length; i++) {
+        for (const candidate of pending) {
+          if (anchors.get(group[i].id).distanceTo(anchors.get(candidate.id)) < markerSize) {
+            group.push(candidate);
+            pending.delete(candidate);
+          }
+        }
+      }
+      if (group.length < 2) continue;
+      const representative = group.find(point => point.id === state.id) || first;
+      for (const point of group) {
+        if (point !== representative) markers.get(point.id).getElement().style.display = 'none';
+      }
+      const element = markers.get(representative.id).getElement();
+      cafeGroups.set(representative.id, group);
+      element.dataset.cafeGroup = group.map(point => point.id).join(' ');
+      const name = `Точки питания рядом: ${group.length}. Выбрать кафе`;
+      element.setAttribute('aria-label', name);
+      element.title = name;
+      const badge = element.firstElementChild;
+      badge.style.position = 'relative';
+      const count = document.createElement('small');
+      count.textContent = String(group.length);
+      count.setAttribute('aria-hidden', 'true');
+      Object.assign(count.style, { position:'absolute', right:'-5px', bottom:'-4px', minWidth:'17px',
+        height:'17px', borderRadius:'9px', background:'#354f3d', color:'#fff7e8',
+        font:'700 11px/17px sans-serif', textAlign:'center' });
+      badge.append(count);
+    }
+  }
+
+  function activateMarker(point, event) {
+    const group = cafeGroups.get(point.id);
+    if (group) hitChooser.showGroup(group, markers.get(point.id).getElement());
+    else hitChooser.activate(point, event);
   }
 
   function draw() {
@@ -428,9 +501,9 @@
         title: label(item), keyboard: true, autoPanOnFocus: false, zIndexOffset: picked ? 1000 : 0
       });
       marker.on('add', () => {
-        labelTarget(marker.getElement(), item, picked, event => hitChooser.activate(item, event));
+        labelTarget(marker.getElement(), item, picked, event => activateMarker(item, event));
       }).addTo(layer);
-      marker.on('click', event => hitChooser.activate(item, event.originalEvent));
+      marker.on('click', event => activateMarker(item, event.originalEvent));
       marker.on('dblclick', L.DomEvent.stopPropagation);
       markers.set(item.id, marker);
     }

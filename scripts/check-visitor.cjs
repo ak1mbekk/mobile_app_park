@@ -70,8 +70,8 @@ async function coldCafeEntry(browser){
     assert.equal(await map.locator('.service-picker select').inputValue(),'cafe');
     assert.ok(await picker.isDisabled(),'The place list waits for geometry');
     releaseAlignment();
-    await picker.selectOption('osm-9868296561');
-    await map.getByRole('heading',{name:'Точка перекуса в южной части зоны'}).waitFor();
+    await picker.selectOption('cafe-22');
+    await map.getByRole('heading',{name:'Кафе на лесной тропе'}).waitFor();
     await map.locator('.p-back').tap();
     await section.getByRole('button',{name:'Кафе на карте →'}).waitFor();
   }finally{
@@ -137,9 +137,9 @@ async function zoomSelectedPlace(browser){
     await page.route('https://tile.openstreetmap.org/**',route=>route.abort());
     await page.goto(root+'#map/2/service/cafe');
     const map=page.locator('#map.current');
-    const pin=map.locator('.place-marker[data-place-id="osm-9868296561"]');
+    const pin=map.locator('.place-marker[data-place-id="cafe-22"]');
     await pin.tap();
-    await map.getByRole('heading',{name:'Точка перекуса в южной части зоны'}).waitFor();
+    await map.getByRole('heading',{name:'Кафе на лесной тропе'}).waitFor();
     const view=()=>page.evaluate(()=>history.state.parkMapView);
     const assertExposed=async()=>{
       assert.equal((await view()).framing,'place');
@@ -388,7 +388,7 @@ async function cartography(browser){
     await openMapSearch(map);
     await map.locator('[data-kind="service"]').click();
     for(const [kind,id,expected,geo] of [
-      ['cafe','osm-9868296561','Точка перекуса в южной части зоны',true],
+      ['cafe','cafe-22','Кафе на лесной тропе',true],
       ['rest','osm-9847947117','Беседка для отдыха',true],
       ['feed','food-entry','Корм рядом с вольером № 4',false]
     ]){
@@ -414,7 +414,7 @@ async function cartography(browser){
         const beforeLink=await view();
         const [popup]=await Promise.all([p.waitForEvent('popup'),yandex.tap()]);
         await popup.waitForLoadState();
-        assert.equal(new URL(popup.url()).searchParams.get('pt'),'26.0212333,53.0910999');
+        assert.equal(new URL(popup.url()).searchParams.get('pt'),'26.0212880,53.0891500');
         assert.equal(new URL(popup.url()).searchParams.has('rtext'),false);
         await popup.close();
         assert.deepEqual(await view(),beforeLink);
@@ -434,7 +434,7 @@ async function cartography(browser){
     await rest.locator('summary').click();
     await rest.getByRole('button',{name:'Зона отдыха на карте →'}).click();
     await p.waitForURL('**#map/1/rest/service/rest',{waitUntil:'commit'});
-    await title.getByText('Зона отдыха · кафе',{exact:true}).waitFor();
+    await title.getByText('Зона отдыха',{exact:true}).waitFor();
     assert.equal(new URL(await yandex.getAttribute('href')).searchParams.has('pt'),false);
     await map.locator('.p-back').click();
     await p.waitForURL('**#visitor',{waitUntil:'commit'});
@@ -444,8 +444,8 @@ async function cartography(browser){
     await map.locator('[data-zone="2"]').tap();
     assert.equal(await service.inputValue(),'cafe');
     await openMapSearch(map);
-    await picker.selectOption('osm-9868296561');
-    await title.getByText('Точка перекуса в южной части зоны',{exact:true}).waitFor();
+    await picker.selectOption('cafe-22');
+    await title.getByText('Кафе на лесной тропе',{exact:true}).waitFor();
     if(output)await p.screenshot({path:path.join(output,'visitor-cafe-zone-2.png')});
     await map.locator('.p-back').tap();
     await p.waitForURL('**#visitor',{waitUntil:'commit'});
@@ -516,7 +516,7 @@ async function closeServiceMarkers(browser) {
   const context = await browser.newContext({ viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true });
   const services = [
     ['osm-9868277715', 'Туалет в северной части зоны', '26.0130966,53.0979380'],
-    ['osm-9868296518', 'Точка перекуса в северной части зоны', '26.0133625,53.0978163'],
+    ['cafe-13', 'Кафе у пирса', '26.0133404,53.0978063'],
   ];
   try {
     await context.route('https://tile.openstreetmap.org/**', route => route.abort());
