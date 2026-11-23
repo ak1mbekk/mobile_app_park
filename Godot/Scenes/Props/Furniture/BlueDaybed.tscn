@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Furniture/bed-daybed.glb" id="Bed"]
+
+[node name="BlueDaybed" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("Bed")]
+
+[node name="SleepPose" type="Marker3D" parent="."]
+position = Vector3(-0.015, 0.248, -0.055)
+rotation = Vector3(0, -0.84, 0)
+
+[node name="Approach" type="Marker3D" parent="."]
+position = Vector3(-0.12, 0.008, 0.62)
+
+[node name="WakeTarget" type="Marker3D" parent="."]
+position = Vector3(0, 0.11, 0.27)
+
+[node name="FloorPose" type="Marker3D" parent="."]
+position = Vector3(-0.12, 0.008, 0.47)
