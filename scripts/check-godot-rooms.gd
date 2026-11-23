@@ -99,15 +99,38 @@ func _check_waiting_props(level: int) -> void:
         "The hungry pet waits with a bib at level %d" % level)
     _expect(dining.spoon.get_parent() == dining.right_paw and dining.fork.get_parent() == dining.left_paw
         and dining.bib.get_parent() == dining.chest, "Independent cutlery and bib are attached to the animated bones")
-    for pair in [[dining.spoon, dining.right_paw], [dining.fork, dining.left_paw]]:
-        _expect(pair[0].global_position.distance_to(pair[1].global_position) < 0.055,
-            "The real utensil pivot is close to the paw at level %d" % level)
+    var grips := [[dining.spoon, ["RightHandMiddle2", "RightHandRing2"]],
+                  [dining.fork, ["LeftHandThumb2", "LeftHandIndex1"]]]
+    for grip: Array in grips:
+        var utensil: Node3D = grip[0]
+        var handle := utensil.find_child("Берёзовая рукоять", true, false) as MeshInstance3D
+        if handle == null:
+            _expect(false, "Wooden grip missing from " + str(utensil.name))
+            continue
+        _expect(handle.is_visible_in_tree(), "Wooden grip is visible on " + str(utensil.name))
+        for finger: String in grip[1]:
+            var gap := _distance_to_grip(handle, _bone(finger))
+            _expect(gap < 0.010, "%s handle meets %s at level %d (gap %.1f mm)" % [utensil.name, finger, level, gap * 1000.0])
     var hip := _bone("Hips")
     var left := _bone("LeftToeBase")
     var right := _bone("RightToeBase")
     _expect(hip.y < 0.045 and left.y < 0.06 and right.y < 0.06 and left.distance_to(right) > 0.15,
         "Seat and both separate feet are close to the mat at level %d" % level)
 
+
+# A nearby triangle edge proves the finger is close to the visible wooden mesh.
+# The spoon is held near the handle end, several centimetres below its model origin.
+func _distance_to_grip(handle: MeshInstance3D, finger: Vector3) -> float:
+    var triangles := handle.global_transform * handle.mesh.get_faces()
+    var nearest := INF
+    for i in range(0, triangles.size(), 3):
+        for k in 3:
+            var a := triangles[i + k]
+            var b := triangles[i + (k + 1) % 3]
+            if not a.is_equal_approx(b):
+                var point := Geometry3D.get_closest_point_to_segment(finger, a, b)
+                nearest = minf(nearest, finger.distance_to(point))
+    return nearest
 
 func _check_meal() -> void:
     _tap("feed")

@@ -74,12 +74,16 @@
     return {...defaults};
   }
   let saved=readProfile();
+  const beds=['bed','bed-willow','settee','bed-oak','bed-daybed'];
   const baths=['base-bath','bath-carved','bath','bath-copper','bath-faience'];
   const wares=[
     {id:'cap',name:'Льняная кепка',tier:'Обычная',group:'hat',price:10},
     {id:'ranger',name:'Шляпа следопыта',tier:'Редкая',group:'hat',price:30},
     {id:'crown',name:'Янтарная корона',tier:'Эпическая',group:'hat',price:80},
     {id:'bed',name:'Лежанка',tier:'Обычная',group:'decor',price:bedPrice},
+    {id:'bed-willow',name:'Плетёное гнездо',tier:'Обычное',group:'decor',price:20,replaces:'место для сна'},
+    {id:'bed-oak',name:'Резная лежанка',tier:'Эпическая',group:'decor',price:70,replaces:'место для сна'},
+    {id:'bed-daybed',name:'Черничная кушетка',tier:'Легендарная',group:'decor',price:110,replaces:'место для сна'},
     {id:'cushion',name:'Вышитая подушка',tier:'Обычная',group:'decor',price:15},
     {id:'lantern',name:'Фонарь лесника',tier:'Редкий',group:'decor',price:35},
     {id:'chest',name:'Дубовый сундук',tier:'Эпический',group:'decor',price:75},
@@ -93,6 +97,8 @@
     {id:'bath-tile',name:'Плитка для ванной',tier:'Обычная',group:'decor',price:25,replaces:'отделку ванной',room:'bathroom'},
     {id:'kitchen-cabinet',name:'Мятный кухонный шкаф',tier:'Обычный',group:'decor',price:35,replaces:'кухонный шкаф',room:'kitchen'}
   ];
+  if(!Array.isArray(saved.owned)&&saved.bed_owned)saved.owned=['bed'];
+  if(!Array.isArray(saved.placed)&&saved.bed_placed)saved.placed=['bed'];
   const owned=new Set(wares.filter(w=>Array.isArray(saved.owned)&&saved.owned.includes(w.id)).map(w=>w.id));
   const placed=new Set(wares.filter(w=>w.group==='decor'&&owned.has(w.id)&&Array.isArray(saved.placed)&&saved.placed.includes(w.id)).map(w=>w.id));
   const isOwned=id=>id==='base-bath'||owned.has(id);
@@ -100,9 +106,12 @@
   const isInstalled=w=>baths.includes(w.id)?installedBath()===w.id:w.group==='hat'?saved.hat===w.id:placed.has(w.id);
   const bathArtwork=id=>id==='base-bath'?'assets/base-bath.webp':'assets/room-'+id+'.webp';
   const shopArtwork=id=>id==='base-bath'?bathArtwork(id):'assets/shop-'+id+'.webp';
-  // Earlier saves could have both beds installed. Those rooms showed the settee.
-  if(placed.has('settee')&&placed.delete('bed'))saved.placed=[...placed];
-  const canSleep=()=>placed.has('bed')||placed.has('settee');
+  // Legacy rooms with both original beds displayed the settee. Keep that choice.
+  const installedBed=()=>[...beds].reverse().find(id=>placed.has(id))??'';
+  const restoredBed=installedBed();
+  beds.forEach(id=>{if(id!==restoredBed)placed.delete(id);});
+  saved.placed=[...placed];
+  const canSleep=()=>!!installedBed();
   saved.starterRoundRewarded=saved.starterRoundRewarded===true||
     ['pairs','match','orchard'].some(game=>saved[game]?.finished===true);
   if(!wares.some(w=>w.id===saved.hat&&w.group==='hat'&&owned.has(w.id)))saved.hat=null;
@@ -260,14 +269,15 @@
   };
   function bedGoal(){
     if(!saved.onboardingDone||saved.night||canSleep()||bedGoalDismissed)return null;
-    if(owned.has('bed'))return {message:'Поставь лежанку, чтобы енот мог отдохнуть.',label:'Поставить лежанку',play:false};
+    const collected=beds.find(id=>owned.has(id));
+    if(collected)return {message:'Поставь место для сна из коллекции, чтобы енот мог отдохнуть.',label:'Поставить: '+wares.find(w=>w.id===collected).name,play:false,id:collected};
     const message=saved.name+' хочет лежанку.';
     return saved.leaves>=bedPrice?{message,label:'Купить лежанку за 5 листиков',play:false}:
       {message:message+' Сыграем за листики?',label:'Сыграть',play:true};
   }
   function buyBed(){
     const goal=bedGoal();
-    return !!goal&&!goal.play&&activateWare(wares.find(ware=>ware.id==='bed'));
+    return !!goal&&!goal.play&&activateWare(wares.find(ware=>ware.id===(goal.id??'bed')));
   }
   function remindBed(){
     bedGoalDismissed=false;
@@ -294,6 +304,10 @@
     paintOutfit();
     $('home').classList.toggle('furnished-bed',placed.has('settee'));
     $('home').classList.toggle('furnished-floor-bed',placed.has('bed'));
+    $('home').dataset.bed=installedBed();
+    const sleepBed=installedBed();
+    if(sleepBed)$('home').style.setProperty('--sleep-scene','url("assets/sleep-'+sleepBed+'-curled.webp")');
+    else $('home').style.removeProperty('--sleep-scene');
     const tub=installedBath();
     $('wash').dataset.furnishing=tub;
     const washSuffix=tub==='base-bath'?'':'-'+tub;
@@ -344,9 +358,11 @@
     }
     const item=figure.hasAttribute('data-wardrobe')&&wares.find(ware=>ware.id===hat);
     actor.alt=item?baseLabel+' · '+item.name:baseLabel;
-    if(saved.night&&showWardrobe&&canSleep()){
-      const furniture=placed.has('settee')?'settee':'bed';
-      home.style.setProperty('--fitted-sleep','url("'+portraits+'sleep-'+furniture+'-'+stage+'-'+hat+'.webp")');
+    const furniture=installedBed();
+    // Only fetch the current small sleep layer; keep age and headwear in data-saving mode.
+    const sleepLayer=saved.night&&canSleep()&&(hat||stage!=='kit');
+    if(sleepLayer){
+      home.style.setProperty('--fitted-sleep','url("'+portraits+'sleep-'+furniture+'-'+stage+'-'+(hat||'bare')+'.webp")');
     }else{
       home.style.removeProperty('--fitted-sleep');
     }
@@ -360,7 +376,7 @@
     home.dataset.kitchenFinish=wallpaper?(cabinet?'furnished':'wallpaper'):(cabinet?'cabinet':'plain');
     home.classList.toggle('preview-kitchen',preview?.room==='kitchen');
     refreshKitchenArtwork();
-    const showSettee=preview?.id==='settee'||(preview?.id!=='bed'&&placed.has('settee'));
+    const shownBed=beds.includes(preview?.id)?preview.id:installedBed();
     $('starter-chest').classList.toggle('upgraded',shown('chest'));
     bathPreview.hidden=preview?.room!=='bathroom';
     bathPreview.classList.toggle('has-bath-tile',shown('bath-tile'));
@@ -376,9 +392,7 @@
     vessel.alt=wares.find(w=>w.id===tub).name;
     vessel.classList.toggle('upgraded',tub==='bath');
     vessel.dataset.furnishing=tub;
-    const decor=wares.filter(w=>!w.room&&(w.id==='bed'||w.id==='settee')&&
-      (placed.has(w.id)||preview?.id===w.id)&&
-      (w.id!=='bed'||!showSettee)&&(w.id!=='settee'||showSettee));
+    const decor=wares.filter(w=>w.id===shownBed);
     $('room-decor').replaceChildren(...decor.map(w=>{
       const img=new Image();img.loading='lazy';img.src='assets/'+(w.replaces?'room-':'shop-')+w.id+'.webp';img.alt='';img.dataset.furnishing=w.id;return img;
     }));
@@ -428,7 +442,7 @@
     return missing?'Ещё '+missing+' '+leafWord(missing):'Можно купить';
   }
   function furnitureGoal(){
-    const current=placed.has('settee')?'Диван у окна':placed.has('bed')?'Лежанка':'без лежанки';
+    const current=wares.find(w=>w.id===installedBed())?.name??'без лежанки';
     const next=wares.filter(w=>w.group==='decor'&&!isOwned(w.id)).sort((a,b)=>a.price-b.price)[0];
     const summary='Место для сна: '+current+'. ';
     return {
@@ -485,7 +499,7 @@
   $('bed-goal-later').onclick=dismissBedGoal;
   function purchasePreview(){return activateWare(preview);}
   function activateWare(w){
-    if(!w||(!isOwned(w.id)&&saved.leaves<w.price))return false;
+    if(saved.night||!w||(!isOwned(w.id)&&saved.leaves<w.price))return false;
     const previous={leaves:saved.leaves,hat:saved.hat,owned:[...owned],placed:[...placed]};
     const purchased=!isOwned(w.id);
     if(purchased){saved.leaves-=w.price;owned.add(w.id);}
@@ -497,8 +511,7 @@
     }
     else if(placed.has(w.id))placed.delete(w.id);
     else {
-      if(w.id==='bed')placed.delete('settee');
-      if(w.id==='settee')placed.delete('bed');
+      if(beds.includes(w.id))beds.forEach(id=>placed.delete(id));
       placed.add(w.id);
     }
     saved.owned=[...owned];saved.placed=[...placed];

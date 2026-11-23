@@ -1,6 +1,6 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '37';
+const version = prefix + '38';
 const base = new URL(self.registration.scope);
 const shell = [
   'index.html','base.css','show.css','visitor.css','park-and-chest.css','vendor/park-menu/menu.css','vendor/park-menu/menu.js','visitor-theme.js','vendor/ibm-plex-sans/IBMPlexSans.ttf','vendor/leaflet/leaflet.css','vendor/leaflet/leaflet.js',
@@ -21,6 +21,7 @@ const shell = [
   ...[0,1,2,3,4].map(id=>'assets/piece-'+id+'.webp'),
   'assets/shop-wallpaper.webp','assets/shop-kitchen-cabinet.webp','assets/shop-bath-tile.webp',
   'assets/sleep-bed-curled.webp','assets/sleep-settee-curled.webp',
+  ...['willow','oak','daybed'].flatMap(id=>['assets/shop-bed-'+id+'.webp','assets/room-bed-'+id+'.webp','assets/sleep-bed-'+id+'-curled.webp']),
   'assets/pet-kit.webp','assets/pet-young.webp','assets/pet-adult.webp',
   'assets/pet-mood-sleepy.webp','assets/pet-mood-hungry.webp','assets/pet-mood-dirty.webp','assets/pet-mood-lonely.webp'
 ];
@@ -75,6 +76,12 @@ self.addEventListener('fetch',event=>{
   event.respondWith((async()=>{
     const cache=await caches.open(version);
     const key=page?new URL('index.html',base):req;
+    // Selected appearance layers are immutable within this worker version.
+    // Reuse only layers the player has actually viewed; never prefetch the collection.
+    if(path.startsWith('assets/fallback-wardrobe/')){
+      const selected=await cache.match(key);
+      if(selected)return selected;
+    }
     try {
       const response=await fetch(req);
       if(response.ok && path==='map-alignment.json'){

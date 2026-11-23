@@ -360,7 +360,10 @@
 #home:not(.night,.in-kitchen) .chest{right:5%;bottom:max(121px,19%);width:clamp(76px,25%,108px)}
 #home:not(.night,.in-kitchen) #room-decor [data-furnishing=bed]{left:4%;bottom:22%;width:33%}
 #home:not(.night,.in-kitchen) #room-decor [data-furnishing=settee]{top:auto;left:1%;bottom:19%;width:38%}
+#home:not(.night,.in-kitchen) #room-decor :is([data-furnishing=bed-willow],[data-furnishing=bed-oak],[data-furnishing=bed-daybed]){top:auto;left:2%;bottom:30%;width:44%;filter:none;clip-path:none}
+#home:not(.night,.in-kitchen) #room-decor [data-furnishing=bed-willow]{left:3%;bottom:30%;width:40%}
 #home:not(.night,.in-kitchen) #aki-sleep{left:8%;top:auto;bottom:20%;display:grid;align-items:center}
+#home[data-bed^="bed-"]:not(.night,.in-kitchen) #aki-sleep{left:2%;bottom:34%;width:44%;height:12%}
 #home:not(.night,.in-kitchen) #aki-sleep[hidden]{display:none}
 #home:not(.night,.in-kitchen) #rope-ball{left:38%;top:auto;bottom:15%}
 #home #rope-ball { pointer-events:auto; border:0; padding:0; background:none; touch-action:manipulation; }

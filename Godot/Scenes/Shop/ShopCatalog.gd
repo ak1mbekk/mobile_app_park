@@ -2,8 +2,9 @@ extends RefCounted
 
 const BED_PRICE := 5
 const HATS := ["cap", "ranger", "crown"]
+const BEDS := ["bed", "bed-willow", "settee", "bed-oak", "bed-daybed"]
 const BATHS := ["base-bath", "bath-carved", "bath", "bath-copper", "bath-faience"]
-const FURNITURE := ["bed", "cushion", "lantern", "chest", "settee", "base-bath", "bath-carved", "bath", "bath-copper", "bath-faience", "wallpaper", "bath-tile", "kitchen-cabinet"]
+const FURNITURE := ["bed", "bed-willow", "bed-oak", "bed-daybed", "cushion", "lantern", "chest", "settee", "base-bath", "bath-carved", "bath", "bath-copper", "bath-faience", "wallpaper", "bath-tile", "kitchen-cabinet"]
 
 # The standalone catalog mirrors public/demo/home.js. Hosted play receives its catalog from the browser.
 const ITEMS := {
@@ -11,6 +12,9 @@ const ITEMS := {
     "ranger": {"name": "Шляпа следопыта", "tier": "Редкая", "price": 30},
     "crown": {"name": "Янтарная корона", "tier": "Эпическая", "price": 80},
     "bed": {"name": "Лежанка", "tier": "Обычная", "price": BED_PRICE},
+    "bed-willow": {"name": "Плетёное гнездо", "tier": "Обычное", "price": 20, "replaces": "место для сна"},
+    "bed-oak": {"name": "Резная лежанка", "tier": "Эпическая", "price": 70, "replaces": "место для сна"},
+    "bed-daybed": {"name": "Черничная кушетка", "tier": "Легендарная", "price": 110, "replaces": "место для сна"},
     "cushion": {"name": "Вышитая подушка", "tier": "Обычная", "price": 15},
     "lantern": {"name": "Фонарь лесника", "tier": "Редкий", "price": 35},
     "chest": {"name": "Дубовый сундук", "tier": "Эпический", "price": 75},
@@ -43,6 +47,14 @@ static func growth_hint(xp: int) -> String:
     if xp < 270:
         return "Юный · уровень %d · до взрослого: %d XP (ур. 10)" % [level, 270 - xp]
     return "Взрослый · уровень %d · все 3 ступени роста открыты" % level
+
+
+static func bed_in_use(placed: Array) -> String:
+    # Preserve the visible settee from legacy saves with both original beds.
+    for id: String in ["bed-daybed", "bed-oak", "settee", "bed-willow", "bed"]:
+        if placed.has(id):
+            return id
+    return ""
 
 
 static func bath_in_use(placed: Array) -> String:
@@ -80,10 +92,9 @@ static func next_furniture(owned: Array) -> String:
 
 static func furniture_goal(owned: Array, placed: Array, leaves: int) -> String:
     var current := "без лежанки"
-    if placed.has("settee"):
-        current = "Диван у окна"
-    elif placed.has("bed"):
-        current = "Лежанка"
+    var bed := bed_in_use(placed)
+    if not bed.is_empty():
+        current = ITEMS[bed].name
     var next := next_furniture(owned)
     var summary := "Место для сна: " + current + ". "
     if next.is_empty():

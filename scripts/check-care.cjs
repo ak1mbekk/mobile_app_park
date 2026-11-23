@@ -122,18 +122,18 @@ const { chromium } = require('playwright');
     await page.locator('#wash.clean').waitFor();
     await page.mouse.up();
     assert.match(await page.locator('#wash').evaluate(e=>getComputedStyle(e).backgroundImage),/clean-bath/);
-    async function previewRenovation(label){
+    async function previewRenovation(id){
       await page.locator('#shop-open').click();
       await page.locator('[data-shop-group="decor"]').click();
-      await ware(label).click();
+      await page.locator('#shop-list button[data-ware="'+id+'"]').click();
     }
     await restore({onboardingDone:true,leaves:0,owned:['bed','settee','bath'],placed:['bed','settee','bath']},'home');
-    await previewRenovation('Лежанка');
+    await previewRenovation('bed');
     assert.equal(await page.locator('#shop-confirm').textContent(),'Поставить');
     await page.locator('#shop-cancel').click();
     await page.locator('#shop-close').click();
     assert.deepEqual((await stats()).placed.sort(),['bath','settee']);
-    await previewRenovation('Лежанка');
+    await previewRenovation('bed');
     await page.locator('#shop-confirm').click();
     await page.reload();
     assert.deepEqual((await stats()).placed.sort(),['bath','bed']);
@@ -146,18 +146,18 @@ const { chromium } = require('playwright');
         return getComputedStyle(room,pseudo).backgroundImage.includes(file);
       },{id,file,pseudo});
     }
-    await previewRenovation('Обои для кухни');
+    await previewRenovation('wallpaper');
     await waitForBackdrop('home','kitchen-wallpaper.webp','::before');
     assert.equal((await stats()).leaves,80);
     await page.locator('#shop-confirm').click();
     await page.locator('#kitchen-back').click();
-    await previewRenovation('Мятный кухонный шкаф');
+    await previewRenovation('kitchen-cabinet');
     await waitForBackdrop('home','kitchen-furnished.webp','::before');
     await page.locator('#shop-confirm').click();
     await page.reload();
     await waitForBackdrop('home','kitchen-furnished.webp','::before');
     await page.locator('#kitchen-back').click();
-    await previewRenovation('Плитка для ванной');
+    await previewRenovation('bath-tile');
     await waitForBackdrop('bath-preview-room','wash-tile-room.webp');
     await page.locator('#shop-confirm').click();
     await page.reload();

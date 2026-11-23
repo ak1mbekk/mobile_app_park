@@ -4,6 +4,8 @@
 
 Файлы пяти купелей лежат в `bath-toys`. Для купания используется один предмет за раз. Сделанные в Blender варианты содержат собственные текстуры. Воду, пену и опорную точку Ричи задаёт сцена ванной в Godot. [Деревянная](bath-toys/wooden-wash-tub.glb) · [Резная дубовая](bath-toys/bath-carved.glb) · [Эмалированная](bath-toys/enamel-bath.glb) · [Медная](bath-toys/bath-copper.glb) · [Фаянсовая](bath-toys/bath-faience.glb) · [Лист из игровой камеры](../docs/showcase/room-studies/godot/five-tubs.webp).
 
+Пять спальных мест доступны как отдельные модели со встроенными текстурами. [Лежанка](home/fleece-bed.glb) · [Плетёное гнездо](home/bed-willow.glb) · [Диван у окна](home/window-settee.glb) · [Резная лежанка](home/bed-oak.glb) · [Черничная кушетка](home/bed-daybed.glb). Диван экспортирован из существующей [сцены Godot](../Godot/Scenes/Props/Furniture/Settee.tscn). [Сравнение в игровой камере](../docs/showcase/room-studies/godot/five-beds-preview.jpg).
+
 ## Как собрать сцены
 
 | Сцена | Основа | Отдельные элементы и замены |

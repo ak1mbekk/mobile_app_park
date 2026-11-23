@@ -4,6 +4,7 @@ extends SceneTree
 const RUNS := 30
 const FPS := 60.0
 const BASE_SEED := 20261123
+const CATALOG := preload("res://Scenes/Shop/ShopCatalog.gd")
 const SCENES := {
     "pairs": preload("res://Scenes/Games/Pairs.tscn"),
     "match": preload("res://Scenes/Games/MatchThree.tscn"),
@@ -50,17 +51,29 @@ func _run() -> void:
         board.queue_free()
         await process_frame
         print("PACE_PROGRESS " + game + " " + JSON.stringify(_summary(samples[game])))
+    var prices: Array[int] = []
+    for item: Dictionary in CATALOG.ITEMS.values():
+        if item.price > 0 and not prices.has(item.price):
+            prices.append(item.price)
+    prices.sort()
+    var bed_collection := {}
     var targets := {}
     for mode in ["pairs", "match", "orchard", "alternate"]:
         targets[mode] = {}
-        for price in [5, 10, 15, 20, 25, 30, 35, 40, 55, 75, 80, 85, 120]:
-            targets[mode][str(price)] = _accumulate(mode, price, false)
-        targets[mode]["55_after_bed"] = _accumulate(mode, 55, true)
-        targets[mode]["120_after_bed"] = _accumulate(mode, 120, true)
+        for price in prices:
+            targets[mode][str(price)] = _accumulate(mode, price)
+        targets[mode]["55_after_bed"] = _accumulate(mode, 55, [CATALOG.BED_PRICE])
+        targets[mode]["120_after_bed"] = _accumulate(mode, 120, [CATALOG.BED_PRICE])
+        var previous_prices: Array = []
+        bed_collection[mode] = {}
+        for id: String in CATALOG.BEDS:
+            var price: int = CATALOG.ITEMS[id].price
+            bed_collection[mode][id] = _accumulate(mode, price, previous_prices)
+            previous_prices.append(price)
     print("PACE_RESULT " + JSON.stringify({"runs": RUNS, "fps": FPS, "seed": BASE_SEED,
         "samples": samples, "summary": {
             "pairs": _summary(samples.pairs), "match": _summary(samples.match),
-            "orchard": _summary(samples.orchard)}, "targets": targets}))
+            "orchard": _summary(samples.orchard)}, "targets": targets, "bed_collection": bed_collection}))
     quit()
 
 
@@ -212,25 +225,25 @@ func _distribution(values: Array) -> Dictionary:
         "max": sorted[-1]}
 
 
-func _accumulate(mode: String, price: int, after_bed: bool) -> Dictionary:
+func _accumulate(mode: String, price: int, previous_prices: Array = []) -> Dictionary:
     var rng := RandomNumberGenerator.new()
-    rng.seed = BASE_SEED + price + int(after_bed) * 10000
+    rng.seed = BASE_SEED + price + int(not previous_prices.is_empty()) * 10000
     var times := []
     var counts := []
     for _trial in 1000:
         var leaves := 0
         var elapsed := 0.0
         var count := 0
-        var bought_bed := not after_bed
-        while leaves < price or not bought_bed:
+        var purchased := 0
+        while purchased < previous_prices.size() or leaves < price:
             var game: String = ["pairs", "match", "orchard"][count % 3] if mode == "alternate" else mode
             var record: Dictionary = samples[game][rng.randi_range(0, RUNS - 1)]
             leaves += maxi(5, int(record.leaves)) if count == 0 else int(record.leaves)
             elapsed += float(record.seconds) + 5.0 # Open/select next game; part of the stated policy.
             count += 1
-            if not bought_bed and leaves >= 5:
-                leaves -= 5
-                bought_bed = true
+            while purchased < previous_prices.size() and leaves >= previous_prices[purchased]:
+                leaves -= int(previous_prices[purchased])
+                purchased += 1
                 elapsed += 10.0 # Shop purchase + return, a timing assumption.
             assert(count < 10000)
         times.append(elapsed)

@@ -20,6 +20,10 @@
 [ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-bath-tile.webp" id="14"]
 [ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-kitchen-cabinet.webp" id="15"]
 
+[ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-bed-willow.webp" id="BedWillow"]
+[ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-bed-oak.webp" id="BedOak"]
+[ext_resource type="Texture2D" path="res://Scenes/Shop/Art/shop-bed-daybed.webp" id="BedDaybed"]
+
 [ext_resource type="PackedScene" path="res://Scenes/Shop/ShopRow.tscn" id="Row"]
 [ext_resource type="Texture2D" path="res://Scenes/Games/Art/game-back.svg" id="Arrow"]
 
@@ -306,6 +310,21 @@ metadata/picture = ExtResource("6")
 unique_name_in_owner = true
 layout_mode = 2
 metadata/picture = SubResource("Bed")
+
+[node name="bed-willow" parent="Catalog/Contents/Scroll/Lists/FurnitureList" instance=ExtResource("Row")]
+unique_name_in_owner = true
+layout_mode = 2
+metadata/picture = ExtResource("BedWillow")
+
+[node name="bed-oak" parent="Catalog/Contents/Scroll/Lists/FurnitureList" instance=ExtResource("Row")]
+unique_name_in_owner = true
+layout_mode = 2
+metadata/picture = ExtResource("BedOak")
+
+[node name="bed-daybed" parent="Catalog/Contents/Scroll/Lists/FurnitureList" instance=ExtResource("Row")]
+unique_name_in_owner = true
+layout_mode = 2
+metadata/picture = ExtResource("BedDaybed")
 
 [node name="cushion" parent="Catalog/Contents/Scroll/Lists/FurnitureList" instance=ExtResource("Row")]
 unique_name_in_owner = true

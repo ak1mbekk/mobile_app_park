@@ -10,7 +10,8 @@ const PREVIEW_ROOMS := {
     &"bed-preview": MAIN, &"settee-preview": MAIN, &"bath-preview": BATH, &"kitchen-preview": KITCHEN,
 }
 const FURNITURE_PREVIEWS := {
-    "bed": &"bed-preview", "settee": &"settee-preview", "bath": &"bath-preview",
+    "bed": &"bed-preview", "settee": &"settee-preview",
+    "bed-willow": &"bed-preview", "bed-oak": &"bed-preview", "bed-daybed": &"bed-preview", "bath": &"bath-preview",
     "base-bath": &"bath-preview", "bath-carved": &"bath-preview", "bath-copper": &"bath-preview", "bath-faience": &"bath-preview",
     "wallpaper": &"kitchen-preview", "kitchen-cabinet": &"kitchen-preview", "bath-tile": &"bath-preview",
 }
@@ -55,6 +56,7 @@ const SHOP_SAVE_ERROR := "Не удалось сохранить изменен�
 @onready var day_ambient_color := ambience.environment.ambient_light_color
 @onready var night_lamp_energy := night_lamp.light_energy
 @onready var main_camera := room_camera.global_transform
+@onready var sleep_camera := main_camera.translated_local(Vector3(0.045, -0.10, 1.75))
 
 var active_mode: StringName = &"home"
 var night := false
@@ -70,6 +72,7 @@ var web_state_callback: JavaScriptObject
 var web_interaction_callback: JavaScriptObject
 var web_navigation_callback: JavaScriptObject
 var pose_tween: Tween
+var sleep_camera_tween: Tween
 var sleep_moving := false
 var bath_moving := false
 var tableware_moving := false
@@ -88,6 +91,8 @@ var native_starter_round_rewarded := false
 var hosted_bed_goal := {}
 var has_sleep_furniture := false
 var settee_in_use := false
+var sleep_furniture := ""
+const BED_NODES := {"bed": "Лежанка", "settee": "Диван", "bed-willow": "Плетёное гнездо", "bed-oak": "Резная лежанка", "bed-daybed": "Черничная кушетка"}
 var native_needs := {"food": 50.0, "clean": 50.0, "energy": 50.0, "joy": 50.0}
 var native_needs_updated := 0.0
 var native_sleep_start_energy := -1.0
@@ -526,10 +531,9 @@ func _commit_native_ware(id: String) -> bool:
     elif native_placed.has(id):
         native_placed.erase(id)
     else:
-        if id == "bed":
-            native_placed.erase("settee")
-        elif id == "settee":
-            native_placed.erase("bed")
+        if id in SHOP_CATALOG.BEDS:
+            for bed_id: String in SHOP_CATALOG.BEDS:
+                native_placed.erase(bed_id)
         native_placed.append(id)
     if not _save_home():
         native_leaves = leaves_before
@@ -606,8 +610,9 @@ func _bed_goal() -> Dictionary:
         return hosted_bed_goal
     if night or has_sleep_furniture or native_bed_goal_dismissed:
         return {}
-    if native_owned.has("bed"):
-        return {"message": "Поставь лежанку, чтобы енот мог отдохнуть.", "label": "Поставить лежанку", "play": false}
+    for id: String in SHOP_CATALOG.BEDS:
+        if native_owned.has(id):
+            return {"message": "Поставь место для сна из коллекции, чтобы енот мог отдохнуть.", "label": "Поставить: " + SHOP_CATALOG.ITEMS[id].name, "play": false, "id": id}
     var message := pet_name + " хочет лежанку."
     if native_leaves >= BED_PRICE:
         return {"message": message, "label": "Купить лежанку за %d листиков" % BED_PRICE, "play": false}
@@ -624,7 +629,7 @@ func _take_bed_goal() -> void:
             _launch_games("pairs")
     elif hosted:
         _notify_host("buy-bed")
-    elif not _commit_native_ware("bed"):
+    elif not _commit_native_ware(str(goal.get("id", "bed"))):
         _set_status(SHOP_SAVE_ERROR)
 
 func _dismiss_bed_goal() -> void:
@@ -729,11 +734,21 @@ func _pose_in(place: StringName) -> Transform3D:
     if place == BATH:
         return bath_room.get_node("Место для Ричи").global_transform.scaled_local(awake_pose.basis.get_scale())
     var pose := idle_pose
-    if settee_in_use:
+    if sleep_furniture in ["bed-willow", "bed-oak", "bed-daybed"]:
+        pose.origin = _bed_marker("FloorPose").global_position
+    elif settee_in_use:
         pose.origin = bedroom.get_node("Место на полу у дивана").position
     return pose
 
+func _bed_marker(marker: String) -> Node3D:
+    return bedroom.get_node(BED_NODES[sleep_furniture]).get_node(marker)
+
+func _raised_bed() -> bool:
+    return sleep_furniture in ["settee", "bed-oak", "bed-daybed"]
+
 func _sleep_pose() -> Transform3D:
+    if sleep_furniture in ["bed-willow", "bed-oak", "bed-daybed"]:
+        return _bed_marker("SleepPose").global_transform.scaled_local(awake_pose.basis.get_scale())
     var marker := "Поза сна" if settee_in_use else "Поза сна на лежанке"
     return bedroom.get_node(marker).transform.scaled_local(awake_pose.basis.get_scale())
 
@@ -745,8 +760,19 @@ func _face_point(pose: Transform3D, point: Vector3) -> Transform3D:
 func _play_travel_animation(clip: StringName, start: float, speed: float, blend: float) -> void:
     richi.player.play_section(clip, start, -1.0, blend, speed)
 
+func _move_sleep_camera(sleep_view: bool, animate := false) -> void:
+    if sleep_camera_tween:
+        sleep_camera_tween.kill()
+    var target: Transform3D = sleep_camera if sleep_view else main_camera
+    if animate:
+        sleep_camera_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+        sleep_camera_tween.tween_property(room_camera, "global_transform", target, 0.65)
+    else:
+        room_camera.global_transform = target
+
 func _move_between_floor_and_bed() -> void:
     sleep_moving = true
+    _move_sleep_camera(night, true)
     if pose_tween:
         pose_tween.kill()
     richi.stop_purchase_celebration()
@@ -757,7 +783,7 @@ func _move_between_floor_and_bed() -> void:
     var floor_pose := _day_pose()
     var settled := _sleep_pose()
     # On the low bed a single step reaches the cushion. The settee has a raised lip.
-    if not settee_in_use:
+    if not _raised_bed():
         var low_bed_motion := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
         if night:
             low_bed_motion.tween_callback(_play_travel_animation.bind(&"Walking", 0.08, 1.05, 0.15))
@@ -771,7 +797,8 @@ func _move_between_floor_and_bed() -> void:
             low_bed_motion.tween_method(_move_along_arc.bind(settled, floor_pose, 0.045, 1.0), 0.0, 1.0, 0.68)
         low_bed_motion.tween_callback(_finish_sleep_movement.bind(true))
         return
-    var at_edge := Transform3D(floor_pose.basis, bedroom.get_node("Подход к дивану").position)
+    var edge_position: Vector3 = _bed_marker("Approach").global_position if sleep_furniture in ["bed-oak", "bed-daybed"] else bedroom.get_node("Подход к дивану").position
+    var at_edge := Transform3D(floor_pose.basis, edge_position)
     var walking_out := _face_point(floor_pose, at_edge.origin)
     var walking_in := _face_point(at_edge, floor_pose.origin)
     var inward := _face_point(at_edge, settled.origin)
@@ -846,7 +873,13 @@ func _set_mode(mode: StringName, animate := true, position_actor := true) -> voi
     var sleeping := mode == &"sleep"
     var previewing := PREVIEW_ROOMS.has(mode)
     var visible_room: StringName = PREVIEW_ROOMS.get(mode, location)
-    if previewing or PREVIEW_ROOMS.has(previous):
+    var bed_view := mode in [&"sleep", &"bed-preview", &"settee-preview"]
+    if bed_view:
+        _move_sleep_camera(true)
+    elif previous in [&"sleep", &"bed-preview", &"settee-preview"]:
+        _move_sleep_camera(false)
+        room_camera.global_transform = _camera_in(visible_room)
+    elif previewing or PREVIEW_ROOMS.has(previous):
         room_camera.global_transform = _camera_in(visible_room)
     for scenery: Node3D in $Комната.get_children().filter(func(node): return node.is_in_group("Архитектура")):
         scenery.visible = visible_room == MAIN and scenery.is_in_group("Основа веранды")
@@ -907,7 +940,7 @@ func _refresh_controls() -> void:
     %Play.visible = free and in_main
     %ToyBall.visible = free and in_main and ball_owned
     %Shop.visible = free and in_main and not moving and shop != null
-    %Sleep.visible = in_main and has_sleep_furniture and (night or free)
+    %Sleep.visible = in_main and (has_sleep_furniture or night) and (night or free)
     %Sleep.accessibility_name = "Разбудить" if night else "Уложить спать"
     %Back.hide()
     %MainRoom.set_pressed_no_signal(in_main)
@@ -927,7 +960,9 @@ func _position_stations() -> void:
     if not camera:
         return
     var sleep_target: Node3D = stations.get_node("Метка лежанки")
-    if settee_in_use:
+    if sleep_furniture in ["bed-willow", "bed-oak", "bed-daybed"]:
+        sleep_target = _bed_marker("WakeTarget")
+    elif settee_in_use:
         sleep_target = bedroom.get_node("Метка пробуждения на диване")
     elif night:
         sleep_target = bedroom.get_node("Метка пробуждения")
@@ -950,12 +985,14 @@ func _position_stations() -> void:
 func _apply_furniture(furniture: Dictionary) -> void:
     var placed: Array = furniture.get("placed", [])
     var preview := str(furniture.get("preview", ""))
-    has_sleep_furniture = placed.has("bed") or placed.has("settee")
-    var had_settee := settee_in_use
-    settee_in_use = preview == "settee" or (preview != "bed" and placed.has("settee"))
+    var installed := SHOP_CATALOG.bed_in_use(placed)
+    has_sleep_furniture = not installed.is_empty()
+    var previous_bed := sleep_furniture
+    sleep_furniture = preview if preview in SHOP_CATALOG.BEDS else installed
+    settee_in_use = sleep_furniture == "settee"
     var selected_bath := preview if preview in SHOP_CATALOG.BATHS else SHOP_CATALOG.bath_in_use(placed)
-    $Спальня/Диван.visible = settee_in_use
-    $Спальня/Лежанка.visible = not settee_in_use and (preview == "bed" or placed.has("bed"))
+    for id: String in BED_NODES:
+        bedroom.get_node(BED_NODES[id]).visible = sleep_furniture == id
     bathroom.show_appearance(selected_bath)
     kitchen.get_node("Архитектура/Обои").visible = preview == "wallpaper" or placed.has("wallpaper")
     bath_room.get_node("Архитектура/Плитка").visible = preview == "bath-tile" or placed.has("bath-tile")
@@ -971,7 +1008,7 @@ func _apply_furniture(furniture: Dictionary) -> void:
         return
     var mode: StringName = FURNITURE_PREVIEWS.get(preview, &"home")
     if mode == active_mode:
-        if mode == &"home" and had_settee != settee_in_use and not _moving_between_places():
+        if mode == &"home" and previous_bed != sleep_furniture and not _moving_between_places():
             _set_mode(&"home", false)
         return
     if mode != &"home":
@@ -1027,6 +1064,10 @@ func _load_native_shop(save: ConfigFile) -> void:
         for id: String in SHOP_CATALOG.FURNITURE:
             if native_owned.has(id) and placed.has(id):
                 native_placed.append(id)
+    var installed := SHOP_CATALOG.bed_in_use(native_placed)
+    for id: String in SHOP_CATALOG.BEDS:
+        if id != installed:
+            native_placed.erase(id)
     native_hat = str(save.get_value("home", "hat", ""))
     if native_hat not in SHOP_CATALOG.HATS or not native_owned.has(native_hat):
         native_hat = ""

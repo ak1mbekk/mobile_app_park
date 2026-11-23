@@ -3,6 +3,10 @@
 [ext_resource type="PackedScene" path="res://Scenes/Props/Furniture/Settee.tscn" id="Settee"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/TrailHouse/Furniture/FleeceBed.tscn" id="FleeceBed"]
 
+[ext_resource type="PackedScene" path="res://Scenes/Props/Furniture/WillowBed.tscn" id="WillowBed"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Furniture/OakBed.tscn" id="OakBed"]
+[ext_resource type="PackedScene" path="res://Scenes/Props/Furniture/BlueDaybed.tscn" id="BlueDaybed"]
+
 [sub_resource type="StandardMaterial3D" id="Wood"]
 albedo_color = Color(0.38, 0.19, 0.08, 1)
 roughness = 0.82
@@ -32,7 +36,7 @@ position = Vector3(0.1275, 0.206, 0.52)
 rotation = Vector3(0, -0.84, 0)
 
 [node name="Поза сна на лежанке" type="Marker3D" parent="."]
-position = Vector3(-0.0805, 0.059, 0.715)
+position = Vector3(-0.0715, 0.059, 0.706)
 rotation = Vector3(0, -0.84, 0)
 
 [node name="Метка пробуждения" type="Marker3D" parent="."]
@@ -58,6 +62,18 @@ scale = Vector3(0.63, 0.63, 0.63)
 visible = false
 
 [node name="Диван" parent="." instance=ExtResource("Settee")]
+position = Vector3(0.1425, 0, 0.52)
+visible = false
+
+[node name="Плетёное гнездо" parent="." instance=ExtResource("WillowBed")]
+position = Vector3(-0.0655, 0, 0.77)
+visible = false
+
+[node name="Резная лежанка" parent="." instance=ExtResource("OakBed")]
+position = Vector3(0.1425, 0, 0.52)
+visible = false
+
+[node name="Черничная кушетка" parent="." instance=ExtResource("BlueDaybed")]
 position = Vector3(0.1425, 0, 0.52)
 visible = false
 
