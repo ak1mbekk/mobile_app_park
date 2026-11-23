@@ -11,6 +11,7 @@ var pose: SkeletonModifier3D
 var audible := false
 var rumble := AudioStreamPlayer.new()
 var sigh := AudioStreamPlayer.new()
+var sleep_sigh := AudioStreamPlayer.new()
 var air := Node3D.new()
 var odor := ImmediateMesh.new()
 var odor_material := StandardMaterial3D.new()
@@ -36,9 +37,17 @@ func attach(pet: Node3D, gesture_modifier: SkeletonModifier3D) -> void:
     sigh.volume_db = -19.0
     add_child(rumble)
     add_child(sigh)
+    sleep_sigh.volume_db = -23.0
+    add_child(sleep_sigh)
     add_child(air)
     _create_air_effects()
     air.hide()
+
+func settle_to_sleep() -> void:
+    if not sleep_sigh.stream:
+        sleep_sigh.stream = _make_breath(true)
+    if audible:
+        sleep_sigh.play()
 
 func start_reaction(kind: StringName) -> void:
     if not actor.resting_at_home or actor.celebrating_purchase:
@@ -85,7 +94,7 @@ func _process(delta: float) -> void:
     var dirty: bool = showing and actor.need_amount("clean") < 30.0
     var sleepy: bool = showing and actor.need_amount("energy") < 30.0
     var joy: float = actor.need_amount("joy")
-    var almost_crying := showing and joy < 30.0
+    var very_sad := showing and joy < 30.0
     var happy := showing and joy > 80.0
     var sad := showing and (joy < 50.0 or (hungry and not happy))
     var expressive_idle := idle and available and not observing and reaction.is_empty()
@@ -107,7 +116,7 @@ func _process(delta: float) -> void:
     pose.stretch = weight if reaction == WAKE else 0.0
     var mood_target := 0.0
     if expressive_idle and not sleepy:
-        mood_target = -1.0 if almost_crying else -0.62 if joy < 50.0 else 1.0 if happy else 0.0
+        mood_target = -0.75 if very_sad else -0.62 if joy < 50.0 else 1.0 if happy else 0.0
     pose.mood = move_toward(pose.mood, mood_target, delta * (8.0 if not expressive_idle else 3.6))
     var rest_bias := Vector2(0.0, -2.0) if idle else Vector2.ZERO
     if not observing:
@@ -122,9 +131,9 @@ func _process(delta: float) -> void:
     var search := _envelope(since_rumble, 0.02, 0.20, 0.96, 1.40) if hungry else 0.0
     actor.gaze.resting_angles = Vector2(4.5 * sin(since_rumble * 4.8), -0.6) * search
 
-    expression = move_toward(expression, -1.0 if almost_crying else -0.65 if sad else 1.0 if happy else 0.0, delta * 3.8)
+    expression = move_toward(expression, -0.75 if very_sad else -0.65 if sad else 1.0 if happy else 0.0, delta * 3.8)
     eyelid_weight = move_toward(eyelid_weight, maxf(0.40 if sleepy and not observing else 0.0, 0.65 * yawn), delta * 3.3)
-    tear_weight = move_toward(tear_weight, 1.0 if almost_crying else 0.0, delta * 2.0)
+    tear_weight = 0.0
     var mouth_target := 0.33 + 0.25 * absf(belly_motion) if hungry else 0.28 if happy and expressive_idle else 0.0
     mouth_weight = move_toward(mouth_weight, maxf(yawn, mouth_target), delta * 4.0)
     fullness = move_toward(fullness, smoothstep(88.0, 100.0, food), delta * 1.5)

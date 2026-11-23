@@ -96,8 +96,10 @@ const BED_NODES := {"bed": "Лежанка", "settee": "Диван", "bed-willow
 var native_needs := {"food": 50.0, "clean": 50.0, "energy": 50.0, "joy": 50.0}
 var native_needs_updated := 0.0
 var native_sleep_start_energy := -1.0
+@onready var sleep_signals: Control = $Интерфейс/SleepSignals
 
 func _ready() -> void:
+    sleep_signals.home = self
     ambience.environment = ambience.environment.duplicate()
     apple.global_position = kitchen.get_node("Яблоко у миски").global_position
     apple.floor_position = apple.global_position
@@ -142,6 +144,7 @@ func _ready() -> void:
     )
     %Park.visible = hosted
     get_viewport().size_changed.connect(_position_stations)
+    get_viewport().size_changed.connect(_resize_sleep_view)
     %Header.resized.connect(_position_stations)
     _show_room()
     if hosted:
@@ -386,7 +389,7 @@ func _on_washed() -> void:
     bathroom.exit_button.hide()
     richi._set_eyelids(0.45, 0.14)
     if not hosted:
-        _increase_native_need("clean", 55)
+        _increase_native_need("clean", 100)
         _update_native_stats()
         _save_home()
     _notify_host("wash-finished")
@@ -763,12 +766,50 @@ func _play_travel_animation(clip: StringName, start: float, speed: float, blend:
 func _move_sleep_camera(sleep_view: bool, animate := false) -> void:
     if sleep_camera_tween:
         sleep_camera_tween.kill()
-    var target: Transform3D = sleep_camera if sleep_view else main_camera
+    var target: Transform3D = _sleep_closeup() if sleep_view and night and not sleep_moving else sleep_camera if sleep_view else main_camera
     if animate:
         sleep_camera_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
         sleep_camera_tween.tween_property(room_camera, "global_transform", target, 0.65)
     else:
         room_camera.global_transform = target
+
+func _resize_sleep_view() -> void:
+    if night and not sleep_moving:
+        _move_sleep_camera(true)
+        _position_stations()
+
+func _sleep_closeup() -> Transform3D:
+    if not sleep_furniture in BED_NODES:
+        return main_camera
+    var bed: Node3D = bedroom.get_node(BED_NODES[sleep_furniture])
+    var points := PackedVector3Array()
+    for mesh: MeshInstance3D in bed.find_children("*", "MeshInstance3D", true, false):
+        if mesh.mesh:
+            var box := mesh.get_aabb()
+            for corner in 8:
+                points.append(mesh.global_transform * box.get_endpoint(corner))
+    if points.is_empty():
+        return main_camera
+    var bounds := AABB(points[0], Vector3.ZERO)
+    for point in points:
+        bounds = bounds.expand(point)
+    # Frame the complete furniture, including the curled pet above its cushion.
+    var center := bounds.get_center() + Vector3(0, 0.07, 0)
+    var view := Basis.from_euler(Vector3(-0.32, 0, 0))
+    var projection := room_camera.get_camera_projection()
+    var tangent_x := 1.0 / absf(projection.x.x)
+    var tangent_y := 1.0 / absf(projection.y.y)
+    var distance := 0.9
+    for point in points:
+        var local := view.inverse() * (point - center)
+        distance = maxf(distance, local.z + (absf(local.x) + 0.05) / (tangent_x * 0.84))
+        distance = maxf(distance, local.z + (absf(local.y) + 0.20) / (tangent_y * 0.57))
+    # Once curled up, a wide sofa must not determine the pet's size on screen.
+    # Its side arms may leave the frame; the curled body and cushion stay visible.
+    if _raised_bed():
+        distance *= [0.56, 0.60, 0.64][richi.age_stage]
+        center.y += 0.04
+    return Transform3D(view, center + view.z * distance + view.y * 0.025)
 
 func _move_between_floor_and_bed() -> void:
     sleep_moving = true
@@ -841,8 +882,12 @@ func _move_along_arc(progress: float, from: Transform3D, to: Transform3D, lift: 
     richi.transform = pose
 
 func _finish_sleep_movement(curl_started := false) -> void:
+    var approach_camera := room_camera.global_transform
     sleep_moving = false
     _set_mode(&"sleep" if night else &"home", false)
+    if night and curl_started:
+        room_camera.global_transform = approach_camera
+        _move_sleep_camera(true, true)
     if night:
         if not curl_started:
             richi.sleep_on_bed(false)
@@ -1095,7 +1140,10 @@ func _save_home() -> bool:
 func _update_native_stats() -> void:
     var level := 1 + floori(native_xp / 30.0)
     %Stats.text = "Уровень %d  ·  Листья %d" % [level, native_leaves]
+    var previous_age: int = richi.age_stage
     richi.set_age_level(level, growth_mesh)
+    if previous_age != richi.age_stage:
+        _resize_sleep_view()
     if game_room:
         game_room.set_ball_shop(ball_owned, native_leaves >= BALL_PRICE)
     _refresh_controls()
@@ -1106,7 +1154,7 @@ func _advance_native_needs() -> void:
     var now := Time.get_unix_time_from_system()
     if native_needs_updated > 0.0:
         var hours := clampf((now - native_needs_updated) / 3600.0, 0, 48)
-        var rates := {"food": -4.0, "clean": -2.0, "energy": 20.0 if night else -3.0, "joy": -3.0}
+        var rates := {"food": -4.0, "clean": -2.0, "energy": 40.0 if night else -3.0, "joy": -3.0}
         for key in rates:
             native_needs[key] = clampf(native_needs[key] + hours * rates[key], 0, 100)
     native_needs_updated = maxf(now, native_needs_updated)

@@ -77,9 +77,9 @@ func _check_needs() -> void:
     for value in [29.9, 30.0, 30.1, 49.9, 50.0, 50.1, 79.9, 80.0, 80.1, 80.0]:
         _state({"joy": value})
         await create_timer(0.63).timeout
-        var expression := -1.0 if value < 30.0 else -0.65 if value < 50.0 else 1.0 if value > 80.0 else 0.0
+        var expression := -0.75 if value < 30.0 else -0.65 if value < 50.0 else 1.0 if value > 80.0 else 0.0
         _expect(is_equal_approx(_shader("expression"), expression), "Expression follows the mood threshold: %s" % value)
-        _expect(is_equal_approx(_shader("wet_eyes"), 1.0 if value < 30.0 else 0.0), "Tears apply strictly below 30 mood: %s" % value)
+        _expect(is_zero_approx(_shader("wet_eyes")), "Sadness has no tears at any mood: %s" % value)
         if value in [29.9, 49.9, 80.1]:
             await _capture("04-mood-%s" % value)
 

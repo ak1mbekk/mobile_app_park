@@ -70,11 +70,22 @@ func _run() -> void:
         quit(1)
         return
     _open()
+    # Offline recovery uses the same 40/h rate as a live sleeping profile.
+    for sample: Vector2 in [Vector2(0, 2.5), Vector2(50, 1.25), Vector2(0, 2.49)]:
+        cabin.night = true
+        cabin.native_needs.energy = sample.x
+        cabin.native_needs_updated = Time.get_unix_time_from_system() - sample.y * 3600.0
+        cabin._advance_native_needs()
+        _expect(absf(cabin.native_needs.energy - minf(100.0, sample.x + sample.y * 40.0)) < 0.01, "Sleep/offline recovery is 40 energy/hour")
+    cabin.night = false
+    cabin.native_needs_updated = Time.get_unix_time_from_system() + 600.0
     _care("food", 50, 82, 3)
     _care("food", 84, 100, 1)
     _care("food", 100, 100, 0)
-    _care("clean", 45, 100, 3)
-    _care("clean", 50, 100, 2)
+    _care("clean", 0, 100, 3)
+    _care("clean", 45, 100, 1)
+    _care("clean", 50, 100, 1)
+    _care("clean", 99, 100, 0)
     _care("clean", 100, 100, 0)
     _round(50, 10)
     _round(95, 2)

@@ -141,7 +141,7 @@
     const now=Date.now();
     if(!saved.onboardingDone){saved.updated=now;return;}
     const hours=Math.min(48,Math.max(0,(now-saved.updated)/3600000));
-    for(const [key,rate] of Object.entries({food:-4,clean:-2,energy:saved.night?20:-3,joy:-3})){
+    for(const [key,rate] of Object.entries({food:-4,clean:-2,energy:saved.night?40:-3,joy:-3})){
       saved[key]=Math.min(100,Math.max(0,saved[key]+hours*rate));
     }
     saved.updated=Math.max(now,saved.updated);
@@ -216,7 +216,7 @@
       return reachedMaximum;
     },
     stats(){advanceNeeds();return {...saved,level:1+Math.floor(saved.xp/30)};},
-    wash(){if(!saved.night)care('clean',55);},gameReward,buyBall,
+    wash(){if(!saved.night)care('clean',100);},gameReward,buyBall,
     openShop(){if(!saved.night)openShop();},
     outfit(){return preview?.group==='hat'?preview.id:saved.hat;},
     furniture(){return {placed:[...placed],preview:preview?.group==='decor'?preview.id:''};},
@@ -292,7 +292,7 @@
     const stage=saved.xp>=270?'adult':saved.xp>=90?'young':'kit';
     $('home').dataset.age=stage;
     const moodValue=Math.round(saved.joy*100)/100;
-    const mood=saved.energy<30?'sleepy':saved.food<30?'hungry':saved.clean<30?'dirty':moodValue<30?'tearful':moodValue<50?'lonely':moodValue>80?'happy':'content';
+    const mood=saved.energy<30?'sleepy':saved.food<30?'hungry':saved.clean<30?'dirty':moodValue<50?'lonely':moodValue>80?'happy':'content';
     $('pet-figure').dataset.mood=mood;
     $('pet-figure').classList.toggle('dusty', saved.clean<30 && !saved.night);
     $('rope-ball').hidden=!saved.ball||saved.night;
@@ -306,6 +306,7 @@
     $('home').classList.toggle('furnished-floor-bed',placed.has('bed'));
     $('home').dataset.bed=installedBed();
     const sleepBed=installedBed();
+    $('home').dataset.sleepBed=sleepBed||'';
     if(sleepBed)$('home').style.setProperty('--sleep-scene','url("assets/sleep-'+sleepBed+'-curled.webp")');
     else $('home').style.removeProperty('--sleep-scene');
     const tub=installedBath();
@@ -337,8 +338,8 @@
   function paintPet(hat){
     const home=$('home'),figure=$('pet-figure'),actor=$('pet-actor');
     const stage=home.dataset.age,mood=figure.dataset.mood;
-    const feeling={sleepy:'зевает',hungry:'проголодался',dirty:'испачкался',lonely:'скучает',tearful:'вот-вот заплачет',happy:'радуется',content:'доволен'};
-    const pose=mood==='tearful'?'lonely':mood==='happy'?'content':mood;
+    const feeling={sleepy:'зевает',hungry:'проголодался',dirty:'испачкался',lonely:'грустит',happy:'радуется',content:'доволен'};
+    const pose=mood==='happy'?'content':mood;
     const bare='assets/pet-'+(pose!=='content'&&stage==='kit'?'mood-'+pose:stage)+'.webp';
     const portraits='assets/fallback-wardrobe/';
     const showWardrobe=hat&&!navigator.connection?.saveData;

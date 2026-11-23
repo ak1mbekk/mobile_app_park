@@ -38,13 +38,28 @@ async function main() {
       assert.equal(await page.locator('#scrub').evaluate(meter => meter.value), 0, 'Moving in from the wall does not lather the coat');
       for (let stroke = 0; stroke < 16; stroke++) await send('touchMove', stroke % 2 ? left : right, chestY);
       await send('touchEnd');
+      assert.ok(await sponge.isVisible(), 'The finished sponge stays on its stand');
       const jug = await page.locator('#rinse').boundingBox();
       assert.ok(jug, 'A drag across the visible coat makes the pitcher available');
       await send('touchStart', jug.x + jug.width / 2, jug.y + jug.height / 2);
-      await send('touchMove', left, fur.y - 18);
+      await send('touchMove', fur.x - 70, fur.y - 18);
       // Two animation frames let the game evaluate this miss while the pitcher is held.
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       assert.equal(await page.locator('#wash').evaluate(el => el.classList.contains('rinsing')), false);
+      assert.equal(await page.locator('#scrub').evaluate(el=>el.value),100,'A visible stream missing the coat removes no foam');
+      await send('touchMove',fur.x+fur.width*.30,fur.y+fur.height*.35);
+      await page.waitForTimeout(130);
+      const firstHit=await page.locator('.bath-water').evaluate(el=>({x:Number(el.dataset.hitX),y:Number(el.dataset.hitY)}));
+      await send('touchMove',fur.x+fur.width*.75,fur.y+fur.height*.65);
+      await page.waitForTimeout(130);
+      const nextHit=await page.locator('.bath-water').evaluate(el=>({x:Number(el.dataset.hitX),y:Number(el.dataset.hitY)}));
+      assert.ok(nextHit.x>firstHit.x+10&&nextHit.y>firstHit.y+10,'Water can rinse different horizontal and vertical parts');
+      await send('touchEnd');
+      const paused=await page.locator('#scrub').evaluate(el=>el.value);
+      await page.waitForTimeout(250);
+      assert.equal(await page.locator('#scrub').evaluate(el=>el.value),paused,'Releasing the pitcher stops rinsing during its soft return');
+      const returning=await page.locator('#rinse').boundingBox();
+      await send('touchStart',returning.x+returning.width/2,returning.y+returning.height/2);
       await send('touchMove', (left + right) / 2, chestY);
       await page.locator('#wash.clean').waitFor({ timeout: 5500 });
       await send('touchEnd');
@@ -82,6 +97,13 @@ async function main() {
       await page.locator('#rinse').focus();
       await page.keyboard.down('Space');
       try {
+        if(id==='base-bath'){
+          await page.waitForFunction(()=>document.querySelector('.bath-water').dataset.hit==='true');
+          const initial=await page.locator('.bath-water').evaluate(el=>Number(el.dataset.hitX));
+          await page.keyboard.press('ArrowRight');
+          await page.waitForFunction(x=>Number(document.querySelector('.bath-water').dataset.hitX)>x+5,initial);
+          await page.keyboard.press('ArrowDown');
+        }
         await page.locator('#wash.clean').waitFor({ timeout: 5500 });
         cleanImages.add(await background('clean' + suffix + '.webp'));
       } finally {
@@ -153,7 +175,7 @@ async function main() {
     await buy('bath');
     assert.equal((await shop()).wallet, 0);
     assert.deepEqual(errors, []);
-    console.log('PASS five browser bath stages, distinct decoded entry/wash/clean artwork, legacy enamel, base selection, cancellation, funds, purchases, tiles and reload');
+    console.log('PASS five browser bath stages, visible returning sponge, multi-point touch/keyboard rinse, misses, release/regrab, distinct artwork, purchases, tiles and reload');
   } finally {
     await browser.close();
   }

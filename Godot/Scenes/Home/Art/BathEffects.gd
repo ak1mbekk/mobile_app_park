@@ -11,6 +11,7 @@ var sparkle := MeshInstance3D.new()
 var foam_offsets: Array[Vector3] = []
 var foam_radii: Array[float] = []
 var sparkle_mesh := ImmediateMesh.new()
+var stream_circle := PackedVector2Array()
 
 func _ready() -> void:
     var bubble := SphereMesh.new()
@@ -52,6 +53,8 @@ func _ready() -> void:
     water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     add_child(water)
     water.hide()
+    for side_index in range(STREAM_SIDES + 1):
+        stream_circle.append(Vector2.from_angle(TAU * side_index / STREAM_SIDES))
 
     var glow := StandardMaterial3D.new()
     glow.albedo_color = Color(1.0, 0.91, 0.63)
@@ -81,32 +84,30 @@ func show_stream(source: Vector3, impact: Vector3, time: float) -> void:
     source = to_local(source)
     impact = to_local(impact)
     var arc := (source + impact) * 0.5 + Vector3.UP * source.distance_to(impact) * 0.20
-    var side := Vector3.FORWARD.cross(impact - source).normalized()
+    var side := Vector3.UP.cross(impact - source).normalized()
     if side.length_squared() < 0.001:
         side = Vector3.RIGHT
     stream.clear_surfaces()
-    stream.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-    for ring in range(STREAM_RINGS):
-        var t0 := float(ring) / STREAM_RINGS
-        var t1 := float(ring + 1) / STREAM_RINGS
-        for segment in range(STREAM_SIDES):
-            var a0 := TAU * segment / STREAM_SIDES
-            var a1 := TAU * (segment + 1) / STREAM_SIDES
-            _stream_vertex(source, arc, impact, side, t0, a0, time)
-            _stream_vertex(source, arc, impact, side, t1, a0, time)
-            _stream_vertex(source, arc, impact, side, t0, a1, time)
-            _stream_vertex(source, arc, impact, side, t0, a1, time)
-            _stream_vertex(source, arc, impact, side, t1, a0, time)
-            _stream_vertex(source, arc, impact, side, t1, a1, time)
+    stream.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
+    var previous_center := source
+    var previous_across := (arc - source).cross(side).normalized()
+    var previous_radius := 0.020 * (0.91 + 0.09 * sin(time * 33.0))
+    for ring in range(1, STREAM_RINGS + 1):
+        var t := float(ring) / STREAM_RINGS
+        var center := source.lerp(arc, t).lerp(arc.lerp(impact, t), t)
+        var across := (arc - source).lerp(impact - arc, t).cross(side).normalized()
+        var radius := lerpf(0.020, 0.011, t) * (0.91 + 0.09 * sin(time * 33.0 - t * 37.0))
+        for radial in stream_circle:
+            var from_normal := side * radial.x + previous_across * radial.y
+            var to_normal := side * radial.x + across * radial.y
+            stream.surface_set_normal(from_normal)
+            stream.surface_add_vertex(previous_center + previous_radius * from_normal)
+            stream.surface_set_normal(to_normal)
+            stream.surface_add_vertex(center + radius * to_normal)
+        previous_center = center
+        previous_across = across
+        previous_radius = radius
     stream.surface_end()
-
-func _stream_vertex(source: Vector3, arc: Vector3, impact: Vector3, side: Vector3, t: float, angle: float, time: float) -> void:
-    var curve := source.lerp(arc, t).lerp(arc.lerp(impact, t), t)
-    var tangent := (arc - source).lerp(impact - arc, t).normalized()
-    var normal := (side * cos(angle) + tangent.cross(side).normalized() * sin(angle)).normalized()
-    var radius := lerpf(0.020, 0.011, t) * (0.91 + 0.09 * sin(time * 33.0 - t * 37.0))
-    stream.surface_set_normal(normal)
-    stream.surface_add_vertex(curve + normal * radius)
 
 func show_sparkle(center: Vector3, phase: float) -> void:
     sparkle.show()

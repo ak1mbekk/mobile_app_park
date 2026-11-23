@@ -93,6 +93,8 @@ func sleep_on_bed(animate := true) -> void:
     resting_at_home = false
     sleeping_on_furniture = true
     presentation.cancel_reaction()
+    if animate:
+        presentation.settle_to_sleep()
     gaze.mood_angles = Vector2.ZERO
     gaze.reset_attention()
     gaze.suspended = true
@@ -119,6 +121,7 @@ func step_toward_ball() -> void:
 func idle_in_home() -> void:
     var waking := sleeping_on_furniture
     sleeping_on_furniture = false
+    presentation.sleep_sigh.stop()
     stop_purchase_celebration()
     resting_at_home = true
     gaze.suspended = false

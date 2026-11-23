@@ -175,6 +175,8 @@ func _exercise_wash(id: String, index: int) -> void:
         return
     state = JSON.parse_string(room._interaction_state([]))
     var target := Vector2(state.pourTarget.x, state.pourTarget.y) * view
+    if index % 2 == 1:
+        target.x = chest.x * 2.0 - target.x
     var before := washes
     bath.washed.connect(func(): washes += 1)
     _touch(Vector2(state.jug.x, state.jug.y) * view, true)

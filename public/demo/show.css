@@ -189,6 +189,20 @@
 #home #pet-figure[data-wardrobe]{transform:translateY(10%);animation:none}
 #home:has(#shop-preview:not([hidden])) #pet-figure[data-wardrobe]{left:24%;width:82%}
 #home.night #night-room{background-image:var(--fitted-sleep,none),var(--sleep-scene)}
+#home.night #night-room{background-size:120% 120%;background-position:50% 30%;transform-origin:50% 56%;animation:sleep-breath 4.2s ease-in-out infinite}
+#home.night[data-sleep-bed="bed"] #night-room{background-size:200% 200%;background-position:25% 50%}
+#home.night[data-sleep-bed="bed-willow"] #night-room{background-size:170% 170%;background-position:21% 52%}
+#home.sleep-entering #night-room{animation:sleep-settle 1.2s ease-out,sleep-breath 4.2s 1.2s ease-in-out infinite}
+#home.sleep-waking #pet-figure{animation:sleep-wake 1.2s ease-in-out,pet-breathe 3s 1.2s ease-in-out infinite}
+#sleep-signals{position:absolute;left:57%;top:39%;width:65px;height:84px;z-index:4;pointer-events:none;color:#f0f2dc;text-shadow:0 1px 4px #223c46;font:700 20px 'IBM Plex Sans',sans-serif}
+#sleep-signals span{position:absolute;left:0;bottom:0;opacity:0;animation:sleep-z 2.8s ease-out infinite}
+#sleep-signals span:nth-child(2){animation-delay:-.93s}
+#sleep-signals span:nth-child(3){animation-delay:-1.86s}
+@keyframes sleep-z{0%{opacity:0;transform:translate(0,0) scale(.65)}25%{opacity:.85}85%{opacity:.55}100%{opacity:0;transform:translate(26px,-69px) scale(1.15)}}
+@keyframes sleep-breath{50%{transform:scale(1.004,1.008)}}
+@keyframes sleep-settle{0%{opacity:0;transform:translateY(-5px) scale(.985)}55%{opacity:1;transform:translateY(2px) scale(1.003,.998)}100%{opacity:1;transform:none}}
+@keyframes sleep-wake{35%{transform:translateY(-5px) scale(1.015,1.04)}70%{transform:translateY(1px) scale(1.02,.99)}100%{transform:none}}
+@media(prefers-reduced-motion:reduce){#home.night #night-room,#home.sleep-waking #pet-figure,#sleep-signals span{animation:none}#sleep-signals span{opacity:.7;transform:none}#sleep-signals span:nth-child(2){left:15px;bottom:23px}#sleep-signals span:nth-child(3){left:32px;bottom:48px}}
 #room-decor{position:absolute;inset:0;pointer-events:none}
 #room-decor img{position:absolute;filter:drop-shadow(0 3px 2px #38271d66)}
 #room-decor [data-furnishing=bed]{left:8%;bottom:25%;width:34%}
@@ -388,6 +402,22 @@
 #soap-area.scrubbing #bath-sponge { cursor:grabbing; transform:rotate(-12deg); filter:drop-shadow(0 6px 4px #263b3566); }
 #soap-area:focus-visible { outline:2px solid #d6e7bf; outline-offset:4px; }
 #soap-area:focus-visible #bath-sponge { filter:drop-shadow(0 0 3px #fff2b9); }
+/* The fallback bath keeps its tools visible and returns them to their stands. */
+#wash #bath-sponge { transform-origin:center;transition:translate .32s cubic-bezier(.2,.7,.3,1),transform .16s ease,filter .16s ease; }
+#wash #soap-area.scrubbing #bath-sponge { transform:rotate(-8deg) scale(1.08);transition-property:transform,filter;cursor:grabbing; }
+#wash #soap-area.sponge-pressing #bath-sponge { transform:rotate(var(--sponge-rub,-8deg)) scale(.92);filter:drop-shadow(0 2px 2px #263b3544); }
+#wash .jug { transition:translate .34s cubic-bezier(.2,.7,.3,1); }
+#wash .jug.held { cursor:grabbing;transition-property:none; }
+#wash .jug:active { transform:none; }
+#wash .jug.held:not(.pouring) img { transform:translateY(-3px) rotate(-8deg); }
+#wash .jug.pouring::after { display:none; }
+#wash .bath-water { position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:3;opacity:0;transition:opacity .18s ease-out; }
+#wash .bath-water.flowing { opacity:.94; }
+#wash .bath-water-line { fill:none;stroke:#8dd7e5;stroke-width:5;stroke-linecap:round; }
+#wash .bath-water-shine { fill:none;stroke:#ecffff;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:5 9; }
+#wash .bath-water.flowing .bath-water-shine { animation:bath-water-travel .34s linear infinite; }
+#wash .bath-water-splash { fill:#d4f7fa;opacity:.85; }
+@keyframes bath-water-travel { to { stroke-dashoffset:-28; } }
 #wash.washing.clean::after {
   content:""; position:absolute; left:56%; top:40%; width:18px; height:18px; pointer-events:none;
   background:#fff6ce; clip-path:polygon(50% 0,61% 38%,100% 50%,61% 62%,50% 100%,39% 62%,0 50%,39% 38%);
@@ -400,6 +430,9 @@
 }
 @media (prefers-reduced-motion:reduce) {
   #wash.washing.clean::after { animation:none; }
+  #wash #bath-sponge,#wash .jug,#wash .jug img,#wash .bath-water { transition:none!important; }
+  #wash #soap-area.scrubbing #bath-sponge { transform:none; }
+  #wash .bath-water.flowing .bath-water-shine { animation:none; }
 }
 .object,.fruit,#soap-area,#wash-start { -webkit-tap-highlight-color:transparent; }
 
@@ -532,8 +565,13 @@
 
 /* Keep the rendered sleep poses in proportion at different phone aspect ratios. */
 #home.night #night-room {
-  background-size: cover;
+  background-size: 180% 180%;
+  background-position: 50% 50%;
 }
+#home.night[data-age="kit"]:is([data-sleep-bed="settee"],[data-sleep-bed="bed-oak"],[data-sleep-bed="bed-daybed"]) #night-room{background-size:230% 230%}
+#home.night[data-age="young"]:is([data-sleep-bed="settee"],[data-sleep-bed="bed-oak"],[data-sleep-bed="bed-daybed"]) #night-room{background-size:210% 210%}
+#home.night:is([data-sleep-bed="settee"],[data-sleep-bed="bed-oak"],[data-sleep-bed="bed-daybed"]) #night-room{background-position:50% 40%}
+#home.night:is([data-sleep-bed="settee"],[data-sleep-bed="bed-oak"],[data-sleep-bed="bed-daybed"]) #sleep-signals{top:34%}
 
 /* Keep the pet and its touch target together as the age-specific portrait grows. */
 #home {

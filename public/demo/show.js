@@ -11,30 +11,45 @@
   const soap=id('soap-area'),foam=soap.querySelector('.foam'),sponge=id('bath-sponge');
   const jug=id('rinse'), wash=id('wash'), meter=id('scrub');
   let clean=0,washed=false,stroke=null,poured=0,pourFrame=0,pourTime=0,hand=null,onFur=false,finishTimer=0;
+  let spongeMotion=null,waterTail=0,waterTarget={x:0,y:0};
+  const bathReduced=matchMedia('(prefers-reduced-motion: reduce)');
+  const jugArt=jug.querySelector('img');
+  const water=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  water.classList.add('bath-water');water.setAttribute('aria-hidden','true');
+  const waterLine=document.createElementNS(water.namespaceURI,'path');
+  const waterShine=document.createElementNS(water.namespaceURI,'path');
+  const splash=document.createElementNS(water.namespaceURI,'ellipse');
+  waterLine.classList.add('bath-water-line');waterShine.classList.add('bath-water-shine');splash.classList.add('bath-water-splash');
+  water.append(waterLine,waterShine,splash);wash.append(water);
   function scrub(amount){
     clean=Math.min(100,clean+amount);meter.value=clean;
     foam.style.opacity=String(clean/100);
     if(clean===100){
-      releaseSoap();sponge.hidden=true;soap.tabIndex=-1;soap.setAttribute('aria-disabled','true');
-      jug.hidden=false;id('washHint').textContent='Кувшин готов';meter.setAttribute('aria-label','Пена на шерсти');
+      releaseSoap();soap.tabIndex=-1;soap.setAttribute('aria-disabled','true');
+      jug.hidden=false;id('washHint').textContent='Подними кувшин и направь струю на шерсть';meter.setAttribute('aria-label','Пена на шерсти');
       if(document.activeElement===soap)jug.focus({preventScroll:true});
     }
   }
   const canScrub=()=>clean<100&&!washed&&!document.hidden&&wash.classList.contains('current')&&wash.classList.contains('washing');
   const insideCoat=(x,y,rect)=>x>=rect.left&&x<=rect.right&&y>=rect.top&&y<=rect.bottom;
   function moveSoap(x,y){
-    sponge.style.translate=(x-stroke.originX)+'px '+(y-stroke.originY)+'px';
+    sponge.style.translate=(x-stroke.grabX-stroke.originX)+'px '+(y-stroke.grabY-stroke.originY)+'px';
   }
   function releaseSoap(){
     const pointer=stroke?.id;stroke=null;
     if(pointer!==undefined&&soap.hasPointerCapture(pointer))soap.releasePointerCapture(pointer);
-    sponge.style.translate='';soap.classList.remove('scrubbing');
+    soap.classList.add('sponge-returning');soap.classList.remove('scrubbing','sponge-pressing');
+    sponge.style.translate='0px 0px';sponge.style.removeProperty('--sponge-rub');
   }
   soap.onpointerdown=e=>{
     if(!canScrub()||stroke||e.button!==0)return;
     const rect=sponge.getBoundingClientRect();
-    stroke={id:e.pointerId,x:e.clientX,y:e.clientY,originX:rect.x+rect.width/2,originY:rect.y+rect.height/2};
-    soap.setPointerCapture(e.pointerId);soap.classList.add('scrubbing');moveSoap(e.clientX,e.clientY);
+    const area=soap.getBoundingClientRect();
+    spongeMotion?.cancel();
+    stroke={id:e.pointerId,x:e.clientX,y:e.clientY,travel:0,
+      originX:area.x+sponge.offsetLeft+sponge.offsetWidth/2,originY:area.y+sponge.offsetTop+sponge.offsetHeight/2,
+      grabX:e.clientX-rect.x-rect.width/2,grabY:e.clientY-rect.y-rect.height/2};
+    soap.setPointerCapture(e.pointerId);soap.classList.remove('sponge-returning');soap.classList.add('scrubbing');moveSoap(e.clientX,e.clientY);
   };
   soap.onpointermove=e=>{
     if(!stroke||stroke.id!==e.pointerId)return;
@@ -43,42 +58,126 @@
     const distance=Math.hypot(e.clientX-stroke.x,e.clientY-stroke.y);if(distance<2)return;
     const rect=soap.getBoundingClientRect();
     const onCoat=insideCoat(e.clientX,e.clientY,rect)&&insideCoat(stroke.x,stroke.y,rect);
+    soap.classList.toggle('sponge-pressing',onCoat);
+    stroke.travel+=distance;sponge.style.setProperty('--sponge-rub',Math.sin(stroke.travel/18)*9+'deg');
     stroke.x=e.clientX;stroke.y=e.clientY;if(onCoat)scrub(distance/4);
   };
   soap.onpointerup=soap.onpointercancel=soap.onlostpointercapture=e=>{if(stroke?.id===e.pointerId)releaseSoap();};
-  soap.onkeydown=e=>{if(canScrub()&&(e.key==='Enter'||e.key===' ')){e.preventDefault();scrub(20);}};
+  soap.onkeydown=e=>{
+    if(!canScrub()||!['Enter',' '].includes(e.key))return;
+    e.preventDefault();spongeMotion?.cancel();
+    if(!bathReduced.matches){
+      const targetX=soap.clientWidth*.5-sponge.offsetLeft-sponge.offsetWidth/2;
+      const targetY=soap.clientHeight*.66-sponge.offsetTop-sponge.offsetHeight/2;
+      spongeMotion=sponge.animate([
+        {translate:'0px 0px',transform:'rotate(0deg) scale(1)'},
+        {translate:`${targetX}px ${targetY}px`,transform:'rotate(-8deg) scale(.92)',offset:.38},
+        {translate:`${targetX+9}px ${targetY-3}px`,transform:'rotate(7deg) scale(.92)',offset:.55},
+        {translate:`${targetX-7}px ${targetY+2}px`,transform:'rotate(-7deg) scale(.94)',offset:.7},
+        {translate:'0px 0px',transform:'rotate(0deg) scale(1)'}
+      ],{duration:520,easing:'ease-in-out'});
+    }
+    scrub(20);
+  };
+  function spout(){
+    // The lip is (11,17) in the actual 88×92 SVG, transformed with the pitcher.
+    const rect=jug.getBoundingClientRect(),style=getComputedStyle(jugArt);
+    const origin=style.transformOrigin.split(' ').map(parseFloat);
+    const matrix=new DOMMatrix(style.transform==='none'?undefined:style.transform);
+    const point=new DOMPoint(jugArt.clientWidth*11/88-origin[0],jugArt.clientHeight*17/92-origin[1]).matrixTransform(matrix);
+    return {x:rect.x+jugArt.offsetLeft+origin[0]+point.x,y:rect.y+jugArt.offsetTop+origin[1]+point.y};
+  }
+  function waterGeometry(){
+    const room=wash.getBoundingClientRect(),fur=soap.getBoundingClientRect(),tip=spout();
+    const {x:hitX,y:hitY}=waterTarget;
+    onFur=Boolean(hand?.lifted)&&insideCoat(hitX,hitY,fur)&&hitY>tip.y+8;
+    const endY=onFur||!hand?hitY:Math.max(tip.y+24,Math.min(room.bottom-24,tip.y+room.height*.25));
+    const endX=onFur||!hand?hitX:tip.x+(hitX-tip.x)*(endY-tip.y)/Math.max(24,hitY-tip.y);
+    const x=tip.x-room.x,y=tip.y-room.y,ex=endX-room.x,ey=endY-room.y;
+    water.setAttribute('viewBox',`0 0 ${room.width} ${room.height}`);
+    const path=`M ${x} ${y} Q ${ex} ${y+(ey-y)*.35} ${ex} ${ey}`;
+    waterLine.setAttribute('d',path);waterShine.setAttribute('d',path);
+    splash.setAttribute('cx',String(ex));splash.setAttribute('cy',String(ey));
+    splash.setAttribute('rx',onFur?'9':'5');splash.setAttribute('ry',onFur?'3':'2');
+    water.dataset.hit=String(onFur);water.dataset.hitX=String(hitX-fur.left);water.dataset.hitY=String(hitY-fur.top);
+    wash.classList.toggle('rinsing',onFur);
+  }
   function releaseJug(){
-    if(hand && typeof hand.id==='number' && jug.hasPointerCapture(hand.id))jug.releasePointerCapture(hand.id);
-    hand=null;onFur=false;cancelAnimationFrame(pourFrame);pourTime=0;
-    jug.style.translate='';jug.classList.remove('pouring');wash.classList.remove('rinsing');
+    const pointer=hand?.id,wasLifted=hand?.lifted;hand=null;
+    if(typeof pointer==='number'&&jug.hasPointerCapture(pointer))jug.releasePointerCapture(pointer);
+    onFur=false;cancelAnimationFrame(pourFrame);cancelAnimationFrame(waterTail);pourTime=0;
+    jug.classList.add('jug-returning');jug.classList.remove('held','pouring');
+    jug.style.translate='0px 0px';water.classList.remove('flowing');wash.classList.remove('rinsing');
+    if(wasLifted&&!bathReduced.matches&&!document.hidden&&wash.classList.contains('current')){
+      const until=performance.now()+190;
+      const finish=now=>{waterGeometry();if(now<until)waterTail=requestAnimationFrame(finish);};
+      waterTail=requestAnimationFrame(finish);
+    }
   }
   function pour(now){
     if(!hand||document.hidden||!wash.classList.contains('current')){releaseJug();return;}
+    if(hand.lifted)waterGeometry();else onFur=false;
     if(onFur && pourTime) poured=Math.min(1,poured+Math.min(now-pourTime,80)/1600);
     pourTime=now;foam.style.opacity=String(1-poured);meter.value=(1-poured)*100;
-    jug.classList.toggle('pouring',onFur);wash.classList.toggle('rinsing',onFur);
+    jug.classList.toggle('pouring',hand.lifted);water.classList.toggle('flowing',hand.lifted);
     if(poured<1){pourFrame=requestAnimationFrame(pour);return;}
-    releaseJug();washed=true;jug.hidden=true;meter.hidden=true;wash.classList.add('clean');
+    releaseJug();washed=true;meter.hidden=true;wash.classList.add('clean');
     id('washHint').textContent='Шёрстка чистая';window.petDemo.wash();
     finishTimer=setTimeout(()=>{if(wash.classList.contains('current')){wash.classList.remove('washing');id('wash-entry').hidden=false;resetBath();}},1150);
   }
+  function placeJug(x,y){
+    const room=wash.getBoundingClientRect();
+    const turnMargin=jug.offsetWidth*.22;
+    x=Math.max(room.left+turnMargin,Math.min(room.right-jug.offsetWidth-turnMargin,x));
+    y=Math.max(room.top+turnMargin,Math.min(room.bottom-jug.offsetHeight-turnMargin,y));
+    jug.style.translate=(x-room.left-jug.offsetLeft)+'px '+(y-room.top-jug.offsetTop)+'px';
+  }
   function aim(x,y){
-    jug.style.translate=(x-hand.x)+'px '+(y-hand.y)+'px';
-    const rect=soap.getBoundingClientRect();
-    onFur=x>=rect.left+rect.width*.16 && x<=rect.right-rect.width*.08 && y>rect.top && y<rect.bottom;
+    if(!hand.lifted&&Math.hypot(x-hand.x,y-hand.y)<5)return;
+    hand.lifted=true;
+    waterTarget={x:x-hand.grabX+jug.offsetWidth/2,y:y-hand.grabY+jug.offsetHeight/2};
+    carryJug();
+  }
+  function carryJug(){
+    // The finger steers the landing point. Keep the vessel outside the face;
+    // the visible curved stream connects its real lip to that same point.
+    const fur=soap.getBoundingClientRect();
+    let left=waterTarget.x+jug.offsetWidth*.935;
+    if(waterTarget.x>=fur.left-20&&waterTarget.x<=fur.right+20)left=Math.max(left,fur.right+8);
+    placeJug(left,waterTarget.y-jug.offsetHeight*1.38);
+  }
+  function aimKeyboard(){
+    const fur=soap.getBoundingClientRect();
+    waterTarget={x:fur.x+fur.width*hand.targetX,y:fur.y+fur.height*hand.targetY};
+    carryJug();
   }
   jug.onpointerdown=e=>{
     if(clean<100||washed||hand||e.button!==0)return;
-    hand={id:e.pointerId,x:e.clientX,y:e.clientY};jug.setPointerCapture(e.pointerId);pourFrame=requestAnimationFrame(pour);
+    cancelAnimationFrame(waterTail);
+    const rect=jug.getBoundingClientRect();
+    const room=wash.getBoundingClientRect();
+    hand={id:e.pointerId,x:e.clientX,y:e.clientY,grabX:e.clientX-rect.x,grabY:e.clientY-rect.y,lifted:false};
+    jug.classList.remove('jug-returning');jug.classList.add('held');
+    jug.style.translate=(rect.x-room.x-jug.offsetLeft)+'px '+(rect.y-room.y-jug.offsetTop)+'px';
+    jug.setPointerCapture(e.pointerId);pourFrame=requestAnimationFrame(pour);
   };
   jug.onpointermove=e=>{if(hand?.id===e.pointerId)aim(e.clientX,e.clientY);};
   jug.onpointerup=jug.onpointercancel=jug.onlostpointercapture=e=>{if(hand?.id===e.pointerId)releaseJug();};
   jug.onkeydown=e=>{
+    if(hand?.id==='keyboard'&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
+      e.preventDefault();
+      if(e.key==='ArrowLeft')hand.targetX=Math.max(.1,hand.targetX-.18);
+      if(e.key==='ArrowRight')hand.targetX=Math.min(.85,hand.targetX+.18);
+      if(e.key==='ArrowUp')hand.targetY=Math.max(.15,hand.targetY-.18);
+      if(e.key==='ArrowDown')hand.targetY=Math.min(.85,hand.targetY+.18);
+      aimKeyboard();return;
+    }
     if(e.key!==' '&&e.key!=='Enter')return;
     e.preventDefault();if(hand||clean<100||washed)return;
-    const origin=jug.getBoundingClientRect(),target=soap.getBoundingClientRect();
-    hand={id:'keyboard',x:origin.x+origin.width/2,y:origin.y+origin.height/2};
-    aim(target.x+target.width*.55,target.y+target.height*.36);pourFrame=requestAnimationFrame(pour);
+    cancelAnimationFrame(waterTail);
+    hand={id:'keyboard',lifted:true,targetX:.5,targetY:.55};
+    jug.classList.remove('jug-returning');jug.classList.add('held','pouring');
+    aimKeyboard();pourFrame=requestAnimationFrame(pour);
   };
   jug.onkeyup=e=>{if(hand?.id==='keyboard'&&(e.key===' '||e.key==='Enter'))releaseJug();};
   jug.onblur=()=>{if(hand?.id==='keyboard')releaseJug();};
@@ -87,6 +186,7 @@
   function resetBath(){
     clearTimeout(finishTimer);releaseSoap();releaseJug();washed=false;clean=0;poured=0;foam.style.opacity='0';jug.hidden=true;id('bathDone').hidden=true;
     sponge.hidden=false;soap.tabIndex=0;soap.removeAttribute('aria-disabled');
+    spongeMotion?.cancel();water.classList.remove('flowing');
     meter.setAttribute('aria-label','Сколько шерсти намылено');
     id('wash').classList.remove('clean');id('scrub').hidden=false;id('scrub').value=0;id('washHint').textContent='Потри шерсть губкой';
   }

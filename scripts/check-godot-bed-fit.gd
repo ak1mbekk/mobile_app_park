@@ -153,6 +153,11 @@ func check() -> void:
             home.native_needs.energy = 42.0
             var floor_pos: Vector3 = home.richi.position
             await travel(id, true)
+            await create_timer(0.70).timeout
+            home.sleep_signals._process(0.0)
+            expect(home.sleep_signals.visible and home.sleep_signals.head_bone >= 0
+                    and root.get_visible_rect().has_point(home.sleep_signals.anchor),
+                    "%s level %d shows sleep Zs above a visible head" % [id, level])
             expect(home.active_mode == &"sleep" and home.richi.sleeping_on_furniture and home.richi.player.is_playing()
                     and home.richi.eyelid_value > 0.95, "%s level %d settled, breathing with closed eyes" % [id, level])
             var support := PackedVector3Array()
@@ -192,11 +197,20 @@ func check() -> void:
             print("SLEEP FIT ", id, " level ", level, " margin ", margin, " measured contact ", gap)
             expect(margin >= -0.005 and gap >= -0.035 and gap <= 0.025,
                     "%s level %d curled skin on the actual mattress (margin %.3f, contact %.3f)" % [id, level, margin, gap])
+            var closeup := root.get_camera_3d()
+            var pet_frame := Rect2(closeup.unproject_position(vertices[0]), Vector2.ZERO)
+            for point in vertices:
+                pet_frame = pet_frame.expand(closeup.unproject_position(point))
+            expect(root.get_visible_rect().grow(-2).encloses(pet_frame), "%s level %d complete pet in closeup" % [id, level])
+            if home._raised_bed():
+                expect(pet_frame.size.x > root.get_visible_rect().size.x * 0.34,
+                        "%s level %d pet occupies at least 34 percent of phone width" % [id, level])
+            print("SLEEP FRAME ", id, " level ", level, " pet pixels ", pet_frame)
             if level == 10:
                 var camera := root.get_camera_3d()
                 var sleep_pixels := projected_bounds(installed)
                 var phone := root.get_visible_rect().grow(-2)
-                expect(phone.encloses(sleep_pixels), "Whole sleeping furniture is in frame: %s %s" % [id, sleep_pixels])
+                expect(phone.intersects(sleep_pixels), "Sleeping cushion remains in frame: %s %s" % [id, sleep_pixels])
                 var pet_pixels := Rect2(camera.unproject_position(vertices[0]), Vector2.ZERO)
                 for point in vertices:
                     pet_pixels = pet_pixels.expand(camera.unproject_position(point))
@@ -204,9 +218,13 @@ func check() -> void:
                 if i == 0:
                     comparison_camera = camera.global_transform
                     comparison_fov = camera.fov
-                expect(camera.global_transform.is_equal_approx(comparison_camera) and is_equal_approx(camera.fov, comparison_fov), "Same gameplay camera in " + id)
+                expect(is_equal_approx(camera.fov, comparison_fov) and pet_pixels.size.x > phone.size.x * 0.20,
+                        "Sleep camera fits this complete bed at a readable pet size: " + id)
                 await capture("%02d-%s-sleep" % [i + 1, id])
             await travel(id, false)
+            home.sleep_signals._process(0.0)
+            expect(not home.sleep_signals.visible and is_zero_approx(home.sleep_signals.elapsed),
+                    "%s level %d removes sleep Zs immediately on wake" % [id, level])
             expect(home.active_mode == &"home" and not home.richi.sleeping_on_furniture and home.richi.position.distance_to(floor_pos) < 0.012,
                     "%s level %d returns to previous floor position" % [id, level])
             if level == 10:

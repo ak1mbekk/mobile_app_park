@@ -11,6 +11,34 @@
   if (!context) return;
 
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const sleepSignals = document.createElement('div');
+  sleepSignals.id = 'sleep-signals';
+  sleepSignals.setAttribute('aria-hidden', 'true');
+  sleepSignals.hidden = true;
+  for (let i=0;i<3;i++) { const z=document.createElement('span'); z.textContent='Z'; sleepSignals.append(z); }
+  home.append(sleepSignals);
+  let sleeping = home.classList.contains('night'), sleepTransition;
+  function syncSleep() {
+    const next = home.classList.contains('night');
+    sleepSignals.hidden = !next || !home.classList.contains('current') || !visibleFallback() || document.hidden;
+    if (next !== sleeping) {
+      clearTimeout(sleepTransition);
+      home.classList.remove('sleep-entering','sleep-waking');
+      if (!reducedMotion.matches && visibleFallback()) {
+        home.classList.add(next ? 'sleep-entering' : 'sleep-waking');
+        sleepTransition = setTimeout(()=>home.classList.remove('sleep-entering','sleep-waking'),1200);
+      }
+      if (next) stop();
+      sleeping = next;
+    }
+  }
+  new MutationObserver(syncSleep).observe(home,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(syncSleep).observe(room3d,{attributes:true,attributeFilter:['hidden'],childList:true});
+  document.addEventListener('conceptscreen',()=>queueMicrotask(syncSleep));
+  document.addEventListener('petprofile',()=>queueMicrotask(syncSleep));
+  document.addEventListener('visibilitychange',syncSleep);
+  reducedMotion.addEventListener('change',syncSleep);
+  queueMicrotask(syncSleep);
   const hats = new Set(['cap', 'ranger', 'crown']);
   const ages = new Set(['kit', 'young', 'adult']);
   let atlas, active, raf, finger;

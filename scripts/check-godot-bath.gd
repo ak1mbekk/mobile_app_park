@@ -84,6 +84,13 @@ func _run() -> void:
         await process_frame
     _touch(center, false)
     _expect(bath.phase == &"ready" and bath.lather_bar.value == 1.0 and bath.rinse_progress == 0.0, "Full lather makes the pitcher usable and preserves both meters")
+    var return_start: float = bath.soap.position.distance_to(bath.soap_rest)
+    _expect(bath.soap.is_visible_in_tree() and return_start > 0.03, "Sponge stays at the last stroke when the meter fills")
+    await create_timer(0.10).timeout
+    var return_mid: float = bath.soap.position.distance_to(bath.soap_rest)
+    _expect(return_mid > 0.001 and return_mid < return_start, "Visible sponge travels back toward its dish")
+    await create_timer(0.45).timeout
+    _expect(bath.soap.is_visible_in_tree() and bath.soap.position.distance_to(bath.soap_rest) < 0.004, "Sponge rests on its dish during rinsing")
     await _capture("03-ready-to-rinse")
 
     var jug := _point(_state().jug)
@@ -98,16 +105,25 @@ func _run() -> void:
     await create_timer(0.22).timeout
     _expect(bath.rinse_progress == 0.0 and not bath.pouring, "A pitcher tap releases no stream")
     _touch(jug, true)
-    _drag(target + Vector2(-146.0, 0.0))
+    var miss := Vector2(root.get_visible_rect().size.x - width * 0.03, center.y + width * 0.20)
+    _drag(miss)
     await create_timer(0.30).timeout
-    _expect(bath.rinse_progress == 0.0 and not bath.pouring and not bath.effects.water.visible, "Holding the pitcher outside the target releases no stream")
-    _drag(target - Vector2(width * 0.055, 0.0))
-    await create_timer(0.24).timeout
-    _expect(bath.rinse_progress == 0.0 and bath.guide.visible and not bath.pouring, "Moving the pitcher toward Richi's face does not start rinsing")
+    var missed_progress: float = bath.rinse_progress
+    await create_timer(0.20).timeout
+    _expect(bath.pouring and bath.effects.water.visible and is_equal_approx(bath.rinse_progress, missed_progress), "A raised pitcher pours beside the fur without washing it")
     await _capture("04a-missed-pour")
+    var left := Vector2(center.x * 2.0 - target.x, target.y - width * 0.03)
+    _drag(left)
+    await create_timer(0.32).timeout
+    var left_progress: float = bath.rinse_progress
+    await create_timer(0.18).timeout
+    _expect(bath.pouring and bath.rinse_progress > left_progress + 0.05, "Holding on the left reaches the fur")
+    await _capture("04b-rinse-from-left")
     _drag(target)
-    await create_timer(0.62).timeout
-    _expect(bath.pouring and bath.effects.water.visible and bath.rinse_progress > 0.17 and bath.rinse_progress < 0.75, "A held pitcher over Richi creates an arc and advances rinse gradually")
+    await create_timer(0.32).timeout
+    var right_progress: float = bath.rinse_progress
+    await create_timer(0.16).timeout
+    _expect(bath.pouring and bath.effects.water.visible and bath.rinse_progress > right_progress + 0.05 and bath.rinse_progress < 1.0, "Moving to the right keeps a working stream and washes gradually")
     _expect_pour_clearance(target)
     await _capture("04-stream-and-rinse-progress")
     var edge := target + Vector2(-0.03, -0.09) * width
@@ -115,7 +131,7 @@ func _run() -> void:
     await create_timer(0.25).timeout
     _expect(bath.pouring and bath.effects.water.visible, "The pitcher still pours near the upper inside edge of the target")
     _expect_pour_clearance(edge)
-    await _capture("04b-rinse-at-edge")
+    await _capture("04c-rinse-at-edge")
     var rinse_snapshot: float = bath.rinse_progress
     _touch(edge, false)
     await create_timer(0.24).timeout
@@ -145,6 +161,7 @@ func _run() -> void:
     _touch(target, false)
     await _until(func(): return room.active_mode == &"home" and not room.bath_moving, 9.0, "automatic exit")
     _expect(washes == 1 and room.location == &"bathroom" and room.native_needs.clean > before + 54.0, "After the clean reaction, Richi exits and receives exactly one gain")
+    _expect(bath.soap.is_visible_in_tree() and bath.soap.position.distance_to(bath.soap_rest) < 0.004, "The sponge remains visible on its dish after the wash")
     await _capture("06-back-on-the-mat")
     if failures == 0:
         print("PASS seated wash, handle and face clearance, misses, pause of an active stream, one care reward, and automatic exit at ", root.size)
