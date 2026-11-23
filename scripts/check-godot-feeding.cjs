@@ -52,16 +52,20 @@ const logicalAsset=url=>new URL(url).pathname.split('/').pop().replace(/-[a-f0-9
     const roomSelector='#scene3d iframe';
     const ready=async(scene)=>{
       try{
-        await page.locator('#'+scene+'.current').waitFor({timeout:90000});
-        await page.locator('#scene3d:not([hidden]) iframe:not([inert])').waitFor({timeout:90000});
         await page.waitForFunction(scene=>{
-          const iframe=document.querySelector('#scene3d iframe');
-          return scene==='home'?typeof iframe?.contentWindow.setParkHomeState==='function':
-            typeof iframe?.contentWindow.setParkScenePaused==='function';
-        },scene,{timeout:90000});
+          const iframe=document.querySelector('#scene3d:not([hidden]) iframe:not([inert])');
+          const bridge=scene==='home'?'setParkHomeState':'setParkScenePaused';
+          return document.getElementById(scene)?.classList.contains('current') &&
+            iframe?.getBoundingClientRect().height>0 && typeof iframe.contentWindow?.[bridge]==='function';
+        },scene,{timeout:180000,polling:250});
       }catch(cause){
-        const notice=await page.locator('#scene3d iframe').evaluate(frame=>frame.contentDocument?.querySelector('#status-notice')?.textContent).catch(()=>null);
-        throw new Error('Godot '+scene+' did not become ready: '+JSON.stringify({loads,errors,notice}),{cause});
+        const status=await page.evaluate(()=>{
+          const iframe=document.querySelector('#scene3d iframe');
+          return {active:document.querySelector('.screen.current')?.id,inert:iframe?.inert,
+            loading:document.querySelector('#loading3d')?.innerText,notice:iframe?.contentDocument?.querySelector('#status-notice')?.textContent,
+            draws:iframe?.contentWindow?.testDrawCount,events:window.parkTestEvents?.slice(-5)};
+        }).catch(()=>null);
+        throw new Error('Godot '+scene+' did not become ready: '+JSON.stringify({loads,errors,status}),{cause});
       }
     };
     const point=(box,x,y)=>({x:box.x+box.width*x,y:box.y+box.height*y});

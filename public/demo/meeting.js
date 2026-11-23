@@ -424,7 +424,9 @@
     if (event.data === 'animal-park:park' && room.classList.contains('current')) {
       document.querySelector('.park-entrance').click();
     }
-    if (event.data === 'animal-park:profile') document.querySelector('#park [data-profile]')?.click();
+    if (event.data === 'animal-park:profile' && room.classList.contains('current')) {
+      document.getElementById('home-profile').click();
+    }
     if (event.data === 'animal-park:shop:closed' || event.data === 'animal-park:shop:catalog') {
       window.petDemo.nativeShopClear();
     }
