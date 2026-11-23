@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Art/TrailHouse/Furniture/bath-carved.glb" id="1_oak"]
+
+[node name="CarvedBath" type="Node3D"]
+
+[node name="CarvedOak" parent="." instance=ExtResource("1_oak")]
