@@ -158,16 +158,26 @@ import { validGuestPaths } from './map-guest-geometry.js';
     draw();
   }
   const area=el('drag-area');
+  function normalizedAt(event){
+    const rect=area.getBoundingClientRect();
+    const offset=L.point(event.clientX-rect.left-rect.width/2,event.clientY-rect.top-rect.height/2);
+    const coord=crs.pointToLatLng(view.add(offset.divideBy(factor())),16);
+    const pixel=toRaster(draft,coord);
+    return [pixel.x/width,pixel.y/height];
+  }
   area.onpointerdown=e=>{
     if(!draft||drag||saving)return;
+    const vertex=e.target.closest?.('[data-boundary-vertex]');
+    const outline=e.target.closest?.('[data-boundary-drag="all"]');
+    if((vertex||outline) && boundaries.startDrag(vertex ? Number(vertex.dataset.boundaryVertex) : 'all',normalizedAt(e))){
+      area.setPointerCapture(e.pointerId);drag={id:e.pointerId,kind:'boundary'};e.preventDefault();return;
+    }
     if(placing||boundaries.drawing){
-      const rect=area.getBoundingClientRect();
-      const offset=L.point(e.clientX-rect.left-rect.width/2,e.clientY-rect.top-rect.height/2);
-      const coord=crs.pointToLatLng(view.add(offset.divideBy(factor())),16);
       if(boundaries.drawing){
-        const pixel=toRaster(draft,coord);
-        boundaries.add([pixel.x/width,pixel.y/height]);return;
+        boundaries.add(normalizedAt(e));return;
       }
+      const pixel=normalizedAt(e);
+      const coord=projection.crs.pointToLatLng(toWorld(draft,pixel[0]*width,pixel[1]*height),16);
       approachCandidate=[Number(coord.lat.toFixed(7)),Number(coord.lng.toFixed(7))];
       placing=false;approachControls();updateBase();return;
     }
@@ -175,13 +185,16 @@ import { validGuestPaths } from './map-guest-geometry.js';
   };
   area.onpointermove=e=>{
     if(drag?.id!==e.pointerId)return;
+    if(drag.kind==='boundary'){boundaries.dragTo(normalizedAt(e));return;}
     const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
     drag.x=e.clientX;drag.y=e.clientY;drag.dx+=dx;drag.dy+=dy;
     shift(dx,dy);
     if(movingView())el('base-map').style.transform='translate('+drag.dx+'px,'+drag.dy+'px)';
   };
   area.onpointerup=area.onpointercancel=e=>{
-    if(drag?.id!==e.pointerId)return;drag=null;
+    if(drag?.id!==e.pointerId)return;
+    if(drag.kind==='boundary'){boundaries.endDrag();drag=null;return;}
+    drag=null;
     if(movingView()){el('base-map').style.transform='';updateBase();}
   };
   area.onkeydown=e=>{

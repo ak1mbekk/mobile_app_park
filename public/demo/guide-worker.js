@@ -1,6 +1,6 @@
 // This worker belongs only to the visitor demo under its registration scope.
 const prefix = 'animal-park-guide:' + self.registration.scope + ':';
-const version = prefix + '47';
+const version = prefix + '48';
 const base = new URL(self.registration.scope);
 const shell = [
   'guide-shell.css','guide-shell.js','catalog-editorial.css','richi-hub.js',

@@ -286,6 +286,15 @@
       edit.textContent='Переместить метку';
       edit.onclick=()=>startEditing(point);
       card.append(edit);
+      if(point.plan){
+        const hasBoundary=Boolean(boundaryData?.enclosures?.[point.zone+'/'+point.id]);
+        const boundaryEdit=document.createElement('a');
+        boundaryEdit.className='p-link edit-animal-boundary';
+        boundaryEdit.href='align.html#boundary='+encodeURIComponent(point.zone+'/'+point.id);
+        boundaryEdit.target='_blank';boundaryEdit.rel='noopener';
+        boundaryEdit.textContent=hasBoundary ? 'Изменить границу территории' : 'Нарисовать границу территории';
+        card.append(boundaryEdit);
+      }
     }
   }
 
