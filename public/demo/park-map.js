@@ -69,9 +69,7 @@
   let boundaryData, contains;
   let guestData;
   function guestPaths() {
-    // The visitor map shows only routes confirmed as open. Draft plan traces and
-    // closed service branches stay available in the staff alignment editor.
-    return (guestData?.paths || []).filter(p => p.zone === state.zone && p.status === 'open')
+    return (guestData?.paths || []).filter(p => p.zone === state.zone && ['open','mapped'].includes(p.status))
       .map(path => ({id:path.id,status:path.status,line:path.points.map(([x,y]) => calibration
         ? projection.crs.pointToLatLng(projection.toWorld(calibration,x,y),16) : L.latLng(-y,x))}));
   }
@@ -384,8 +382,17 @@
     const id = new URLSearchParams(location.search).get('walk');
     const path = paths.find(path => path.id === id);
     if (!path) return null;
-    const landmarkIds = id === 'night-birds-otter' ? ['night-world','bird-row','38'] : [];
-    return {...path,landmarkIds,landmarks:local().filter(item=>landmarkIds.includes(item.id)).map(position).filter(Boolean)};
+    const fromNightWorld = id === 'night-birds-otter';
+    const continuation = fromNightWorld && paths.find(p=>p.id === 'bird-bank-connection' && p.status === 'open');
+    const segments = continuation ? [path.id,continuation.id] : [path.id];
+    const line = continuation ? path.line.concat(continuation.line.slice(1)) : path.line;
+    const landmarksByWalk = {
+      'night-birds-otter':['night-world','bird-row','38'],
+      'bird-bank-connection':['cafe-13','38','36'],
+      'island-west-bank-walk':['cafe-12','32']
+    };
+    const landmarkIds = landmarksByWalk[id] || [];
+    return {id,line,segments,landmarkIds,landmarks:local().filter(item=>landmarkIds.includes(item.id)).map(position).filter(Boolean)};
   }
 
   function framePlace(point, zoom) {
@@ -568,7 +575,7 @@
       const options = {interactive:false,lineCap:'round',lineJoin:'round',pane:'visitor-paths'};
       L.polyline(path.line,{...options,color:'#fff7dc',weight:7}).addTo(layer);
       L.polyline(path.line,{...options,color:'#11605e',weight:4,
-        dashArray:path.status==='plan' ? '8 6' : null}).addTo(layer);
+        dashArray:path.status==='mapped' ? '8 5' : null}).addTo(layer);
     }
     markers.clear();
     const matches = local().filter(visible);
@@ -758,7 +765,8 @@
     const paths = guestPaths();
     const legend = host.querySelector('.guest-path-key');
     legend.querySelector('[data-all-walks]').hidden = !focusedWalk(paths);
-    legend.querySelector('[data-plan]').hidden = true;
+    legend.querySelector('[data-plan]').hidden = !paths.some(p => p.status === 'mapped');
+    legend.querySelector('[data-all-walks]').href = '?view=3d#map/'+state.zone;
     legend.querySelector('[data-open]').hidden = !paths.some(p => p.status === 'open');
     legend.querySelector('[data-missing]').hidden = paths.length > 0;
     if (calibration && !flatOnly && window.createParkLandscape) {

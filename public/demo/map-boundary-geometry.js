@@ -20,7 +20,7 @@ function within(a, b, p) {
   return p.every((value, i) => value >= Math.min(a[i], b[i]) && value <= Math.max(a[i], b[i]));
 }
 
-function crosses(a, b, c, d) {
+export function crosses(a, b, c, d) {
   const first = orientation(a, b, c), second = orientation(a, b, d);
   const third = orientation(c, d, a), fourth = orientation(c, d, b);
   return (first * second < 0 && third * fourth < 0) ||

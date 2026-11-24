@@ -7,7 +7,7 @@ export function validGuestPaths(data) {
     if (!path || typeof path.id !== 'string' || !/^[a-z0-9-]{1,64}$/.test(path.id) ||
         ids.has(path.id) || ![1, 2].includes(path.zone) ||
         typeof path.name !== 'string' || !path.name.trim() || path.name.length > 100 ||
-        !['plan', 'open', 'closed'].includes(path.status) ||
+        !['plan', 'mapped', 'open', 'closed'].includes(path.status) ||
         !Array.isArray(path.points) || path.points.length < 2 || path.points.length > 256) return false;
     ids.add(path.id);
     return path.points.every((point, i) => Array.isArray(point) && point.length === 2 &&

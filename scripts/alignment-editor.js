@@ -83,7 +83,7 @@ export default function alignmentEditor() {
       const guestPaths=path.join(server.config.publicDir,'demo','map-guest-paths.json');
       server.middlewares.use('/__park/guest-paths',(req,res)=>localJsonRequest(req,res,512,input=>{
         const {id,status,revision}=input || {};
-        if(typeof id!=='string' || !['plan','open','closed'].includes(status) ||
+        if(typeof id!=='string' || !['plan','mapped','open','closed'].includes(status) ||
            !Number.isSafeInteger(revision)){res.writeHead(422).end();return;}
         try{
           const previous=JSON.parse(fs.readFileSync(guestPaths,'utf8'));
