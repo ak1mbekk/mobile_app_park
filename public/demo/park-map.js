@@ -72,7 +72,7 @@
     // The visitor map shows only routes confirmed as open. Draft plan traces and
     // closed service branches stay available in the staff alignment editor.
     return (guestData?.paths || []).filter(p => p.zone === state.zone && p.status === 'open')
-      .map(path => ({status:path.status,line:path.points.map(([x,y]) => calibration
+      .map(path => ({id:path.id,status:path.status,line:path.points.map(([x,y]) => calibration
         ? projection.crs.pointToLatLng(projection.toWorld(calibration,x,y),16) : L.latLng(-y,x))}));
   }
 
@@ -368,14 +368,24 @@
   function frameZone() {
     framing = 'zone';
     const rim = 23; // Half of a 44 px touch target, including its border.
-    const extent = L.latLngBounds(local().map(position).filter(Boolean));
-    for (const item of local()) {
+    const walk = focusedWalk(guestPaths());
+    const extent = L.latLngBounds(walk ? [...walk.line,...walk.landmarks] : local().map(position).filter(Boolean));
+    for (const item of walk ? [] : local()) {
       const ring = boundary(item);
       if (ring) extent.extend(L.latLngBounds(ring));
     }
     const header = toolbar.getBoundingClientRect();
     map.fitBounds(extent, { paddingTopLeft: [rim, header.bottom - surface.getBoundingClientRect().top + rim],
       paddingBottomRight: [rim, rim], maxZoom: calibration ? 19 : 2, animate: false });
+  }
+
+  function focusedWalk(paths) {
+    if (state.id || state.kind !== 'all') return null;
+    const id = new URLSearchParams(location.search).get('walk');
+    const path = paths.find(path => path.id === id);
+    if (!path) return null;
+    const landmarkIds = id === 'night-birds-otter' ? ['night-world','bird-row','38'] : [];
+    return {...path,landmarkIds,landmarks:local().filter(item=>landmarkIds.includes(item.id)).map(position).filter(Boolean)};
   }
 
   function framePlace(point, zoom) {
@@ -747,6 +757,7 @@
     }
     const paths = guestPaths();
     const legend = host.querySelector('.guest-path-key');
+    legend.querySelector('[data-all-walks]').hidden = !focusedWalk(paths);
     legend.querySelector('[data-plan]').hidden = true;
     legend.querySelector('[data-open]').hidden = !paths.some(p => p.status === 'open');
     legend.querySelector('[data-missing]').hidden = paths.length > 0;
@@ -770,7 +781,7 @@
         filterHint.textContent = 'В этой зоне таких мест нет.';
         status.hidden = true;
         renderCard(selectedPlace());
-        landscape.update({items,paths,selected:next.id,zone:next.zone,position,boundary,attached,alignment:calibration,filter:next.kind+'/'+next.service});
+        landscape.update({items,paths,walk:focusedWalk(paths),selected:next.id,zone:next.zone,position,boundary,attached,alignment:calibration,filter:next.kind+'/'+next.service});
         return;
       }
     }

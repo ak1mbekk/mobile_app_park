@@ -27,8 +27,11 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
     ].map(([id,color,lineWidth,opacity]) => ({
       id,type:'line',source:'guestPaths',layout:{'line-cap':'round','line-join':'round'},
       filter:['==',['get','status'],'open'],
-      paint:{'line-color':color,'line-width':lineWidth,'line-opacity':opacity}
+      paint:{'line-color':id === 'guest-path-open' ? ['case',['==',['get','focused'],true],'#125e4c',color] : color,
+        'line-width':lineWidth,'line-opacity':opacity}
     })),
+    { id:'walk-ends',type:'circle',source:'walkEnds',
+      paint:{'circle-radius':5,'circle-color':'#fffaf0','circle-stroke-color':'#125e4c','circle-stroke-width':3} },
     { id: 'habitats', type: 'fill', source: 'areas', paint: {
       'fill-color': ['case', ['get', 'chosen'], '#efae58', '#78995e'], 'fill-opacity': 0.28 } },
     { id: 'habitat-edges', type: 'line', source: 'areas', paint: {
@@ -65,7 +68,7 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
         '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'),
         survey:{type:'image',url:'assets/park-survey.webp',coordinates:surveyCorners(alignment)},
         points: source(collection([])), areas: source(collection([])), rails:source(collection([])),
-        pavilions:source(collection([])),guestPaths:source(collection([]))}, layers}
+        pavilions:source(collection([])),guestPaths:source(collection([])),walkEnds:source(collection([]))}, layers}
   });
   map.addControl(new gl.AttributionControl({compact:false}), 'bottom-left');
   map.addControl(new gl.NavigationControl({visualizePitch:true}), 'bottom-right');
@@ -155,9 +158,13 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
     if (!ready || stopped) return;
     const {items, selected, zone, position, boundary} = payload;
     map.getSource('guestPaths').setData(collection(payload.paths.map(path => ({
-      type:'Feature',properties:{status:path.status},geometry:{type:'LineString',
+      type:'Feature',properties:{status:path.status,focused:path.id === payload.walk?.id},geometry:{type:'LineString',
         coordinates:path.line.map(ll=>[ll.lng,ll.lat])}
     }))));
+    const walk = payload.walk;
+    const ends = walk ? [walk.line[0],walk.line[walk.line.length-1]] : [];
+    map.getSource('walkEnds').setData(collection(ends.map(ll=>({type:'Feature',properties:{},
+      geometry:{type:'Point',coordinates:[ll.lng,ll.lat]}}))));
     if (payload.alignment !== surveyAlignment) {
       surveyAlignment = payload.alignment;
       map.getSource('survey').setCoordinates(surveyCorners(surveyAlignment));
@@ -170,7 +177,7 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
       if (!ll) continue;
       const xy = [ll.lng,ll.lat];
       const chosen = item.id === selected;
-      const props = {id:item.id, name:item.name, chosen, rank:item.symbol ? 0 : item.service ? 2 : 1};
+      const props = {id:item.id, name:item.name, chosen, rank:walk?.landmarkIds.includes(item.id) ? -5 : item.symbol ? 0 : item.service ? 2 : 1};
       if (chosen) target = xy;
       bounds.extend(xy);
       const ring = boundary(item)?.map(p => [p.lng,p.lat]);
@@ -201,19 +208,25 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
       return {type:'Feature',properties,geometry:{type:'Polygon',coordinates:[[...coords,coords[0]]]}};
     });
     map.getSource('pavilions').setData(collection(buildings));
-    const key = [zone,selected,payload.filter].join('/');
+    const key = [zone,selected,payload.filter,payload.walk?.id].join('/');
     if (cameraKey !== key) {
       map.resize();
       if (target) map.jumpTo({center:target,zoom:buildings.some(b=>b.properties.chosen) ? 19 : 17.55,pitch:53,padding:{top:72,bottom:145,left:16,right:16}});
-      else if (!bounds.isEmpty()) {
+      else if (payload.walk) {
+        const extent = new gl.LngLatBounds();
+        for (const ll of payload.walk.line) extent.extend([ll.lng,ll.lat]);
+        for (const ll of payload.walk.landmarks) extent.extend([ll.lng,ll.lat]);
+        map.fitBounds(extent,{padding:{top:85,bottom:74,left:56,right:56},maxZoom:19,
+          pitch:22,bearing:0,duration:0});
+      } else if (!bounds.isEmpty()) {
         const center = bounds.getCenter();
         const view = map.cameraForBounds(bounds,{padding:{top:76,bottom:40,left:24,right:24},maxZoom:17.8});
         const portrait = surface.clientHeight > surface.clientWidth * 1.35;
-        if (portrait && zone === 1) {
-          const focus = window.parkProjection.crs.pointToLatLng(
-            window.parkProjection.toWorld(surveyAlignment,340,1060),16);
-          map.jumpTo({center:[focus.lng,focus.lat],zoom:Math.min((view?.zoom || 16.5)+0.35,17.4),pitch:34,bearing:-7,
-            padding:{top:64,bottom:28,left:12,right:12}});
+        if (zone === 1 && payload.paths.length && payload.filter === 'all/') {
+          const network = new gl.LngLatBounds();
+          for (const path of payload.paths) for (const ll of path.line) network.extend([ll.lng,ll.lat]);
+          map.fitBounds(network,{padding:{top:80,bottom:60,left:30,right:30},maxZoom:17.8,
+            pitch:portrait ? 25 : 33,bearing:0,duration:0});
         } else {
           map.jumpTo({center:view?.center || center,zoom:view?.zoom || 16.5,pitch:44,bearing:-10,
             padding:{top:64,bottom:32,left:18,right:18}});
