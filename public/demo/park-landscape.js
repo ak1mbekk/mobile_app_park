@@ -26,13 +26,11 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
       ['guest-path-open', '#2d7864', width(3.8, 8), 0.88]
     ].map(([id,color,lineWidth,opacity]) => ({
       id,type:'line',source:'guestPaths',layout:{'line-cap':'round','line-join':'round'},
-      filter:id === 'guest-path-edge' ? ['in',['get','status'],['literal',['open','mapped']]] : ['==',['get','status'],'open'],
+      filter:['in',['get','status'],['literal',['open','mapped']]],
       paint:{'line-color':id === 'guest-path-open' ? ['case',['==',['get','focused'],true],'#125e4c',color] : color,
-        'line-width':lineWidth,'line-opacity':opacity}
+        'line-width':lineWidth,'line-opacity':opacity,
+        ...(id === 'guest-path-open' ? {'line-dasharray':[2.4,1.5]} : {})}
     })),
-    { id:'guest-path-mapped',type:'line',source:'guestPaths',filter:['==',['get','status'],'mapped'],
-      layout:{'line-cap':'round','line-join':'round'},
-      paint:{'line-color':'#387561','line-width':width(3.8,8),'line-dasharray':[2.4,1.5]} },
     { id:'walk-ends',type:'circle',source:'walkEnds',
       paint:{'circle-radius':5,'circle-color':'#fffaf0','circle-stroke-color':'#125e4c','circle-stroke-width':3} },
     { id: 'habitats', type: 'fill', source: 'areas', paint: {

@@ -28,11 +28,16 @@ const {chromium} = require('playwright');
   assert.deepEqual(birds.points.at(-1),bank.points[0]);
   assert.deepEqual(bank.points.at(-1),bridge.points.at(-1));
   assert.deepEqual(byId.get('north-front-row').points.at(-1),island.points[0]);
+  assert.deepEqual(island.points.at(-1),byId.get('island-feed-walk').points[2]);
+  assert.deepEqual(byId.get('north-canal').points.at(-1),byId.get('island-feed-walk').points[0]);
+  assert.deepEqual(byId.get('island-feed-walk').points.at(-1),[650,1150]);
   for (const p of [bank,bridge,birds,island]) assert.equal(p.status,'open');
   const browser = await chromium.launch({executablePath:process.env.BROWSER_EXE,
     args:['--no-proxy-server','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   try {
-    const page = await browser.newPage({viewport:{width:554,height:668},serviceWorkers:'block'});
+    const viewport = {width:Number(process.env.MAP_VIEWPORT_WIDTH)||554,
+      height:Number(process.env.MAP_VIEWPORT_HEIGHT)||668};
+    const page = await browser.newPage({viewport,serviceWorkers:'block'});
     const errors = [];
     page.on('pageerror',e => errors.push(e.message));
     await page.route('**/park-landscape.js', async route => {
@@ -51,15 +56,17 @@ const {chromium} = require('playwright');
         return {status:sources.guestPaths.data.features.map(f=>f.properties.status),
           focused:sources.guestPaths.data.features.filter(f=>f.properties.focused).length,
           ends:sources.walkEnds.data.features.map(f=>map.project(f.geometry.coordinates)).map(p=>[p.x,p.y]),
-          mappedRendered:map.queryRenderedFeatures({layers:['guest-path-mapped']}).length,
+          routeRendered:map.queryRenderedFeatures({layers:['guest-path-open']}).length,
+          routeDash:map.getPaintProperty('guest-path-open','line-dasharray'),
           names:sources.points.data.features.map(f=>f.properties.name)};
       });
       assert.deepEqual(stats.status.sort(),expected.map(p=>p.status).sort());
       assert.equal(stats.focused,walk === 'night-birds-otter' ? 2 : walk ? 1 : 0);
       assert.equal(stats.ends.length,walk ? 2 : 0);
-      assert.ok(stats.ends.every(([x,y])=>x>=0 && x<554 && y>50 && y<668));
+      assert.ok(stats.ends.every(([x,y])=>x>=0 && x<viewport.width && y>50 && y<viewport.height));
       if(zone===1) assert.ok(stats.names.includes('Квартал разноцветных птиц'));
-      if(zone===2) assert.ok(stats.mappedRendered,'zone 2 has a visible mapped walk');
+      assert.ok(stats.routeRendered,'zone has a visible visitor walk');
+      assert.deepEqual(stats.routeDash,[2.4,1.5]);
       if(process.env.MAP_SCREENSHOTS) {
         await fs.mkdir(process.env.MAP_SCREENSHOTS,{recursive:true});
         await page.evaluate(()=>new Promise(resolve=>{reviewMap.once('idle',resolve);reviewMap.triggerRepaint()}));
@@ -74,8 +81,8 @@ const {chromium} = require('playwright');
     await inspect(2,null,'forest-walks');
     await page.route('**/park-landscape.js',route=>route.fulfill({contentType:'application/javascript',body:''}));
     await page.reload();
-    const mapped = data.paths.filter(p=>p.zone===2 && p.status==='mapped');
-    await page.waitForFunction(n=>document.querySelectorAll('.leaflet-visitor-paths-pane path[stroke-dasharray]').length===n,mapped.length);
+    const visible = data.paths.filter(p=>p.zone===2 && ['open','mapped'].includes(p.status));
+    await page.waitForFunction(n=>document.querySelectorAll('.leaflet-visitor-paths-pane path[stroke-dasharray]').length===n,visible.length);
     await page.locator('.guest-path-key summary').click();
     assert.ok(await page.locator('.guest-path-key [data-plan]').isVisible());
     assert.deepEqual(errors,[]);

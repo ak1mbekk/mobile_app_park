@@ -574,8 +574,7 @@
     for (const path of guestPaths()) {
       const options = {interactive:false,lineCap:'round',lineJoin:'round',pane:'visitor-paths'};
       L.polyline(path.line,{...options,color:'#fff7dc',weight:7}).addTo(layer);
-      L.polyline(path.line,{...options,color:'#11605e',weight:4,
-        dashArray:path.status==='mapped' ? '8 5' : null}).addTo(layer);
+      L.polyline(path.line,{...options,color:'#11605e',weight:4,dashArray:'8 5'}).addTo(layer);
     }
     markers.clear();
     const matches = local().filter(visible);
