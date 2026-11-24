@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-24T10:59:44.1631754+03:00",
+  "title": "Design System: Карта Парка животных",
+  "extensions": {
+    "colorMeta": {
+      "pine": {
+        "role": "primary",
+        "displayName": "Глубокий хвойный",
+        "tonalRamp": ["hsl(163 25% 15%)", "hsl(163 34% 25%)", "hsl(163 45% 35%)", "hsl(163 45% 50%)", "hsl(163 45% 65%)", "hsl(163 45% 78%)", "hsl(163 23% 88%)", "hsl(163 11% 95%)"]
+      },
+      "pine-secondary": {
+        "role": "primary",
+        "displayName": "Вторичный хвойный",
+        "tonalRamp": ["hsl(162 23% 15%)", "hsl(162 31% 25%)", "hsl(162 41% 35%)", "hsl(162 41% 50%)", "hsl(162 41% 65%)", "hsl(162 41% 78%)", "hsl(162 21% 88%)", "hsl(162 10% 95%)"]
+      },
+      "lichen": {
+        "role": "neutral",
+        "displayName": "Светлый лишайник",
+        "tonalRamp": ["hsl(81 20% 15%)", "hsl(81 28% 25%)", "hsl(81 37% 35%)", "hsl(81 37% 50%)", "hsl(81 37% 65%)", "hsl(81 37% 78%)", "hsl(81 18% 88%)", "hsl(81 9% 95%)"]
+      },
+      "lichen-deep": {
+        "role": "neutral",
+        "displayName": "Глубокий лишайник",
+        "tonalRamp": ["hsl(90 17% 15%)", "hsl(90 24% 25%)", "hsl(90 31% 35%)", "hsl(90 31% 50%)", "hsl(90 31% 65%)", "hsl(90 31% 78%)", "hsl(90 16% 88%)", "hsl(90 8% 95%)"]
+      },
+      "lake": {
+        "role": "secondary",
+        "displayName": "Озёрный голубой",
+        "tonalRamp": ["hsl(186 22% 15%)", "hsl(186 30% 25%)", "hsl(186 41% 35%)", "hsl(186 41% 50%)", "hsl(186 41% 65%)", "hsl(186 41% 78%)", "hsl(186 20% 88%)", "hsl(186 10% 95%)"]
+      },
+      "target-orange": {
+        "role": "tertiary",
+        "displayName": "Сигнальный оранжевый",
+        "tonalRamp": ["hsl(21 38% 15%)", "hsl(21 52% 25%)", "hsl(21 69% 35%)", "hsl(21 69% 50%)", "hsl(21 69% 65%)", "hsl(21 69% 78%)", "hsl(21 34% 88%)", "hsl(21 17% 95%)"]
+      },
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Графит",
+        "tonalRamp": ["hsl(158 10% 15%)", "hsl(158 14% 25%)", "hsl(158 19% 35%)", "hsl(158 19% 50%)", "hsl(158 19% 65%)", "hsl(158 19% 78%)", "hsl(158 9% 88%)", "hsl(158 5% 95%)"]
+      },
+      "muted-graphite": {
+        "role": "neutral",
+        "displayName": "Приглушённый графит",
+        "tonalRamp": ["hsl(154 4% 15%)", "hsl(154 6% 25%)", "hsl(154 8% 35%)", "hsl(154 8% 50%)", "hsl(154 8% 65%)", "hsl(154 8% 78%)", "hsl(154 4% 88%)", "hsl(154 2% 95%)"]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Полевая линия",
+        "tonalRamp": ["hsl(113 6% 15%)", "hsl(113 8% 25%)", "hsl(113 11% 35%)", "hsl(113 11% 50%)", "hsl(113 11% 65%)", "hsl(113 11% 78%)", "hsl(113 5% 88%)", "hsl(113 3% 95%)"]
+      },
+      "field-white": {
+        "role": "neutral",
+        "displayName": "Полевой белый",
+        "tonalRamp": ["hsl(80 33% 15%)", "hsl(80 45% 25%)", "hsl(80 60% 35%)", "hsl(80 60% 50%)", "hsl(80 60% 65%)", "hsl(80 60% 78%)", "hsl(80 30% 88%)", "hsl(80 15% 95%)"]
+      },
+      "map-ground": {
+        "role": "neutral",
+        "displayName": "Грунт карты",
+        "tonalRamp": ["hsl(86 16% 15%)", "hsl(86 22% 25%)", "hsl(86 29% 35%)", "hsl(86 29% 50%)", "hsl(86 29% 65%)", "hsl(86 29% 78%)", "hsl(86 15% 88%)", "hsl(86 7% 95%)"]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Рабочий заголовок",
+        "purpose": "Заголовки поиска, выбранного места и панели визита."
+      },
+      "title": {
+        "displayName": "Заголовок секции",
+        "purpose": "Короткие локальные заголовки внутри рабочих панелей."
+      },
+      "body": {
+        "displayName": "Основной текст",
+        "purpose": "Названия, инструкции и прикладные пояснения."
+      },
+      "label": {
+        "displayName": "Компактная метка",
+        "purpose": "Навигационные подписи, статусы и короткие служебные обозначения."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating-control",
+        "value": "0 8px 22px rgba(20,47,39,.13)",
+        "purpose": "Переключатель зоны, поиск и картографические контролы, плавающие над картой."
+      },
+      {
+        "name": "floating-panel",
+        "value": "0 18px 42px rgba(20,47,39,.2)",
+        "purpose": "Рабочая панель поиска или выбранного места."
+      },
+      {
+        "name": "side-panel",
+        "value": "-18px 0 42px rgba(20,47,39,.2)",
+        "purpose": "Направленное отделение панели визита от карты."
+      }
+    ],
+    "motion": [
+      {
+        "name": "panel-enter",
+        "value": "180ms cubic-bezier(.2,.8,.2,1)",
+        "purpose": "Короткое появление рабочей или визитной панели со сдвигом 14px; отключается при reduced motion."
+      },
+      {
+        "name": "marker-state",
+        "value": "140ms ease",
+        "purpose": "Смена насыщенности и прозрачности маркеров при выборе текущего места."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile-shell",
+        "value": "720px"
+      },
+      {
+        "name": "compact-phone",
+        "value": "430px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Navigation Rail Item",
+      "kind": "nav",
+      "refersTo": "rail-item-active",
+      "description": "Высокий пункт хвойного рельса; активный раздел становится лишайниковым и получает оранжевую пиктограмму.",
+      "html": "<nav class=\"ds-rail\" aria-label=\"Основные разделы\"><button class=\"ds-rail-item is-active\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z\"/><path d=\"M8 4v13m8-10v13\"/></svg><span>Карта</span></button><button class=\"ds-rail-item\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6.5 15.5c1.7-2.2 2.8-5 5.5-5s3.8 2.8 5.5 5c2 2.7.4 5-2.4 4.3-2.2-.6-4-.6-6.2 0-2.8.7-4.4-1.6-2.4-4.3Z\"/></svg><span>Животные</span></button></nav>",
+      "css": ".ds-rail{display:flex;flex-direction:column;width:92px;background:var(--pine);color:var(--white)}.ds-rail-item{min-height:82px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:0;border-bottom:1px solid rgba(255,255,255,.12);background:transparent;color:#cbd8cf;font:600 11px/1.25 ParkUI,Arial,sans-serif;cursor:pointer}.ds-rail-item svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.ds-rail-item:hover{background:rgba(255,255,255,.07);color:var(--white)}.ds-rail-item.is-active{background:var(--lichen);color:var(--pine)}.ds-rail-item.is-active svg{stroke:var(--orange)}.ds-rail-item:focus-visible{outline:3px solid var(--orange);outline-offset:-3px}.ds-rail-item:active{filter:brightness(.94)}"
+    },
+    {
+      "name": "Zone Switch",
+      "kind": "nav",
+      "refersTo": "zone-toggle-active",
+      "description": "Единый двухсегментный контроль, который всегда показывает обе реальные зоны парка.",
+      "html": "<div class=\"ds-zone-switch\" role=\"group\" aria-label=\"Зона парка\"><button aria-pressed=\"true\">Казачны мір</button><button aria-pressed=\"false\">Лясныя таямніцы</button></div>",
+      "css": ".ds-zone-switch{display:grid;grid-template-columns:1fr 1fr;min-width:368px;border:1px solid var(--pine);border-radius:10px;overflow:hidden;background:var(--lichen);box-shadow:0 8px 22px rgba(20,47,39,.13)}.ds-zone-switch button{min-height:48px;padding:8px 18px;border:0;border-right:1px solid var(--line);background:transparent;color:var(--pine);font:650 15px/1.1 ParkUI,Arial,sans-serif;cursor:pointer}.ds-zone-switch button:last-child{border-right:0}.ds-zone-switch button:hover{background:var(--lichen-2)}.ds-zone-switch button[aria-pressed=true]{background:var(--pine);color:var(--white)}.ds-zone-switch button:focus-visible{outline:3px solid var(--orange);outline-offset:-3px}.ds-zone-switch button:active{filter:brightness(.94)}"
+    },
+    {
+      "name": "Map Search Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "Квадратное иконографическое действие, плавающее рядом с переключателем зоны.",
+      "html": "<button class=\"ds-icon-button\" type=\"button\" aria-label=\"Найти животное или место\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6\"/><path d=\"m15 15 5 5\"/></svg></button>",
+      "css": ".ds-icon-button{width:50px;height:50px;display:grid;place-items:center;border:1px solid var(--pine);border-radius:10px;background:var(--lichen);color:var(--pine);box-shadow:0 8px 22px rgba(20,47,39,.13);cursor:pointer}.ds-icon-button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.ds-icon-button:hover{background:var(--pine);color:var(--white)}.ds-icon-button:focus-visible{outline:3px solid var(--orange);outline-offset:3px}.ds-icon-button:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Map Search Field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Высокое поисковое поле с пиктограммой для названия животного или места.",
+      "html": "<label class=\"ds-search-field\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6\"/><path d=\"m15 15 5 5\"/></svg><input type=\"search\" placeholder=\"Например, альпака или кафе\" aria-label=\"Найти животное или место\"></label>",
+      "css": ".ds-search-field{height:52px;padding:0 14px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;background:var(--white);color:var(--pine-2)}.ds-search-field svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.ds-search-field input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:var(--ink);font:400 15px/1.45 ParkUI,Arial,sans-serif}.ds-search-field input::placeholder{color:#6b7c74}.ds-search-field:hover{border-color:var(--pine-2)}.ds-search-field:focus-within{outline:3px solid var(--orange);outline-offset:3px}.ds-search-field:active{background:var(--white)}"
+    },
+    {
+      "name": "Map Filter Segments",
+      "kind": "chip",
+      "refersTo": "filter-active",
+      "description": "Три плотно соединённых фильтра, которые меняют состояние внутри общей рамки.",
+      "html": "<div class=\"ds-filters\" role=\"group\" aria-label=\"Тип места\"><button aria-pressed=\"true\">Все</button><button aria-pressed=\"false\">Животные</button><button aria-pressed=\"false\">Сервисы</button></div>",
+      "css": ".ds-filters{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}.ds-filters button{min-height:42px;padding:4px;border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink);font:400 13px/1.45 ParkUI,Arial,sans-serif;cursor:pointer}.ds-filters button:last-child{border-right:0}.ds-filters button:hover{background:var(--lichen-2)}.ds-filters button[aria-pressed=true]{background:var(--pine);color:var(--white)}.ds-filters button:focus-visible{outline:3px solid var(--orange);outline-offset:-3px}.ds-filters button:active{filter:brightness(.94)}"
+    },
+    {
+      "name": "Observation Sheet",
+      "kind": "card",
+      "refersTo": "observation-sheet",
+      "description": "Компактная рабочая панель поиска или выбранного места, плавающая над картой.",
+      "html": "<section class=\"ds-observation-sheet\"><div class=\"ds-sheet-head\"><h2>Поиск по всей карте</h2><button type=\"button\" aria-label=\"Закрыть\">×</button></div><p>Найдите животное или полезное место по названию.</p></section>",
+      "css": ".ds-observation-sheet{width:min(380px,100%);padding:22px;border:1px solid var(--pine);border-radius:12px;background:var(--lichen);color:var(--ink);box-shadow:0 18px 42px rgba(20,47,39,.2);font:400 15px/1.45 ParkUI,Arial,sans-serif}.ds-sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.ds-sheet-head h2{margin:0;font-size:22px;line-height:1.1;letter-spacing:-.02em}.ds-observation-sheet p{margin:18px 0 0;color:var(--muted)}.ds-sheet-head button{width:42px;height:42px;border:1px solid var(--pine);border-radius:10px;background:var(--lichen);color:var(--pine);font-size:24px;cursor:pointer}.ds-sheet-head button:hover{background:var(--pine);color:var(--white)}.ds-sheet-head button:focus-visible{outline:3px solid var(--orange);outline-offset:3px}.ds-sheet-head button:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Guest Path Key",
+      "kind": "custom",
+      "refersTo": "path-key",
+      "description": "Компактная легенда, которая объясняет только подтверждённые гостевые дорожки.",
+      "html": "<details class=\"ds-path-key\" open><summary><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"6\" cy=\"18\" r=\"2\"/><circle cx=\"18\" cy=\"6\" r=\"2\"/><path d=\"M8 18h3c4 0 2-8 6-10\"/></svg>Пешеходные дорожки</summary><p><i aria-hidden=\"true\"></i>Доступно посетителям</p><p>Служебные проезды не подсвечиваются.</p></details>",
+      "css": ".ds-path-key{width:260px;border:1px solid var(--pine);border-radius:10px;background:var(--lichen);color:var(--ink);box-shadow:0 8px 22px rgba(20,47,39,.14);font:500 12px/1.35 ParkUI,Arial,sans-serif}.ds-path-key summary{min-height:46px;padding:0 13px;display:flex;align-items:center;gap:9px;cursor:pointer;font-weight:650;list-style:none}.ds-path-key summary:hover{background:var(--lichen-2)}.ds-path-key summary:focus-visible{outline:3px solid var(--orange);outline-offset:3px}.ds-path-key summary:active{filter:brightness(.94)}.ds-path-key svg{width:20px;height:20px;fill:none;stroke:var(--orange);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.ds-path-key p{margin:0;padding:0 13px 11px;color:var(--muted)}.ds-path-key i{display:inline-block;width:24px;height:0;margin-right:8px;border-top:4px dashed var(--pine-2);vertical-align:middle}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Станция наблюдения за дикой природой",
+    "overview": "Система ведёт себя как спокойный полевой инструмент: карта начинается с первого пикселя и остаётся рабочей поверхностью, а поиск, выбор зоны, легенда и сведения о месте крепятся к её краям. Интерфейс плотный и прямой, но не перегруженный: важные статусы заменяются на месте, вместо того чтобы накапливать карточки и окна.\n\nВизуальный язык строится на глубоком хвойном каркасе, светлых лишайниковых рабочих поверхностях, озёрной географии и редком тёплом оранжевом сигнале. Строгие линии, малые радиусы и один рабочий гротеск поддерживают высокую информационную ясность на улице. Это самостоятельная продуктовая система интерфейса, а не заявка на официальную фирменную айдентику парка.",
+    "keyCharacteristics": [
+      "Карта как непрерывная рабочая поверхность.",
+      "Плотные навигационные рельсы и компактные контекстные панели.",
+      "Глубокий хвойный каркас, светлый лишайниковый фон и озёрная география.",
+      "Оранжевый только для цели, фокуса и редкого сигнала.",
+      "Строгие однопиксельные линии, небольшие радиусы и минимум декоративной глубины.",
+      "Самостоятельно размещённый IBM Plex Sans для кириллицы, подписей и данных."
+    ],
+    "rules": [
+      {
+        "name": "The Rare Orange Rule",
+        "body": "Оранжевый обозначает цель, фокус или единичный сигнал; он не становится общим цветом кнопок и больших поверхностей.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Workhorse Rule",
+        "body": "В интерфейсе нет декоративного шрифтового контраста: IBM Plex Sans меняет вес и размер, но не уступает роль другому семейству.",
+        "section": "typography"
+      },
+      {
+        "name": "The Map-as-Work-Surface Rule",
+        "body": "Новые функции прикрепляются к карте как компактные инструменты или контекстные панели; они не должны превращать стартовый экран в сетку крупных карточек.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-by-Default Rule",
+        "body": "Неподвижные рельсы, поля и секции остаются плоскими; тени разрешены только плавающим рабочим поверхностям над картой.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Field Geometry Rule",
+        "body": "Сначала строгая линия и малый радиус; круг или полностью скруглённая форма допускаются только для точечного маркера либо отдельного иконографического действия.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do оставляйте карту главной рабочей поверхностью и прикрепляйте инструменты к её краям.",
+      "Do используйте хвойный цвет для структуры и выбранных состояний, а оранжевый — только для цели и фокуса.",
+      "Do сохраняйте минимум 44×44px для касания и заметный клавиатурный фокус.",
+      "Do разделяйте плотные списки однопиксельными линиями вместо упаковки каждого пункта в отдельную карточку.",
+      "Do показывайте активный маршрут, выбранное место и смену состояния непосредственно на карте."
+    ],
+    "donts": [
+      "Don't копируйте Windows/Fluent, glassmorphism или псевдо-нейросетевую декоративность.",
+      "Don't используйте декоративные градиенты, гигантские карточки и шаблонные eyebrow-заголовки.",
+      "Don't добавляйте тени неподвижным рельсам, обычным секциям и вложенным элементам.",
+      "Don't превращайте каждый фильтр или соседний сегмент в отдельную пилюлю.",
+      "Don't выдавайте эту продуктовую UI-систему за официальную фирменную айдентику парка."
+    ]
+  }
+}

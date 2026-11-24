@@ -262,16 +262,13 @@
       const list = document.createElement('div');
       list.className = 'map-residents';
       for (const {slug, name, portrait} of residents) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.dataset.go = slug === 'kapibara' ? 'animal' : 'species/' + slug;
-        if (!individual && portrait) button.append(residentPortrait(portrait));
-        button.append(individual ? 'Об этом животном' : name);
-        const arrow = document.createElement('span');
-        arrow.setAttribute('aria-hidden', 'true');
-        arrow.textContent = '→';
-        button.append(arrow);
-        list.append(button);
+        const resident = document.createElement('div');
+        resident.className = 'map-resident';
+        if (!individual && portrait) resident.append(residentPortrait(portrait));
+        const label = document.createElement('span');
+        label.textContent = individual ? name : 'Здесь живёт: ' + name;
+        resident.append(label);
+        list.append(resident);
       }
       card.append(list);
     }

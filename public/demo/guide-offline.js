@@ -7,7 +7,7 @@
   }
   const workerUrl=new URL('guide-worker.js',document.baseURI).href;
   function ready(){
-    status.textContent='Карта и фотографии животных сохранены для этого браузера.';
+    status.textContent='Карта сохранена для этого браузера.';
     button.hidden=true;
   }
   navigator.serviceWorker.getRegistration(new URL('./',document.baseURI)).then(reg=>{
@@ -15,9 +15,8 @@
   }).catch(()=>{});
   button.onclick=async()=>{
     button.disabled=true;
-    status.textContent='Сохраняем карту и каталог животных…';
+    status.textContent='Сохраняем карту…';
     try {
-      await window.parkSchedule.load();
       const registration=await navigator.serviceWorker.register('guide-worker.js');
       const worker=registration.installing || registration.waiting || registration.active;
       if (!worker) throw Error('Worker unavailable');
