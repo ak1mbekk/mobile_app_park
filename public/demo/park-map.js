@@ -69,7 +69,9 @@
   let boundaryData, contains;
   let guestData;
   function guestPaths() {
-    return (guestData?.paths || []).filter(p => p.zone === state.zone && p.status !== 'closed')
+    // The visitor map shows only routes confirmed as open. Draft plan traces and
+    // closed service branches stay available in the staff alignment editor.
+    return (guestData?.paths || []).filter(p => p.zone === state.zone && p.status === 'open')
       .map(path => ({status:path.status,line:path.points.map(([x,y]) => calibration
         ? projection.crs.pointToLatLng(projection.toWorld(calibration,x,y),16) : L.latLng(-y,x))}));
   }
@@ -745,7 +747,7 @@
     }
     const paths = guestPaths();
     const legend = host.querySelector('.guest-path-key');
-    legend.querySelector('[data-plan]').hidden = !paths.some(p => p.status === 'plan');
+    legend.querySelector('[data-plan]').hidden = true;
     legend.querySelector('[data-open]').hidden = !paths.some(p => p.status === 'open');
     legend.querySelector('[data-missing]').hidden = paths.length > 0;
     if (calibration && !flatOnly && window.createParkLandscape) {

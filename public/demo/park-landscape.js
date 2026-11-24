@@ -22,13 +22,12 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
     layer('walk-edge', 'line', 'walk', { 'line-color': '#c6b695', 'line-width': width(1.8, 12) }),
     layer('walks', 'line', 'walk', { 'line-color': '#fff6df', 'line-width': width(1.2, 10) }),
     ...[
-      ['guest-path-edge', '#fff7dc', width(6, 12)],
-      ['guest-path-plan', '#11605e', width(3.8, 8)],
-      ['guest-path-open', '#11605e', width(3.8, 8)]
-    ].map(([id,color,lineWidth]) => ({
+      ['guest-path-edge', '#f7f0d7', width(7.5, 17), 0.86],
+      ['guest-path-open', '#2d7864', width(3.8, 8), 0.88]
+    ].map(([id,color,lineWidth,opacity]) => ({
       id,type:'line',source:'guestPaths',layout:{'line-cap':'round','line-join':'round'},
-      ...(id === 'guest-path-edge' ? {} : {filter:['==',['get','status'],id === 'guest-path-open' ? 'open' : 'plan']}),
-      paint:{'line-color':color,'line-width':lineWidth,...(id === 'guest-path-plan' ? {'line-dasharray':[2,1.4]} : {})}
+      filter:['==',['get','status'],'open'],
+      paint:{'line-color':color,'line-width':lineWidth,'line-opacity':opacity}
     })),
     { id: 'habitats', type: 'fill', source: 'areas', paint: {
       'fill-color': ['case', ['get', 'chosen'], '#efae58', '#78995e'], 'fill-opacity': 0.28 } },
@@ -116,7 +115,15 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
     ctx.beginPath(); ctx.arc(36,36,29,0,2*Math.PI); ctx.fill();
     ctx.save();
     ctx.fillStyle = ctx.strokeStyle = '#fff9e9';
-    if (item.service === 'Туалеты') {
+    if (item.symbol === 'night') {
+      ctx.beginPath(); ctx.arc(35,35,13,0,Math.PI*2); ctx.fill();
+      ctx.save(); ctx.globalCompositeOperation='destination-out';
+      ctx.beginPath(); ctx.arc(41,30,12,0,Math.PI*2); ctx.fill(); ctx.restore();
+    } else if (item.symbol === 'bird') {
+      ctx.lineWidth=4; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(21,39); ctx.quadraticCurveTo(29,28,36,37);
+      ctx.quadraticCurveTo(43,28,51,39); ctx.stroke();
+    } else if (item.service === 'Туалеты') {
       ctx.font='bold 23px Arial'; ctx.textAlign='center'; ctx.fillText('WC',36,44);
     } else if (item.service) {
       const path = window.parkGuide.markerFace(item).querySelector('path');
@@ -163,7 +170,7 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
       if (!ll) continue;
       const xy = [ll.lng,ll.lat];
       const chosen = item.id === selected;
-      const props = {id:item.id, name:item.name, chosen, rank:item.symbol === 'pizza' ? 0 : item.service ? 2 : 1};
+      const props = {id:item.id, name:item.name, chosen, rank:item.symbol ? 0 : item.service ? 2 : 1};
       if (chosen) target = xy;
       bounds.extend(xy);
       const ring = boundary(item)?.map(p => [p.lng,p.lat]);
@@ -201,7 +208,16 @@ window.createParkLandscape = function (surface, select, fallback, alignment) {
       else if (!bounds.isEmpty()) {
         const center = bounds.getCenter();
         const view = map.cameraForBounds(bounds,{padding:{top:76,bottom:40,left:24,right:24},maxZoom:17.8});
-        map.jumpTo({center:view?.center || center,zoom:view?.zoom || 16.5,pitch:48,bearing:-12,padding:{top:0,bottom:0,left:0,right:0}});
+        const portrait = surface.clientHeight > surface.clientWidth * 1.35;
+        if (portrait && zone === 1) {
+          const focus = window.parkProjection.crs.pointToLatLng(
+            window.parkProjection.toWorld(surveyAlignment,340,1060),16);
+          map.jumpTo({center:[focus.lng,focus.lat],zoom:Math.min((view?.zoom || 16.5)+0.35,17.4),pitch:34,bearing:-7,
+            padding:{top:64,bottom:28,left:12,right:12}});
+        } else {
+          map.jumpTo({center:view?.center || center,zoom:view?.zoom || 16.5,pitch:44,bearing:-10,
+            padding:{top:64,bottom:32,left:18,right:18}});
+        }
       }
       cameraKey = key;
     }

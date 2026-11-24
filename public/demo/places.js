@@ -22,14 +22,17 @@
     {zone:1,id:'65wc',badge:'WC',name:'Туалет у водоёма',x:558,y:74,service:'Туалеты'},
     {zone:1,id:'rest',badge:'Отдых',name:'Зона отдыха',x:99,y:139,service:'Места отдыха'},
     {zone:1,id:'food-entry',badge:'Корм',name:'Корм для животных у входа',x:152,y:612,service:'Корм для животных'},
-    {zone:1,id:'food-pond',badge:'Корм',name:'Корм у водоёма рядом с № 24',x:654,y:412,service:'Корм для животных'},
-    {zone:1,id:'dispenser-west',badge:'Корм',name:'Автомат с кормом у центрального водоёма',x:62,y:349,service:'Корм для животных'},
-    {zone:1,id:'dispenser-otter',badge:'Корм',name:'Автомат с кормом у вольера № 38',x:526,y:162,service:'Корм для животных'},
-    {zone:1,id:'dispenser-island',badge:'Корм',name:'Автомат с кормом у моста к № 24',x:568,y:456,service:'Корм для животных'},
+    {zone:1,id:'food-pond',badge:'Корм',name:'Корм для животных у водоёма',x:654,y:412,plan:[610,300],service:'Корм для животных'},
+    {zone:1,id:'dispenser-west',badge:'Корм',name:'Автомат с кормом у западной гостевой дорожки',x:62,y:349,plan:[185,385],service:'Корм для животных'},
+    {zone:1,id:'dispenser-otter',badge:'Корм',name:'Автомат с кормом у выдры',x:526,y:162,plan:[414,160],service:'Корм для животных'},
+    {zone:1,id:'dispenser-island',badge:'Корм',name:'Автомат с кормом у прохода к № 24',x:568,y:456,plan:[625,270],service:'Корм для животных'},
     {zone:1,id:'wc-entry',badge:'WC',name:'Туалет у входа',x:197,y:612,service:'Туалеты'},
-    {zone:1,id:'wc-island',badge:'WC',name:'Туалет у вольера № 24',x:667,y:423,service:'Туалеты'},
+    {zone:1,id:'wc-island',badge:'WC',name:'Туалет у водоёма № 24',x:667,y:423,plan:[650,278],service:'Туалеты'},
     {zone:1,id:'wc-rest',badge:'WC',name:'Туалет в зоне отдыха',x:51,y:117,service:'Туалеты'},
     {zone:1,id:'wash-entry',badge:'Руки',name:'Рукомойник у входа',x:177,y:612,service:'Где вымыть руки'},
+    {zone:1,id:'night-world',name:'Ночной мир',plan:[174,348],symbol:'night',detail:'Крытая экспозиция с животными. Вход находится со стороны гостевой дорожки.',keywords:['ночной мир','крытая экспозиция']},
+    {zone:1,id:'bird-row',name:'Птичьи вольеры',plan:[250,58],symbol:'bird',detail:'Ряд экспозиций с птицами между отмеченными на схеме ориентирами.',keywords:['птицы','птичьи вольеры']},
+    {zone:1,id:'squirrels-west',name:'Белки',plan:[202,320],detail:'Территория белок у западной гостевой дорожки.',species:['belka-evropejskaya','dvuxczvetnaya-belka'],keywords:['белки']},
     {zone:2,id:'1',badge:'1',name:'Хайленд',x:77,y:232,species:['hijlend']},
     {zone:2,id:'11',badge:'11',name:'Зубр европейский',x:349,y:513,plan:[526,594],species:['zubr']},
     {zone:2,id:'15',badge:'15',name:'Олень благородный',x:573,y:282,plan:[735,345],species:['olen-blagorodnyij']},
@@ -58,7 +61,6 @@
   // WGS84 points explicitly tagged amenity=toilets. Independent of the paper map.
   const geoFacilities=[
     {zone:1,id:'osm-9868277697',name:'Туалет у входной части парка',geo:[26.0125061,53.0949839]},
-    {zone:1,id:'osm-9868277715',name:'Туалет в северной части зоны',geo:[26.0130966,53.0979380]},
     {zone:2,id:'osm-9868296562',name:'Туалет в южной части зоны',geo:[26.0213501,53.0904689]},
     {zone:2,id:'osm-10971056120',name:'Туалет в северной части зоны',geo:[26.0214259,53.0927221]}
   ].map(p=>({...p,badge:'WC',service:'Туалеты'})).concat([
@@ -75,6 +77,7 @@
     {zone:1,id:'cafe-14-1',name:'Пиццерия',geo:[26.010135,53.096426],keywords:['пицца'],symbol:'pizza'},
     {zone:1,id:'cafe-15',name:'Ярмарочный домик 1',geo:[26.010577,53.096673]},
     {zone:1,id:'cafe-15-1',name:'Ярмарочный домик 2',geo:[26.010651,53.096600]},
+    {zone:1,id:'cafe-summer-24',name:'Летнее кафе у водоёма',plan:[590,250],keywords:['летнее кафе','сезонное кафе'],detail:'Работает в летний сезон; режим нужно уточнять у парка.'},
     {zone:2,id:'cafe-21',name:'Фудтрак',geo:[26.02131702998618,53.09097172838789]},
     {zone:2,id:'cafe-21-1',name:'Шашлык',geo:[26.021315,53.090871]},
     {zone:2,id:'cafe-21-2',name:'Кафе (лес)',geo:[26.021352,53.090745]},
@@ -122,11 +125,13 @@
     {zone:1,id:'18',x:127,y:481,plan:[223,441],name:'Бельгийская голубая порода и коза гиргентана',species:['belgijskaya-golubaya-poroda','koza-gergentana']},
     // The technical drawing prints 19–23 on the parking side of the perimeter.
     // Use the park's annotated map for 19, 21 and 23; the other two await placement.
-    {zone:1,id:'19',x:23,y:388,plan:[163.5,418.7],name:'Обыкновенный канюк',species:[]},
-    {zone:1,id:'20',x:23,y:406,name:'Филин',species:['filin']},
-    {zone:1,id:'21',x:25,y:438,plan:[181.4,447.9],name:'Камерунская коза',species:[]},
-    {zone:1,id:'22',x:27,y:479,name:'Овца уэссан',species:[]},
-    {zone:1,id:'23',x:27,y:499,plan:[200.5,486],name:'Полярная сова',species:['polyarnaya-sova']},
+    // The printed labels 19–23 sit outside the boundary and point into five small
+    // roadside structures. Use the ends of those leader lines, not the label text.
+    {zone:1,id:'19',x:23,y:388,plan:[192,405],name:'Обыкновенный канюк',species:[]},
+    {zone:1,id:'20',x:23,y:406,plan:[196,421],name:'Филин',species:['filin']},
+    {zone:1,id:'21',x:25,y:438,plan:[200,445],name:'Камерунская коза',species:[]},
+    {zone:1,id:'22',x:27,y:479,plan:[207,466],name:'Овца уэссан',species:[]},
+    {zone:1,id:'23',x:27,y:499,plan:[216,487],name:'Полярная сова',species:['polyarnaya-sova']},
     {zone:1,id:'32',x:570,y:322,plan:[541,269],name:'Азиатский буйвол',species:['vodyanoj-bujvol-(aziatskij)']},
     {zone:1,id:'33',x:503,y:342,plan:[422,249],name:'Лама',species:['lama']},
     {zone:1,id:'34',x:374,y:287,plan:[376,262],name:'Альпака',species:['alpaka']},
