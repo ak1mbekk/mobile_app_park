@@ -2,27 +2,41 @@
 version: 1
 slug: "public-demo-index-html"
 primary_target: "public/demo/index.html"
-related_targets: ["public/demo/visitor.css","public/demo/park-map.js"]
+related_targets: ["public/demo/guide-ui.css", "public/demo/park-home.css", "public/demo/park-home.js", "public/demo/catalog.js", "public/demo/feedings.js", "public/demo/map.html", "public/demo/map-app.css", "public/demo/map-app-shell.js", "public/demo/park-map.js"]
 ---
 
-# Карта парка
+# Главная путеводителя Парка животных
 
-Mode: Operate. Scope: `public/demo/index.html` and the map-first visitor shell around it.
+## Задача
 
-Audience: a park visitor holding a phone outdoors. Job: find an animal or facility, understand which zone it belongs to, and follow only the highlighted public paths. Primary action: search and reveal a place on the map. Constraints: no virtual pet, game economy, rooms, mini-games, family account, external map handoff, Windows/Fluent styling, fabricated park facts, or decorative dashboard metrics.
+Режим — Operate. Посетителю с телефоном нужно найти обитателя, проверить кормления, открыть дорожки одной из зон или купить билет. Знак парка и название деревни Глинище привязывают главную к месту.
 
-## Direction contract
+## Композиция на телефоне
 
-THESIS: The interface is a wildlife observation station built around the live park map, not a home screen made of feature cards. The map is the working surface from the first pixel; supporting tools attach to its edge and never displace it.
+1. Под знаком парка находится холодно-серое поле «Найти животное». Введённый запрос передаётся в каталог.
+2. Широкая фотография каракала ведёт в карточку вида. Его название и подпись «О животном» размещены поверх затемнённой части кадра.
+3. Под обложкой два ряда равных действий. Графитовые кнопки открывают карту, кормления и аудиогид. Лаймовый билет с боковыми выемками ведёт на официальную страницу покупки.
+4. Сразу под быстрыми действиями находятся ссылки «Экскурсии», «Как добраться» и «Для посетителей».
+5. В разделе «Наши животные» три входа в каталог — «Млекопитающие», «Птицы» и «Все». Под ними фотографии филина, ламы, капибары и енота-полоскуна образуют два ряда по две карточки. Внизу указано местоположение парка.
+6. Нижняя графитовая панель содержит «Главная», «Животные», «Карта», «Места» и «Визит» в одном порядке на всех экранах. В карточке вида активен раздел «Животные». Расписание, экскурсии и дорога относятся к разделу «Визит».
 
-OWN-WORLD: Deep pine structure, pale lichen work surfaces, lake blue geography, warm orange only for the current target, and graphite text. Controls are compact field labels and durable rails with crisp 1px rules, square-ended geometry and restrained 12px corners. One self-hosted workhorse sans carries Cyrillic labels, names and data. No glass, oversized pills, fake paper, gradients or decorative shadows.
+## Широкий экран
 
-STORY: The visitor opens directly on the two park zones, searches by animal rather than enclosure number, selects a result and sees its territory, nearby path and useful services without leaving the application. Animals and visitor information remain secondary destinations in the same shell.
+От 760 px поиск занимает обе колонки. Фотография каракала находится слева, действия и ссылки для визита справа. Ниже на всю ширину идут группы и галерея животных. Панель навигации остаётся доступна по центру у нижнего края.
 
-FIRST VIEWPORT: On desktop, a 92px pine navigation rail anchors the left edge, the map fills the remaining viewport, and a slim lichen context strip holds zone switching and search. A compact observation drawer opens from the right for search and place details. On phones, the map remains full height; the brand becomes a small top plate, zone switching becomes a two-line compact control, and the three primary destinations sit in a bottom navigation dock above the safe area. The signature interaction is “focus the sighting”: selecting an animal tightens the map camera, raises one orange locator and turns the drawer from search results into the animal’s place record.
+## Переходы
 
-FORM: Assigned grounded direction 3, “wildlife observation station”, seed key `47d3e757`. Raise from Japanese high-density web: information density without card inflation. Raise from Crouwel’s specimen: strict alignment to one visible module rhythm. Raise from transit diagrams: unmistakable active route and transfer context. Raise from split-flap boards: status changes replace in place rather than opening stacked overlays.
+Кнопка в шапке переключает дневную и ночную темы. Выбор сохраняется при переходах к карте и работе без связи.
 
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+Карточка показывает название вида и доступные сведения из каталога. Действие «Показать место на карте» зависит от привязки к месту. Полноэкранная карта открывается отдельно с переключателем зон «Казачны мір» и «Лясныя таямніцы». «Главная» в нижней панели возвращает к началу путеводителя. «Места» открывают категории сервисов карты. Страница «Как добраться» содержит внешние ссылки для подъезда к каждой зоне.
 
-Unresolved: official brand palette and type system are not supplied; this branch uses an explicit product UI system that must not be presented as the park’s official identity.
+Аудиогид показывает рассказы по двум зонам. Кнопка «Слушать» запускает запись, ссылка «На карте» открывает вольер. Название рассказа ведёт на отдельный экран с текстом и прямым адресом для QR. Путеводитель можно заранее сохранить для прогулки без связи.
+
+В расписании посетитель выбирает дату и раскрывает кормление. Название животного, время и доступность перехода на карту должны соответствовать данным выбранного события.
+
+## Проверка
+
+- На узком экране проверьте, что подпись «Млекопитающие» видна целиком, крайние кнопки доступны, а нижняя панель не закрывает последнюю ссылку.
+- Перейдите с обложки к каракалу. Введите название животного на главной, проверьте выдачу, затем откройте одну из групп и проверьте активный фильтр.
+- Проверьте переходы с графитовых кнопок и адрес назначения билета. Откройте рассказ напрямую, запустите запись и перейдите к вольеру. На карте переключите обе зоны и откройте поиск места.
+- Проверьте, что блок ссылок для визита предшествует разделу «Наши животные» визуально и по порядку фокуса. В обоих размерах пройдите действия с клавиатуры и проверьте читаемость белых названий на снимках.

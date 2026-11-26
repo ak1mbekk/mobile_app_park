@@ -177,7 +177,7 @@ html.dark #visitor-theme .sun-icon {display:block}
 #map .park-surface{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;background:#dae2c8;isolation:isolate}
 #map .guest-path-key{position:absolute;z-index:409;left:var(--map-left);bottom:calc(var(--map-bottom) + 6px);max-width:min(250px, calc(100% - 85px));border-radius:12px;background:var(--surface);color:var(--ink);box-shadow:var(--zk-shadow-control);font:500 13px/1.35 var(--zk-font)}
 #map .guest-path-key summary{display:flex;align-items:center;gap:8px;min-height:42px;padding:0 12px;cursor:pointer;font-weight:600}
-#map .guest-path-key summary::before,#map .guest-path-key i{content:"";display:inline-block;width:24px;height:5px;background:repeating-linear-gradient(to right,#387561 0 7px,transparent 7px 11px);border-radius:999px;box-shadow:0 0 0 3px rgba(247,240,215,.82)}
+#map .guest-path-key summary::before,#map .guest-path-key i{content:"";display:inline-block;width:24px;height:0;border-top:4px dashed #387561;background:none;border-radius:0;box-shadow:none}
 #map .guest-path-key i{margin-right:6px;vertical-align:middle}
 #map .guest-path-key:has([data-missing]:not([hidden])) summary::before{display:none}
 #map .guest-path-key p{margin:0;padding:0 12px 9px}
@@ -230,8 +230,6 @@ html.dark #visitor-theme .sun-icon {display:block}
 #map .map-filter-hint{margin:8px 0;color:var(--ink);font-size:15px;line-height:1.4}
 #map .place-picker{display:block;margin:0}
 #animal-map-query{width:100%;min-height:44px;margin:6px 0 10px;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--paper);color:var(--ink);font:inherit}
-#map .animal-editor-pin{color:#ab441e;text-align:center;font:36px/40px sans-serif;text-shadow:0 0 3px white;cursor:grab}
-#map :is(.edit-animal-marker,.edit-animal-boundary){margin-top:6px}
 #animal-map-matches{display:grid;max-height:24dvh;overflow:auto;margin-bottom:8px}
 #animal-map-matches[hidden]{display:none}
 #animal-map-matches button{min-height:44px;text-align:left;padding:8px;color:var(--ink);background:var(--surface);border-bottom:1px solid var(--line)}
@@ -275,7 +273,6 @@ html.dark #visitor-theme .sun-icon {display:block}
     width:min(41%,365px);max-height:calc(100% - var(--map-top) - var(--map-bottom) - 60px);
   }
 }
-#map .visitor-survey{position:absolute;top:0;left:0;width:2064px;height:2369px;max-width:none;transform-origin:0 0;pointer-events:none}
 #map .place-marker.place-point::after{content:'';display:block;width:14px;height:14px;box-sizing:border-box;border:2px solid white;border-radius:50%;background:#285d43;box-shadow:0 1px 4px #172c1d80}
 #map .place-marker.place-point.picked::after{width:20px;height:20px;background:#214632;outline:3px solid #174c37;outline-offset:2px}
 #map .place-marker:focus-visible{outline:2px solid #174c37;outline-offset:-2px;border-radius:50%}

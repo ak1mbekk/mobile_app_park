@@ -1,8 +1,14 @@
 {
   "raster": "enclosures-2064x2369",
-  "revision": 0,
+  "revision": 1,
   "centerX": 9601312.071205,
   "centerY": 5472047.323384,
   "scale": 0.59315515,
-  "angle": 0.805739
+  "angle": 0.805739,
+  "animalPositions": {
+    "2/5": [
+      53.09072699760162,
+      26.02056567119206
+    ]
+  }
 }

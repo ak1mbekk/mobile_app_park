@@ -42,7 +42,8 @@
     "url": "https://animal-park.by/galereya/karakal.html",
     "slug": "karakal",
     "photo": "https://animal-park.by/gallery/karakal-compressed.webp",
-    "thumbnail": "assets/caracal.webp"
+    "thumbnail": "assets/caracal.webp",
+    "description": "У каракала длинные чёрные кисточки на ушах, короткий хвост и песочная шерсть. Сильные задние лапы помогают ему высоко подпрыгивать. Так он может поймать птицу, которая только что взлетела. Каракалы живут в Африке и Азии."
   },
   {
     "id": "site-xorek-fretka",
@@ -342,83 +343,6 @@
     "scientific": "Macaca fuscata"
   },
   {
-    "id": "site-belyij-amur",
-    "name": "Белый амур",
-    "category": "Рыбы",
-    "url": "https://animal-park.by/galereya/belyij-amur.html",
-    "slug": "belyij-amur",
-    "photo": "https://animal-park.by/gallery/amur.png",
-    "thumbnail": "assets/species/belyij-amur.webp"
-  },
-  {
-    "id": "site-belyij-tolstolobik",
-    "name": "Белый толстолобик",
-    "category": "Рыбы",
-    "url": "https://animal-park.by/galereya/belyij-tolstolobik.html",
-    "slug": "belyij-tolstolobik",
-    "photo": "https://animal-park.by/gallery/tolstolobik.jpg",
-    "thumbnail": "assets/species/belyij-tolstolobik.webp",
-    "scientific": "Hypophthalmichthys molitrix"
-  },
-  {
-    "id": "site-karp-obyiknovennyij-(sazan)",
-    "name": "Карп обыкновенный (Сазан)",
-    "category": "Рыбы",
-    "url": "https://animal-park.by/galereya/karp-obyiknovennyij-(sazan).html",
-    "slug": "karp-obyiknovennyij-(sazan)",
-    "photo": "https://animal-park.by/gallery/karp-2.png",
-    "thumbnail": "assets/species/karp-obyiknovennyij--sazan.webp",
-    "scientific": "Cyprinus carpio"
-  },
-  {
-    "id": "site-serebryanyij-karas",
-    "name": "Серебряный карась",
-    "category": "Рыбы",
-    "url": "https://animal-park.by/galereya/serebryanyij-karas.html",
-    "slug": "serebryanyij-karas",
-    "photo": "https://animal-park.by/gallery/karas-cleaned.webp",
-    "thumbnail": "assets/species/serebryanyij-karas.webp",
-    "scientific": "Carassius gibelio"
-  },
-  {
-    "id": "site-shhuka-obyiknovennaya",
-    "name": "Щука обыкновенная",
-    "category": "Рыбы",
-    "url": "https://animal-park.by/galereya/shhuka-obyiknovennaya.html",
-    "slug": "shhuka-obyiknovennaya",
-    "photo": "https://animal-park.by/gallery/schuka.png",
-    "thumbnail": "assets/species/shhuka-obyiknovennaya.webp",
-    "scientific": "Esox lucius"
-  },
-  {
-    "id": "site-sterlyad",
-    "name": "Стерлядь",
-    "category": "Рыбы",
-    "url": "https://animal-park.by/galereya/sterlyad.html",
-    "slug": "sterlyad",
-    "photo": "https://animal-park.by/gallery/sterlet.webp",
-    "thumbnail": "assets/species/sterlyad.webp",
-    "scientific": "Esox lucius"
-  },
-  {
-    "id": "site-lin",
-    "name": "Линь",
-    "category": "Рыбы",
-    "url": "https://animal-park.by/galereya/lin.html",
-    "slug": "lin",
-    "photo": "https://animal-park.by/gallery/lin.png",
-    "thumbnail": "assets/species/lin.webp"
-  },
-  {
-    "id": "site-forel-raduzhnaya",
-    "name": "Форель радужная",
-    "category": "Рыбы",
-    "url": "https://animal-park.by/galereya/forel-raduzhnaya.html",
-    "slug": "forel-raduzhnaya",
-    "photo": "https://animal-park.by/gallery/forel.webp",
-    "thumbnail": "assets/species/forel-raduzhnaya.webp"
-  },
-  {
     "id": "site-antilopa-garna",
     "name": "Антилопа Гарна",
     "category": "Парнокопытные",
@@ -603,7 +527,7 @@
   {
     "id": "site-belyij-aist",
     "name": "Белый Аист",
-    "category": "Хищные птицы",
+    "category": "Другие птицы",
     "url": "https://animal-park.by/galereya/belyij-aist.html",
     "slug": "belyij-aist",
     "photo": "https://animal-park.by/gallery/belyij-aist.jpg",

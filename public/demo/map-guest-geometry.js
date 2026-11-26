@@ -16,3 +16,93 @@ export function validGuestPaths(data) {
       (!i || point.some((v, j) => v !== path.points[i - 1][j])));
   });
 }
+
+const distance = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+
+function project(point, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const fraction = Math.max(0, Math.min(1,
+    ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / (dx * dx + dy * dy)));
+  const xy = [a[0] + dx * fraction, a[1] + dy * fraction];
+  return {xy, fraction, distance:distance(point, xy)};
+}
+
+export function guestNetwork(data, zone) {
+  const nodes = new Map(), edges = [];
+  const vertex = xy => {
+    const key = xy.join(',');
+    if (!nodes.has(key)) nodes.set(key, {xy, links:[]});
+    return nodes.get(key);
+  };
+  for (const path of data.paths) {
+    if (path.zone !== zone || !['open','mapped'].includes(path.status)) continue;
+    for (let i = 1; i < path.points.length; i++) {
+      const a = vertex(path.points[i - 1]), b = vertex(path.points[i]);
+      const length = distance(a.xy, b.xy);
+      a.links.push([b,length]);
+      b.links.push([a,length]);
+      edges.push({a,b,length});
+    }
+  }
+  return edges;
+}
+
+export function nearestGuestPoint(edges, point, ring) {
+  let best;
+  const consider = (edge, candidate) => {
+    if (!best || candidate.distance < best.distance) best = {...candidate,edge};
+  };
+  for (const edge of edges) {
+    const {a,b} = edge;
+    if (!ring) {
+      consider(edge, project(point, a.xy, b.xy));
+      continue;
+    }
+    for (let i = 0; i < ring.length; i++) {
+      const from = ring[i], to = ring[(i + 1) % ring.length];
+      if (!distance(from, to)) continue;
+      consider(edge, project(from, a.xy, b.xy));
+      consider(edge, {xy:a.xy, fraction:0, distance:project(a.xy,from,to).distance});
+      consider(edge, {xy:b.xy, fraction:1, distance:project(b.xy,from,to).distance});
+    }
+  }
+  return best;
+}
+
+export function shortestGuestWalk(start, finish) {
+  // Consecutive segments share the vertices explicitly joined in the park plan.
+  const end = {xy:finish.xy};
+  const {a:beginA,b:beginB,length:beginLength} = start.edge;
+  const {a:endA,b:endB,length:endLength} = finish.edge;
+  const origin = {xy:start.xy};
+  const pending = new Map([[origin,0]]);
+  const settled = new Set(), previous = new Map();
+  const relax = (node, total, from) => {
+    if (settled.has(node) || total >= (pending.get(node) ?? Infinity)) return;
+    pending.set(node,total);
+    previous.set(node,from);
+  };
+  while (pending.size) {
+    let node, total = Infinity;
+    for (const [next,length] of pending) {
+      if (length < total) { node = next; total = length; }
+    }
+    if (node === end) {
+      const points = [];
+      for (let step = end; step; step = previous.get(step)) points.push(step.xy);
+      return {points:points.reverse().filter((xy,i,line) => !i || distance(xy,line[i-1]) > 1e-6),length:total};
+    }
+    pending.delete(node);
+    settled.add(node);
+    if (node === origin) {
+      relax(beginA,beginLength * start.fraction,node);
+      relax(beginB,beginLength * (1 - start.fraction),node);
+      if (start.edge === finish.edge) relax(end,beginLength * Math.abs(start.fraction - finish.fraction),node);
+      continue;
+    }
+    for (const [next,length] of node.links) relax(next,total + length,node);
+    if (node === endA) relax(end,total + endLength * finish.fraction,node);
+    if (node === endB) relax(end,total + endLength * (1 - finish.fraction),node);
+  }
+  return null;
+}

@@ -46,18 +46,22 @@
 #animals #animalReset { min-height:44px;min-width:44px;padding:10px 14px;margin-top:12px;border:1px solid var(--line);border-radius:9px;color:var(--ink);background:var(--surface); }
 #animals .animalcard:focus-visible { outline:3px solid var(--green);outline-offset:3px; }
 #species .species-heading { color:var(--muted);font-size:13px; }
-#species .species-story { display:grid;gap:22px; }
+#species .species-editorial { max-width:960px; }
+#species .species-story { display:grid;gap:18px; }
 #species #species-photo { width:100%;height:auto;margin:0;max-height:none;border:0;border-radius:12px;overflow:hidden;background:var(--inset); }
-#species #species-photo img { display:block;width:100%;height:auto;max-height:440px;object-fit:contain;border-radius:0; }
+#species #species-photo img { display:block;width:100%;height:auto;max-height:min(37svh,360px);aspect-ratio:16/10;object-fit:cover;object-position:center 26%;border-radius:0; }
 #species .species-copy { min-width:0; }
-#species #species-group { margin:0 0 7px;color:var(--green);font:600 12px/1.4 var(--zk-font); }
-#species #species-name { margin:0;font-size:clamp(28px,6vw,38px);line-height:1.12;overflow-wrap:anywhere; }
-#species #species-latin { margin-top:8px;color:var(--muted);font-size:14px;font-style:italic; }
-#species #species-description { margin:18px 0 0;font:400 16px/1.65 var(--zk-font);color:var(--ink);max-width:54ch; }
-#species #species-location { margin-top:22px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;line-height:1.5;color:var(--muted); }
-#species #species-place { margin-top:12px;min-height:48px;width:100%;padding:12px 16px;line-height:1.4; }
+#species #species-name { margin:0;font-size:2rem;line-height:1.12;overflow-wrap:anywhere; }
+#species :is(.species-meta,#species-location) { margin:6px 0 0;color:var(--muted);font:400 14px/1.5 var(--zk-font); }
+#species .species-meta:has(#species-group:empty):has(#species-latin[hidden]) { display:none; }
+#species #species-group:not(:empty) + #species-latin::before { content:'·';margin-inline:8px; }
+#species .species-actions { margin-top:16px;max-width:58ch; }
+#species .species-actions:has(#species-listen[hidden]):has(#species-place[hidden]) { display:none; }
+#species #species-description { margin:20px 0 0;font:400 1rem/1.6 var(--zk-font);color:var(--ink);max-width:58ch; }
+#species #species-audio:not(:empty) { max-width:58ch;margin-top:16px; }
 #species #species-source,
-#species #other-enclosures button { display:flex;align-items:center;min-height:44px;min-width:44px;margin:12px 0 0;padding:10px 0;font:500 14px/1.4 var(--zk-font);text-align:left; }
+#species #other-enclosures button { display:flex;align-items:center;min-height:44px;min-width:44px;margin:8px 0 0;padding:8px 0;font:500 14px/1.4 var(--zk-font);text-align:left; }
+#species #species-source { width:fit-content;color:var(--z-link);text-underline-offset:3px; }
 #species #other-enclosures button { width:100%;border-bottom:1px solid var(--line); }
 @media (hover:hover) {
   #animals .animalcard:hover { border-color:var(--green);background:var(--inset); }
@@ -84,7 +88,9 @@
   #animals .search { max-width:600px; }
   #animals #catalog-count { max-width:none;font-size:14px; }
   #species .species-story { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:start; }
-  #species .species-copy { padding-top:12px; }
+  #species .species-story:has(#species-photo[hidden]) { grid-template-columns:minmax(0,1fr); }
+  #species #species-photo img { max-height:440px;aspect-ratio:5/4; }
+  #species #species-name { font-size:2.5rem; }
 }
 @media (min-width:1000px) {
   #animals .animalgrid { grid-template-columns:repeat(4,minmax(0,1fr)); }

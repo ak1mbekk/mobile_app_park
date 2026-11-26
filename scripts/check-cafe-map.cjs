@@ -90,7 +90,7 @@ async function openSearch(page) {
 }
 
 async function ready(page) {
-  await page.locator('#map.current .visitor-survey').evaluate(image => image.decode());
+  await page.locator('#map.current .leaflet-visitor-land-pane svg').waitFor();
   await page.waitForFunction(() => !document.querySelector('#map .place-picker select').disabled && history.state?.parkMapView?.geographic);
 }
 

@@ -1,10 +1,18 @@
 (() => {
   const mapScreen = document.getElementById('map');
   const visit = document.getElementById('visit-panel');
-  const nav = [...document.querySelectorAll('[data-shell]')];
+  const nav = [...document.querySelectorAll('.app-nav [data-shell]')];
+
+  function syncNavigation() {
+    const searching = !document.getElementById('map-search').hidden;
+    const kind = location.hash.split('/').find(part => part === 'animals' || part === 'service');
+    setCurrent(!visit.hidden ? 'visit' : (searching && kind) || 'map');
+  }
+  document.addEventListener('parkmapviewchange', syncNavigation);
 
   function announceMap() {
     mapScreen.classList.add('current');
+    syncNavigation();
     document.dispatchEvent(new CustomEvent('conceptscreen', {detail:'map'}));
   }
 
@@ -21,10 +29,11 @@
   };
 
   function setCurrent(name) {
-    nav.forEach(item => {
-      if (item.dataset.shell === name) item.setAttribute('aria-current', 'page');
-      else item.removeAttribute('aria-current');
-    });
+    const next = nav.find(item => item.dataset.shell === name);
+    const previous = nav.find(item => item.hasAttribute('aria-current'));
+    if (next === previous) return;
+    previous?.removeAttribute('aria-current');
+    next?.setAttribute('aria-current', 'page');
   }
 
   function activeZone() {
@@ -41,10 +50,7 @@
 
   function openSearch(kind = 'all') {
     closeVisit();
-    const toggle = document.querySelector('.map-search-toggle');
-    if (toggle.getAttribute('aria-expanded') !== 'true') toggle.click();
-    document.querySelector(`[data-kind="${kind}"]`)?.click();
-    setCurrent(kind === 'animals' ? 'animals' : 'map');
+    document.dispatchEvent(new CustomEvent('parksearch', {detail:{kind}}));
   }
 
   function openVisit() {
@@ -59,11 +65,10 @@
     const shell = event.target.closest('[data-shell]');
     if (shell) {
       event.preventDefault();
-      if (shell.dataset.shell === 'animals') openSearch('animals');
+      if (['animals','service'].includes(shell.dataset.shell)) openSearch(shell.dataset.shell);
       else if (shell.dataset.shell === 'visit') openVisit();
       else {
         closeVisit();
-        document.querySelector('[data-kind="all"]')?.click();
         document.querySelector('.map-search-close')?.click();
         window.conceptReplace(`map/${activeZone()}`);
         setCurrent('map');
@@ -74,10 +79,7 @@
     const service = event.target.closest('[data-find-service]');
     if (service) {
       closeVisit();
-      openSearch('service');
-      const select = document.querySelector('.service-picker select');
-      select.value = service.dataset.findService;
-      select.dispatchEvent(new Event('change', {bubbles:true}));
+      document.dispatchEvent(new CustomEvent('parksearch', {detail:{kind:'service',service:service.dataset.findService}}));
     }
   });
 
@@ -92,4 +94,14 @@
   window.addEventListener('hashchange', announceMap);
   if (!location.hash.startsWith('#map/')) history.replaceState(history.state, '', '#map/1');
   mapScreen.classList.add('current');
+  const [, , directory, category] = location.hash.split('/');
+  setCurrent(!category && ['animals','service'].includes(directory) ? directory : 'map');
+  window.parkGuideData.load('catalogue.json')
+    .then(entries => {
+      const species = new Map(entries.map(entry => [entry.slug, entry]));
+      window.parkGuide.speciesPhoto = slug => species.get(slug)?.thumbnail;
+      window.parkGuide.speciesName = slug => species.get(slug)?.name;
+      document.dispatchEvent(new Event('parkcatalogready'));
+    })
+    .catch(() => { /* Place names and the built-in markers also work offline. */ });
 })();

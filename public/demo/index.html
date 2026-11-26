@@ -1,110 +1,209 @@
 <!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#173d32">
-  <title>Карта Парка животных</title>
-  <link rel="icon" type="image/png" href="assets/park-favicon.png">
-  <link rel="apple-touch-icon" href="assets/park-touch-icon.png">
-  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-  <link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css">
-  <link rel="stylesheet" href="visitor.css">
-  <link rel="stylesheet" href="map-app.css">
-</head>
-<body>
-  <svg class="icon-library" aria-hidden="true">
-    <symbol id="icon-map" viewBox="0 0 24 24"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z"/><path d="M8 4v13m8-10v13"/></symbol>
-    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></symbol>
-    <symbol id="icon-paw" viewBox="0 0 24 24"><path d="M6.5 15.5c1.7-2.2 2.8-5 5.5-5s3.8 2.8 5.5 5c2 2.7.4 5-2.4 4.3-2.2-.6-4-.6-6.2 0-2.8.7-4.4-1.6-2.4-4.3Z"/><circle cx="5" cy="10" r="1.7"/><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="19" cy="10" r="1.7"/></symbol>
-    <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></symbol>
-    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
-    <symbol id="icon-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h3c4 0 2-8 6-10"/></symbol>
-    <symbol id="icon-tree" viewBox="0 0 24 24"><path d="m12 3-5 7h3l-4 6h5v5h2v-5h5l-4-6h3Z"/></symbol>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Парк животных</title>
+<meta name="theme-color" content="#ffffff">
+<script src="guide-theme.js"></script>
+<script>
+  if (/^#map(?:\/|$)/.test(location.hash) || new URLSearchParams(location.search).get('layout') === 'map') {
+    location.replace('map.html' + location.search + (location.hash || '#map/1'));
+  }
+</script>
+<link rel="icon" href="assets/park-favicon.png">
+<link rel="apple-touch-icon" href="assets/park-touch-icon.png">
+<link rel="manifest" href="guide.webmanifest">
+<link rel="stylesheet" href="base.css"><link rel="stylesheet" href="visitor.css">
+<link rel="stylesheet" href="vendor/park-menu/menu.css"><link rel="stylesheet" href="guide-shell.css"><link rel="stylesheet" href="catalog-editorial.css">
+<link rel="stylesheet" href="park-home.css?v=atlas2">
+<link rel="stylesheet" href="guide-ui.css">
+</head><body class="in-guide">
+<header class="guide-header"><div class="guide-bar">
+  <a class="guide-wordmark" href="#park"><img src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных · Главная"></a>
+  <button class="guide-theme-toggle" type="button" aria-label="Тёмная тема" title="Тёмная тема">
+    <svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6.5 6.5 0 0 0 8.268 8.267c.344-.215.825-.004.803.402"/></svg>
+    <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M19.07 4.93l-1.42 1.42m-11.3 11.3-1.42 1.42"/></svg>
+  </button>
+</div></header>
+<svg width="0" height="0" aria-hidden="true" style="position:absolute"><symbol id="atlas-map" viewBox="0 0 24 24"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z M8 4v13m8-10v13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol><symbol id="aki-arrow" viewBox="0 0 24 24"><path d="m12 5-7 7 7 7M5 12h15" fill="none" stroke="currentColor" stroke-width="2"/></symbol><symbol id="z-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol><symbol id="z-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol><symbol id="z-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></symbol><symbol id="z-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l4 2"/></symbol><symbol id="z-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M6 10v11h4v-6h4v6h4V10"/></symbol><symbol id="z-paw" viewBox="0 0 24 24"><path d="M6.2 16c1.8-2.9 3.3-5.2 5.8-5.2s4 2.3 5.8 5.2c1.8 3-1.1 4.7-3.2 3.8a6.8 6.8 0 0 0-5.2 0C7.3 20.7 4.4 19 6.2 16Z"/><ellipse cx="4.6" cy="10.2" rx="1.5" ry="2"/><ellipse cx="9" cy="6.1" rx="1.5" ry="2"/><ellipse cx="15" cy="6.1" rx="1.5" ry="2"/><ellipse cx="19.4" cy="10.2" rx="1.5" ry="2"/></symbol><symbol id="z-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.3"/></symbol><symbol id="z-tour" viewBox="0 0 24 24"><path d="m3 16 3-10h4v10m4 0V6h4l3 10M10 11h4"/><circle cx="6.5" cy="16.5" r="3.5"/><circle cx="17.5" cy="16.5" r="3.5"/></symbol><symbol id="z-ticket" viewBox="0 0 24 24"><path d="M3 6h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4Zm12 1v2m0 2v2m0 2v2"/></symbol><symbol id="z-mammal" viewBox="0 0 24 24"><path d="M3 17c-3-2-2-8 1-9 2-1 4 0 4 2 0 1-1 2-2 2 0 2 2 2 3 1 1-3 2-4 5-4l2-5 1 4 3-3-1 5 3 2-1 2-4 1-2 3 3 1v1H6l-3-3Z"/></symbol><symbol id="z-bird" viewBox="0 0 24 24"><path d="m2 15 6-1 4-6c2-4 6-4 7 0l3 1-3 2c-1 6-5 8-10 7l-1 2H6l2-3-6 1Z"/></symbol><symbol id="z-all" viewBox="0 0 24 24"><circle cx="7" cy="7" r="3.6"/><circle cx="17" cy="7" r="3.6"/><circle cx="7" cy="17" r="3.6"/><circle cx="17" cy="17" r="3.6"/></symbol></svg>
+<main>
+<section id="park" class="screen visitor-screen current">
+<div class="z-home">
+<h1 class="z-sr">Парк животных</h1>
+<form class="z-search" id="home-search" role="search" action="#animals"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-search"/></svg><input type="search" name="q" aria-label="Поиск животных" placeholder="Найти животное" autocomplete="off" enterkeyhint="search"><button type="submit" aria-label="Искать"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></button></form>
+<a class="z-cover" href="#species/karakal"><img src="assets/caracal.webp" width="804" height="643" alt="" fetchpriority="high"><div><h2>Каракал</h2><span>О животном <svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></span></div></a>
+<div class="z-plan">
+<nav class="z-actions" aria-label="Посещение парка">
+  <a href="map.html#map/1"><svg aria-hidden="true"><use href="#atlas-map"/></svg>Карта парка</a>
+  <a href="#feed"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-clock"/></svg>Кормления</a>
+  <a href="#audio"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="3" y="12" width="5" height="8" rx="2"/><rect x="16" y="12" width="5" height="8" rx="2"/></svg>Аудиогид</a>
+  <a class="z-ticket" href="https://animal-park.by/tickets/stranicza-biletov.html?clear_date=1"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-ticket"/></svg>Купить билеты</a>
+</nav>
+<nav class="z-visit" aria-label="Информация для посетителей"><a href="#tours"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-tour"/></svg><span>Экскурсии</span><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a><a href="#directions"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-pin"/></svg><span>Как добраться</span><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a><a href="#visitor"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-info"/></svg><span>Для посетителей</span><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a></nav>
+</div>
+<section class="z-residents"><header><h2>Наши животные</h2></header><nav class="z-groups" aria-label="Группы животных"><a href="#animals/Млекопитающие"><i><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-mammal"/></svg></i>Млекопитающие</a><a href="#animals/Птицы"><i><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-bird"/></svg></i>Птицы</a><a href="#animals"><i><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-all"/></svg></i>Все</a></nav>
+<div class="z-gallery"><a href="#species/filin"><img src="assets/species/filin.webp" alt="" loading="lazy"><strong>Филин</strong></a><a href="#species/lama"><img src="assets/species/lama.webp" alt="" loading="lazy"><strong>Лама</strong></a><a href="#animal"><img src="assets/capybara.webp" alt="" loading="lazy"><strong>Капибара</strong></a><a href="#species/enot-poloskun"><img src="assets/raccoon.webp" alt="" loading="lazy"><strong>Енот-полоскун</strong></a></div></section>
+<address class="z-locality">Деревня Глинище · Барановичский район</address></div></section>
+<section class="screen visitor-screen" id="audio" aria-labelledby="audio-title">
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <symbol id="audio-download-icon" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4"/></symbol>
+    <symbol id="audio-saved-icon" viewBox="0 0 24 24"><path d="m7 11 3 3 7-7M5 16v4h14v-4"/></symbol>
+    <symbol id="audio-play-icon" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="audio-pause-icon" viewBox="0 0 24 24"><rect x="7" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="audio-close-icon" viewBox="0 0 24 24"><path d="m6 6 12 12m0-12L6 18"/></symbol>
   </svg>
-
-  <div class="park-app">
-    <aside class="app-rail" aria-label="Основные разделы">
-      <a class="app-mark" href="#map/1" data-shell="map" aria-label="Парк животных · карта">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tree"/></svg>
-        <span>Парк<br>животных</span>
-      </a>
-      <nav class="app-nav">
-        <button type="button" data-shell="map" aria-current="page"><svg aria-hidden="true"><use href="#icon-map"/></svg><span>Карта</span></button>
-        <button type="button" data-shell="animals"><svg aria-hidden="true"><use href="#icon-paw"/></svg><span>Животные</span></button>
-        <button type="button" data-shell="visit"><svg aria-hidden="true"><use href="#icon-info"/></svg><span>Визит</span></button>
-      </nav>
-      <p class="app-rail-note">Две зоны<br>одна карта</p>
-    </aside>
-
-    <main id="map" class="screen current" aria-label="Карта парка">
-      <div class="map-mount">
-        <header class="visitor-map-head">
-          <span class="mobile-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#icon-tree"/></svg></span>
-          <div class="visitor-zone-switch" role="group" aria-label="Зона парка">
-            <button type="button" disabled data-zone="1">Казачны мір</button>
-            <button type="button" disabled data-zone="2">Лясныя таямніцы</button>
-          </div>
-          <button type="button" disabled class="map-search-toggle" aria-label="Найти животное или место" aria-controls="map-search" aria-expanded="false">
-            <svg class="p-icon" aria-hidden="true"><use href="#icon-search"/></svg>
-          </button>
-        </header>
-
-        <div class="park-surface" role="region" aria-label="Интерактивная карта территории"></div>
-
-        <details class="guest-path-key">
-          <summary><svg aria-hidden="true"><use href="#icon-route"/></svg>Пешеходные дорожки</summary>
-          <a data-all-walks hidden href="?view=3d#map/1">Показать все дорожки зоны</a>
-          <p data-plan hidden><i aria-hidden="true"></i>По схеме парка от 12.11.2025</p>
-          <p data-open hidden><i aria-hidden="true"></i>Доступно посетителям</p>
-          <p data-missing hidden>Для этой зоны маршрут пока не нанесён.</p>
-          <p>Служебные проезды не подсвечиваются.</p>
-        </details>
-
-        <p class="map-status" role="status">Загружаем карту…</p>
-
-        <section class="visitor-map-sheet" id="map-search" aria-labelledby="map-search-title" hidden>
-          <div class="map-search-heading">
-            <div><h2 id="map-search-title" tabindex="-1">Поиск по всей карте</h2></div>
-            <button class="map-search-close" type="button" aria-label="Закрыть поиск"><svg class="p-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
-          </div>
-          <label class="map-query"><span class="sr">Животное или место</span><svg aria-hidden="true"><use href="#icon-search"/></svg><input id="animal-map-query" type="search" placeholder="Например, альпака или кафе" aria-label="Найти животное или место" autocomplete="off"></label>
-          <div id="animal-map-matches" hidden></div>
-          <div class="map-filters" role="group" aria-label="Тип места">
-            <button type="button" data-kind="all">Все</button>
-            <button type="button" data-kind="animals">Животные</button>
-            <button type="button" data-kind="service">Сервисы</button>
-          </div>
-          <label class="service-picker" hidden><span>Тип сервиса</span><select><option value="">Все сервисы</option></select></label>
-          <label class="place-picker"><span>Место на карте</span><select><option value="">Выберите место</option></select></label>
-          <div class="map-offline">
-            <button type="button" class="p-link" id="save-guide">Сохранить карту без связи</button>
-            <p id="offline-guide-status" role="status"></p>
-          </div>
-        </section>
-
-        <section class="visitor-map-sheet map-result" aria-label="Выбранное место" hidden>
-          <div class="place-info" aria-live="polite" hidden></div>
-        </section>
+  <div class="p-content audio-content">
+    <header class="audio-heading">
+      <button class="p-back" id="audio-back" type="button" data-go="park" aria-label="На главную парка"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+      <h1 class="p-title" id="audio-title">Аудиогид</h1>
+      <button type="button" class="audio-save" id="save-guide" aria-label="Сохранить для прогулки" title="Сохранить для прогулки" aria-describedby="offline-guide-status">
+        <svg class="audio-icon audio-download-icon" aria-hidden="true"><use href="#audio-download-icon"/></svg>
+        <svg class="audio-icon audio-saved-icon" aria-hidden="true"><use href="#audio-saved-icon"/></svg>
+      </button>
+    </header>
+    <p id="offline-guide-status" class="audio-download-status" role="status"></p>
+    <div id="audio-controls">
+      <div class="z-search" role="search" aria-label="Поиск в аудиогиде">
+        <svg class="audio-icon" aria-hidden="true"><use href="#z-search"/></svg>
+        <input id="audio-search" type="search" placeholder="Найти животное" aria-label="Найти животное" autocomplete="off">
+        <button type="button" id="audio-search-clear" aria-label="Очистить поиск" title="Очистить поиск" hidden><svg class="audio-icon" aria-hidden="true"><use href="#audio-close-icon"/></svg></button>
       </div>
-    </main>
-
-    <aside class="visit-panel" id="visit-panel" aria-labelledby="visit-title" hidden>
-      <header><div><h2 id="visit-title" tabindex="-1">Главное перед прогулкой</h2></div><button type="button" data-close-visit aria-label="Закрыть"><svg aria-hidden="true"><use href="#icon-close"/></svg></button></header>
-      <section><h3>Оставайтесь на дорожках</h3><p>На карте пунктиром отмечены проходы, доступные посетителям. Служебные дороги и закрытые ответвления не подсвечиваются.</p></section>
-      <section><h3>Корм для животных</h3><p>Используйте только корм из автоматов парка. Еда, принесённая с собой, животным не подходит.</p><button type="button" data-find-service="feed">Показать автоматы на карте</button></section>
-      <section><h3>Связаться с парком</h3><a href="tel:+375293031717">+375 29 303 17 17</a><a href="mailto:support@animal-park.by">support@animal-park.by</a></section>
-      <footer><span>Деревня Глинище</span><span>Барановичский район</span></footer>
-    </aside>
+      <div id="audio-zone-filter" class="audio-zone-filter" role="group" aria-label="Зоны парка"></div>
+    </div>
+    <p id="audio-missing" role="status" hidden>Рассказ по этой ссылке недоступен. Выберите запись из списка.</p>
+    <p id="audio-empty" role="status" hidden>Ничего не нашли.</p>
+    <div id="audio-directory"></div>
   </div>
-
-  <script src="vendor/leaflet/leaflet.js"></script>
-  <script src="places.js"></script>
-  <script src="map-projection.js"></script>
-  <script src="vendor/maplibre/maplibre-gl.js"></script>
-  <script src="park-landscape.js"></script>
-  <script src="map-app-shell.js?v=2"></script>
-  <script src="park-map.js"></script>
-  <script src="guide-offline.js"></script>
-</body>
-</html>
+</section>
+<section class="screen visitor-screen" id="animals" aria-labelledby="catalog-title">
+  <div class="catalog">
+    <div class="catalog-heading"><button type="button" class="cat-back" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="catalog-title" tabindex="-1">Животные</h1><button id="catalog-search-toggle" type="button" aria-label="Поиск животных" aria-expanded="false" aria-controls="animalSearchPanel"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15.5 15.5 5 5"/></svg></button></div>
+    <label class="search" id="animalSearchPanel" hidden><svg class="p-icon ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15.5 15.5 5 5"/></svg><input id="animalSearch" type="search" aria-label="Найти животное" placeholder="Найти животное" autocomplete="off" enterkeyhint="search"></label>
+    <div id="animalClasses" class="catalog-classes" role="group" aria-label="Группы животных" hidden></div>
+    <p id="catalog-count" role="status" aria-live="polite" aria-atomic="true"></p>
+    <p id="catalog-source-error" class="empty" role="status" hidden>Каталог временно недоступен. Попробуйте обновить страницу.</p>
+    <div class="animalgrid" id="catalog-list">
+      <button type="button" class="animalcard" data-go="animal"><img loading="lazy" src="assets/capybara.webp" alt=""><small>Грызуны</small><b>Капибара</b></button>
+      <a class="animalcard" href="https://animal-park.by/galereya/enot-poloskun.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/raccoon.webp" alt=""><small>Хищные</small><b>Енот-полоскун</b></a>
+      <a class="animalcard" href="https://animal-park.by/galereya/koshachiy-lemur.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/lemur.webp" alt=""><small>Приматы</small><b>Кошачий лемур</b></a>
+      <a class="animalcard" href="https://animal-park.by/galereya/karakal.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/caracal.webp" alt=""><small>Хищные</small><b>Каракал</b></a>
+      <a class="animalcard" href="https://animal-park.by/galereya/zubr.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/bison.webp" alt=""><small>Парнокопытные</small><b>Европейский зубр</b></a>
+      <a class="animalcard" href="https://animal-park.by/galereya/edipov-tamarin.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><img loading="lazy" src="assets/tamarin.webp" alt=""><small>Приматы</small><b>Эдипов тамарин</b></a>
+    </div>
+    <div id="animalEmpty" class="empty" hidden><p role="status">Таких животных в подборке нет.</p><button class="cat-back" id="animalReset" type="button">Сбросить фильтры</button></div>
+  </div>
+</section>
+<section class="screen visitor-screen" id="species" aria-labelledby="species-name">
+  <div class="p-content species-editorial">
+    <div class="species-heading">
+      <button type="button" class="p-back" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+      <span>Каталог животных</span>
+    </div>
+    <div class="species-story">
+      <figure class="p-animal-photo" id="species-photo" hidden></figure>
+      <div class="species-copy">
+        <h1 id="species-name" class="p-title" tabindex="-1">Карточка животного</h1>
+        <p class="species-meta"><span id="species-group"></span><i id="species-latin" hidden></i></p>
+        <p id="species-location" hidden></p>
+        <div class="species-actions guide-card-actions">
+          <div id="species-listen" hidden></div>
+          <button type="button" id="species-place" hidden>
+            <svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#atlas-map"/></svg>
+            <span>На карте</span>
+          </button>
+        </div>
+        <p id="species-description" hidden></p>
+        <div id="species-audio" class="guide-card-transcript"></div>
+        <a id="species-source" class="p-link" href="https://animal-park.by/galereya/" target="_blank" rel="noopener noreferrer">Подробнее на сайте парка ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="screen visitor-screen" id="animal" aria-labelledby="p-animal-title"><div class="p-content">
+<button class="p-back" type="button" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+<div class="p-animal-photo"><img loading="lazy" src="assets/capybara.webp" alt="Капибара крупным планом"></div>
+<p class="p-species">Hydrochoerus hydrochaeris</p><h1 class="p-title" id="p-animal-title">Капибара</h1>
+<p class="p-bio">Глаза и уши капибары расположены высоко. Во время плавания они остаются над водой, даже когда почти всё тело погружено.</p>
+<dl class="p-facts"><div><dt>Родина</dt><dd>Южная Америка</dd></div><div><dt>Масса тела</dt><dd>35–70 кг</dd></div></dl>
+<p class="p-location">Казачны мір · Вольер № 36</p>
+<div class="guide-card-actions">
+  <div id="capybara-listen" hidden></div>
+  <button type="button" data-go="map/1/36"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#atlas-map"/></svg><span>На карте</span></button>
+</div>
+<div id="capybara-audio" class="guide-card-transcript"></div>
+<a class="p-link" href="https://animal-park.by/galereya/kapibara.html" rel="noopener noreferrer" target="_blank">Карточка на сайте парка <svg viewBox="0 0 24 24" class="p-icon" aria-hidden="true"><path d="M6 18 18 6M7 6h11v11"/></svg></a>
+</div></section>
+<section class="screen visitor-screen" id="feed" aria-labelledby="p-feed-title"><div class="p-content">
+<button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+<h1 class="p-title" id="p-feed-title">Кормления</h1><p class="p-lead">Зона «Казачны мір»</p>
+<label class="visit-date">Дата посещения <input type="date" id="visit-date" required></label>
+<div role="status" id="schedule-status"></div><button id="retry-schedule" class="p-link" type="button" hidden>Повторить загрузку</button><div class="feeding-list" id="feeding-list"></div><div id="feeding-actions" class="feeding-actions" hidden><button type="button" data-go="map" class="p-primary">Показать место на карте →</button><button type="button" id="add-reminder" class="p-link">В календарь · за 30 минут</button><small id="calendar-hint" role="status"></small></div><div class="p-footnote"><strong>Перед посещением</strong><p><span id="schedule-edition"></span> Изменения на дату поездки уточняйте в парке.</p>
+<a href="https://animal-park.by/dopolnitelnyie-uslugi/pokazatelnoe-kormlenie.html" target="_blank" rel="noopener noreferrer" class="p-link">Расписание на сайте парка <svg viewBox="0 0 24 24" class="p-icon" aria-hidden="true"><path d="M6 18 18 6M7 6h11v11"/></svg></a></div>
+</div></section>
+<section id="visitor" class="screen visitor-screen"><div class="p-content visitor-info">
+  <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+  <h1 class="p-title">Для посетителей</h1>
+  <details open><summary>Как связаться с парком</summary><div>
+    <p>Деревня Глинище, Малаховецкий с/с 31, Барановичский район.</p>
+    <a href="tel:+375293031717">Колл-центр · +375 29 303 17 17</a>
+    <a href="mailto:support@animal-park.by">support@animal-park.by</a>
+    <a href="https://animal-park.by/kontaktyi.html" target="_blank" rel="noopener noreferrer">Все контакты ↗</a>
+  </div></details>
+  <details><summary>Правила прогулки</summary><div>
+    <ul><li>Дети младше 14 лет посещают парк со взрослым.</li><li>Угощать животных принесённой из дома едой запрещено.</li><li>Оставайтесь на дорожках. Не просовывайте руки в вольеры.</li><li>Домашних питомцев оставьте дома.</li></ul>
+    <a href="https://animal-park.by/o-nas/pravila.html" target="_blank" rel="noopener noreferrer">Полные правила обеих зон ↗</a>
+  </div></details>
+  <details><summary>Где перекусить и отдохнуть</summary><div>
+    <p>В первой зоне есть кафе у пирса, во второй — фудтрак. Откройте карту и выберите место, где хотите перекусить.</p>
+    <button class="p-link" data-go="map/1/rest/service/rest">Зона отдыха на карте →</button>
+    <a class="p-link" href="map.html#map/1/cafe-13">Кафе у пирса на карте →</a>
+    <a class="p-link" href="map.html#map/2/cafe-21">Фудтрак в «Лясныя таямніцы» →</a>
+    <a href="tel:+375447137525">Обед для группы · +375 44 713 75 25</a>
+    <a href="https://animal-park.by/dopolnitelnyie-uslugi/pitanie/" target="_blank" rel="noopener noreferrer">Кафе и фотографии ↗</a>
+  </div></details>
+  <details><summary>Помочь парку</summary><div>
+    <p>Условия программы опеки над животными публикует парк.</p>
+    <a href="https://animal-park.by/prezentacziya-opeka.pdf" target="_blank" rel="noopener noreferrer">Программа опеки · PDF, 83 МБ ↗</a>
+  </div></details>
+  <button class="p-link" data-go="tours">Экскурсии и запись →</button>
+</div></section>
+<section id="tours" class="screen visitor-screen" aria-labelledby="tour-title"><div class="p-content visitor-info tour-page">
+  <header class="tour-intro">
+  <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+  <h1 class="p-title" id="tour-title">Обзорная экскурсия</h1>
+  </header>
+  <dl class="p-facts"><div><dt>Длительность</dt><dd>Около 1,5 часа</dd></div><div><dt>Группа</dt><dd>До 25 человек</dd></div></dl>
+  <figure class="tour-portrait"><img loading="lazy" src="assets/bison.webp" alt="Европейский зубр"><figcaption><a href="map.html#map/2/11">Европейский зубр · Лясныя таямніцы ↗</a></figcaption></figure>
+  <div class="tour-booking"><p>Дату и время согласуйте с парком заранее.</p>
+  <a class="p-primary" href="https://docs.google.com/forms/d/e/1FAIpQLSc3f-Eug6DlobNSAYqWwvjMS7PhRMU9GnymfdAsuu_X9Z1p0Q/viewform?usp=header" target="_blank" rel="noopener noreferrer">Подать заявку <span aria-hidden="true">↗</span></a></div>
+  <div class="tour-links"><a class="p-link" href="https://animal-park.by/dopolnitelnyie-uslugi/gid-tur.html" target="_blank" rel="noopener noreferrer">Цены и условия <span aria-hidden="true">↗</span></a>
+  <a class="p-link" href="tel:+375447329219">Позвонить <span>+375 44 732 92 19</span></a></div>
+</div></section>
+<section id="directions" class="screen visitor-screen"><div class="p-content visitor-info">
+  <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+  <h1 class="p-title">Как добраться</h1>
+  <address class="arrival-address">Деревня Глинище, Малаховецкий с/с, 31<br>Барановичский район</address>
+  <div class="arrival-zones">
+    <section><h2>Казачны мір</h2><a class="p-primary" href="https://yandex.by/maps/org/park_zhivotnykh/11025733579/" rel="noopener noreferrer" target="_blank">Открыть в Яндекс Картах ↗</a><a class="p-link" href="map.html#map/1">Дорожки и вольеры →</a></section>
+    <section><h2>Лясныя таямніцы</h2><a class="p-primary" href="https://yandex.by/maps/org/lesnyye_tayny/55770037829/" rel="noopener noreferrer" target="_blank">Открыть в Яндекс Картах ↗</a><a class="p-link" href="map.html#map/2">Дорожки и вольеры →</a></section>
+  </div>
+  <a class="p-link" href="https://animal-park.by/kontaktyi.html" target="_blank" rel="noopener noreferrer">Контакты парка ↗</a>
+</div></section>
+</main>
+<section class="guide-player" aria-label="Плеер аудиогида" hidden>
+  <button class="guide-toggle" type="button" aria-label="Слушать"></button>
+  <div class="guide-now"><strong></strong><span></span></div>
+  <button class="guide-stop" type="button" aria-label="Закрыть плеер">×</button>
+  <audio preload="none"></audio>
+</section>
+<nav class="z-dock slide-tabs" aria-label="Навигация по парку">
+  <span class="slide-tabs-motion" aria-hidden="true"></span>
+  <a href="#park" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-home"/></svg><span>Главная</span></a>
+  <a href="#animals"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-paw"/></svg><span>Животные</span></a>
+  <a href="map.html#map/1"><svg aria-hidden="true"><use href="#atlas-map"/></svg><span>Карта</span></a>
+  <a href="map.html#map/1/service"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-pin"/></svg><span>Места</span></a>
+  <a href="#visitor"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-info"/></svg><span>Визит</span></a>
+</nav>
+<script defer src="vendor/slide-tabs/tabs.js"></script>
+<script src="places.js"></script><script src="guide-data.js"></script><script src="park-schedule.js"></script>
+<script src="audio-stops.js"></script><script src="audio-guide.js"></script><script src="catalog.js"></script><script src="feedings.js"></script><script src="guide-offline.js"></script><script src="park-home.js"></script>
+</body></html>

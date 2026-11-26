@@ -1,40 +1,11 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Совмещение плана · Парк животных</title><link rel="stylesheet" href="visitor.css"><link rel="stylesheet" href="align.css"></head>
-<body><main>
-<div id="workspace" aria-label="Совмещение с Яндекс Картами">
-  <iframe id="base-map" title="Опорная карта Яндекса" tabindex="-1"></iframe>
-  <div id="drag-area" tabindex="0" aria-label="Сдвинуть план мышью или клавишами со стрелками"><img id="survey" alt="Технический план с номерами вольеров" src="assets/park-survey.webp" draggable="false"></div>
-</div>
-<aside><h1>Совмещение плана</h1><div class="adjustments"><p>Потяни план за дорожку или берег пруда. Сверь совпадение во второй зоне до сохранения.</p>
-<label>Участок <select id="region"><option value="all">Весь парк</option><option value="1">Казачны мір</option><option value="2">Лясныя таямніцы</option></select></label>
-<label>Перетаскивать <select id="move"><option value="plan">Технический план</option><option value="view">Поле просмотра</option></select></label>
-<label>Приближение карты <input id="zoom" type="range" min="14" max="19" step="1" value="14"></label>
-<label>Масштаб плана, % <input id="scale" type="number" min="20" max="300" step="any" required inputmode="decimal"></label>
-<label>Поворот, ° <input id="angle" type="number" min="-180" max="180" step="any" required inputmode="decimal"></label>
-<label>Видимость плана <input id="opacity" type="range" min="0" max="100" value="50"></label>
-<details><summary>Точки подхода для маршрутов</summary>
-<label>Вольер <select id="approach-place"><option value="">Выберите вольер</option></select></label>
-<p>Отметьте проверенный на месте подход со стороны гостевой дорожки. Яндекс использует эту точку для пешего маршрута.</p>
-<button id="place-approach" type="button" disabled>Указать на карте</button>
-<button id="confirm-approach" type="button" hidden>Подтвердить гостевой подход</button>
-<button id="remove-approach" type="button" hidden>Убрать точку</button>
-<p id="approach-note" role="status"></p></details>
-<details id="path-editor"><summary>Гостевые дорожки</summary>
-<label>Участок <select id="path-place"></select></label>
-<label>Доступ <select id="path-access"><option value="plan">Черновик</option><option value="mapped">Пешеходная дорожка на схеме парка</option><option value="open">Проход подтверждён парком</option><option value="closed">Проход закрыт</option></select></label>
-<button type="button" id="path-save" disabled>Сохранить доступ</button>
-<p id="path-note" role="status"></p></details>
-<details id="boundary-editor"><summary>Границы вольеров</summary>
-<label>Вольер <select id="boundary-place"><option value="">Выберите вольер</option></select></label>
-<p>Перетащите круглый угол или потяните контур целиком. Если контура ещё нет, последовательно отметьте вершины по видимой ограде.</p>
-<div class="boundary-actions">
-  <button id="trace-boundary" type="button" disabled>Начать обводку</button>
-  <button id="undo-boundary" type="button" disabled>Убрать вершину</button>
-  <button id="cancel-boundary" type="button" disabled>Отменить обводку</button>
-  <button id="save-boundary" type="button" disabled>Сохранить контур</button>
-  <button id="clear-boundary" type="button" hidden>Удалить контур</button>
-</div>
-<p id="boundary-note" role="status">Загружаем контуры…</p></details>
- </div><div class="buttons"><button id="revert" type="button">Отменить</button><button id="save" type="button" disabled>Сохранить для всех</button></div>
-<p role="status" id="status">Загружаем привязку…</p><a href="./index.html#map/1" target="_blank" rel="noopener">Открыть карту посетителя ↗</a></aside></main>
-<script src="vendor/leaflet/leaflet.js"></script><script src="places.js"></script><script src="map-projection.js"></script><script type="module" src="align.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<title>Карта парка</title>
+<script>
+  const boundary = new URLSearchParams(location.hash.slice(1)).get('boundary');
+  const place = boundary && /^([12])\/([a-zA-Z0-9_.-]+)$/.exec(boundary);
+  location.replace('map.html#map/' + (place ? place[1] + '/' + place[2] : '1'));
+</script>
+<a href="map.html#map/1">Открыть карту парка</a>
+</html>

@@ -1,0 +1,78 @@
+#map .visitor-map-head .guide-theme-toggle { grid-area:theme; width:100%; height:100%; border-radius:14px; background:var(--z-panel); box-shadow:var(--shadow); }
+#map .visitor-map-head .guide-theme-toggle:hover { background:var(--z-cloud); }
+#map {
+  --map-inset:16px;
+  --map-left-edge:max(var(--map-inset),env(safe-area-inset-left));
+  --map-right-edge:max(var(--map-inset),env(safe-area-inset-right));
+  --map-ui-bottom:98px;
+  --map-toolbar-size:52px;
+  --map-toolbar-bottom:76px;
+  --map-zoom-stack:90px;
+}
+#map:has(.maplibregl-map) { --map-zoom-stack:134px; }
+#map .visitor-map-head {
+  inset:calc(var(--map-inset) + env(safe-area-inset-top)) var(--map-right-edge) auto var(--map-left-edge);
+  display:grid; grid-template-areas:"back zones search theme";
+  grid-template-columns:var(--map-toolbar-size) minmax(260px,420px) minmax(0,1fr) var(--map-toolbar-size);
+  align-items:stretch; gap:8px;
+}
+#map .visitor-map-head .map-home { grid-area:back; width:100%; height:var(--map-toolbar-size); border-radius:14px; }
+#map .visitor-map-head .map-search-toggle {
+  grid-area:search; width:100%; min-width:0; height:var(--map-toolbar-size);
+  margin:0; padding:0 12px; border-radius:14px;
+}
+#map .visitor-map-head .map-search-toggle span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#map .visitor-map-head .visitor-zone-switch { grid-area:zones; width:100%; min-width:0; height:52px; border-radius:14px; }
+#map :is(.guest-path-key,.maplibregl-ctrl-bottom-right,.leaflet-bottom.leaflet-right) { bottom:var(--map-ui-bottom); }
+#map .guest-path-key { left:var(--map-left-edge); }
+#map :is(.map-locate,.maplibregl-ctrl-bottom-right,.leaflet-bottom.leaflet-right) { right:var(--map-right-edge); }
+#map :is(.maplibregl-ctrl-bottom-right,.leaflet-bottom.leaflet-right) :is(.maplibregl-ctrl-group,.leaflet-control-zoom) { margin:0; }
+#map .map-status { top:calc(var(--map-toolbar-bottom) + env(safe-area-inset-top)); left:var(--map-left-edge); right:auto; max-width:calc(100% - var(--map-left-edge) - var(--map-right-edge)); }
+#map :is(#map-search,.map-result,.map-hit-chooser) {
+  left:var(--map-left-edge); padding:16px; border-radius:16px;
+  scrollbar-color:var(--z-line) transparent; scrollbar-width:thin;
+}
+#map #map-search { top:calc(var(--map-toolbar-bottom) + env(safe-area-inset-top)); }
+#map .map-result { top:auto; bottom:var(--map-ui-bottom); max-height:min(48dvh,340px); }
+#map .map-result .place-info { gap:12px; }
+#map .map-result .map-place-heading { display:flex; align-items:center; gap:12px; padding:0; min-height:44px; }
+#map .map-result .map-place-heading > div { flex:1; min-width:0; }
+#map .map-result .map-place-heading img { width:44px; height:44px; flex:none; object-fit:cover; border-radius:10px; }
+#map .map-result .map-place-heading h2 { font-size:20px; }
+#map .map-result .map-place-heading p { margin:3px 0 0; }
+#map .map-result .map-sheet-close { position:static; }
+#map .map-result .place-info small { margin:0; color:var(--muted); font-size:13px; }
+#map .map-result .resident-profile { min-height:44px; margin:0; }
+#map .map-result .guide-card-actions button { font-size:14px; }
+@media(max-width:720px) {
+  #map {
+    --map-inset:12px;
+    --map-ui-bottom:calc(72px + env(safe-area-inset-bottom));
+    --map-toolbar-size:48px;
+    --map-toolbar-bottom:132px;
+    --map-zoom-stack:98px;
+  }
+  #map:has(.maplibregl-map) { --map-zoom-stack:146px; }
+  #map .visitor-map-head {
+    grid-template-areas:"back search theme" "zones zones zones";
+    grid-template-columns:var(--map-toolbar-size) minmax(0,1fr) var(--map-toolbar-size);
+  }
+  #map .visitor-map-head .guide-theme-toggle { grid-area:theme; }
+  #map #map-search,#map .map-result,#map .map-hit-chooser { right:var(--map-right-edge); width:auto; }
+  #map .map-result {
+    max-height:min(340px, 48dvh, calc(100% - var(--map-toolbar-bottom) - var(--map-ui-bottom) - env(safe-area-inset-top) - 72px));
+  }
+  #map #map-search { top:auto; bottom:var(--map-ui-bottom); max-height:min(64dvh,calc(100% - var(--map-toolbar-bottom) - var(--map-ui-bottom) - env(safe-area-inset-top))); }
+  #map :is(.map-locate,.maplibregl-ctrl-group button,.leaflet-bar a,.map-sheet-close,.map-search-close) { width:48px; height:48px; }
+  #map .visitor-zone-switch { height:56px; }
+  #map .visitor-zone-switch button { min-height:48px; }
+  .map-category-summary { bottom:var(--map-ui-bottom); left:var(--map-left-edge); }
+}
+@media (max-height:520px) and (min-width:600px) {
+  #map .map-result {
+    top:calc(var(--map-toolbar-bottom) + env(safe-area-inset-top));
+    right:auto;
+    width:min(360px, 45vw);
+    max-height:none;
+  }
+}

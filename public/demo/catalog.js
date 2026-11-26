@@ -6,11 +6,10 @@
   const searchToggle=document.getElementById('catalog-search-toggle');
   const empty = document.getElementById('animalEmpty');
   const classes = document.getElementById('animalClasses');
-  const groupOrder = ['Млекопитающие','Птицы','Рыбы','Другие'];
+  const groupOrder = ['Млекопитающие','Птицы','Другие'];
   const groupOfCategory = new Map([
     ...['Млекопитающие','Парнокопытные','Парнокопытное','Приматы','Грызуны','Хищные'].map(name=>[name,'Млекопитающие']),
-    ...['Другие птицы','Хищные птицы','Экзотические птицы'].map(name=>[name,'Птицы']),
-    ['Рыбы','Рыбы']
+    ...['Другие птицы','Хищные птицы','Экзотические птицы'].map(name=>[name,'Птицы'])
   ]);
   const normalize = text => text.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[^а-яa-z0-9]+/g,' ').trim();
   const bySlug = new Map();
@@ -32,7 +31,8 @@
   function restoreSelection() {
     const state=history.state?.catalogState;
     search.value=typeof state?.query==='string'?state.query:'';
-    selectedGroup=groupOrder.includes(state?.group)?state.group:'Все';
+    const routeGroup = groupOrder.find(group => location.hash === '#animals/' + encodeURIComponent(group));
+    selectedGroup=state ? (groupOrder.includes(state.group) ? state.group : 'Все') : (routeGroup || 'Все');
     returnCard=typeof state?.card==='string'?state.card:'';
     searchPanel.hidden=!search.value;
     searchToggle.setAttribute('aria-expanded',String(!searchPanel.hidden));
@@ -90,6 +90,7 @@
     const entry = bySlug.get(location.hash.slice('#species/'.length));
     const photo = document.getElementById('species-photo');
     document.getElementById('species-name').textContent = entry?.name || (loading ? 'Загружаем карточку…' : 'Карточка недоступна');
+    if (entry) document.title = entry.name + ' · Парк животных';
     document.getElementById('species-group').textContent = entry?.category || '';
     document.getElementById('species-latin').textContent = entry?.scientific || '';
     document.getElementById('species-latin').hidden=!entry?.scientific;
@@ -97,27 +98,38 @@
     description.textContent=entry?.description || '';
     description.hidden=!entry?.description;
     document.getElementById('species-source').href = entry?.url || 'https://animal-park.by/galereya/';
+    const narration = document.getElementById('species-audio');
+    const listenHost = document.getElementById('species-listen');
+    narration.replaceChildren();
+    listenHost.replaceChildren();
+    listenHost.hidden = true;
+    if (entry) window.parkAudioGuide?.addToCard([entry.slug], narration, {listenHost});
     const mapLink=document.getElementById('species-place');
     const locations=window.parkGuide.places.filter(p=>entry && p.species?.includes(entry.slug));
+    const singlePlace = locations.length === 1 ? locations[0] : null;
     const placeNote=document.getElementById('species-location');
-    placeNote.textContent=locations.length===1?window.parkGuide.zones[locations[0].zone].name+' · Вольер № '+(locations[0].badge||locations[0].id):locations.length>1?'Места на карте парка':'';
+    const guide = window.parkGuide;
+    placeNote.textContent = singlePlace
+      ? `${guide.zones[singlePlace.zone].name} · ${singlePlace.searchLocation ?? guide.locationLabel(singlePlace)}`
+      : locations.length ? 'Места на карте парка' : '';
     placeNote.hidden=!locations.length;
     const group=document.getElementById('other-enclosures');
     group?.remove();
-    mapLink.hidden=locations.length!==1;
-    if(locations.length===1)mapLink.dataset.go='map/'+locations[0].zone+'/'+locations[0].id;
+    mapLink.hidden = !singlePlace;
+    if (singlePlace) mapLink.dataset.go = `map/${singlePlace.zone}/${singlePlace.id}`;
     if(locations.length>1){
       const list=document.createElement('div');list.id='other-enclosures';
       for(const p of locations){
         const link=document.createElement('button');link.className='p-link';link.type='button';
-        link.textContent=window.parkGuide.zones[p.zone].name+' · № '+p.id+' →';
+        link.textContent=window.parkGuide.zones[p.zone].name+' · '+window.parkGuide.locationLabel(p)+' →';
         link.dataset.go='map/'+p.zone+'/'+p.id;list.append(link);
       }
-      mapLink.after(list);
+      mapLink.parentElement.after(list);
     }
     photo.hidden = !entry?.thumbnail;
     if(entry?.thumbnail){
       const portrait = photo.firstElementChild || new Image();
+      portrait.onerror = () => { photo.hidden = true; portrait.remove(); };
       if(portrait.getAttribute('src') !== entry.thumbnail) portrait.src = entry.thumbnail;
       if(!portrait.parentElement){portrait.alt = ''; photo.append(portrait);}
     }
@@ -127,15 +139,17 @@
     button.type='button';button.className='animalcard';
     button.dataset.scientific=entry.scientific||'';
     button.dataset.category=entry.category;
-    if(entry.slug==='kapibara') button.dataset.go='animal';
+    if(entry.slug==='kapibara' && !window.parkGuideData.live) button.dataset.go='animal';
     else button.dataset.go='species/'+entry.slug;
     if(entry.thumbnail){
-      const photo=document.createElement('img');photo.loading='lazy';photo.alt='';photo.src=entry.thumbnail;
+      const photo=document.createElement('img');photo.loading='lazy';photo.alt='';
+      photo.onerror = () => photo.remove();
+      photo.src=entry.thumbnail;
       button.append(photo);
     }
     const enclosures=window.parkGuide.places.filter(p=>!p.detail && p.species?.includes(entry.slug));
     const place=enclosures.length===1?enclosures[0]:null;
-    if(place){
+    if(place && /^\d/.test(place.badge || '')){
       const tag=document.createElement('span');tag.className='enclosure-tag';
       tag.innerHTML='<svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg>';
       tag.append('№ '+place.badge);tag.setAttribute('aria-label','Вольер № '+place.badge);button.append(tag);
@@ -180,14 +194,16 @@
   }
   async function loadCatalog() {
     try {
-      const response = await fetch('catalogue.json');
-      if (!response.ok) throw Error('Catalogue unavailable');
-      const data = await response.json();
+      const data = await window.parkGuideData.load('catalogue.json');
       if (!Array.isArray(data) || !data.length) throw Error('Empty catalogue');
       for (const entry of data) bySlug.set(entry.slug, entry);
       document.dispatchEvent(new Event('parkcatalogready'));
     } catch {
-      // Keep the six bundled cards. Re-entering the section can retry after a network failure.
+      if (await window.parkGuideData.ready === false) {
+        grid.replaceChildren();
+        indexCards();
+        document.getElementById('catalog-source-error').hidden = false;
+      }
       catalogRequest = null;
     }
     if (section.classList.contains('current')) {showCatalogCards();restoreFocus();}

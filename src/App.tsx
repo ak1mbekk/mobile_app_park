@@ -1,17 +1,13 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import HomePage from './pages/HomePage';
 import VisitorMapPage from './pages/VisitorMapPage';
-import AnimalsPage from './pages/AnimalsPage';
 import CalendarPage from './pages/CalendarPage';
 import ShopPage from './pages/ShopPage';
 import MorePage from './pages/MorePage';
 import NewsPage from './pages/NewsPage';
 import InfoPage from './pages/InfoPage';
-import SettingsPage from './pages/SettingsPage';
-
-const MapPage = lazy(() => import('./pages/MapPage'));
 
 type DemoWindow = Window & {
   conceptReplace?: (route: string) => void;
@@ -169,15 +165,15 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/guide" element={<HomePage />} />
           <Route path="/map" element={<VisitorMapPage />} />
-          <Route path="/map/editor" element={<Suspense fallback={<p role="status">Загружаем редактор карты…</p>}><MapPage /></Suspense>} />
-          <Route path="/animals/synced" element={<AnimalsPage />} />
+          <Route path="/map/editor" element={<Navigate replace to="/map" />} />
+          <Route path="/animals/synced" element={<Navigate replace to="/animals" />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/more" element={<MorePage />} />
           <Route path="/news" element={<NewsPage />} />
           <Route path="/profile" element={<Navigate replace to={profileAddress} />} />
           <Route path="/info" element={<InfoPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings" element={<Navigate replace to="/more" />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

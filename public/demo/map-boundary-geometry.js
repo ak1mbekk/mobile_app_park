@@ -47,5 +47,10 @@ export function validRing(ring) {
 export function validBoundaries(value) {
   return value?.raster === raster && Number.isSafeInteger(value.revision) && value.revision >= 0 &&
     value.enclosures && typeof value.enclosures === 'object' && !Array.isArray(value.enclosures) &&
+    (!value.schematic || (Array.isArray(value.schematic) && value.schematic.every(id => typeof id === 'string' && Object.hasOwn(value.enclosures,id)))) &&
+    (!value.segments || (typeof value.segments === 'object' && !Array.isArray(value.segments) &&
+      Object.entries(value.segments).every(([key,line]) => /^[12]\/[a-z0-9.-]+$/.test(key) &&
+        Array.isArray(line) && line.length >= 2 && line.length <= 128 && line.every(point =>
+          Array.isArray(point) && point.length === 2 && point.every(n => Number.isFinite(n) && n >= 0 && n <= 1))))) &&
     Object.entries(value.enclosures).every(([id, ring]) => /^[12]\/\d{1,3}(?:\.\d{1,2})?$/.test(id) && validRing(ring));
 }

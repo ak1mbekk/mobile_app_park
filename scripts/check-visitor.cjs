@@ -34,10 +34,10 @@ async function firstVisitScripts(browser) {
     await page.route('**/vendor/leaflet/leaflet.js', route => route.abort(), { times: 1 });
     await mapLink.click();
     await page.getByRole('button', { name: 'Загрузить карту ещё раз' }).click();
-    await page.locator('#map.current .visitor-survey').evaluate(image => image.decode());
+    await page.locator('#map.current .leaflet-visitor-land-pane svg').waitFor();
     await page.locator('#map .p-back').click();
     await mapLink.click();
-    await page.locator('#map.current .visitor-survey').waitFor();
+    await page.locator('#map.current .leaflet-visitor-land-pane svg').waitFor();
     assert.equal(calls.filter(url => url.endsWith('/park-map.js')).length, 1);
     assert.equal(calls.filter(url => url.endsWith('/leaflet/leaflet.js')).length, 2);
   } finally {
@@ -88,7 +88,7 @@ async function fullScreenMap(browser){
       await page.setViewportSize({width,height});
       await page.goto(root+'#map/1');
       const map=page.locator('#map.current');
-      await map.locator('.visitor-survey').evaluate(image=>image.decode());
+      await map.locator('.leaflet-visitor-land-pane svg').waitFor();
       const surface=map.locator('.park-surface');
       const frame=await surface.boundingBox();
       assert.equal(await page.locator('.game-wayfinding').isVisible(),false);
@@ -175,7 +175,7 @@ async function filteredMapResults(browser) {
       await page.route('https://tile.openstreetmap.org/**', route => route.abort());
       await page.goto(root + '#map/2/service/gift');
       const map = page.locator('#map.current');
-      await map.locator('.visitor-survey').evaluate(image => image.decode());
+      await map.locator('.leaflet-visitor-land-pane svg').waitFor();
       const empty = 'В списке этой зоны таких мест нет.';
       const listOnly = 'Для этих мест пока нет отметок на карте. Они доступны в списке.';
       const hint = map.locator('.map-filter-hint');
@@ -286,7 +286,7 @@ async function cartography(browser){
     await p.goto(root+'#zone1/36/plan');
     await p.waitForURL('**#map/1/36',{waitUntil:'commit'});
     await title.getByText('Капибара',{exact:true}).waitFor();
-    await map.locator('.visitor-survey').evaluate(img=>img.decode());
+    await map.locator('.leaflet-visitor-land-pane svg').waitFor();
     await map.getByText('Открыта локальная карта парка.',{exact:true}).waitFor();
     assert.equal(await p.locator('#geo,#zone1,#zone2,#overview').count(),0);
     assert.equal(await map.locator('iframe,.map-layer-switch').count(),0);
@@ -471,7 +471,7 @@ async function markerHitTesting(browser){
   try{
     await p.route('https://tile.openstreetmap.org/**',route=>route.abort());
     await p.goto(root+'#map/1');
-    await map.locator('.visitor-survey').evaluate(img=>img.decode());
+    await map.locator('.leaflet-visitor-land-pane svg').waitFor();
     await openMapSearch(map);
     const target=await overlap();
     assert.ok(target,'Zone 1 retains an overlapping touch target');
@@ -526,7 +526,7 @@ async function closeServiceMarkers(browser) {
         try {
           await page.goto(root + '#map/1');
           const map = page.locator('#map.current');
-          await map.locator('.visitor-survey').evaluate(image => image.decode());
+          await map.locator('.leaflet-visitor-land-pane svg').waitFor();
           await page.waitForFunction(() => Number.isFinite(history.state?.parkMapView?.zoom));
           if (zoomIn) {
             const zoom = await page.evaluate(() => history.state.parkMapView.zoom);
@@ -652,7 +652,7 @@ async function offline(browser){
   await p.waitForFunction(()=>!!navigator.serviceWorker.controller);
   await context.setOffline(true);
   await p.reload();
-  await map.locator('.visitor-survey').evaluate(img=>img.decode());
+  await map.locator('.leaflet-visitor-land-pane svg').waitFor();
   await openMapSearch(map);
   await map.locator('[data-kind="service"]').click();
   await map.locator('.service-picker select').selectOption('rest');
@@ -683,7 +683,7 @@ async function offline(browser){
     assert.match(await fresh.locator('#map .place-info a').first().getAttribute('href'),/11025733579/);
     outage=false;
     await fresh.evaluate(()=>window.dispatchEvent(new Event('online')));
-    await fresh.locator('#map .visitor-survey').evaluate(image=>image.decode());
+    await fresh.locator('#map .leaflet-visitor-land-pane svg').waitFor();
     assert.equal(await fresh.locator('#map .place-info h2').textContent(),'Капибара');
     assert.match(await fresh.locator('#map .place-info a').first().textContent(),/^Примерное место/);
     assert.equal(await fresh.locator('#map .map-hit-chooser').count(),1);
@@ -739,7 +739,7 @@ async function mapShell(browser,appRoot){
     await page.locator('main a[href="/map"]').click();
     await page.waitForURL('**/map',{waitUntil:'commit'});
     const guide=page.frameLocator('iframe[title="Карта парка животных"]');
-    await guide.locator('#map.current .visitor-survey').evaluate(image=>image.decode());
+    await guide.locator('#map.current .leaflet-visitor-land-pane svg').waitFor();
     assert.equal(await guide.locator('.game-wayfinding').isVisible(),false);
     await guide.locator('#map .p-back').click();
     await page.waitForURL('**/guide',{waitUntil:'commit'});
@@ -751,10 +751,9 @@ async function mapShell(browser,appRoot){
     await guide.getByRole('heading',{name:'Зубр европейский',exact:true}).waitFor();
     assert.equal(await guide.locator('#map .place-picker select').inputValue(),'11');
 
-    await page.goto(new URL('settings',appRoot).href);
-    await page.getByRole('link',{name:'Редактор карты',exact:true}).click();
-    await page.waitForURL('**/map/editor',{waitUntil:'commit'});
-    assert.equal(await page.locator('iframe[title="Карта парка животных"]').count(),0);
+    await page.goto(new URL('map/editor',appRoot).href);
+    await page.waitForURL('**/map');
+    await page.locator('iframe[title="Карта парка животных"]').waitFor();
   }finally{await page.close();}
 }
 (async()=>{

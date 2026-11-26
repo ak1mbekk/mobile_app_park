@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
-import alignmentEditor from './scripts/alignment-editor.js';
 import familyAccounts from './scripts/family-accounts.js';
 import godotDelivery from './scripts/godot-delivery.js';
 
@@ -11,7 +10,7 @@ const appVersion = process.env.npm_package_version || pkg?.version || '';
 
 export default defineConfig(({ mode }) => ({
   publicDir: 'public',
-  plugins: [react(), alignmentEditor(), familyAccounts(), godotDelivery()],
+  plugins: [react(), familyAccounts(), godotDelivery()],
   preview: { host: '127.0.0.1' },
   base: './',
   define: {

@@ -5,7 +5,7 @@ import PullToRefresh from '../ui/PullToRefresh';
 export default function AppLayout() {
   const location = useLocation();
   const path = location.pathname.replace(/\/$/, '');
-  const isMapPage = path === '/map' || path === '/map/editor';
+  const isMapPage = path === '/map';
 
   if (path === '/calendar' || path === '/guide') {
     return (

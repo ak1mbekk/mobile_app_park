@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "Парк животных",
+  "short_name": "Парк животных",
+  "lang": "ru",
+  "start_url": "./index.html#park",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#202a2b",
+  "icons": [
+    {
+      "src": "assets/park-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

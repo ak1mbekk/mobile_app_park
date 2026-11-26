@@ -9,11 +9,13 @@ const {chromium} = require('playwright');
   const data = JSON.parse(await fs.readFile(path.join(__dirname, '../public/demo/map-guest-paths.json'), 'utf8'));
   const byId = new Map(data.paths.map(p => [p.id,p]));
   const {contains,crosses,width,height} = await import('../public/demo/map-boundary-geometry.js');
-  const {enclosures} = JSON.parse(await fs.readFile(path.join(__dirname,'../public/demo/map-boundaries.json'),'utf8'));
+  const {enclosures,schematic = []} = JSON.parse(await fs.readFile(path.join(__dirname,'../public/demo/map-boundaries.json'),'utf8'));
+  const approximate = new Set(schematic);
   for (const walk of data.paths.filter(p=>['open','mapped'].includes(p.status))) {
     const vertices = walk.points.map(([x,y])=>[x/width,y/height]);
     for (const [id,ring] of Object.entries(enclosures)) {
-      if (!id.startsWith(walk.zone+'/')) continue;
+      // Schematic outlines are estimates and can overlap a marked visitor path.
+      if (!id.startsWith(walk.zone+'/') || approximate.has(id)) continue;
       assert.ok(!contains(ring,vertices[0]),walk.id+' starts inside '+id);
       for (let i=1;i<vertices.length;i++) {
         assert.ok(!ring.some((v,j)=>crosses(vertices[i-1],vertices[i],v,ring[(j+1)%ring.length])),
@@ -40,7 +42,7 @@ const {chromium} = require('playwright');
     const page = await browser.newPage({viewport,serviceWorkers:'block'});
     const errors = [];
     page.on('pageerror',e => errors.push(e.message));
-    await page.route('**/park-landscape.js', async route => {
+    await page.route('**/guide-landscape.js', async route => {
       const response = await route.fetch();
       const body = (await response.text()).replace('map.addControl(new gl.AttributionControl', 'window.reviewMap=map;map.addControl(new gl.AttributionControl');
       await route.fulfill({response,body});
@@ -79,7 +81,7 @@ const {chromium} = require('playwright');
     await inspect(1,'island-west-bank-walk','island-west-bank');
     await inspect(1,null,'north-walks-together');
     await inspect(2,null,'forest-walks');
-    await page.route('**/park-landscape.js',route=>route.fulfill({contentType:'application/javascript',body:''}));
+    await page.route('**/guide-landscape.js',route=>route.fulfill({contentType:'application/javascript',body:''}));
     await page.reload();
     const visible = data.paths.filter(p=>p.zone===2 && ['open','mapped'].includes(p.status));
     await page.waitForFunction(n=>document.querySelectorAll('.leaflet-visitor-paths-pane path[stroke-dasharray]').length===n,visible.length);

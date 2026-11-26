@@ -6,7 +6,6 @@ import {
   NewspaperIcon,
   UserIcon,
   InfoIcon,
-  SettingsIcon,
   ChevronDownIcon,
 } from '../components/icons';
 
@@ -14,7 +13,6 @@ const ITEMS = [
   { path: '/news', label: 'Новости', icon: NewspaperIcon },
   { path: '/profile', label: 'Личный кабинет', icon: UserIcon },
   { path: '/info', label: 'Доп. информация', icon: InfoIcon },
-  { path: '/settings', label: 'Настройки', icon: SettingsIcon },
 ] as const;
 
 export default function MorePage() {

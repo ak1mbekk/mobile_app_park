@@ -10,8 +10,14 @@
       yandex:'https://yandex.by/maps/org/lesnyye_tayny/55770037829/'}
   };
   const places = [
-    {zone:1,id:'entrance',name:'Вход в Казачны мір',x:57,y:563,service:'Вход'},
-    {zone:1,id:'souvenirs',name:'Сувениры у входа',x:107,y:546,service:'Сувениры'},
+    // Approximate service positions follow the visitor-plan symbols, matched to the
+    // entrance, numbered pens, paths and shorelines on each technical sheet.
+    {zone:1,id:'ride-parking',name:'Парковка для аттракциона у входа',x:15,y:563,plan:[202,514],approximate:true,service:'Парковка'},
+    {zone:2,id:'entrance',name:'Вход в Лясныя таямніцы',x:254,y:187,plan:[363,270],approximate:true,service:'Вход'},
+    {zone:2,id:'souvenirs',name:'Сувениры у входной дорожки',x:244,y:265,plan:[391,367],approximate:true,service:'Сувениры'},
+    {zone:2,id:'bus-parking',name:'Парковка для автобусов',x:440,y:52,plan:[426,194],approximate:true,service:'Парковка'},
+    {zone:1,id:'entrance',name:'Вход в Казачны мір',x:57,y:563,plan:[211,506],approximate:true,service:'Вход'},
+    {zone:1,id:'souvenirs',name:'Сувениры у входа',x:107,y:546,plan:[226,506],approximate:true,service:'Сувениры'},
     {zone:1,id:'36',badge:'36',name:'Капибара',x:544,y:212,plan:[402,194],species:['kapibara']},
     {zone:1,id:'54',badge:'54',name:'Енот-полоскун',x:87,y:74,species:['enot-poloskun']},
     {zone:1,id:'62',badge:'62',name:'Носуха',x:46,y:246,species:['nosuxa']},
@@ -19,19 +25,20 @@
     {zone:1,id:'50',badge:'50',name:'Место кормления у № 50',x:143,y:69,detail:'Дикообразы и сурикаты · по программе кормлений',species:['indijskij-dikobraz','surikatyi']},
     {zone:1,id:'lake49',badge:'≈',name:'Озеро у вольера № 49',x:163,y:102,detail:'Наблюдение за кормлением аистов с берега'},
     {zone:1,id:'15',badge:'15',name:'Северный олень',x:208,y:373,plan:[244,363],species:['severnyij-olen']},
-    {zone:1,id:'65wc',badge:'WC',name:'Туалет у водоёма',x:558,y:74,service:'Туалеты'},
-    {zone:1,id:'rest',badge:'Отдых',name:'Зона отдыха',x:99,y:139,service:'Места отдыха'},
-    {zone:1,id:'food-entry',badge:'Корм',name:'Корм для животных у входа',x:152,y:612,service:'Корм для животных'},
+    {zone:1,id:'65wc',badge:'WC',name:'Туалет у водоёма',x:558,y:74,plan:[347,134],approximate:true,service:'Туалеты'},
+    {zone:1,id:'rest',badge:'Отдых',name:'Зона отдыха',x:99,y:139,plan:[111,281],approximate:true,service:'Места отдыха'},
+    {zone:1,id:'food-entry',badge:'Корм',name:'Корм для животных у входа',x:152,y:612,plan:[260,527],approximate:true,service:'Корм для животных'},
     {zone:1,id:'food-pond',badge:'Корм',name:'Корм для животных у водоёма',x:654,y:412,plan:[610,300],service:'Корм для животных'},
     {zone:1,id:'dispenser-west',badge:'Корм',name:'Автомат с кормом у западной гостевой дорожки',x:62,y:349,plan:[185,385],service:'Корм для животных'},
     {zone:1,id:'dispenser-otter',badge:'Корм',name:'Автомат с кормом у выдры',x:526,y:162,plan:[414,160],service:'Корм для животных'},
     {zone:1,id:'dispenser-island',badge:'Корм',name:'Автомат с кормом у прохода к № 24',x:568,y:456,plan:[625,270],service:'Корм для животных'},
-    {zone:1,id:'wc-entry',badge:'WC',name:'Туалет у входа',x:197,y:612,service:'Туалеты'},
+    {zone:1,id:'wc-entry',badge:'WC',name:'Туалет у входа',x:197,y:612,plan:[277,525],approximate:true,service:'Туалеты'},
     {zone:1,id:'wc-island',badge:'WC',name:'Туалет у водоёма № 24',x:667,y:423,plan:[650,278],service:'Туалеты'},
-    {zone:1,id:'wc-rest',badge:'WC',name:'Туалет в зоне отдыха',x:51,y:117,service:'Туалеты'},
-    {zone:1,id:'wash-entry',badge:'Руки',name:'Рукомойник у входа',x:177,y:612,service:'Где вымыть руки'},
+    {zone:1,id:'wc-rest',badge:'WC',name:'Туалет в зоне отдыха',x:51,y:117,plan:[102,252],approximate:true,service:'Туалеты'},
+    {zone:1,id:'wash-entry',badge:'Руки',name:'Рукомойник у входа',x:177,y:612,plan:[270,526],approximate:true,service:'Где вымыть руки'},
     {zone:1,id:'night-world',name:'Ночной мир',plan:[113,219],symbol:'night',detail:'Крытая экспозиция с животными. Вход находится со стороны гостевой дорожки.',keywords:['ночной мир','крытая экспозиция']},
     {zone:1,id:'bird-row',name:'Квартал разноцветных птиц',plan:[278,159],symbol:'bird',detail:'Экспозиция вдоль пруда, участки 39.1–39.19 на схеме парка.',keywords:['птицы']},
+    {zone:1,id:'40.2',legacyId:'caracal',name:'Каракал и сервал',plan:[224,165],approximate:true,species:['karakal','serval']},
     {zone:1,id:'40.3',name:'Осоед и пустельга',plan:[217,168],species:['osoed','obyiknovennaya-pustelga'],detail:'Участок 40.3 по схеме парка. Положение метки ориентировочное.'},
     {zone:1,id:'41.1-41.8',name:'Ушастая сова, кеклик и декоративный голубь',plan:[202,175],species:['ushastaya-sova'],detail:'На схеме эти птицы подписаны вместе для ряда 41.1–41.8. Метка показывает приблизительное положение ряда.'},
     {zone:1,id:'42',name:'Филин',plan:[176,183],species:['filin'],detail:'Участок 42 по схеме парка, западнее ряда с ушастой совой. Положение метки ориентировочное.'},
@@ -41,25 +48,25 @@
     {zone:2,id:'15',badge:'15',name:'Олень благородный',x:573,y:282,plan:[735,345],species:['olen-blagorodnyij']},
     {zone:2,id:'19',badge:'19',name:'Лось',x:719,y:60,plan:[848,84],species:['los']},
     {zone:2,id:'33',badge:'33',name:'Муфлон',x:416,y:299,plan:[540,419],species:['muflon']},
-    {zone:2,id:'36',badge:'36',name:'Домашние козы',x:308,y:163,plan:[402,319],detail:'Англо-нубийская, камерунская и камори'},
-    {zone:2,id:'wc',badge:'WC',name:'Туалет у вольера № 16',x:647,y:285,service:'Туалеты'},
-    {zone:2,id:'parking',badge:'P',name:'Временная парковка',x:440,y:50,service:'Парковка'},
-    {zone:2,id:'food-entry',badge:'Корм',name:'Корм рядом с вольером № 4',x:245,y:279,service:'Корм для животных'},
-    {zone:2,id:'food-deer',badge:'Корм',name:'Корм у вольера № 15',x:576,y:248,service:'Корм для животных'},
-    {zone:2,id:'rest-island',badge:'Отдых',name:'Место отдыха у острова № 30',x:431,y:190,service:'Места отдыха'},
-    {zone:2,id:'rest-lake',badge:'Отдых',name:'Место отдыха у большого пруда',x:252,y:442,service:'Места отдыха'},
-    {zone:2,id:'rest-sheep',badge:'Отдых',name:'Место отдыха у вольера № 38',x:317,y:320,service:'Места отдыха'},
-    {zone:2,id:'rest-south',badge:'Отдых',name:'Место отдыха между вольерами № 38 и 34',x:320,y:359,service:'Места отдыха'},
-    {zone:2,id:'rest-31',badge:'Отдых',name:'Место отдыха у вольера № 31',x:448,y:224,service:'Места отдыха'},
-    {zone:2,id:'rest-east-bank',badge:'Отдых',name:'Место отдыха на тропе у № 12',x:356,y:455,service:'Места отдыха'},
-    {zone:2,id:'rest-east-path',badge:'Отдых',name:'Место отдыха на повороте у пруда',x:339,y:477,service:'Места отдыха'},
-    {zone:2,id:'rest-south-bank',badge:'Отдых',name:'Место отдыха у вольера № 11',x:312,y:496,service:'Места отдыха'},
-    {zone:2,id:'wash-west',badge:'Руки',name:'Рукомойник у вольера № 5',x:296,y:350,service:'Где вымыть руки'},
-    {zone:2,id:'wash-north',badge:'Руки',name:'Рукомойник у вольера № 36',x:328,y:131,service:'Где вымыть руки'},
-    {zone:2,id:'wash-23',badge:'Руки',name:'Рукомойник у вольера № 23',x:575,y:160,service:'Где вымыть руки'},
-    {zone:2,id:'wc-west',badge:'WC',name:'Туалет у вольера № 5',x:268,y:359,service:'Туалеты'},
-    {zone:2,id:'wc-north',badge:'WC',name:'Туалет у вольера № 36',x:308,y:140,service:'Туалеты'},
-    {zone:2,id:'wc-23',badge:'WC',name:'Туалет у вольера № 23',x:562,y:166,service:'Туалеты'}
+    {zone:2,id:'36',badge:'36',name:'Домашние козы',x:308,y:163,plan:[402,319],detail:'Англо-нубийская, камерунская и камори',residents:['Англо-нубийская коза','Камерунская коза','Коза камори']},
+    {zone:2,id:'wc',badge:'WC',name:'Туалет у вольера № 16',x:647,y:285,plan:[765,355],approximate:true,service:'Туалеты'},
+    {zone:2,id:'parking',badge:'P',name:'Временная парковка',x:440,y:50,plan:[418,187],approximate:true,service:'Парковка'},
+    {zone:2,id:'food-entry',badge:'Корм',name:'Корм рядом с вольером № 4',x:245,y:279,plan:[394,376],approximate:true,service:'Корм для животных'},
+    {zone:2,id:'food-deer',badge:'Корм',name:'Корм у вольера № 15',x:576,y:248,plan:[713,306],approximate:true,service:'Корм для животных'},
+    {zone:2,id:'rest-island',badge:'Отдых',name:'Место отдыха у острова № 30',x:431,y:190,plan:[549,251],approximate:true,service:'Места отдыха'},
+    {zone:2,id:'rest-lake',badge:'Отдых',name:'Место отдыха у большого пруда',x:252,y:442,plan:[409,525],approximate:true,service:'Места отдыха'},
+    {zone:2,id:'rest-sheep',badge:'Отдых',name:'Место отдыха у вольера № 38',x:317,y:320,plan:[436,438],approximate:true,service:'Места отдыха'},
+    {zone:2,id:'rest-south',badge:'Отдых',name:'Место отдыха между вольерами № 38 и 34',x:320,y:359,plan:[463,452],approximate:true,service:'Места отдыха'},
+    {zone:2,id:'rest-31',badge:'Отдых',name:'Место отдыха у вольера № 31',x:448,y:224,plan:[562,292],approximate:true,service:'Места отдыха'},
+    {zone:2,id:'rest-east-bank',badge:'Отдых',name:'Место отдыха на тропе у № 12',x:356,y:455,plan:[523,523],approximate:true,service:'Места отдыха'},
+    {zone:2,id:'rest-east-path',badge:'Отдых',name:'Место отдыха на повороте у пруда',x:339,y:477,plan:[503,564],approximate:true,service:'Места отдыха'},
+    {zone:2,id:'rest-south-bank',badge:'Отдых',name:'Место отдыха у вольера № 11',x:312,y:496,plan:[474,590],approximate:true,service:'Места отдыха'},
+    {zone:2,id:'wash-west',badge:'Руки',name:'Рукомойник у вольера № 5',x:296,y:350,plan:[424,463],approximate:true,service:'Где вымыть руки'},
+    {zone:2,id:'wash-north',badge:'Руки',name:'Рукомойник у вольера № 36',x:328,y:131,plan:[381,221],approximate:true,service:'Где вымыть руки'},
+    {zone:2,id:'wash-23',badge:'Руки',name:'Рукомойник у вольера № 23',x:575,y:160,plan:[669,205],approximate:true,service:'Где вымыть руки'},
+    {zone:2,id:'wc-west',badge:'WC',name:'Туалет у вольера № 5',x:268,y:359,plan:[409,465],approximate:true,service:'Туалеты'},
+    {zone:2,id:'wc-north',badge:'WC',name:'Туалет у вольера № 36',x:308,y:140,plan:[373,232],approximate:true,service:'Туалеты'},
+    {zone:2,id:'wc-23',badge:'WC',name:'Туалет у вольера № 23',x:562,y:166,plan:[663,212],approximate:true,service:'Туалеты'}
   ];
   // WGS84 points explicitly tagged amenity=toilets. Independent of the paper map.
   const geoFacilities=[
@@ -74,13 +81,14 @@
   // Preserve source slugs and exact [longitude, latitude]; no poster-pixel projection.
   const cafes=[
     {zone:1,id:'cafe-11',name:'Кафе у входа',geo:[26.01180407130183,53.09486532257983]},
-    {zone:1,id:'cafe-12',name:'Кафе (буйвол)',geo:[26.016451996283358,53.096626902799045]},
+    {zone:1,id:'cafe-12',name:'Кафе (буйвол)',geo:[26.016451996283358,53.096626902799045],detail:'У водоёма № 24, со стороны вольера буйвола. Расположение по карте питания парка.'},
     {zone:1,id:'cafe-13',name:'Кафе у пирса',geo:[26.0133403545969,53.097806338801696]},
     {zone:1,id:'cafe-14',name:'Кафе в центре',geo:[26.010004,53.096660]},
     {zone:1,id:'cafe-14-1',name:'Пиццерия',geo:[26.010135,53.096426],keywords:['пицца'],symbol:'pizza'},
     {zone:1,id:'cafe-15',name:'Ярмарочный домик 1',geo:[26.010577,53.096673]},
     {zone:1,id:'cafe-15-1',name:'Ярмарочный домик 2',geo:[26.010651,53.096600]},
-    {zone:1,id:'cafe-summer-24',name:'Летнее кафе у водоёма',plan:[590,250],keywords:['летнее кафе','сезонное кафе'],detail:'Работает в летний сезон; режим нужно уточнять у парка.'},
+    // Visitor annotation on the path by island 24, registered against pens 7, 8, 32, 33 and 36.
+    {zone:1,id:'cafe-summer-24',name:'Летнее кафе у водоёма',plan:[622,298],keywords:['летнее кафе','сезонное кафе'],detail:'Примерное место летней точки у дорожки на берегу водоёма № 24.'},
     {zone:2,id:'cafe-21',name:'Фудтрак',geo:[26.02131702998618,53.09097172838789]},
     {zone:2,id:'cafe-21-1',name:'Шашлык',geo:[26.021315,53.090871]},
     {zone:2,id:'cafe-21-2',name:'Кафе (лес)',geo:[26.021352,53.090745]},
@@ -121,7 +129,7 @@
       zone:1,id:String(id),x,y,plan,name:'Вольер № '+id,
       detail:'По схеме парка животные зимуют в тёплом домике. Виды не указаны.',species:[]
     })),
-    {zone:1,id:'15.1',x:208,y:341,plan:[235,315],name:'Коза ламанча и бурская коза',species:['burskaya-koza']},
+    {zone:1,id:'15.1',x:208,y:341,plan:[235,315],name:'Коза ламанча и бурская коза',species:['burskaya-koza'],audioStory:'lamancha-boer'},
     {zone:1,id:'16',x:166,y:441,plan:[224,386],name:'Мини-шетлендский пони',species:['poni']},
     {zone:1,id:'16.1',x:121,y:389,plan:[207,371],name:'Валлийская овца',species:[]},
     {zone:1,id:'17',x:98,y:393,plan:[212,415],name:'Овца рацка',species:[]},
@@ -135,17 +143,20 @@
     {zone:1,id:'21',x:25,y:438,plan:[200,445],name:'Камерунская коза',species:[]},
     {zone:1,id:'22',x:27,y:479,plan:[207,466],name:'Овца уэссан',species:[]},
     {zone:1,id:'23',x:27,y:499,plan:[216,487],name:'Полярная сова',species:['polyarnaya-sova']},
+    {zone:1,id:'24',badge:'24',plan:[632,346],name:'Островной вольер № 24',detail:'На плане указана зимовка животных в тёплом домике.'},
+    {zone:1,id:'30',badge:'30',plan:[673,283],name:'Контактная площадка № 30'},
     {zone:1,id:'32',x:570,y:322,plan:[541,269],name:'Азиатский буйвол',species:['vodyanoj-bujvol-(aziatskij)']},
     {zone:1,id:'33',x:503,y:342,plan:[422,249],name:'Лама',species:['lama']},
     {zone:1,id:'34',x:374,y:287,plan:[376,262],name:'Альпака',species:['alpaka']},
     {zone:1,id:'34.1',x:384,y:249,plan:[371,246],name:'Мангалица',species:[]},
-    {zone:1,id:'35',x:364,y:232,plan:[319,267],name:'Двугорбый верблюд и осёл',species:['oslyi']},
+    {zone:1,id:'35',x:364,y:232,plan:[319,267],name:'Двугорбый верблюд и осёл',species:['oslyi'],audioStory:'camel-donkey'},
     {zone:1,id:'38',x:575,y:162,plan:[401,158],name:'Выдра',species:[]},
     {zone:2,id:'2',x:191,y:202,plan:[210,580],name:'Африканский страус и ватусси',species:['straus-afrikanskij','vatusi']},
     {zone:2,id:'3',x:111,y:104,plan:[314,645],name:'Венгерский степной скот и лань',species:['vengerskij-stepnoj-skot','evropeyskaya-lan']},
-    {zone:2,id:'5',x:238,y:330,plan:[367,418],name:'Альпака · альпакотерапия',species:['alpaka']},
-    {zone:2,id:'6',x:238,y:369,plan:[367,453],name:'Альпака',species:['alpaka']},
-    {zone:2,id:'7',x:215,y:405,plan:[378,507],name:'Двугорбый верблюд и осёл',species:['oslyi']},
+    {zone:2,id:'4',plan:[319,415],name:'Лама',species:['lama']},
+    {zone:2,id:'5',x:238,y:330,plan:[367,418],name:'Альпака · альпакотерапия',searchLocation:'Альпакотерапия',species:['alpaka']},
+    {zone:2,id:'6',x:238,y:369,plan:[367,453],name:'Альпака',searchLocation:'Вольер альпак',species:['alpaka']},
+    {zone:2,id:'7',x:215,y:405,plan:[378,507],name:'Двугорбый верблюд и осёл',species:['oslyi'],audioStory:'camel-donkey'},
     {zone:2,id:'8',x:217,y:513,plan:[383,547],name:'Айширская, швицкая, джерсейская коровы и камерунская коза',species:['ajshirskaya-poroda','shviczkaya-korova','dzhersejskaya-poroda']},
     {zone:2,id:'9',x:217,y:537,plan:[396,601],name:'Овца святого Якова',species:['ovcza-svyatogo-yakova']},
     {zone:2,id:'10',x:288,y:535,plan:[473,649],name:'Тарпановидная лошадь и лань',species:['tarpanovidnaya-loshad','evropeyskaya-lan']},
@@ -163,6 +174,23 @@
     {zone:2,id:'35',x:363,y:231,plan:[490,362],name:'Англо-нубийская коза',species:[]},
     {zone:2,id:'38',x:296,y:300,plan:[425,436],name:'Камерунская овца',species:['ovcza-kamerunskaya']}
   ].map(p=>({...p,badge:p.id}));
+  // Named animals on the visitor plan that have no individual catalogue entry.
+  const additionalResidents = {
+    '1/15.1':['Коза ламанча'],
+    '1/35':['Двугорбый верблюд'],
+    '2/7':['Двугорбый верблюд'],
+    '2/8':['Камерунская коза'],
+    '2/24':['Мангалица'],
+    '1/40.3':['Осоед'],
+    '1/41.1-41.8':['Кеклик','Декоративный голубь']
+  };
+  for (const place of [...places, ...numberedEnclosures]) {
+    const names = additionalResidents[place.zone + '/' + place.id];
+    if (names) place.residents = names;
+    else if (place.species?.length === 0 && !place.name.startsWith('Вольер №')) {
+      place.residents = [place.name];
+    }
+  }
   const compareIds=new Intl.Collator('ru',{numeric:true});
   const byZoneAndNumber=(a,b)=>a.zone-b.zone || Number(!!a.service)-Number(!!b.service) || compareIds.compare(a.id,b.id);
   // Marker portraits are verified, face-first crops of the same catalogue photos.
@@ -179,6 +207,7 @@
     'Сувениры':'M3 9h18v4H3z M5 13v8h14v-8 M12 9v12 M12 9C3 9 5 1 9 4l3 5c6-11 12-1 0 0z',
     'Кафе':'M3 9h13v5a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6z M16 10h2a3 3 0 0 1 0 6h-2 M6 3v3m4-4v3m4-2v3',
     'Корм для животных':'M5 10h14l-2 11H7z M9 10C7 6 7 4 5 3c5-1 9 3 7 7m1-1c0-5 3-7 7-7 0 4-2 7-7 7z',
+    'Туалеты':'M2 7l2 10 3-7 3 7 2-10 M22 8a5 5 0 1 0 0 8',
     'Парковка':'M7 21V3h6a5 5 0 0 1 0 10H7',
     'Места отдыха':'M4 6h16v5H4z M3 15h18 M6 15v5m12-5v5m-12-9v4m12-4v4',
     'Где вымыть руки':'M3 14h17c0 4-3 6-8 6s-8-2-9-6z M8 11V6a3 3 0 0 1 6 0v2m-2 0h5'
@@ -256,5 +285,8 @@
     }
     return {dismiss,activate,showGroup,destroy:()=>{dismiss();panel.remove();}};
   }
-  window.parkGuide={zones,markerFace,speciesPortrait,bindMarkerHitChooser,legacyCafeIds,surveyBuildings,places:[...places,...numberedEnclosures,...cafes].sort(byZoneAndNumber),geoFacilities};
+  function locationLabel(place) {
+    return /^\d+(?:\.\d+)?(?:[-–]\d+(?:\.\d+)?)?$/.test(place.id) ? 'Вольер № ' + place.id : place.name;
+  }
+  window.parkGuide={serviceGlyphs,locationLabel,zones,markerFace,speciesPortrait,bindMarkerHitChooser,legacyCafeIds,surveyBuildings,places:[...places,...numberedEnclosures,...cafes].sort(byZoneAndNumber),geoFacilities};
 })();

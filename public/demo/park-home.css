@@ -1,0 +1,134 @@
+html, body.in-guide { height:auto; min-height:100%; overflow:auto; }
+body.in-guide { display:block; margin:0; font-family:var(--zk-font); }
+body.in-guide main > .screen { display:none; position:static; height:auto; }
+body.in-guide main > .current { display:block; min-height:70vh; overflow:visible; }
+body.in-guide .guide-header { position:static; width:100%; }
+.park-content.park-layout { margin:auto; padding-top:16px; }
+.park-hero-art { height:clamp(200px,32vw,410px); object-fit:cover; }
+.park-visit-actions .park-action { grid-template-columns:1fr auto; }
+.park-directory { align-content:start; }
+.park-directory a { display:flex; align-items:center; justify-content:space-between; min-height:54px; padding:12px 18px; background:var(--landing-tile); color:var(--ink); border-radius:12px; text-decoration:none; font-weight:600; }
+.park-directory a:hover, .park-directory a:focus-visible { background:var(--surface); }
+
+:root {
+  --atlas-margin:clamp(16px,4vw,48px);
+  --atlas-title:Georgia,"Times New Roman",serif;
+  --zk-cream:251 251 248;
+  --zk-cream-deep:242 243 236;
+  --zk-card:255 255 255;
+  --zk-ink:27 38 31;
+  --zk-line:207 214 205;
+}
+.in-guide .guide-header { background:#fbfbf8; border-bottom:1px solid #cfd6cd; }
+.in-guide .guide-bar, #park .park-layout, .visitor-screen .p-content {
+  width:min(100%,1160px); margin-inline:auto; box-sizing:border-box;
+  padding-inline:var(--atlas-margin);
+}
+#park .park-layout { align-items:start; padding-top:22px; gap:24px; }
+#park .atlas-masthead h1, .visitor-screen .p-title, .catalog h1, #species-name, #p-animal-title {
+  font:normal clamp(36px,5.8vw,66px)/1.04 var(--atlas-title); letter-spacing:-.045em; margin:0 0 16px;
+}
+.atlas-cover { margin:0; }
+.atlas-cover img { width:100%; height:auto; aspect-ratio:1.96; object-fit:cover; object-position:center 29%; display:block; }
+.atlas-cover figcaption { display:flex; align-items:center; justify-content:space-between; padding:9px 0; font:14px/1.3 var(--zk-font); }
+.atlas-cover a, #feed .p-link { color:#254f3c; text-underline-offset:3px; }
+#park .park-visit-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin:12px 0 0; padding:0; background:transparent; gap:8px; }
+#park .park-action { display:flex; align-items:center; justify-content:space-between; min-height:48px; border-radius:3px; padding:10px 14px; font-size:16px; }
+#park .park-action-primary { background:#254f3c; color:white; }
+#park .park-action-secondary { border:1px solid #9cad9e; background:transparent; }
+#park .park-directory { gap:0; border-top:1px solid #abb8ad; }
+#park .park-directory a { border-bottom:1px solid #cfd6cd; border-radius:0; background:transparent; padding:12px 0; min-height:55px; font:normal 23px/1.18 var(--atlas-title); }
+#park .park-directory a:hover { color:#39724a; }
+#park .park-directory a span { font:18px var(--zk-font); }
+#park .park-locality { text-align:left; font-style:normal; }
+#feed .p-content { max-width:820px; padding-block:16px 32px; }
+#feed .p-title { margin:10px 0 4px; }
+#feed .p-lead { margin:0 0 22px; }
+#feed .visit-date { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; font-size:15px; }
+#feed .visit-date input { padding:8px 12px; min-height:44px; border:1px solid #a0afa4; border-radius:3px; background:white; color:#17241f; font:inherit; }
+#feed .feeding-summary { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; margin:16px 0; font-size:15px; }
+#feed .feeding-summary button { margin:0; }
+#feed .feeding-list { display:block; border-top:1px solid #acb9af; }
+#feed .feeding-row { margin:0; padding:0; border:0; border-bottom:1px solid #cfd6cd; border-radius:0; background:transparent; }
+#feed .feeding-row.selected { background:#edf2eb; }
+#feed .feeding-choice { width:100%; display:grid; grid-template-columns:4em minmax(0,1fr) auto; align-items:baseline; gap:12px; text-align:left; background:transparent; color:inherit; padding:15px 12px; min-height:60px; }
+#feed .feeding-choice::after { content:'⌄'; font-size:18px; color:#44624a; }
+#feed .feeding-choice[aria-expanded="true"]::after { content:''; }
+#feed .feeding-choice time { font-size:18px; font-variant-numeric:tabular-nums; }
+#feed .feeding-choice strong, #feed .feeding-choice small { display:block; }
+#feed .feeding-choice strong { font:normal clamp(19px,3vw,24px)/1.15 var(--atlas-title); }
+#feed .feeding-choice small { margin-top:5px; font-size:13px; color:#4c6052; }
+#feed .feeding-actions:not([hidden]) { display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px; padding:0 12px 12px; }
+#feed .feeding-actions button { width:auto; min-height:44px; margin:0; padding:6px 10px; font-size:14px; }
+#feed .feeding-actions .p-primary { background:#254f3c; color:white; border-radius:3px; }
+#feed .feeding-actions small:empty { display:none; }
+@media(min-width:800px) {
+  #park .park-layout { grid-template-columns:minmax(0,1.45fr) minmax(0,.8fr); }
+  #park .park-directory { margin-top:clamp(54px,7.5vw,85px); }
+}
+@media(max-width:799px) {
+  #park .park-layout { grid-template-columns:minmax(0,1fr); gap:18px; }
+}
+
+
+/* The cover, catalogue and practical pages share the same page edges and ink. */
+html:not(.dark) body.in-guide { --zk-cta:#254f3c; --zk-stone:84 98 86; }
+.in-guide :focus-visible { outline:2px solid #315f46; outline-offset:3px; }
+#park .atlas-cover figcaption { padding-block:0; border-bottom:1px solid var(--line); }
+.atlas-cover figcaption a,.tour-portrait figcaption a { display:inline-flex; align-items:center; min-height:44px; }
+#park .directory-animals { display:grid; grid-template-columns:clamp(72px,8vw,98px) 1fr auto; gap:16px; }
+.directory-animals img { display:block; width:100%; height:auto; aspect-ratio:1.22; object-fit:cover; }
+#park .park-locality { grid-column:1/-1; padding:0; margin-top:4px; color:var(--muted); }
+#animals .catalog { width:min(100%,1160px); padding-inline:var(--atlas-margin); }
+#animals #catalog-title { font:normal clamp(32px,5vw,54px)/1.05 var(--atlas-title); margin:0; }
+#animals .animalcard { border:0; border-bottom:1px solid var(--line); background:transparent; border-radius:0; }
+#animals .catalog-card-copy { padding:10px 0 14px; }
+#animals .animalcard .catalog-card-copy b { font:normal clamp(19px,2.4vw,25px)/1.1 var(--atlas-title); }
+#animals .animalcard.catalog-feature,#species #species-photo,.p-content .p-animal-photo { border-radius:3px; }
+#species .p-primary,.visitor-screen .visitor-info .p-primary { display:inline-flex; align-items:center; justify-content:center; width:fit-content; padding:12px 18px; border-radius:3px; background:#254f3c; color:white; text-decoration:none; }
+#species .species-heading { margin-block:0 20px; }
+#species .species-heading button { margin:0; }
+.in-guide .visitor-info { max-width:920px; padding-block:20px 48px; }
+.visitor-info .p-back,#animal .p-back,#feed .p-back { min-width:44px; }
+.visitor-info .p-title { margin:10px 0 22px; }
+#visitor details { margin:0; padding:0; border:0; border-top:1px solid var(--line); border-radius:0; background:transparent; }
+#visitor details:last-of-type { border-bottom:1px solid var(--line); }
+#visitor summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:58px; padding:12px 0; font:normal 22px/1.25 var(--atlas-title); cursor:pointer; list-style:none; }
+#visitor summary::-webkit-details-marker { display:none; }
+#visitor summary::after { content:'+'; font:normal 23px var(--zk-font); color:#315f46; }
+#visitor details[open] summary::after { content:'−'; }
+#visitor details>div { max-width:65ch; padding:0 0 16px; }
+#visitor details p,#visitor details li { line-height:1.55; }
+#visitor details a,#visitor details .p-link { width:fit-content; display:flex; align-items:center; min-height:44px; margin:0; padding:4px 0; color:#254f3c; font-size:16px; text-underline-offset:4px; }
+#visitor details ul { padding-left:1.3em; }
+#visitor details li+li { margin-top:7px; }
+#tours .tour-intro p,.arrival-address { max-width:52ch; font:normal clamp(18px,2vw,21px)/1.5 var(--zk-font); }
+.tour-intro p a,.tour-portrait a { color:#254f3c; text-underline-offset:3px; }
+.tour-portrait { margin:20px 0; }
+.tour-portrait img { display:block; width:100%; height:auto; aspect-ratio:1.85; object-fit:cover; }
+.tour-portrait figcaption { font:14px/1.4 var(--zk-font); }
+#tours .p-facts { display:flex; flex-wrap:wrap; gap:14px 32px; border-block:1px solid var(--line); padding-block:16px; margin:20px 0; }
+#tours .p-facts div { display:grid; gap:3px; padding:0; border:0; }
+#tours .p-facts dd { margin:0; font:normal 23px/1.2 var(--atlas-title); }
+.tour-links { display:flex; flex-wrap:wrap; gap:4px 20px; }
+#tours .tour-booking p { margin-bottom:10px; }
+.arrival-address { margin:0 0 22px; color:var(--ink); }
+.arrival-zones { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr)); gap:16px 32px; margin:20px 0; }
+.arrival-zones section { border-top:1px solid var(--line); padding:18px 0 0; }
+.arrival-zones h2 { font:normal 28px/1.12 var(--atlas-title); margin:0 0 14px; }
+.arrival-zones .p-link { display:flex; }
+@media(min-width:800px) {
+  #tours .tour-page { max-width:1160px; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 40px; align-content:start; align-items:start; }
+  .tour-intro,#tours .p-facts,.tour-booking,.tour-links { grid-column:1; }
+  .tour-portrait { grid-column:2; grid-row:1 / span 4; margin:54px 0 0; }
+  .tour-portrait img { aspect-ratio:1.1; }
+}
+#feed .feeding-choice[aria-expanded="true"]::after { content:'−'; }
+@media(max-width:380px) {
+  #park .park-action { padding-inline:10px; font-size:15px; }
+}
+
+body.in-guide .visitor-screen .p-content h1.p-title { font:normal clamp(34px,5vw,58px)/1.06 var(--atlas-title); letter-spacing:-.04em; }
+.in-guide h1[tabindex="-1"]:focus { outline:0; }
+body.in-guide .visitor-screen .arrival-zones h2 { font-family:var(--atlas-title); }
+html { scroll-padding-block-start:80px; }

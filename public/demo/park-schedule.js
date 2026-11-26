@@ -22,24 +22,28 @@
       typeof data.byDate === 'object' && !Array.isArray(data.byDate) &&
       Object.entries(data.byDate).every(([date, list]) => isoDay.test(date) && validList(list));
   }
-  try {
-    const cached = JSON.parse(localStorage.getItem(storageKey));
-    if (valid(cached)) programme = cached;
-  } catch {}
   const announce = () => document.dispatchEvent(new Event('parkprogrammechange'));
   function load() {
     if (pending) return pending;
     state = 'loading';
     pending = (async () => {
       try {
-        const response = await fetch('feeding-programme.json', {cache:'no-cache'});
-        if (!response.ok) throw Error('Programme unavailable');
-        const data = await response.json();
+        const data = await window.parkGuideData.load('feeding-programme.json', {cache:'no-cache'});
         if (!valid(data)) throw Error('Invalid programme');
         programme = data;
-        try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch {}
+        if (!window.parkGuideData.live) {
+          try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch {}
+        }
         state = 'ready';
-      } catch { state = 'error'; }
+      } catch {
+        if (await window.parkGuideData.ready === null) {
+          try {
+            const cached = JSON.parse(localStorage.getItem(storageKey));
+            if (valid(cached)) programme = cached;
+          } catch {}
+        }
+        state = 'error';
+      }
       finally { pending = null; announce(); }
     })();
     announce();

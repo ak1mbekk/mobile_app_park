@@ -42,7 +42,7 @@
       schedule.state==='loading'&&!edition?'Загружаем программу…':'';
     if(!date.validity.valid)status.textContent+=' Выберите сегодняшнюю или будущую дату.';
     else if(edition && !events.length)status.textContent+=' Нет опубликованных событий.';
-    else if(edition && !selected)status.textContent+=' Выбранного кормления нет в программе на эту дату.';
+    else if(edition && !selected && eventId!=='none')status.textContent+=' Выбранного кормления нет в программе на эту дату.';
     actions.hidden=true;
     list.replaceChildren();
     for(const event of events){
@@ -53,7 +53,7 @@
       const text=document.createElement('span'),title=document.createElement('strong'),place=document.createElement('small');
       title.textContent=event.name;place.textContent=event.status==='cancelled'?'Кормление отменено':placeText(event)+(event.end?' · до '+event.end:'');
       text.append(title,place);select.append(time,text);row.append(select);
-      select.onclick=()=>{window.conceptReplace(eventRoute(event.id));list.querySelector('[data-event="'+event.id+'"]')?.focus({preventScroll:true});};
+      select.onclick=()=>{window.conceptReplace(eventRoute(event===selected?'none':event.id));list.querySelector('[data-event="'+event.id+'"]')?.focus({preventScroll:true});};
       if(event===selected && event.status!=='cancelled'){
         row.classList.add('selected');
         actions.hidden=false;

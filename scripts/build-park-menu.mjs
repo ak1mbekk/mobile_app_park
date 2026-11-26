@@ -10,3 +10,13 @@ await build({
     lib: { entry: "src/park-menu.tsx", formats: ["iife"], name: "ParkMenu", fileName: () => "menu.js", cssFileName: "menu" },
   },
 });
+
+await build({
+  configFile: false,
+  publicDir: false,
+  define: { "process.env.NODE_ENV": JSON.stringify("production") },
+  build: {
+    outDir: "public/demo/vendor/slide-tabs",
+    lib: { entry: "src/guide-navigation.tsx", formats: ["iife"], name: "GuideNavigation", fileName: () => "tabs.js" },
+  },
+});

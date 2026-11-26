@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <script src="guide-theme.js"></script>
+  <title>Карта Парка животных</title>
+  <link rel="icon" type="image/png" href="assets/park-favicon.png">
+  <link rel="apple-touch-icon" href="assets/park-touch-icon.png">
+  <link rel="manifest" href="guide.webmanifest">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css">
+  <link rel="stylesheet" href="visitor.css">
+  <link rel="stylesheet" href="map-app.css?v=map-layout">
+  <link rel="stylesheet" href="guide-ui.css">
+  <link rel="stylesheet" href="map-layout.css">
+</head>
+<body>
+  <svg class="icon-library" aria-hidden="true">
+    <symbol id="aki-paw" viewBox="0 0 24 24"><use href="#icon-paw"/></symbol>
+    <symbol id="icon-map" viewBox="0 0 24 24"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z"/><path d="M8 4v13m8-10v13"/></symbol>
+    <symbol id="icon-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M6 10v11h4v-6h4v6h4V10"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></symbol>
+    <symbol id="icon-paw" viewBox="0 0 24 24"><path d="M6.5 15.5c1.7-2.2 2.8-5 5.5-5s3.8 2.8 5.5 5c2 2.7.4 5-2.4 4.3-2.2-.6-4-.6-6.2 0-2.8.7-4.4-1.6-2.4-4.3Z"/><circle cx="5" cy="10" r="1.7"/><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="19" cy="10" r="1.7"/></symbol>
+    <symbol id="icon-place" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="icon-back" viewBox="0 0 24 24"><path d="m13 6-6 6 6 6M7 12h13"/></symbol>
+    <symbol id="icon-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h3c4 0 2-8 6-10"/></symbol>
+    <symbol id="audio-play-icon" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="audio-pause-icon" viewBox="0 0 24 24"><rect x="7" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="icon-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></symbol>
+    <symbol id="icon-tree" viewBox="0 0 24 24"><path d="m12 3-5 7h3l-4 6h5v5h2v-5h5l-4-6h3Z"/></symbol>
+  </svg>
+
+  <div class="park-app">
+    <aside class="app-rail" aria-label="Основные разделы">
+      <a class="app-mark" href="#map/1" data-shell="map" aria-label="Парк животных · карта">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-tree"/></svg>
+        <span>Парк<br>животных</span>
+      </a>
+      <nav class="app-nav slide-tabs" aria-label="Навигация по парку">
+        <span class="slide-tabs-motion" aria-hidden="true"></span>
+        <a href="index.html#park"><svg aria-hidden="true"><use href="#icon-home"/></svg><span>Главная</span></a>
+        <button type="button" data-shell="animals"><svg aria-hidden="true"><use href="#icon-paw"/></svg><span>Животные</span></button>
+        <button type="button" data-shell="map" aria-current="page"><svg aria-hidden="true"><use href="#icon-map"/></svg><span>Карта</span></button>
+        <button type="button" data-shell="service"><svg aria-hidden="true"><use href="#icon-place"/></svg><span>Места</span></button>
+        <button type="button" data-shell="visit"><svg aria-hidden="true"><use href="#icon-info"/></svg><span>Визит</span></button>
+      </nav>
+
+    </aside>
+
+    <main id="map" class="screen current" aria-label="Карта парка">
+      <div class="map-mount">
+        <header class="visitor-map-head">
+          <a class="map-home" href="index.html#park" aria-label="На главную парка"><svg class="p-icon" aria-hidden="true"><use href="#icon-back"/></svg></a>
+          <div class="visitor-zone-switch" role="group" aria-label="Зона парка">
+            <button type="button" disabled data-zone="1">Казачны мір</button>
+            <button type="button" disabled data-zone="2">Лясныя таямніцы</button>
+          </div>
+          <button type="button" disabled class="map-search-toggle" aria-label="Найти животное или место" aria-controls="map-search" aria-expanded="false">
+            <svg class="p-icon" aria-hidden="true"><use href="#icon-search"/></svg><span>Поиск по парку</span>
+          </button>
+          <button class="guide-theme-toggle" type="button" aria-label="Тёмная тема" title="Тёмная тема">
+            <svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6.5 6.5 0 0 0 8.268 8.267c.344-.215.825-.004.803.402"/></svg>
+            <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M19.07 4.93l-1.42 1.42m-11.3 11.3-1.42 1.42"/></svg>
+          </button>
+        </header>
+
+        <div class="park-surface" role="region" aria-label="Интерактивная карта территории"></div>
+        <button class="map-locate" type="button" aria-label="Моё местоположение" title="Моё местоположение" hidden>
+          <svg class="p-icon" aria-hidden="true"><use href="#icon-locate"/></svg>
+        </button>
+
+        <details class="guest-path-key">
+          <summary><svg aria-hidden="true"><use href="#icon-route"/></svg>Маршруты для гостей</summary>
+          <a data-all-walks hidden href="?view=3d#map/1">Показать все дорожки зоны</a>
+          <p data-plan hidden><i aria-hidden="true"></i>По схеме парка от 12.11.2025</p>
+          <p data-open hidden><i aria-hidden="true"></i>Доступно посетителям</p>
+          <p data-missing hidden>Для этой зоны маршрут пока не нанесён.</p>
+          <p>Ограды нанесены по планам парка. У части вольеров показаны только различимые участки.</p>
+        </details>
+
+        <p class="map-status" role="status">Загружаем карту…</p>
+
+        <section class="visitor-map-sheet" id="map-search" aria-labelledby="map-search-title" hidden>
+          <div class="map-search-heading">
+            <div><h2 id="map-search-title" tabindex="-1">Поиск по всей карте</h2></div>
+            <button class="map-search-close" type="button" aria-label="Закрыть поиск"><svg class="p-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
+          </div>
+          <label class="map-query"><span class="sr">Животное или место</span><svg aria-hidden="true"><use href="#icon-search"/></svg><input id="animal-map-query" type="search" placeholder="Например, альпака или кафе" aria-label="Найти животное или место" autocomplete="off"></label>
+          <button type="button" class="category-back" hidden>← Все категории мест</button>
+          <div id="animal-map-matches" aria-label="Результаты поиска"></div>
+          <label class="place-picker" hidden><span>Место на карте</span><select><option value="">Выберите место</option></select></label>
+
+        </section>
+
+        <div class="map-category-summary" hidden>
+          <button type="button" class="category-list" aria-controls="map-search"></button>
+          <button type="button" class="category-clear" aria-label="Сбросить категорию">×</button>
+        </div>
+        <section class="visitor-map-sheet map-result" aria-label="Выбранное место" hidden>
+          <div class="place-info" aria-live="polite" hidden></div>
+        </section>
+      </div>
+      <section class="guide-player" aria-label="Плеер аудиогида" hidden>
+        <button class="guide-toggle" type="button" aria-label="Слушать"></button>
+        <div class="guide-now"><strong></strong><span></span></div>
+        <button class="guide-stop" type="button" aria-label="Закрыть плеер">×</button>
+        <audio preload="none"></audio>
+      </section>
+    </main>
+
+    <aside class="visit-panel" id="visit-panel" aria-labelledby="visit-title" hidden>
+      <header><div><h2 id="visit-title" tabindex="-1">Главное перед прогулкой</h2></div><button type="button" data-close-visit aria-label="Закрыть"><svg aria-hidden="true"><use href="#icon-close"/></svg></button></header>
+      <section><h3>Оставайтесь на дорожках</h3><p>На карте пунктиром отмечены проходы, доступные посетителям. Служебные дороги и закрытые ответвления не подсвечиваются.</p></section>
+      <section><h3>Корм для животных</h3><p>Используйте только корм из автоматов парка. Еда, принесённая с собой, животным не подходит.</p><button type="button" data-find-service="feed">Показать автоматы на карте</button></section>
+      <section><h3>Карта и аудиогид без связи</h3><div class="map-offline">
+            <button type="button" class="p-link" id="save-guide">Сохранить для прогулки</button>
+            <p id="offline-guide-status" role="status"></p>
+          </div></section>
+      <section><h3>Связаться с парком</h3><a href="tel:+375293031717">+375 29 303 17 17</a><a href="mailto:support@animal-park.by">support@animal-park.by</a></section>
+      <footer><span>Деревня Глинище</span><span>Барановичский район</span></footer>
+    </aside>
+  </div>
+
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="places.js?v=places2"></script>
+  <script src="guide-data.js"></script>
+  <script src="map-projection.js"></script>
+  <script src="vendor/maplibre/maplibre-gl.js"></script>
+  <script src="guide-landscape.js"></script>
+  <script src="map-app-shell.js?v=places2"></script>
+  <script src="audio-stops.js"></script>
+  <script src="audio-guide.js"></script>
+  <script src="park-map.js?v=map-layout"></script>
+  <script src="guide-offline.js"></script>
+  <script defer src="vendor/slide-tabs/tabs.js"></script>
+</body>
+</html>
