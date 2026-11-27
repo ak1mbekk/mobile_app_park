@@ -4,9 +4,10 @@
 <title>Парк животных</title>
 <meta name="theme-color" content="#ffffff">
 <script src="guide-theme.js"></script>
+<script src="guide-history.js"></script>
 <script>
   if (/^#map(?:\/|$)/.test(location.hash) || new URLSearchParams(location.search).get('layout') === 'map') {
-    location.replace('map.html' + location.search + (location.hash || '#map/1'));
+    window.parkGuideHistory.replaceDocument('map.html' + location.search + (location.hash || '#map/1'));
   }
 </script>
 <link rel="icon" href="assets/park-favicon.png">
@@ -16,6 +17,7 @@
 <link rel="stylesheet" href="vendor/park-menu/menu.css"><link rel="stylesheet" href="guide-shell.css"><link rel="stylesheet" href="catalog-editorial.css">
 <link rel="stylesheet" href="park-home.css?v=atlas2">
 <link rel="stylesheet" href="guide-ui.css">
+<link rel="stylesheet" href="feedings.css">
 </head><body class="in-guide">
 <header class="guide-header"><div class="guide-bar">
   <a class="guide-wordmark" href="#park"><img src="assets/park-wordmark.webp" width="200" height="84" alt="Парк животных · Главная"></a>
@@ -41,7 +43,7 @@
 <nav class="z-visit" aria-label="Информация для посетителей"><a href="#tours"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-tour"/></svg><span>Экскурсии</span><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a><a href="#directions"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-pin"/></svg><span>Как добраться</span><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a><a href="#visitor"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-info"/></svg><span>Для посетителей</span><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a></nav>
 </div>
 <section class="z-residents"><header><h2>Наши животные</h2></header><nav class="z-groups" aria-label="Группы животных"><a href="#animals/Млекопитающие"><i><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-mammal"/></svg></i>Млекопитающие</a><a href="#animals/Птицы"><i><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-bird"/></svg></i>Птицы</a><a href="#animals"><i><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-all"/></svg></i>Все</a></nav>
-<div class="z-gallery"><a href="#species/filin"><img src="assets/species/filin.webp" alt="" loading="lazy"><strong>Филин</strong></a><a href="#species/lama"><img src="assets/species/lama.webp" alt="" loading="lazy"><strong>Лама</strong></a><a href="#animal"><img src="assets/capybara.webp" alt="" loading="lazy"><strong>Капибара</strong></a><a href="#species/enot-poloskun"><img src="assets/raccoon.webp" alt="" loading="lazy"><strong>Енот-полоскун</strong></a></div></section>
+<div class="z-gallery"><a href="#species/filin"><img src="assets/species/filin.webp" alt="" loading="lazy" decoding="async"><strong>Филин</strong></a><a href="#species/lama"><img src="assets/species/lama.webp" alt="" loading="lazy" decoding="async"><strong>Лама</strong></a><a href="#animal"><img src="assets/capybara.webp" alt="" loading="lazy" decoding="async"><strong>Капибара</strong></a><a href="#species/enot-poloskun"><img src="assets/raccoon.webp" alt="" loading="lazy" decoding="async"><strong>Енот-полоскун</strong></a></div></section>
 <address class="z-locality">Деревня Глинище · Барановичский район</address></div></section>
 <section class="screen visitor-screen" id="audio" aria-labelledby="audio-title">
   <svg width="0" height="0" aria-hidden="true" style="position:absolute">
@@ -53,7 +55,7 @@
   </svg>
   <div class="p-content audio-content">
     <header class="audio-heading">
-      <button class="p-back" id="audio-back" type="button" data-go="park" aria-label="На главную парка"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+      <button class="p-back" id="audio-back" type="button" data-guide-back="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
       <h1 class="p-title" id="audio-title">Аудиогид</h1>
       <button type="button" class="audio-save" id="save-guide" aria-label="Сохранить для прогулки" title="Сохранить для прогулки" aria-describedby="offline-guide-status">
         <svg class="audio-icon audio-download-icon" aria-hidden="true"><use href="#audio-download-icon"/></svg>
@@ -76,7 +78,7 @@
 </section>
 <section class="screen visitor-screen" id="animals" aria-labelledby="catalog-title">
   <div class="catalog">
-    <div class="catalog-heading"><button type="button" class="cat-back" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="catalog-title" tabindex="-1">Животные</h1><button id="catalog-search-toggle" type="button" aria-label="Поиск животных" aria-expanded="false" aria-controls="animalSearchPanel"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15.5 15.5 5 5"/></svg></button></div>
+    <div class="catalog-heading"><button type="button" class="cat-back" data-guide-back="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="catalog-title" tabindex="-1">Животные</h1><button id="catalog-search-toggle" type="button" aria-label="Поиск животных" aria-expanded="false" aria-controls="animalSearchPanel"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15.5 15.5 5 5"/></svg></button></div>
     <label class="search" id="animalSearchPanel" hidden><svg class="p-icon ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15.5 15.5 5 5"/></svg><input id="animalSearch" type="search" aria-label="Найти животное" placeholder="Найти животное" autocomplete="off" enterkeyhint="search"></label>
     <div id="animalClasses" class="catalog-classes" role="group" aria-label="Группы животных" hidden></div>
     <p id="catalog-count" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -95,7 +97,7 @@
 <section class="screen visitor-screen" id="species" aria-labelledby="species-name">
   <div class="p-content species-editorial">
     <div class="species-heading">
-      <button type="button" class="p-back" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+      <button type="button" class="p-back" data-guide-back="animals" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
       <span>Каталог животных</span>
     </div>
     <div class="species-story">
@@ -119,7 +121,7 @@
   </div>
 </section>
 <section class="screen visitor-screen" id="animal" aria-labelledby="p-animal-title"><div class="p-content">
-<button class="p-back" type="button" data-go="animals" aria-label="Назад · Животные"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+<button class="p-back" type="button" data-guide-back="animals" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
 <div class="p-animal-photo"><img loading="lazy" src="assets/capybara.webp" alt="Капибара крупным планом"></div>
 <p class="p-species">Hydrochoerus hydrochaeris</p><h1 class="p-title" id="p-animal-title">Капибара</h1>
 <p class="p-bio">Глаза и уши капибары расположены высоко. Во время плавания они остаются над водой, даже когда почти всё тело погружено.</p>
@@ -132,29 +134,123 @@
 <div id="capybara-audio" class="guide-card-transcript"></div>
 <a class="p-link" href="https://animal-park.by/galereya/kapibara.html" rel="noopener noreferrer" target="_blank">Карточка на сайте парка <svg viewBox="0 0 24 24" class="p-icon" aria-hidden="true"><path d="M6 18 18 6M7 6h11v11"/></svg></a>
 </div></section>
-<section class="screen visitor-screen" id="feed" aria-labelledby="p-feed-title"><div class="p-content">
-<button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
-<h1 class="p-title" id="p-feed-title">Кормления</h1><p class="p-lead">Зона «Казачны мір»</p>
-<label class="visit-date">Дата посещения <input type="date" id="visit-date" required></label>
-<div role="status" id="schedule-status"></div><button id="retry-schedule" class="p-link" type="button" hidden>Повторить загрузку</button><div class="feeding-list" id="feeding-list"></div><div id="feeding-actions" class="feeding-actions" hidden><button type="button" data-go="map" class="p-primary">Показать место на карте →</button><button type="button" id="add-reminder" class="p-link">В календарь · за 30 минут</button><small id="calendar-hint" role="status"></small></div><div class="p-footnote"><strong>Перед посещением</strong><p><span id="schedule-edition"></span> Изменения на дату поездки уточняйте в парке.</p>
-<a href="https://animal-park.by/dopolnitelnyie-uslugi/pokazatelnoe-kormlenie.html" target="_blank" rel="noopener noreferrer" class="p-link">Расписание на сайте парка <svg viewBox="0 0 24 24" class="p-icon" aria-hidden="true"><path d="M6 18 18 6M7 6h11v11"/></svg></a></div>
-</div></section>
-<section id="visitor" class="screen visitor-screen"><div class="p-content visitor-info">
-  <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
-  <h1 class="p-title">Для посетителей</h1>
-  <details open><summary>Как связаться с парком</summary><div>
+<section class="screen visitor-screen" id="feed" aria-labelledby="p-feed-title">
+  <div class="p-content">
+    <header class="feeding-header">
+      <button class="p-back" type="button" data-guide-back="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+      <h1 class="p-title" id="p-feed-title">Кормления</h1>
+    </header>
+    <article id="feeding-feature" class="feeding-feature" aria-labelledby="feeding-feature-title" hidden>
+      <div class="feeding-cover">
+        <div class="feeding-cover-photo" aria-hidden="true"></div>
+        <div class="feeding-cover-copy">
+          <h2 id="feeding-feature-title" tabindex="-1"></h2>
+          <p id="feeding-feature-status"></p>
+        </div>
+      </div>
+      <div class="feeding-feature-details">
+        <p id="feeding-feature-place"></p>
+        <div id="feeding-actions" class="feeding-actions" hidden>
+          <button type="button" data-go="map" class="p-primary"><svg class="p-icon" aria-hidden="true"><use href="#atlas-map"/></svg>На карте</button>
+          <button type="button" id="add-reminder"><svg class="p-icon" aria-hidden="true"><use href="#feeding-calendar"/></svg>В календарь</button>
+          <small id="calendar-hint" role="status"></small>
+        </div>
+      </div>
+    </article>
+    <button type="button" id="visit-date" class="visit-date" aria-haspopup="dialog" aria-controls="feeding-calendar-dialog">
+      <svg class="p-icon" aria-hidden="true"><use href="#feeding-calendar"/></svg>
+      <span class="visit-date-copy"><span>Дата посещения</span><strong id="visit-date-value"></strong></span>
+      <svg class="p-icon visit-date-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+    </button>
+    <dialog id="feeding-calendar-dialog" class="feeding-calendar" aria-labelledby="feeding-calendar-title">
+      <header class="feeding-calendar-header">
+        <h2 id="feeding-calendar-title">Дата посещения</h2>
+        <button type="button" class="calendar-icon calendar-close" aria-label="Закрыть календарь"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+      </header>
+      <div class="feeding-calendar-month">
+        <button type="button" class="calendar-icon calendar-prev" aria-label="Предыдущий месяц"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+        <strong id="feeding-calendar-month" aria-live="polite"></strong>
+        <button type="button" class="calendar-icon calendar-next" aria-label="Следующий месяц"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
+      </div>
+      <div class="feeding-calendar-week" aria-hidden="true"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+      <div class="feeding-calendar-days" role="group" aria-label="Дни месяца"></div>
+      <footer class="feeding-calendar-footer"><button type="button" class="calendar-today">Сегодня</button></footer>
+    </dialog>
+    <div role="status" id="schedule-status"></div>
+    <button id="retry-schedule" class="p-link" type="button" hidden>Повторить загрузку</button>
+    <section id="feeding-agenda" class="feeding-agenda" aria-labelledby="feeding-agenda-title" hidden>
+      <h2 id="feeding-agenda-title">Расписание</h2>
+      <div class="feeding-list" id="feeding-list"></div>
+    </section>
+    <div class="p-footnote">
+      <p><span id="schedule-edition"></span> Изменения на дату поездки уточняйте в парке.</p>
+      <a href="https://animal-park.by/dopolnitelnyie-uslugi/pokazatelnoe-kormlenie.html" target="_blank" rel="noopener noreferrer" class="p-link">Расписание на сайте парка <svg viewBox="0 0 24 24" class="p-icon" aria-hidden="true"><path d="M6 18 18 6M7 6h11v11"/></svg></a>
+    </div>
+    <svg class="profile-icons" width="0" height="0" aria-hidden="true"><symbol id="feeding-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4m8-4v4M4 10h16"/></symbol></svg>
+  </div>
+</section>
+    <svg class="profile-icons" aria-hidden="true" width="0" height="0">
+      <symbol id="profile-person" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.25"/><path d="M5 20v-1.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V20Z"/></symbol>
+      <symbol id="profile-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Zm3 5h6m-6 4h6m-6 4h3"/></symbol>
+      <symbol id="profile-exit" viewBox="0 0 24 24"><path d="M12 5H5v14h7m-1-7h9m-3-3 3 3-3 3"/></symbol>
+      <symbol id="profile-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    </svg>
+<section id="profile" class="screen visitor-screen" aria-labelledby="profile-title">
+  <div class="p-content profile-content">
+    <header class="profile-heading"><button class="p-back" type="button" data-guide-back="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="profile-title" class="p-title">Профиль</h1></header>
+    <div class="profile-identity">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-person"/></svg>
+      <div><strong>Гость парка</strong><small>Аккаунт не подключён</small></div>
+    </div>
+    <ul class="profile-list">
+      <li><a class="profile-row" href="https://animal-park.by/tickets/stranicza-biletov.html?clear_date=1">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#z-ticket"/></svg><span>Билеты</span><svg class="profile-arrow" aria-hidden="true"><use href="#profile-chevron"/></svg>
+      </a></li>
+      <li><a class="profile-row" href="#tours">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#z-tour"/></svg><span>Экскурсии</span><svg class="profile-arrow" aria-hidden="true"><use href="#profile-chevron"/></svg>
+      </a></li>
+      <li><div class="profile-row" aria-disabled="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-receipt"/></svg><span>История покупок<small>Доступна с аккаунтом</small></span>
+      </div></li>
+      <li><a class="profile-row" href="#visitor">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#z-info"/></svg><span>О сервисе<small>Правила, контакты и офлайн-доступ</small></span><svg class="profile-arrow" aria-hidden="true"><use href="#profile-chevron"/></svg>
+      </a></li>
+      <li><div class="profile-row" aria-disabled="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-exit"/></svg><span>Выйти</span>
+      </div></li>
+    </ul>
+  </div>
+</section>
+<section id="visitor" class="screen visitor-screen" aria-labelledby="visit-title"><div class="p-content visitor-info">
+  <header class="visit-intro">
+    <button class="p-back" type="button" data-guide-back="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+    <h1 class="p-title" id="visit-title">Главное перед прогулкой</h1>
+  </header>
+  <details open><summary>Правила прогулки</summary><div>
+    <ul>
+      <li>Оставайтесь на дорожках. Доступные проходы отмечены на карте пунктиром.</li>
+      <li>Кормите животных только кормом из автоматов парка.</li>
+      <li>Не просовывайте руки в вольеры.</li>
+      <li>Дети младше 14 лет посещают парк со взрослым.</li>
+      <li>Домашних питомцев оставьте дома.</li>
+    </ul>
+    <a class="p-link" data-map-zone href="map.html#map/1/service/feed">Показать автоматы с кормом на карте</a>
+    <a href="https://animal-park.by/o-nas/pravila.html" target="_blank" rel="noopener noreferrer">Полные правила обеих зон ↗</a>
+  </div></details>
+  <section class="visit-offline" aria-labelledby="visit-offline-title">
+    <h2 id="visit-offline-title">Карта и аудиогид без связи</h2>
+    <button type="button" class="p-link" id="save-visit-guide" aria-describedby="visit-offline-status">Сохранить для прогулки</button>
+    <p id="visit-offline-status" role="status"></p>
+  </section>
+  <details><summary>Как связаться с парком</summary><div>
     <p>Деревня Глинище, Малаховецкий с/с 31, Барановичский район.</p>
     <a href="tel:+375293031717">Колл-центр · +375 29 303 17 17</a>
     <a href="mailto:support@animal-park.by">support@animal-park.by</a>
     <a href="https://animal-park.by/kontaktyi.html" target="_blank" rel="noopener noreferrer">Все контакты ↗</a>
   </div></details>
-  <details><summary>Правила прогулки</summary><div>
-    <ul><li>Дети младше 14 лет посещают парк со взрослым.</li><li>Угощать животных принесённой из дома едой запрещено.</li><li>Оставайтесь на дорожках. Не просовывайте руки в вольеры.</li><li>Домашних питомцев оставьте дома.</li></ul>
-    <a href="https://animal-park.by/o-nas/pravila.html" target="_blank" rel="noopener noreferrer">Полные правила обеих зон ↗</a>
-  </div></details>
   <details><summary>Где перекусить и отдохнуть</summary><div>
     <p>В первой зоне есть кафе у пирса, во второй — фудтрак. Откройте карту и выберите место, где хотите перекусить.</p>
-    <button class="p-link" data-go="map/1/rest/service/rest">Зона отдыха на карте →</button>
+    <a class="p-link" href="map.html#map/1/service/rest">Места отдыха на карте →</a>
     <a class="p-link" href="map.html#map/1/cafe-13">Кафе у пирса на карте →</a>
     <a class="p-link" href="map.html#map/2/cafe-21">Фудтрак в «Лясныя таямніцы» →</a>
     <a href="tel:+375447137525">Обед для группы · +375 44 713 75 25</a>
@@ -168,7 +264,7 @@
 </div></section>
 <section id="tours" class="screen visitor-screen" aria-labelledby="tour-title"><div class="p-content visitor-info tour-page">
   <header class="tour-intro">
-  <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+  <button class="p-back" type="button" data-guide-back="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
   <h1 class="p-title" id="tour-title">Обзорная экскурсия</h1>
   </header>
   <dl class="p-facts"><div><dt>Длительность</dt><dd>Около 1,5 часа</dd></div><div><dt>Группа</dt><dd>До 25 человек</dd></div></dl>
@@ -179,7 +275,7 @@
   <a class="p-link" href="tel:+375447329219">Позвонить <span>+375 44 732 92 19</span></a></div>
 </div></section>
 <section id="directions" class="screen visitor-screen"><div class="p-content visitor-info">
-  <button class="p-back" type="button" data-go="park" aria-label="Назад · Парк животных"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
+  <button class="p-back" type="button" data-guide-back="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
   <h1 class="p-title">Как добраться</h1>
   <address class="arrival-address">Деревня Глинище, Малаховецкий с/с, 31<br>Барановичский район</address>
   <div class="arrival-zones">
@@ -199,9 +295,8 @@
   <span class="slide-tabs-motion" aria-hidden="true"></span>
   <a href="#park" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-home"/></svg><span>Главная</span></a>
   <a href="#animals"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-paw"/></svg><span>Животные</span></a>
-  <a href="map.html#map/1"><svg aria-hidden="true"><use href="#atlas-map"/></svg><span>Карта</span></a>
-  <a href="map.html#map/1/service"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-pin"/></svg><span>Места</span></a>
-  <a href="#visitor"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-info"/></svg><span>Визит</span></a>
+  <a href="map.html#map/1" data-map-zone><svg aria-hidden="true"><use href="#atlas-map"/></svg><span>Карта</span></a>
+  <a href="#profile"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#profile-person"/></svg><span>Профиль</span></a>
 </nav>
 <script defer src="vendor/slide-tabs/tabs.js"></script>
 <script src="places.js"></script><script src="guide-data.js"></script><script src="park-schedule.js"></script>

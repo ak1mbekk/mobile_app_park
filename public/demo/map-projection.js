@@ -9,6 +9,7 @@
       config.centerY+config.scale*(dx*Math.sin(a)+dy*Math.cos(a)));
   }
   function planPixel(zone,point){
+    if(point.raster)return point.raster;
     if(!point.plan)return null;
     const [x,y]=point.plan;
     return zone===1?[x,877+y]:[455+x*1345/1009,1370+y*999/749];

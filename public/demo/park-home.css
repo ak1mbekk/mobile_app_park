@@ -41,27 +41,6 @@ body.in-guide .guide-header { position:static; width:100%; }
 #park .park-directory a:hover { color:#39724a; }
 #park .park-directory a span { font:18px var(--zk-font); }
 #park .park-locality { text-align:left; font-style:normal; }
-#feed .p-content { max-width:820px; padding-block:16px 32px; }
-#feed .p-title { margin:10px 0 4px; }
-#feed .p-lead { margin:0 0 22px; }
-#feed .visit-date { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; font-size:15px; }
-#feed .visit-date input { padding:8px 12px; min-height:44px; border:1px solid #a0afa4; border-radius:3px; background:white; color:#17241f; font:inherit; }
-#feed .feeding-summary { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; margin:16px 0; font-size:15px; }
-#feed .feeding-summary button { margin:0; }
-#feed .feeding-list { display:block; border-top:1px solid #acb9af; }
-#feed .feeding-row { margin:0; padding:0; border:0; border-bottom:1px solid #cfd6cd; border-radius:0; background:transparent; }
-#feed .feeding-row.selected { background:#edf2eb; }
-#feed .feeding-choice { width:100%; display:grid; grid-template-columns:4em minmax(0,1fr) auto; align-items:baseline; gap:12px; text-align:left; background:transparent; color:inherit; padding:15px 12px; min-height:60px; }
-#feed .feeding-choice::after { content:'⌄'; font-size:18px; color:#44624a; }
-#feed .feeding-choice[aria-expanded="true"]::after { content:''; }
-#feed .feeding-choice time { font-size:18px; font-variant-numeric:tabular-nums; }
-#feed .feeding-choice strong, #feed .feeding-choice small { display:block; }
-#feed .feeding-choice strong { font:normal clamp(19px,3vw,24px)/1.15 var(--atlas-title); }
-#feed .feeding-choice small { margin-top:5px; font-size:13px; color:#4c6052; }
-#feed .feeding-actions:not([hidden]) { display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px; padding:0 12px 12px; }
-#feed .feeding-actions button { width:auto; min-height:44px; margin:0; padding:6px 10px; font-size:14px; }
-#feed .feeding-actions .p-primary { background:#254f3c; color:white; border-radius:3px; }
-#feed .feeding-actions small:empty { display:none; }
 @media(min-width:800px) {
   #park .park-layout { grid-template-columns:minmax(0,1.45fr) minmax(0,.8fr); }
   #park .park-directory { margin-top:clamp(54px,7.5vw,85px); }
@@ -91,6 +70,24 @@ html:not(.dark) body.in-guide { --zk-cta:#254f3c; --zk-stone:84 98 86; }
 .in-guide .visitor-info { max-width:920px; padding-block:20px 48px; }
 .visitor-info .p-back,#animal .p-back,#feed .p-back { min-width:44px; }
 .visitor-info .p-title { margin:10px 0 22px; }
+#profile .profile-heading { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+#profile .profile-heading :is(.p-title,.p-back) { margin:0; }
+#profile .profile-content { max-width:620px; padding-block:18px 36px; }
+.profile-icons { position:absolute; overflow:hidden; }
+#profile .p-title { margin:0 0 22px; }
+.profile-identity { display:flex; align-items:center; gap:14px; padding:16px; border-radius:12px; background:var(--z-cloud); }
+.profile-identity strong { font-weight:650; }
+.profile-content small { display:block; margin-top:3px; color:var(--z-muted); font-size:13px; line-height:1.35; }
+.profile-list { margin:14px 0 0; padding:0; list-style:none; }
+.profile-list li { border-bottom:1px solid var(--z-line); }
+.profile-row { display:grid; grid-template-columns:24px minmax(0,1fr) 20px; align-items:center; gap:14px; min-height:56px; padding:8px; color:var(--z-ink); font-weight:550; text-decoration:none; }
+.profile-row[aria-disabled=true] { color:var(--z-muted); }
+.profile-row svg,.profile-identity svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.profile-row .profile-arrow { width:20px; height:20px; color:var(--z-muted); }
+@media (hover:hover) { a.profile-row:hover { background:var(--z-cloud); } }
+#visitor .visit-intro { display:flex; align-items:center; gap:8px; margin-bottom:24px; }
+#visitor .visit-intro .p-title { margin:0; text-wrap:balance; }
+#visitor .visit-intro .p-back { flex:none; width:var(--z-touch-size); height:var(--z-touch-size); margin:0; }
 #visitor details { margin:0; padding:0; border:0; border-top:1px solid var(--line); border-radius:0; background:transparent; }
 #visitor details:last-of-type { border-bottom:1px solid var(--line); }
 #visitor summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:58px; padding:12px 0; font:normal 22px/1.25 var(--atlas-title); cursor:pointer; list-style:none; }
@@ -99,9 +96,13 @@ html:not(.dark) body.in-guide { --zk-cta:#254f3c; --zk-stone:84 98 86; }
 #visitor details[open] summary::after { content:'−'; }
 #visitor details>div { max-width:65ch; padding:0 0 16px; }
 #visitor details p,#visitor details li { line-height:1.55; }
-#visitor details a,#visitor details .p-link { width:fit-content; display:flex; align-items:center; min-height:44px; margin:0; padding:4px 0; color:#254f3c; font-size:16px; text-underline-offset:4px; }
-#visitor details ul { padding-left:1.3em; }
+#visitor :is(a,.p-link) { width:fit-content; display:flex; align-items:center; min-height:var(--z-touch-size); margin:0; padding:4px 0; color:var(--z-link); font-size:16px; text-underline-offset:4px; }
+#visitor details ul { margin-block:0 8px; padding-left:1.3em; }
 #visitor details li+li { margin-top:7px; }
+#visitor .visit-offline { padding-block:18px; }
+#visitor .visit-offline h2 { margin:0; font:600 20px/1.25 var(--z-font); letter-spacing:-.02em; }
+#visitor .visit-offline p { margin:8px 0 0; color:var(--z-muted); }
+#visitor .visit-offline p:empty { display:none; }
 #tours .tour-intro p,.arrival-address { max-width:52ch; font:normal clamp(18px,2vw,21px)/1.5 var(--zk-font); }
 .tour-intro p a,.tour-portrait a { color:#254f3c; text-underline-offset:3px; }
 .tour-portrait { margin:20px 0; }
@@ -123,7 +124,6 @@ html:not(.dark) body.in-guide { --zk-cta:#254f3c; --zk-stone:84 98 86; }
   .tour-portrait { grid-column:2; grid-row:1 / span 4; margin:54px 0 0; }
   .tour-portrait img { aspect-ratio:1.1; }
 }
-#feed .feeding-choice[aria-expanded="true"]::after { content:'−'; }
 @media(max-width:380px) {
   #park .park-action { padding-inline:10px; font-size:15px; }
 }

@@ -1,19 +1,21 @@
 (() => {
   const screens = [...document.querySelectorAll('main > .screen')];
-  const detailPage = /^#(?:animal$|species\/)/.test(location.hash);
-  if (detailPage && document.referrer && !history.state?.fromCatalog) {
-    const referrer = new URL(document.referrer);
-    if (referrer.origin === location.origin && referrer.pathname === new URL('map.html', location.href).pathname) {
-      history.replaceState({...history.state, fromParkMap:true}, '');
-    }
-  }
   document.getElementById('home-search').addEventListener('submit', event => {
     event.preventDefault();
     const query = event.currentTarget.elements.q.value.trim();
-    history.pushState({catalogState:{query}}, '', '#animals');
+    window.parkGuideHistory.push('#animals', {catalogState:{query}});
     show();
   });
   let lastView;
+  function syncMapLinks() {
+    let zone;
+    try { zone = localStorage.getItem('park-map-zone'); } catch {}
+    if (zone !== '1' && zone !== '2') return;
+    for (const link of document.querySelectorAll('[data-map-zone]')) {
+      link.hash = link.hash.replace(/^#map\/[12](?=\/|$)/, '#map/' + zone);
+    }
+  }
+
   function show() {
     const route = location.hash.slice(1).split('/')[0];
     if (route === 'animal' && window.parkGuideData.live) {
@@ -21,15 +23,12 @@
       return;
     }
     if (route === 'map') {
-      location.replace('map.html' + location.search + location.hash);
+      window.parkGuideHistory.replaceDocument('map.html' + location.search + location.hash);
       return;
     }
     const active = screens.find(screen => screen.id === route) || screens[0];
     for (const screen of screens) screen.classList.toggle('current', screen === active);
-    if (['species','animal'].includes(active.id)) {
-      active.querySelector('[data-go="animals"]').setAttribute('aria-label', history.state?.fromParkMap ? 'Назад · Карта парка' : 'Назад · Животные');
-    }
-    const sectionRoute = ({species:'animals', animal:'animals', audio:'park', directions:'visitor', tours:'visitor', feed:'visitor'})[active.id] || active.id;
+    const sectionRoute = ({species:'animals', animal:'animals', audio:'park', directions:'profile', tours:'profile', feed:'profile', visitor:'profile'})[active.id] || active.id;
     const dock = document.querySelector('.z-dock');
     const previous = dock.querySelector('[aria-current="page"]');
     const next = Array.from(dock.querySelectorAll('a')).find(link => link.hash === '#' + sectionRoute);
@@ -54,16 +53,9 @@
     show();
   };
   window.conceptGo = route => {
-    if (route === 'animals' && (history.state?.fromCatalog || history.state?.fromParkMap)) {
-      history.back();
-      return;
-    }
-    if (lastView === 'animals' && (route === 'animal' || route.startsWith('species/'))) {
-      history.pushState({fromCatalog:true}, '', '#' + route);
-      show();
-      return;
-    }
-    location.hash = route;
+    if (location.hash === '#' + route) return;
+    window.parkGuideHistory.push('#' + route);
+    show();
   };
   window.conceptStart = show;
   document.addEventListener('click', event => {
@@ -73,6 +65,8 @@
     window.conceptGo(link.dataset.go);
   });
   window.addEventListener('hashchange', show);
+  window.addEventListener('pageshow', syncMapLinks);
+  syncMapLinks();
   window.parkGuideData.ready.then(() => {
     if (location.hash === '#animal' && window.parkGuideData.live) show();
   });

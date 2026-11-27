@@ -1,7 +1,9 @@
 (() => {
-  const button = document.getElementById('save-guide');
-  const status = document.getElementById('offline-guide-status');
-  const iconButton = button.classList.contains('audio-save');
+  const controls = [...document.querySelectorAll('#save-guide, #save-visit-guide')].map(button => ({
+    button,
+    status: document.getElementById(button.getAttribute('aria-describedby')),
+    icon: button.classList.contains('audio-save'),
+  }));
   const downloadLimit = 12000;
   const retryDelay = 20000;
   const {cacheName, previousCacheName} = window.parkGuideAudio;
@@ -35,15 +37,17 @@
 
   function markSaved() {
     saved = true;
-    status.dataset.state = 'saved';
-    status.textContent = 'Путеводитель сохранён для этого браузера.';
-    if (iconButton) {
-      button.dataset.state = 'saved';
-      button.setAttribute('aria-disabled', 'true');
-      button.setAttribute('aria-label', 'Сохранено для прогулки');
-      button.title = 'Сохранено для прогулки';
-    } else {
-      button.hidden = true;
+    for (const {button, status, icon} of controls) {
+      status.dataset.state = 'saved';
+      status.textContent = 'Путеводитель сохранён для прогулки.';
+      if (icon) {
+        button.dataset.state = 'saved';
+        button.setAttribute('aria-disabled', 'true');
+        button.setAttribute('aria-label', 'Сохранено для прогулки');
+        button.title = 'Сохранено для прогулки';
+      } else {
+        button.hidden = true;
+      }
     }
   }
 
@@ -130,8 +134,10 @@
 
   async function saveForWalk() {
     report('saving');
-    if (!explicitSave) status.textContent = '';
-    button.dataset.state = 'saving';
+    for (const {button, status} of controls) {
+      if (!explicitSave) status.textContent = '';
+      button.dataset.state = 'saving';
+    }
     const results = await Promise.allSettled([saveRecordings(), waitForShell()]);
     const failed = results.find(result => result.status === 'rejected');
     if (failed) throw failed.reason;
@@ -139,14 +145,16 @@
   }
 
   function showFailure(error) {
-    delete button.dataset.state;
+    for (const {button} of controls) delete button.dataset.state;
     if (!navigator.onLine) report('offline');
     else if (weakConnection() || ['AbortError','TimeoutError'].includes(error.name)) report('weak');
     else {
       report('');
       if (explicitSave) {
-        status.dataset.state = 'error';
-        status.textContent = 'Не удалось сохранить путеводитель. Попробуйте ещё раз.';
+        for (const {status} of controls) {
+          status.dataset.state = 'error';
+          status.textContent = 'Не удалось сохранить путеводитель. Попробуйте ещё раз.';
+        }
       }
     }
   }
@@ -170,13 +178,13 @@
 
   window.addEventListener('offline', () => { stopRequest(); report('offline'); });
   if (!window.isSecureContext || !('serviceWorker' in navigator) || !('caches' in window)) {
-    button.hidden = true;
+    for (const {button} of controls) button.hidden = true;
     window.addEventListener('online', () => report(''));
     if (!navigator.onLine) report('offline');
     return;
   }
 
-  button.onclick = () => start({manual:true});
+  for (const {button} of controls) button.onclick = () => start({manual:true});
   window.addEventListener('online', () => {
     if (currentJob) currentJob.then(() => start());
     else start();

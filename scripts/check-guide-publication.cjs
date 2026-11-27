@@ -81,8 +81,10 @@ async function waitForHealth(base, child) {
     const context = await browser.newContext({viewport:{width:390,height:760}});
     const page = await context.newPage();
     const upstreamRequests = [];
+    const requestsWithApiKey = [];
     page.on('request', request => {
       if (request.url().startsWith(upstreamUrl)) upstreamRequests.push(request.url());
+      if (Object.hasOwn(request.headers(), 'x-api-key')) requestsWithApiKey.push(request.url());
     });
     await page.goto(base + '/demo/index.html#species/karakal');
     await page.getByRole('heading',{name:'Каракал из выгрузки',exact:true}).waitFor();
@@ -102,6 +104,7 @@ async function waitForHealth(base, child) {
     await page.getByRole('button',{name:'На карте',exact:true}).click();
     await page.locator('.place-info').getByRole('heading',{name:'Вольер из выгрузки',exact:true}).waitFor();
     assert.deepEqual(upstreamRequests,[]);
+    assert.deepEqual(requestsWithApiKey,[]);
     console.log('One server publication, private-field filtering, read-only map and offline snapshot passed.');
   } finally {
     await browser?.close();

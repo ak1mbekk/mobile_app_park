@@ -17,7 +17,7 @@ import {
   ChevronLeftIcon,
 } from '../components/icons';
 import { getPedestrianRoute, getPedestrianRouteMulti, formatDistance, formatDuration } from '../utils/routePedestrian';
-import { getLocalAnimals } from '../utils/remoteApi';
+import { getLocalAnimals } from '../utils/localAnimals';
 import { normalizedToGeo } from '../hooks/useMapAnchors';
 import 'leaflet/dist/leaflet.css';
 

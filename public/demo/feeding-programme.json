@@ -3,12 +3,12 @@
   "source": "https://animal-park.by/dopolnitelnyie-uslugi/pokazatelnoe-kormlenie.html",
   "daily": [
     {"id":"capybara","zone":1,"place":"36","start":"15:50","end":"16:00","name":"Капибары","species":"kapibara"},
-    {"id":"exotic","zone":1,"place":"53","start":"16:00","end":"16:20","name":"Мир экзотических животных"},
+    {"id":"exotic","zone":1,"place":"53","start":"16:00","end":"16:20","name":"Экзотические животные","species":"kinkazhu"},
     {"id":"raccoons","zone":1,"place":"54","start":"16:20","end":"16:30","name":"Еноты-полоскуны","species":"enot-poloskun"},
-    {"id":"porcupines","zone":1,"place":"50","start":"16:20","name":"Дикообразы","species":"indijskij-dikobraz"},
+    {"id":"porcupines","zone":1,"place":"50","start":"16:20","name":"Дикобразы","species":"indijskij-dikobraz"},
     {"id":"meerkats","zone":1,"place":"50","start":"16:20","name":"Сурикаты","species":"surikatyi"},
     {"id":"coatis","zone":1,"place":"62","start":"16:30","end":"16:40","name":"Носухи","species":"nosuxa"},
-    {"id":"storks","zone":1,"place":"lake49","start":"16:30","name":"Аисты у озера"}
+    {"id":"storks","zone":1,"place":"lake49","start":"16:30","name":"Аисты","species":"belyij-aist"}
   ],
   "byDate": {}
 }

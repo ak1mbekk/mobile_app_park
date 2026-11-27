@@ -1,15 +1,17 @@
 importScripts('audio-stops.js');
 
-const cacheName = 'animal-park-map:zoo-guide35';
+const cacheName = 'animal-park-map:zoo-guide47';
 const guideCachePrefix = 'animal-park-map:zoo-guide';
 const base = new URL(self.registration.scope);
 const shell = [
   'audio-stops.js','audio-guide.js','guide-theme.js','guide-data.js','vendor/slide-tabs/tabs.js',
   'assets/species/alpaka.webp','assets/species/oslyi.webp','assets/species/burskaya-koza.webp',
   'assets/species/bactrian-camel.jpg','assets/species/lamancha-goat.jpg',
-  'assets/species/evropeyskaya-lan.webp','assets/lemur.webp','assets/tamarin.webp',
-  'map.html','guide-ui.css','assets/caracal.webp','assets/species/filin.webp','assets/species/lama.webp','base.css','park-home.css','park-home.js','park-schedule.js','catalog.js','feedings.js',
+  'assets/species/evropeyskaya-lan.webp','assets/species/vatusi.webp','assets/lemur.webp','assets/tamarin.webp',
+  'map.html','guide-ui.css','assets/caracal.webp','assets/species/filin.webp','assets/species/lama.webp','base.css','park-home.css','park-home.js','guide-history.js','park-schedule.js','catalog.js','feedings.js','feedings.css',
   'feeding-programme.json','catalogue.json','vendor/park-menu/menu.css','guide-shell.css','catalog-editorial.css',
+  'assets/species/kinkazhu.webp','assets/species/belyij-aist.webp','assets/species/indijskij-dikobraz.webp',
+  'assets/species/nosuxa.webp','assets/species/surikatyi.webp',
   'assets/capybara.webp','assets/raccoon.webp','assets/bison.webp','assets/park-wordmark.webp',
   'index.html','guide.webmanifest','visitor.css','map-app.css','map-layout.css','map-app-shell.js','places.js','map-projection.js',
   'park-map.js','guide-landscape.js','guide-offline.js','vendor/leaflet/leaflet.css',

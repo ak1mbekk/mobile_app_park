@@ -44,7 +44,7 @@ window.createParkLandscape = function (surface, select, fallback) {
       'fill-extrusion-height': ['get', 'height'], 'fill-extrusion-vertical-gradient': true }),
     { id:'survey-buildings', type:'fill-extrusion',source:'pavilions',paint:{
       'fill-extrusion-color':['case',['get','chosen'],'#bc5936',['has','id'],'#cc8861','#c99e75'],
-      'fill-extrusion-height':3, 'fill-extrusion-vertical-gradient':true } },
+      'fill-extrusion-base':['get','base'], 'fill-extrusion-height':['get','height'], 'fill-extrusion-vertical-gradient':true } },
     {id:'navigation-edge',type:'line',source:'navigation',filter:['==',['geometry-type'],'LineString'],
       layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#fff','line-width':9}},
     {id:'navigation-route',type:'line',source:'navigation',filter:['==',['geometry-type'],'LineString'],
@@ -52,6 +52,8 @@ window.createParkLandscape = function (surface, select, fallback) {
     {id:'locations', type: 'symbol', source: 'points', layout: {
       'symbol-sort-key': ['case', ['get','chosen'], -100, ['get','rank']],
       'icon-image': ['get','icon'], 'icon-size': ['case',['get','chosen'],1.16,0.82], 'icon-padding': 2,
+      'icon-anchor': ['case',['get','gate'],'bottom','center'],
+      'icon-offset': ['case',['get','gate'],['literal',[0,-18]],['literal',[0,0]]],
       'text-field': ['step', ['zoom'],
         ['case',['get','chosen'],['get','name'],''],
         17, ['case',['any',['get','chosen'],['<=',['get','rank'],1]],['get','name'],''],
@@ -141,7 +143,7 @@ window.createParkLandscape = function (surface, select, fallback) {
 
   const pendingPhotos = new Set();
   // Fences follow the measured plan perimeter. Rail and post dimensions are symbolic.
-  function addFence(ring, rails, closed = true) {
+  function addFence(ring, {rails, edges, posts}, closed = true) {
     const deg = 1 / 111320;
     const lon = deg / Math.cos(ring[0][1]*Math.PI/180);
     function piece(corners, base, height) {
@@ -153,11 +155,18 @@ window.createParkLandscape = function (surface, select, fallback) {
       const [u,v] = ring[(i+1)%ring.length];
       const dx=(u-x)/lon, dy=(v-y)/deg, len=Math.hypot(dx,dy);
       if (len < 0.1) return;
+      // Adjacent enclosures can have the same fence, traced in either direction.
+      const edge = [ring[i].join(','), ring[(i+1)%ring.length].join(',')].sort().join('/');
+      if (edges.has(edge)) return;
+      edges.add(edge);
       const nx=-dy/len*0.16*lon, ny=dx/len*0.16*deg;
       piece([[x+nx,y+ny],[u+nx,v+ny],[u-nx,v-ny],[x-nx,y-ny]],0.72,1.22);
       const postCount = Math.ceil(len/6);
       for(let k=0;k<postCount;k++){
         const px=x+(u-x)*k/postCount, py=y+(v-y)*k/postCount;
+        const post = [px,py].join(',');
+        if (posts.has(post)) continue;
+        posts.add(post);
         piece([[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>[px+a*.22*lon,py+b*.22*deg]),0,1.42);
       }
     });
@@ -224,29 +233,34 @@ window.createParkLandscape = function (surface, select, fallback) {
       lastAlignment = payload.alignment;
       cameraKey = null;
     }
-    const points = [], areas = [], rails = [], bounds = new gl.LngLatBounds();
+    const points = [], areas = [], bounds = new gl.LngLatBounds();
+    const fence = {rails:[], edges:new Set(), posts:new Set()};
     const ids = new Set(items.map(item => item.id));
     for (const contour of payload.contours) {
       const ring = contour.ring.map(p => [p.lng,p.lat]);
       const properties = contour.attached && ids.has(contour.id)
         ? {id:contour.id, chosen:contour.id === selected} : {chosen:false};
       areas.push({type:'Feature',properties,geometry:{type:'Polygon',coordinates:[[...ring,ring[0]]]}});
-      addFence(ring, rails);
+      addFence(ring, fence);
     }
     const sections = (payload.fenceSections || []).map(line => {
       const coordinates = line.map(p => [p.lng,p.lat]);
-      addFence(coordinates,rails,false);
+      addFence(coordinates,fence,false);
       return {type:'Feature',properties:{},geometry:{type:'LineString',coordinates}};
     });
     map.getSource('fenceSections').setData(collection(sections));
-    let target;
+    let target, preferredBearing;
     for (const item of items) {
       const ll = position(item);
       if (!ll) continue;
       const xy = [ll.lng,ll.lat];
       const chosen = item.id === selected;
-      const props = {id:item.id, name:item.name, chosen, rank:walk?.landmarkIds.includes(item.id) ? -5 : item.symbol ? 0 : item.service ? 2 : 1};
-      if (chosen) target = xy;
+      const props = {id:item.id, name:item.name, chosen, gate:item.symbol === 'gate',
+        rank:walk?.landmarkIds.includes(item.id) ? -5 : item.symbol ? 0 : item.service ? 2 : 1};
+      if (chosen) {
+        target = xy;
+        preferredBearing = item.gateBearing;
+      }
       bounds.extend(xy);
       const photo = item.species?.map(window.parkGuide.speciesPortrait).find(Boolean);
       props.icon = photo || item.symbol || item.service || 'paw';
@@ -255,14 +269,14 @@ window.createParkLandscape = function (surface, select, fallback) {
     }
     map.getSource('points').setData(collection(points));
     map.getSource('areas').setData(collection(areas));
-    map.getSource('rails').setData(collection(rails));
-    const buildings = window.parkGuide.surveyBuildings.map(({zone:buildingZone, place, ring}) => {
+    map.getSource('rails').setData(collection(fence.rails));
+    const buildings = window.parkGuide.surveyBuildings.map(({zone:buildingZone, place, ring, base = 0, height = 3}) => {
       const projection = window.parkProjection;
       const coords = ring.map(([x,y]) => {
         const ll = projection.crs.pointToLatLng(projection.toWorld(payload.alignment,x,y),16);
         return [ll.lng,ll.lat];
       });
-      const properties = {chosen:false};
+      const properties = {chosen:false,base,height};
       if (place && buildingZone === zone && items.some(item => item.id === place)) {
         properties.id = place;
         properties.chosen = selected === place;
@@ -276,7 +290,10 @@ window.createParkLandscape = function (surface, select, fallback) {
     const key = [zone,selected,payload.filter,payload.walk?.id].join('/');
     const frame = () => {
       const padding = payload.cameraPadding();
-      if (target) map.jumpTo({center:target,zoom:buildings.some(b=>b.properties.chosen) ? 19 : 18.15,pitch:44,padding});
+      if (target) map.jumpTo({
+        center:target, zoom:buildings.some(b=>b.properties.chosen) ? 19 : 18.15,
+        pitch:44, bearing:preferredBearing ?? map.getBearing(), padding
+      });
       else if (category && !bounds.isEmpty()) {
         map.setPadding({top:0,bottom:0,left:0,right:0});
         map.jumpTo({pitch:0,bearing:0});

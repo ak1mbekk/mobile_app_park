@@ -142,7 +142,7 @@
     if(entry.slug==='kapibara' && !window.parkGuideData.live) button.dataset.go='animal';
     else button.dataset.go='species/'+entry.slug;
     if(entry.thumbnail){
-      const photo=document.createElement('img');photo.loading='lazy';photo.alt='';
+      const photo=document.createElement('img');photo.loading='lazy';photo.decoding='async';photo.alt='';
       photo.onerror = () => photo.remove();
       photo.src=entry.thumbnail;
       button.append(photo);
@@ -211,7 +211,7 @@
   }
   document.addEventListener('conceptscreen', event => {
     const screen = event.detail;
-    if (!['animals','species','map'].includes(screen)) return;
+    if (!['animals','species','map','feed'].includes(screen)) return;
     const canLoad = location.protocol !== 'file:';
     if (screen === 'species') {
       detail(canLoad && !bySlug.size);

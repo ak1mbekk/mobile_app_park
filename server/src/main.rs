@@ -39,6 +39,7 @@ const RELEASE_FILES: &[&str] = &[
     "catalog-editorial.css",
     "catalog.js",
     "feedings.js",
+    "feedings.css",
     "guide-shell.css",
     "map-app.css",
     "map-layout.css",
@@ -48,6 +49,7 @@ const RELEASE_FILES: &[&str] = &[
     "map-projection.js",
     "park-home.css",
     "park-home.js",
+    "guide-history.js",
     "park-map.js",
     "guide-landscape.js",
     "park-schedule.js",
@@ -69,6 +71,7 @@ const RELEASE_FILES: &[&str] = &[
     "assets/audio/camel-donkey.mp3",
     "assets/audio/lamancha-boer.mp3",
     "assets/audio/caracal.mp3",
+    "assets/audio/watusi.mp3",
 ];
 
 #[derive(Clone)]

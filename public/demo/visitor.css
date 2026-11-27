@@ -142,7 +142,7 @@ html.dark #visitor-theme .sun-icon {display:block}
   @keyframes geo-arrive{from{transform:translateY(8px);opacity:.4}to{transform:none;opacity:1}}
 }
 
-.visitor-screen :is(.p-back,.cat-back)[data-go]{width:44px;height:44px;min-width:44px;display:inline-grid;place-items:center;padding:0;color:var(--ink);background:transparent;border:0}
+.visitor-screen :is(.p-back,.cat-back)[data-guide-back]{width:44px;height:44px;min-width:44px;display:inline-grid;place-items:center;padding:0;color:var(--ink);background:transparent;border:0}
 #geo .geo-head{display:grid;grid-template-columns:44px 1fr auto;gap:4px 8px;border:0;padding:4px 10px 8px}
 #geo-zone{display:grid;grid-template-columns:1fr 1.24fr;grid-column:1/-1;grid-row:2;gap:3px;background:var(--inset);padding:3px;border-radius:14px}
 #geo-zone button{min-height:44px;padding:4px;color:var(--muted);background:transparent;border-radius:11px;font:600 15px/1.2 var(--zk-font)}
@@ -241,9 +241,6 @@ html.dark #visitor-theme .sun-icon {display:block}
   width:100%;min-width:0;min-height:48px;padding:0 8px 0 12px;
   border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font-size:15px;
 }
-#map .map-offline{margin-top:8px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
-#map .map-offline .p-link{min-height:44px}
-#map .map-offline p:empty{display:none}
 #map .place-info{position:relative;padding:0;border:0}
 #map .map-sheet-close{position:absolute;top:0;right:0}
 #map .map-place-heading{padding-right:48px}

@@ -285,8 +285,7 @@
       (point.legacyId && path === '/' + point.zone + '/' + point.legacyId));
     const query = normalize(search.value).split(' ').filter(Boolean);
     heading.textContent = selected ? stories[keyForPlace(selected)].title : 'Аудиогид';
-    back.dataset.go = path ? 'audio' : 'park';
-    back.setAttribute('aria-label', path ? 'Назад к рассказам' : 'На главную парка');
+    back.dataset.guideBack = path ? 'audio' : 'park';
     document.getElementById('audio-controls').hidden = Boolean(selected);
     document.getElementById('audio-missing').hidden = !path || Boolean(selected);
     directory.classList.toggle('guide-single', Boolean(selected));

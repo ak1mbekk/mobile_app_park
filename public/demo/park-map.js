@@ -23,20 +23,34 @@
   const zoneButtons = host.querySelectorAll('[data-zone]');
   const serviceNames = {
     cafe: 'Кафе', rest: 'Места отдыха', feed: 'Корм для животных', wc: 'Туалеты',
-    wash: 'Где вымыть руки', parking: 'Парковка', entrance: 'Вход', gift: 'Сувениры'
+    wash: 'Где вымыть руки', parking: 'Парковка', entrance: 'Вход', ticket: 'Касса', exit: 'Выход', gift: 'Сувениры'
   };
+  const serviceKeyByName = new Map(Object.entries(serviceNames).map(([key,name]) => [name,key]));
   const serviceSearchTerms = {
     'Где вымыть руки':'умывальник умывальники рукомойник рукомойники раковина',
     'Туалеты':'туалет wc санузел уборная',
     'Корм для животных':'автомат с кормом кормушка выдача корма',
     'Парковка':'паркинг парковки стоянка',
-    'Места отдыха':'место отдыха беседки отдых'
+    'Места отдыха':'место отдыха беседки скамейки лавочки отдых'
   };
   const views = new Map();
   const state = { zone: 1, id: '', kind: 'all', service: '' };
   let landscape, flatOnly = false;
   const query = host.querySelector('#animal-map-query');
+  const queryField = query.closest('label');
   const matchesPanel = host.querySelector('#animal-map-matches');
+  const filterRows = host.querySelector('#map-filter-rows');
+  const closeSearchButton = search.querySelector('.map-search-close');
+  const filterToggle = toolbar.querySelector('.map-filter-toggle');
+  const animalGlyph = 'M4 15c1-2 3-6 6-6s4 3 6 6c2 4-2 4-6 3-4 1-8 1-6-3Z M4 7v1m4-5v2m5-2v2m4 2v1';
+  const filterKey = 'park-map-hidden-categories';
+  const hiddenCategories = new Set();
+  const categoryLabels = {animals:'Животные', ...serviceNames};
+  try {
+    const saved = JSON.parse(localStorage.getItem(filterKey));
+    if (Array.isArray(saved)) saved.filter(key => Object.hasOwn(categoryLabels,key)).forEach(key => hiddenCategories.add(key));
+  } catch {}
+  const isFilterView = () => state.kind === 'service' && !state.service;
   let visitorPlaces = [];
   let dataReady = false;
   const normalize = value => value.toLocaleLowerCase('ru').replace(/ё/g, 'е');
@@ -63,21 +77,36 @@
     matchesPanel.scrollTop = 0;
   }
 
-  function categoryButton(title, glyph, activate) {
-    const button = document.createElement('button');
-    button.type = 'button';
+  function categoryIcon(glyph) {
     const icon = document.createElementNS('http://www.w3.org/2000/svg','svg');
     icon.setAttribute('viewBox','0 0 24 24');
     icon.setAttribute('aria-hidden','true');
     const path = document.createElementNS(icon.namespaceURI,'path');
     path.setAttribute('d',glyph);
     icon.append(path);
-    button.append(icon, document.createTextNode(title));
+    return icon;
+  }
+
+  function categoryButton(title, glyph, activate) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.append(categoryIcon(glyph), document.createTextNode(title));
     button.onclick = activate;
     return button;
   }
 
   function searchAnimals() {
+    const filters = isFilterView();
+    search.toggleAttribute('data-filter-panel', filters);
+    filterRows.hidden = !filters;
+    queryField.hidden = filters;
+    matchesPanel.hidden = filters;
+    closeSearchButton.setAttribute('aria-label', filters ? 'Закрыть фильтр' : 'Закрыть поиск');
+    if (filters) {
+      categoryBack.hidden = true;
+      search.querySelector('h2').textContent = 'Фильтр карты';
+      return;
+    }
     const needle = normalize(query.value.trim());
     const animalsOnly = state.kind === 'animals';
     matchesPanel.classList.toggle('animal-atlas', animalsOnly);
@@ -92,7 +121,7 @@
     matchesPanel.hidden = false;
     matchesPanel.replaceChildren();
     if (browsing) {
-      if (!servicesOnly) matchesPanel.append(categoryButton('Животные','M4 15c1-2 3-6 6-6s4 3 6 6c2 4-2 4-6 3-4 1-8 1-6-3Z M4 7v1m4-5v2m5-2v2m4 2v1',()=>openDirectory('animals')));
+      if (!servicesOnly) matchesPanel.append(categoryButton('Животные',animalGlyph,()=>openDirectory('animals')));
       for (const [key,name] of Object.entries(serviceNames)) {
         matchesPanel.append(categoryButton(name,guide.serviceGlyphs[name],()=>openDirectory('service',key)));
       }
@@ -100,7 +129,7 @@
     }
     const results = [];
     for (const p of visitorPlaces) {
-      if ((!needle && !servicesOnly && p.zone !== state.zone) || !visible(p)) continue;
+      if ((!needle && !servicesOnly && p.zone !== state.zone) || !directoryMatches(p)) continue;
       if (animalsOnly) {
         for (const animal of animalResults(p)) {
           if (normalize(animal.name).includes(needle) || (p.species?.length === 1 && !p.residents?.length && normalize(p.name).includes(needle))) {
@@ -189,9 +218,33 @@
   const selectedPlace = () => local().find(point => point.id === state.id);
   const label = point => point.name;
   const serviceKeys = point => point.services || [point.service];
-  const visible = point =>
-    (state.kind === 'all' || (state.kind === 'animals' ? hasAnimals(point) : Boolean(point.service))) &&
+  const directoryMatches = point =>
+    (state.kind === 'all' || isFilterView() || (state.kind === 'animals' ? hasAnimals(point) : Boolean(point.service))) &&
     (!state.service || serviceKeys(point).includes(serviceNames[state.service]));
+  const visible = point => {
+    if (!directoryMatches(point)) return false;
+    if (state.kind === 'animals' || state.service || (point.id === state.id && point.zone === state.zone)) return true;
+    return point.service
+      ? serviceKeys(point).some(service => !hiddenCategories.has(serviceKeyByName.get(service)))
+      : !hiddenCategories.has('animals');
+  };
+
+  for (const [key,name] of Object.entries(categoryLabels)) {
+    const row = document.createElement('label');
+    row.className = 'map-filter-row';
+    const control = document.createElement('input');
+    control.type = 'checkbox';
+    control.setAttribute('role','switch');
+    control.checked = !hiddenCategories.has(key);
+    control.addEventListener('change', () => {
+      if (control.checked) hiddenCategories.delete(key);
+      else hiddenCategories.add(key);
+      try { localStorage.setItem(filterKey,JSON.stringify([...hiddenCategories])); } catch {}
+      show();
+    });
+    row.append(categoryIcon(key === 'animals' ? animalGlyph : guide.serviceGlyphs[name]), document.createTextNode(name),control);
+    filterRows.append(row);
+  }
 
   function parseRoute() {
     const [, zone, ...parts] = location.hash.slice(1).split('/');
@@ -236,8 +289,8 @@
       const count = local().filter(visible).length;
       listButton.textContent = serviceNames[state.service] + ' · ' + count + '  —  Список';
     }
-    searchToggle.setAttribute('aria-expanded', String(!search.hidden));
-    document.dispatchEvent(new Event('parkmapviewchange'));
+    searchToggle.setAttribute('aria-expanded', String(!search.hidden && !isFilterView()));
+    filterToggle.setAttribute('aria-expanded', String(!search.hidden && isFilterView()));
     if (mapReady) updateStatus();
   }
 
@@ -247,6 +300,13 @@
     updateSheets();
     if (open) search.querySelector('h2').focus({ preventScroll: true });
     else if (returnFocus) searchToggle.focus({ preventScroll: true });
+  }
+
+  function closeSearch() {
+    if (!isFilterView()) return setSearch(false,true);
+    setSearch(false);
+    navigate({kind:'all', service:''});
+    filterToggle.focus({preventScroll:true});
   }
 
   function openPlace(id, source = 'map') {
@@ -873,7 +933,7 @@
         L.polygon(contour.ring, {pane:'visitor-areas',className:'place-area',interactive:false}).addTo(layer);
       }
     }
-    for (const roof of guide.surveyBuildings.filter(b=>b.zone===state.zone)) {
+    for (const roof of guide.surveyBuildings.filter(b=>b.zone===state.zone && !b.base)) {
       const destination = matches.find(item=>item.id===roof.place);
       const ring = roof.ring.map(([x,y])=>calibration
         ? projection.crs.pointToLatLng(projection.toWorld(calibration,x,y),16) : L.latLng(-y,x));
@@ -1024,7 +1084,7 @@
     zoneButtons.forEach(button => {
       button.setAttribute('aria-pressed', String(Number(button.dataset.zone) === state.zone));
     });
-    searchToggle.toggleAttribute('data-filtered', state.kind !== 'all');
+    searchToggle.toggleAttribute('data-filtered', Boolean(state.service) || state.kind === 'animals');
     if (calibration === undefined) {
       if (!loading) {
         loading = true;
@@ -1138,7 +1198,6 @@
   window.addEventListener('offline', () => { if (map) updateStatus(); });
   picker.replaceChildren(new Option('Загружаем места…', ''));
   picker.disabled = true;
-  document.addEventListener('parksearch', event => openDirectory(event.detail.kind, event.detail.service));
   listButton.onclick = () => setSearch(true);
   locateButton.onclick = () => {
     if (navigation && !navigation.place && navigation.watch != null) endNavigation();
@@ -1157,12 +1216,13 @@
     if (picker.value) openPlace(picker.value, 'picker');
     else navigate({ id: '' });
   };
-  searchToggle.onclick = () => searchOpen && !choosing ? setSearch(false,true) : openDirectory('all');
-  search.querySelector('.map-search-close').onclick = () => setSearch(false, true);
+  searchToggle.onclick = () => searchOpen && !choosing && !isFilterView() ? closeSearch() : openDirectory('all');
+  filterToggle.onclick = () => searchOpen && isFilterView() ? closeSearch() : openDirectory('service');
+  closeSearchButton.onclick = closeSearch;
   host.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
     if (choosing) hitChooser.dismiss();
-    else if (searchOpen) setSearch(false, true);
+    else if (searchOpen) closeSearch();
     else if (!result.hidden) closePlace();
     else return;
     event.stopPropagation();
@@ -1176,6 +1236,7 @@
     visitorPlaces = [...guide.places, ...guide.geoFacilities].filter(p => !p.name.startsWith('Вольер №'));
     dataReady = true;
     searchToggle.disabled = false;
+    filterToggle.disabled = false;
     show();
     if (!state.id && !state.service && state.kind !== 'all') setSearch(true);
   });

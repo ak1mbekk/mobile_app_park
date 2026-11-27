@@ -7,13 +7,15 @@
 }
 #animals .catalog-heading,
 #species .species-heading { display:flex;align-items:center;gap:10px;margin-bottom:16px; }
-#animals .catalog-heading { display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;margin-bottom:12px; }
+#animals .catalog-heading { display:grid;grid-template-columns:var(--z-touch-size) minmax(0,1fr) var(--z-touch-size);gap:8px;margin-bottom:12px; }
 #animals .catalog-heading .cat-back,
 #species .species-heading .p-back { flex:0 0 44px;margin:0; }
+#animals .catalog-heading :is(.cat-back,#catalog-search-toggle) { width:var(--z-touch-size); height:var(--z-touch-size); }
+#animals .catalog-heading .p-icon { width:var(--z-control-icon); height:var(--z-control-icon); }
 #animals #catalog-title { margin:0;font:650 21px/1.2 var(--zk-font);letter-spacing:-.025em;text-align:center; }
 #animals #catalog-title:focus,
 #species #species-name:focus { outline:none; }
-#animals #catalog-search-toggle { width:44px;height:44px;padding:10px;background:transparent;color:var(--ink);border-radius:10px; }
+#animals #catalog-search-toggle { padding:10px;background:transparent;color:var(--ink);border-radius:10px; }
 #animals #catalog-search-toggle[aria-expanded="true"] { background:var(--inset); }
 #animals #catalog-count { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);font-size:13px;color:var(--muted); }
 #animals.catalog-filtered #catalog-count { position:static;width:auto;height:auto;clip-path:none;margin-top:16px; }
@@ -21,7 +23,7 @@
 #animals .search:focus-within { outline:2px solid var(--green);outline-offset:2px; }
 #animals .search input { font-size:16px;min-height:44px;outline:none; }
 #animals .catalog-classes { margin:8px 0 0;gap:5px;border:0; }
-#animals .catalog-classes button { flex:1 1 auto;min-height:44px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:13px;background:transparent; }
+#animals .catalog-classes button { flex:1 1 auto;min-width:var(--z-touch-size);min-height:var(--z-touch-size);padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:13px;background:transparent; }
 #animals .catalog-classes button[aria-pressed="true"] { color:var(--zk-cta-text);background:var(--zk-cta);border-color:var(--zk-cta);font-weight:600; }
 #animals .animalgrid { grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;margin-top:18px; }
 #animals .catalog-group-heading { margin:10px 0 0;font-size:18px;letter-spacing:-.02em; }

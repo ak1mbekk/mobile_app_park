@@ -628,8 +628,8 @@ async function availability(browser){
   await p.goto(root+'#feed/raccoons');
   await p.getByText('Не удалось загрузить программу кормлений.').waitFor();
   fixture=structuredClone(sample);await p.locator('#retry-schedule').click();
-  await p.locator('#feed .feeding-row.selected [data-event="raccoons"]').waitFor();
-  const today=await p.locator('#visit-date').inputValue();
+  await p.locator('#feeding-feature[data-event="raccoons"]').waitFor();
+  const today=await p.locator('#visit-date').getAttribute('data-date');
   fixture.byDate[today]=[];await p.reload();await p.getByText('Нет опубликованных событий.',{exact:true}).waitFor();
   assert.equal(await p.locator('#feed [data-event]').count(),0);
   fixture.byDate[today]=[{...sample.daily[2],status:'cancelled'}];await p.reload();await p.getByText('Кормление отменено').waitFor();
@@ -667,7 +667,7 @@ async function offline(browser){
   await p.locator('#species-photo img').evaluate(img=>img.decode());
   await p.evaluate(()=>window.conceptGo('feed/raccoons'));
   await p.getByText('Не удалось обновить. Показана сохранённая программа.').waitFor();
-  await p.locator('#feed [data-event="raccoons"]').waitFor();
+  await p.locator('#feeding-feature[data-event="raccoons"]').waitFor();
   await context.close();
 
   const fresh=await browser.newPage();
@@ -692,28 +692,34 @@ async function offline(browser){
 async function calendarShell(browser,appRoot){
   const p=await browser.newPage({viewport:{width:390,height:844},locale:'ru-RU'});
   try {
-    const sampleDay='2090-06-12';
+    const parkToday=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Minsk',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    const nextMonth=new Date(parkToday+'T12:00:00Z');
+    nextMonth.setUTCMonth(nextMonth.getUTCMonth()+1,12);
+    const sampleDay=nextMonth.toISOString().slice(0,10);
     const fixture=structuredClone(sample);
     fixture.byDate[sampleDay]=[sample.daily[2]];
     await p.route('**/feeding-programme.json',r=>r.fulfill({json:fixture}));
     await p.goto(new URL('calendar',appRoot).href);
     const calendar=p.frameLocator('iframe[title="Календарь кормлений парка"]');
-    await calendar.locator('#feed.current [data-event="raccoons"]').waitFor();
+    await calendar.locator('#feeding-feature:not([hidden])').waitFor();
     assert.equal(await calendar.locator('.game-wayfinding').isVisible(),false);
     assert.ok(await p.locator('nav a[href="/animals"]').isVisible());
-    await calendar.locator('#visit-date').fill(sampleDay);
-    await calendar.locator('#visit-date').press('Tab');
-    const row=calendar.locator('#feed [data-event="raccoons"]');
-    await row.click();
+    await calendar.locator('#visit-date').click();
+    await calendar.locator('.calendar-next').click();
+    await calendar.locator(`[data-day="${sampleDay}"]`).click();
+    const feature=calendar.locator('#feeding-feature[data-event="raccoons"]');
+    await feature.waitFor();
     assert.equal(await calendar.locator('#feed [data-event]').count(),1);
-    const eventLink=await row.evaluate(el=>el.ownerDocument.location.href);
-    assert.equal(new URL(eventLink).hash,'#feed/raccoons/'+sampleDay);
+    assert.ok(await calendar.locator('#feeding-agenda').isHidden());
+    const dayLink=await feature.evaluate(el=>el.ownerDocument.location.href);
+    assert.equal(new URL(dayLink).hash,'#feed/all/'+sampleDay);
+    const eventLink=dayLink.replace('/all/','/raccoons/');
     await calendar.locator('#feed .p-primary').click();
     await calendar.locator('#map .place-info [data-go="species/enot-poloskun"]').click();
     await calendar.locator('#species.current .p-back').click();
     await calendar.locator('#map.current .p-back').click();
-    assert.equal(await calendar.locator('#visit-date').inputValue(),sampleDay);
-    assert.equal(await row.getAttribute('aria-expanded'),'true');
+    assert.equal(await calendar.locator('#visit-date').getAttribute('data-date'),sampleDay);
+    await feature.waitFor();
     if(output)await p.screenshot({path:path.join(output,'calendar-shell.png')});
     await p.locator('nav a[href="/animals"]').click();
     const animals=p.frameLocator('iframe[title="Животные парка"]');
@@ -724,8 +730,8 @@ async function calendarShell(browser,appRoot){
     await animals.locator('#species.current .p-back').click();
     await animals.locator('#animals.current').waitFor();
     await p.goto(eventLink);
-    assert.equal(await p.locator('#visit-date').inputValue(),sampleDay);
-    assert.equal(await p.locator('#feed [data-event="raccoons"]').getAttribute('aria-expanded'),'true');
+    assert.equal(await p.locator('#visit-date').getAttribute('data-date'),sampleDay);
+    await p.locator('#feeding-feature[data-event="raccoons"]').waitFor();
     await p.goto(eventLink.replace('/raccoons/','/coatis/'));
     await p.getByText('Выбранного кормления нет в программе на эту дату.').waitFor();
     assert.ok(await p.locator('#feeding-actions').isHidden());

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import PageLayout from '../components/layout/PageLayout';
 import EmptyState from '../components/ui/EmptyState';
-import { getLocalAnimals } from '../utils/remoteApi';
+import { getLocalAnimals } from '../utils/localAnimals';
 import { loadAnimalsFromSite, type SiteAnimal } from '../data/animalsFromSite';
 import { PawIcon, MapPinIcon } from '../components/icons';
 

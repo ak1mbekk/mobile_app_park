@@ -9,15 +9,27 @@
       technical:{width:1009,height:749,image:'assets/technical-2.webp'},
       yandex:'https://yandex.by/maps/org/lesnyye_tayny/55770037829/'}
   };
+  // Gate positions are the intersections of visitor paths and the park perimeter.
+  const entrances = [
+    {zone:1,id:'entrance',name:'Вход в парк',raster:[312.819,1368.881],gateAxis:[.246,.969],gateBearing:55,
+      service:'Вход',symbol:'gate',keywords:['ворота','проверка билетов'],
+      detail:'У ворот проверяют билеты. За ними начинается прогулка по кругу. Выход — у сувениров.'},
+    {zone:2,id:'entrance',name:'Вход в Лясныя таямніцы',x:254,y:187,raster:[940.415,1746.495],
+      gateAxis:[.926,-.378],gateBearing:0,service:'Вход',symbol:'gate',keywords:['ворота'],
+      detail:'За воротами начинается гостевая дорожка к прудам.'}
+  ];
   const places = [
     // Approximate service positions follow the visitor-plan symbols, matched to the
     // entrance, numbered pens, paths and shorelines on each technical sheet.
     {zone:1,id:'ride-parking',name:'Парковка для аттракциона у входа',x:15,y:563,plan:[202,514],approximate:true,service:'Парковка'},
-    {zone:2,id:'entrance',name:'Вход в Лясныя таямніцы',x:254,y:187,plan:[363,270],approximate:true,service:'Вход'},
     {zone:2,id:'souvenirs',name:'Сувениры у входной дорожки',x:244,y:265,plan:[391,367],approximate:true,service:'Сувениры'},
     {zone:2,id:'bus-parking',name:'Парковка для автобусов',x:440,y:52,plan:[426,194],approximate:true,service:'Парковка'},
-    {zone:1,id:'entrance',name:'Вход в Казачны мір',x:57,y:563,plan:[211,506],approximate:true,service:'Вход'},
-    {zone:1,id:'souvenirs',name:'Сувениры у входа',x:107,y:546,plan:[226,506],approximate:true,service:'Сувениры'},
+    ...entrances,
+    {zone:1,id:'ticket-office',name:'Касса парка',plan:[211,506],service:'Касса',
+      keywords:['билеты','купить билет'],detail:'Здесь продают билеты. Их проверяют у входных ворот.'},
+    {zone:1,id:'exit',name:'Выход из парка',plan:[221.976,509.684],approximate:true,service:'Выход',
+      detail:'Круг заканчивается у сувениров. Отсюда можно вернуться к кассе.'},
+    {zone:1,id:'souvenirs',name:'Сувениры у выхода',x:107,y:546,plan:[226,506],approximate:true,service:'Сувениры'},
     {zone:1,id:'36',badge:'36',name:'Капибара',x:544,y:212,plan:[402,194],species:['kapibara']},
     {zone:1,id:'54',badge:'54',name:'Енот-полоскун',x:87,y:74,species:['enot-poloskun']},
     {zone:1,id:'62',badge:'62',name:'Носуха',x:46,y:246,species:['nosuxa']},
@@ -27,6 +39,11 @@
     {zone:1,id:'15',badge:'15',name:'Северный олень',x:208,y:373,plan:[244,363],species:['severnyij-olen']},
     {zone:1,id:'65wc',badge:'WC',name:'Туалет у водоёма',x:558,y:74,plan:[347,134],approximate:true,service:'Туалеты'},
     {zone:1,id:'rest',badge:'Отдых',name:'Зона отдыха',x:99,y:139,plan:[111,281],approximate:true,service:'Места отдыха'},
+    // Bench groups drawn on the 12.11.2025 visitor plan, matched to the guest paths and banks.
+    {zone:1,id:'rest-canal-bridge',name:'Скамейки у мостика через канал',raster:[154,1218],approximate:true,service:'Места отдыха'},
+    {zone:1,id:'rest-canal-pond',name:'Скамейки между каналом и прудом',raster:[196,1129],approximate:true,service:'Места отдыха'},
+    {zone:1,id:'rest-pond-birds',name:'Скамейки у пруда вдоль птичьего квартала',raster:[294,1030],approximate:true,service:'Места отдыха'},
+    {zone:1,id:'rest-pond-camels',name:'Скамейки у пруда напротив вольеров лам и альпак',raster:[325,1099],approximate:true,service:'Места отдыха'},
     {zone:1,id:'food-entry',badge:'Корм',name:'Корм для животных у входа',x:152,y:612,plan:[260,527],approximate:true,service:'Корм для животных'},
     {zone:1,id:'food-pond',badge:'Корм',name:'Корм для животных у водоёма',x:654,y:412,plan:[610,300],service:'Корм для животных'},
     {zone:1,id:'dispenser-west',badge:'Корм',name:'Автомат с кормом у западной гостевой дорожки',x:62,y:349,plan:[185,385],service:'Корм для животных'},
@@ -96,6 +113,19 @@
     {zone:2,id:'cafe-23',name:'Кафе (павлин)',geo:[26.028002,53.091333]},
     {zone:2,id:'cafe-24',name:'Кафе (кабанчик)',geo:[26.023469,53.092165]}
   ].map(point=>({...point,service:'Кафе',badge:'☕'}));
+  // The gate follows the fence across the path. Offsets and footprints are in survey pixels.
+  function surveyGate({zone,id,raster:[x,y],gateAxis:[dx,dy]}) {
+    function part(from,to,depth,base,height) {
+      const ring = [[from,-depth],[to,-depth],[to,depth],[from,depth]].map(([along,across]) =>
+        [x + dx * along - dy * across, y + dy * along + dx * across]);
+      return {zone,place:id,ring,base,height};
+    }
+    return [
+      part(-3.7,-2.4,.63,0,3.2),
+      part(2.4,3.7,.63,0,3.2),
+      part(-3.6,3.6,.38,2.65,3.4)
+    ];
+  }
   // Outlines traced in pixels on the original 2064 × 2369 survey. Only assign a
   // visitor destination where the park's independent food pin agrees with the plan.
   const surveyBuildings = [
@@ -103,7 +133,8 @@
     {zone:1,ring:[[110.4,1194.4],[116.5,1192.5],[119.2,1199],[113,1201.2]]},
     {zone:1,place:'cafe-14-1',ring:[[113,1201.2],[119.2,1199],[124.6,1212.1],[116.2,1215]]},
     {zone:2,place:'cafe-21-1',ring:[[1005.2,1915],[1012,1913.5],[1014,1929.7],[1007,1930]]},
-    {zone:2,ring:[[1014.5,1937.9],[1020,1938.1],[1020,1943.9],[1014.4,1943.8]]}
+    {zone:2,ring:[[1014.5,1937.9],[1020,1938.1],[1020,1943.9],[1014.4,1943.8]]},
+    ...entrances.flatMap(surveyGate)
   ];
   // These old names/OSM nodes have no proven identity with an official cafe.
   // A legacy link opens its zone's cafe filter, never an arbitrary nearby place.
@@ -203,7 +234,10 @@
   // Each facility has its own silhouette. Enclosures share one rim in both map views.
   const serviceGlyphs={
     pizza:'M3 3Q14 2 21 12L5 21z M4 7Q12 6 17 12 M8 11h.1 M11 14h.1 M7 16h.1',
+    gate:'M3 21V5h18v16 M7 21V9h10v12',
     'Вход':'M4 20V4h12v3 M4 20h12v-3 M11 12h10m-4-4 4 4-4 4',
+    'Касса':'M3 6h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4z M15 8v1m0 2v2m0 2v1',
+    'Выход':'M20 20V4H8v3 M20 20H8v-3 M13 12H3m4-4-4 4 4 4',
     'Сувениры':'M3 9h18v4H3z M5 13v8h14v-8 M12 9v12 M12 9C3 9 5 1 9 4l3 5c6-11 12-1 0 0z',
     'Кафе':'M3 9h13v5a6 6 0 0 1-6 6H9a6 6 0 0 1-6-6z M16 10h2a3 3 0 0 1 0 6h-2 M6 3v3m4-4v3m4-2v3',
     'Корм для животных':'M5 10h14l-2 11H7z M9 10C7 6 7 4 5 3c5-1 9 3 7 7m1-1c0-5 3-7 7-7 0 4-2 7-7 7z',
