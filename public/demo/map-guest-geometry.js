@@ -1,4 +1,6 @@
-// All path vertices are pixels of the 2064 × 2369 technical plan.
+import { width, height } from './map-boundary-geometry.js';
+
+// All path vertices are pixels of the technical plan.
 export function validGuestPaths(data) {
   if (!data || !Number.isSafeInteger(data.revision) || data.revision < 0 ||
       !Array.isArray(data.paths) || data.paths.length > 256) return false;
@@ -11,8 +13,8 @@ export function validGuestPaths(data) {
         !Array.isArray(path.points) || path.points.length < 2 || path.points.length > 256) return false;
     ids.add(path.id);
     return path.points.every((point, i) => Array.isArray(point) && point.length === 2 &&
-      point.every(Number.isFinite) && point[0] >= 0 && point[0] <= 2064 &&
-      point[1] >= 0 && point[1] <= 2369 &&
+      point.every(Number.isFinite) && point[0] >= 0 && point[0] <= width &&
+      point[1] >= 0 && point[1] <= height &&
       (!i || point.some((v, j) => v !== path.points[i - 1][j])));
   });
 }
@@ -27,6 +29,10 @@ function project(point, a, b) {
   return {xy, fraction, distance:distance(point, xy)};
 }
 
+export function guestPathsForZone(data, zone) {
+  return (data?.paths ?? []).filter(path => path.zone === zone && ['open', 'mapped'].includes(path.status));
+}
+
 export function guestNetwork(data, zone) {
   const nodes = new Map(), edges = [];
   const vertex = xy => {
@@ -34,8 +40,7 @@ export function guestNetwork(data, zone) {
     if (!nodes.has(key)) nodes.set(key, {xy, links:[]});
     return nodes.get(key);
   };
-  for (const path of data.paths) {
-    if (path.zone !== zone || !['open','mapped'].includes(path.status)) continue;
+  for (const path of guestPathsForZone(data, zone)) {
     for (let i = 1; i < path.points.length; i++) {
       const a = vertex(path.points[i - 1]), b = vertex(path.points[i]);
       const length = distance(a.xy, b.xy);
@@ -105,4 +110,19 @@ export function shortestGuestWalk(start, finish) {
     if (node === endB) relax(end,total + endLength * (1 - finish.fraction),node);
   }
   return null;
+}
+
+export function guestApproach(edges, {point, enclosure, saved}, metresPerPixel) {
+  const ring = saved ? undefined : enclosure?.map(([x, y]) => [x * width, y * height]);
+  const approach = nearestGuestPoint(edges, point, ring);
+  return approach && approach.distance * metresPerPixel <= (saved ? 20 : 35) ? approach : null;
+}
+
+export function guestDirections(edges, position, finish, metresPerPixel) {
+  const start = nearestGuestPoint(edges, position);
+  if (!start || start.distance * metresPerPixel > 45) return {status:'outside-network'};
+  const walk = shortestGuestWalk(start, finish);
+  if (!walk) return {status:'disconnected'};
+  const metres = Math.round(walk.length * metresPerPixel);
+  return {status:metres < 10 ? 'nearby' : 'walking', points:walk.points, metres};
 }

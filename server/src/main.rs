@@ -52,6 +52,7 @@ const RELEASE_FILES: &[&str] = &[
     "park-home.js",
     "guide-history.js",
     "park-map.js",
+    "map-data.js",
     "guide-landscape.js",
     "park-schedule.js",
     "places.js",

@@ -1,6 +1,6 @@
 // Geometries from OpenStreetMap. Building extrusion follows MapLibre's 3D buildings example.
 // Animal locations are projected separately from the park's calibrated visitor plan.
-window.createParkLandscape = function (surface, select, fallback) {
+window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
   const gl = window.maplibregl;
   const collection = features => ({ type: 'FeatureCollection', features });
   const source = (data, attribution) => ({ type: 'geojson', data, attribution });
@@ -100,7 +100,7 @@ window.createParkLandscape = function (surface, select, fallback) {
     },
     maxBounds: [[25.993,53.082],[26.045,53.111]], attributionControl: false,
     style: {version: 8, light: {anchor:'map', position:[1.2,195,38], intensity:0.52},
-      sources: {land: source('assets/park-landscape.geojson',
+      sources: {land: source(terrainUrl,
         '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'),
         points: source(collection([])), areas: source(collection([])), fenceSections:source(collection([])), rails:source(collection([])),
         pavilions:source(collection([])),guestPaths:source(collection([])),walkEnds:source(collection([])),

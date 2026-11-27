@@ -1,4 +1,7 @@
-// The visitor uses one map. Technical-plan positions are tied to the manually saved alignment.
+import { loadMapData, loadMapTerrain, mapPlaces, terrainUrl } from './map-data.js';
+import { contains, width, height } from './map-boundary-geometry.js';
+import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from './map-guest-geometry.js';
+
 (() => {
   const guide = window.parkGuide;
   const projection = window.parkProjection;
@@ -181,35 +184,15 @@
   }
   serviceOffsets.sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
   let map, layer, calibration, hitChooser;
-  let boundaryData, contains;
-  let guestData, guestGeometry, networkData;
-  const networks = new Map();
+  let boundaryData, guestData;
   function guestPaths() {
-    return (guestData?.paths || []).filter(p => p.zone === state.zone && ['open','mapped'].includes(p.status))
+    return guestPathsForZone(guestData,state.zone)
       .map(path => ({id:path.id,status:path.status,line:path.points.map(([x,y]) => calibration
         ? projection.crs.pointToLatLng(projection.toWorld(calibration,x,y),16) : L.latLng(-y,x))}));
   }
 
-  async function fetchMapData(file) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3500);
-    try {
-      return await window.parkGuideData.load(file, {cache:'no-store', signal:controller.signal});
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-
-  async function readGuestPaths(source) {
-    try {
-      const [schema,data] = await Promise.all([import('./map-guest-geometry.js'),
-        source ? source.visitorPaths : fetchMapData('map-guest-paths.json')]);
-      guestGeometry = schema;
-      return schema.validGuestPaths(data) ? data : null;
-    } catch { return null; }
-  }
   let refreshing;
-  let loading = false, mapReady = false, drawing = false, terrainFailed = false;
+  let mapReady = false, drawing = false, terrainFailed = false;
   let searchOpen = false, choosing = false, placeTrigger;
   let framing = 'zone';
   const markers = new Map();
@@ -347,7 +330,7 @@
 
   function projectedFence(vertices) {
     return vertices?.map(([x, y]) => {
-      const px = x * 2064, py = y * 2369;
+      const px = x * width, py = y * height;
       return calibration ? projection.crs.pointToLatLng(projection.toWorld(calibration, px, py), 16) : L.latLng(-py, px);
     });
   }
@@ -372,7 +355,7 @@
     const ring=boundaryData?.enclosures[key];
     if(!coord || !ring)return true;
     const px=projection.toRaster(calibration,L.latLng(coord));
-    return contains(ring,[px.x/2064,px.y/2369]);
+    return contains(ring,[px.x/width,px.y/height]);
   }
 
   function updateStatus() {
@@ -396,21 +379,12 @@
     return [pixel.x,pixel.y];
   };
 
-  function network(zone) {
-    if (!guestData) return [];
-    if (networkData !== guestData) { networks.clear(); networkData = guestData; }
-    if (!networks.has(zone)) networks.set(zone,guestGeometry.guestNetwork(guestData,zone));
-    return networks.get(zone);
-  }
-
-  function approach(point, metresPerPixel) {
-    const saved = calibration.approaches?.[placeKey(point)];
-    const centre = saved ? L.latLng(saved) : position(point);
-    if (!centre || !guestData) return null;
-    const ring = !saved && boundaryData?.enclosures[placeKey(point)]?.map(([x,y]) => [x*2064,y*2369]);
-    const nearby = guestGeometry.nearestGuestPoint(network(point.zone),rasterPoint(centre),ring || undefined);
-    return nearby?.distance * metresPerPixel <= (saved ? 20 : 35) ? nearby : null;
-  }
+  const walkingMessage = {
+    'outside-network': () => 'Вы вне сети гостевых дорожек этой зоны.',
+    disconnected: () => 'Между этими дорожками нет соединения.',
+    nearby: () => 'Вы рядом с местом.',
+    walking: metres => 'Пешком ' + metres + ' м · до дорожки у места',
+  };
 
   function updateDirections(focus = false) {
     const active = navigation?.place && placeKey(navigation.place) === placeKey(selectedPlace());
@@ -472,9 +446,17 @@
     if (!window.isSecureContext) return fail('Для геолокации откройте сайт по HTTPS.');
     if (!navigator.geolocation) return fail('Геолокация недоступна в этом браузере.');
     if (!calibration) return fail('Географическая карта ещё не загрузилась.');
+    const mapArea = L.latLngBounds([[0,0],[width,0],[width,height],[0,height]].map(planPoint)).pad(0.35);
     const metresPerPixel = planPoint([0,0]).distanceTo(planPoint([1,0]));
-    const finish = place && approach(place,metresPerPixel);
-    if (place && !finish) return fail('Рядом с этим местом пока нет нанесённого гостевого прохода.');
+    const edges = place ? guestNetwork(guestData,place.zone) : [];
+    let finish;
+    if (place) {
+      const key = placeKey(place);
+      const saved = calibration.approaches?.[key];
+      const target = saved ? L.latLng(saved) : position(place);
+      finish = target && guestApproach(edges,{point:rasterPoint(target), enclosure:boundaryData?.enclosures[key], saved},metresPerPixel);
+      if (!finish) return fail('Рядом с этим местом пока нет нанесённого гостевого прохода.');
+    }
     try {
       request.watch = navigator.geolocation.watchPosition(({coords}) => {
         if (navigation !== request) return;
@@ -484,7 +466,6 @@
           return;
         }
         const current = L.latLng(coords.latitude,coords.longitude);
-        const mapArea = L.latLngBounds([[0,0],[2064,0],[2064,2369],[0,2369]].map(planPoint)).pad(0.35);
         visitorLocation = mapArea.contains(current) ? current : null;
         if (!place) {
           releaseLocation(request);
@@ -492,19 +473,10 @@
           updateDirections(Boolean(visitorLocation));
           return;
         }
-        const start = guestGeometry.nearestGuestPoint(network(state.zone),rasterPoint(current));
-        if (!start || start.distance * metresPerPixel > 45) {
-          request.route = null;
-          request.message = 'Вы вне сети гостевых дорожек этой зоны.';
-          updateDirections(false);
-          return;
-        }
-        const walk = guestGeometry.shortestGuestWalk(start,finish);
-        const focus = Boolean(walk && !request.route);
-        request.route = walk?.points.map(planPoint);
-        const length = walk && Math.round(walk.length * metresPerPixel);
-        request.message = !walk ? 'Между этими дорожками нет соединения.' : length < 10
-          ? 'Вы рядом с местом.' : 'Пешком ' + length + ' м · до дорожки у места';
+        const walk = guestDirections(edges,rasterPoint(current),finish,metresPerPixel);
+        const focus = Boolean(walk.points && !request.route);
+        request.route = walk.points?.map(planPoint);
+        request.message = walkingMessage[walk.status](walk.metres);
         updateDirections(focus);
       }, error => {
         if (navigation !== request) return;
@@ -531,9 +503,7 @@
       return L.latLng(-point.y,point.x);
     };
     try {
-      const response = await fetch('assets/park-landscape.geojson');
-      if (!response.ok) throw Error('Terrain unavailable');
-      const data = await response.json();
+      const data = await loadMapTerrain();
       if (map !== mounted) return;
       L.geoJSON(data,{pane:'visitor-land',interactive:false,coordsToLatLng,
         filter:f=>Object.hasOwn(colors, f.properties.kind),
@@ -1040,39 +1010,6 @@
     map.on('click', () => hitChooser.dismiss());
   }
 
-  function validAlignment(value) {
-    return value?.raster === 'enclosures-2064x2369' && value.scale > 0 &&
-      [value.scale, value.angle, value.centerX, value.centerY].every(Number.isFinite);
-  }
-
-  async function readAlignment(source) {
-    if (source) return validAlignment(source.mapAlignment) ? source.mapAlignment : null;
-    const key = 'park-map-alignment';
-    try {
-      const value = await fetchMapData('map-alignment.json');
-      if (!validAlignment(value)) throw Error();
-      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
-      return value;
-    } catch {
-      try {
-        const saved = JSON.parse(localStorage.getItem(key));
-        if (validAlignment(saved)) return saved;
-      } catch {}
-      return null;
-    }
-  }
-
-  async function readBoundaries(source) {
-    try {
-      const [geometry, value] = await Promise.all([
-        import('./map-boundary-geometry.js'),
-        source ? source.enclosures : fetchMapData('map-boundaries.json')
-      ]);
-      contains=geometry.contains;
-      return geometry.validBoundaries(value) ? value : null;
-    } catch { return null; }
-  }
-
   function show() {
     if (!dataReady) return;
     if (!document.getElementById('map').classList.contains('current')) return;
@@ -1087,17 +1024,7 @@
     });
     searchToggle.toggleAttribute('data-filtered', Boolean(state.service) || state.kind === 'animals');
     if (calibration === undefined) {
-      if (!loading) {
-        loading = true;
-        const source = window.parkGuideData.current;
-        Promise.all([readAlignment(source), readBoundaries(source), readGuestPaths(source)]).then(([value, boundaries, paths]) => {
-          if (source !== window.parkGuideData.current) return;
-          calibration = value;
-          boundaryData = boundaries;
-          guestData = paths;
-          show();
-        });
-      }
+      refreshAlignment();
       return;
     }
     const paths = guestPaths();
@@ -1114,7 +1041,7 @@
             flatOnly = true;
             landscape = null;
             show();
-          });
+          }, terrainUrl);
         } catch { flatOnly = true; }
       }
       if (landscape) {
@@ -1139,27 +1066,29 @@
   }
 
   function refreshAlignment(publicationChanged = false) {
+    if (!dataReady) return;
     const source = window.parkGuideData.current;
-    if (!publicationChanged && (source !== null || (!map && !landscape))) return;
+    const initial = calibration === undefined;
+    if (!initial && !publicationChanged && (source !== null || (!map && !landscape))) return;
     if (refreshing) {
       if (publicationChanged) refreshing.then(() => refreshAlignment(true));
       return;
     }
-    refreshing = Promise.all([readAlignment(source), readBoundaries(source), readGuestPaths(source)]).then(([next, boundaries, paths]) => {
+    refreshing = loadMapData(source).then(({alignment:next, boundaries, paths}) => {
       if (source !== window.parkGuideData.current) return;
       const recovered = next && !calibration;
       const alignmentChanged = next && (recovered || ['revision', 'centerX', 'centerY', 'scale', 'angle']
         .some(key => next[key] !== calibration[key]));
       const boundariesChanged = boundaries && boundaries.revision !== boundaryData?.revision;
       const pathsChanged = (paths?.revision ?? null) !== (guestData?.revision ?? null);
-      if (!publicationChanged && !alignmentChanged && !boundariesChanged && !pathsChanged) return;
+      if (!initial && !publicationChanged && !alignmentChanged && !boundariesChanged && !pathsChanged) return;
       if (navigation) endNavigation();
       if (publicationChanged) {
-        visitorPlaces = publishedPlaces(source);
+        visitorPlaces = mapPlaces(source);
       }
       guestData = paths;
-      if (publicationChanged || alignmentChanged) calibration = next;
-      if (publicationChanged || boundariesChanged) boundaryData = boundaries;
+      if (initial || publicationChanged || alignmentChanged) calibration = next;
+      if (initial || publicationChanged || boundariesChanged) boundaryData = boundaries;
       if (recovered && map) {
         hitChooser?.destroy();
         map.remove();
@@ -1239,17 +1168,13 @@
     else return;
     event.stopPropagation();
   });
-  function publishedPlaces(source) {
-    const places = source ? source.places : [...guide.places, ...guide.geoFacilities];
-    return places.filter(p => !p.name.startsWith('Вольер №'));
-  }
   function startMap(source) {
     if (source === false) {
       status.textContent = 'Данные карты временно недоступны.';
       status.hidden = false;
       return;
     }
-    visitorPlaces = publishedPlaces(source);
+    visitorPlaces = mapPlaces(source);
     dataReady = true;
     searchToggle.disabled = false;
     filterToggle.disabled = false;

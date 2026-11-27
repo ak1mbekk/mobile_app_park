@@ -129,7 +129,8 @@ body.in-guide, body.in-guide:has(.visitor-screen.current) {
   white-space:nowrap;
   font:600 clamp(11px, 3vw, 12px)/1.1 var(--z-font);
 }
-.slide-tabs > [aria-current="page"] { color:var(--z-lime); }
+.slide-tabs:not([data-slide-pending]) > [aria-current="page"],
+.slide-tabs > [data-slide-target] { color:var(--z-lime); }
 .slide-tabs:not(.slide-tabs-ready) > [aria-current="page"] { background:var(--tabs-selected-bg); }
 .slide-tabs svg { flex:none; width:var(--z-control-icon); height:var(--z-control-icon); }
 .in-guide :focus-visible, .park-app :focus-visible { outline:3px solid var(--z-focus); outline-offset:2px; }

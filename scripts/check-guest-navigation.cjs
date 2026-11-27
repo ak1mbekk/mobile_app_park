@@ -6,7 +6,8 @@ const url = process.env.PARK_MAP_URL || 'http://127.0.0.1:8170/demo/map.html';
 const {paths} = JSON.parse(readFileSync(require.resolve('../public/demo/map-guest-paths.json'),'utf8'));
 
 async function graphChecks() {
-  const {guestNetwork,nearestGuestPoint,shortestGuestWalk} = await import('../public/demo/map-guest-geometry.js');
+  const {guestNetwork,nearestGuestPoint,shortestGuestWalk,guestApproach,guestDirections} =
+    await import('../public/demo/map-guest-geometry.js');
   for (const zone of [1,2]) {
     const edges = guestNetwork({paths},zone);
     const start = nearestGuestPoint(edges,edges[0].a.xy);
@@ -16,12 +17,19 @@ async function graphChecks() {
     {zone:1,status:'open',points:[[0,0],[10,0],[10,10]]},
     {zone:1,status:'mapped',points:[[10,10],[20,10]]},
     {zone:1,status:'closed',points:[[0,0],[20,10]]},
-    {zone:1,status:'open',points:[[40,0],[50,0]]}
+    {zone:1,status:'open',points:[[40,0],[50,0]]},
+    {zone:2,status:'open',points:[[20,10],[40,0]]}
   ]},1);
   const near = point => nearestGuestPoint(edges,point);
   assert(Math.abs(shortestGuestWalk(near([2,1]),near([8,-1])).length - 6) < 1e-6);
   assert(Math.abs(shortestGuestWalk(near([2,1]),near([17,11])).length - 25) < 1e-6);
   assert.equal(shortestGuestWalk(near([2,1]),near([45,1])),null);
+  const finish = guestApproach(edges,{point:[17,11],saved:true},1);
+  assert.equal(guestApproach(edges,{point:[17,35],saved:true},1),null);
+  assert.deepEqual(guestDirections(edges,[17,12],finish,1),{status:'nearby',points:[[17,10]],metres:0});
+  assert.equal(guestDirections(edges,[2,1],finish,1).metres,25);
+  assert.equal(guestDirections(edges,[140,140],finish,1).status,'outside-network');
+  assert.equal(guestDirections(edges,[45,1],finish,1).status,'disconnected');
 }
 
 async function coordinates(page, pixel) {
@@ -83,6 +91,10 @@ async function run(browser, {flat, zone, id, pixels, width}) {
         assert(gap < .03, 'Route leaves the marked path by ' + gap + ' plan pixels');
       }
       const oldPosition = features.find(item=>item.properties.visitor).geometry.coordinates;
+      const noisy = {...await coordinates(page,pixels[1]),accuracy:100};
+      await page.evaluate(coords => moveTestVisitor(coords),noisy);
+      await page.getByText('Сигнал GPS неточный. Подождите на открытом месте.').waitFor();
+      assert.deepEqual((await readNavigation()).find(item=>item.properties.visitor).geometry.coordinates,oldPosition);
       await page.evaluate(coords => moveTestVisitor(coords),await coordinates(page,pixels[1]));
       await page.waitForFunction(old => {
         const visitor = navigationTestMap.getStyle().sources.navigation.data.features.find(item=>item.properties.visitor);
@@ -121,7 +133,7 @@ async function deniedLocation(browser) {
   }
 }
 
-async function offlineRoute(browser) {
+async function offlineRoutes(browser) {
   const context = await browser.newContext({viewport:{width:390,height:678},permissions:['geolocation']});
   try {
     const page = await context.newPage();
@@ -133,7 +145,14 @@ async function offlineRoute(browser) {
     await page.reload();
     await page.getByRole('button',{name:'Проложить маршрут'}).click();
     await page.waitForFunction(() => document.querySelector('.map-walk-status')?.textContent.startsWith('Пешком'));
-    console.log('Offline guest route passed');
+    const forestStart = await coordinates(page,[1056,2178]);
+    await context.setGeolocation(forestStart);
+    await page.getByRole('button',{name:'Лясныя таямніцы'}).click();
+    await page.evaluate(() => { location.hash = '#map/2/6'; });
+    await page.getByRole('button',{name:'Проложить маршрут'}).click();
+    await page.waitForFunction(() => document.querySelector('.map-walk-status')?.textContent.startsWith('Пешком'));
+    assert.equal(await page.evaluate(() => navigator.onLine),false);
+    console.log('Offline guest routes passed in both zones');
   } finally {
     await context.close();
   }
@@ -148,7 +167,7 @@ async function offlineRoute(browser) {
     await run(browser,{flat:false,zone:1,id:'cafe-13',pixels:[[234,1389],[216,1384]],width:390});
     await run(browser,{flat:true,zone:2,id:'6',pixels:[[1056,2178],[1033,2171]],width:390});
     await deniedLocation(browser);
-    await offlineRoute(browser);
+    await offlineRoutes(browser);
   } finally {
     await browser.close();
   }

@@ -1,6 +1,6 @@
 importScripts('audio-stops.js');
 
-const cacheName = 'animal-park-map:zoo-guide48';
+const cacheName = 'animal-park-map:zoo-guide49';
 const guideCachePrefix = 'animal-park-map:zoo-guide';
 const base = new URL(self.registration.scope);
 const shell = [
@@ -14,7 +14,7 @@ const shell = [
   'assets/species/nosuxa.webp','assets/species/surikatyi.webp',
   'assets/capybara.webp','assets/raccoon.webp','assets/bison.webp','assets/park-wordmark.webp',
   'index.html','guide.webmanifest','visitor.css','map-app.css','map-layout.css','map-app-shell.js','places.js','map-projection.js',
-  'park-map.js','guide-landscape.js','guide-offline.js','vendor/leaflet/leaflet.css',
+  'park-map.js','map-data.js','guide-landscape.js','guide-offline.js','vendor/leaflet/leaflet.css',
   'vendor/leaflet/leaflet.js','vendor/maplibre/maplibre-gl.css','vendor/maplibre/maplibre-gl.js',
   'vendor/ibm-plex-sans/IBMPlexSans.ttf','assets/park-landscape.geojson',
   'assets/park-favicon.png','assets/park-touch-icon.png','map-alignment.json','map-boundaries.json',

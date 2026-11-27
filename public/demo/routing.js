@@ -8,10 +8,11 @@ let lastHome='intro', currentScreen='', currentRoute='', previousScreens={};
 
 // The game and the guide share this HTML document. Load each visitor tool on its first visit.
 const visitorScripts = new Map();
-function loadVisitorScript(src) {
+function loadVisitorScript(src, type = 'text/javascript') {
   if (!visitorScripts.has(src)) {
     visitorScripts.set(src, new Promise((resolve, reject) => {
       const script = document.createElement('script');
+      script.type = type;
       script.src = src;
       script.onload = resolve;
       script.onerror = () => {
@@ -36,7 +37,7 @@ async function loadVisitorTools(screen) {
         await loadVisitorScript('vendor/maplibre/maplibre-gl.js');
         await loadVisitorScript('guide-landscape.js');
       } catch { /* The plan remains available on devices without the 3D renderer. */ }
-      await loadVisitorScript('park-map.js');
+      await loadVisitorScript('park-map.js', 'module');
     } else {
       await loadVisitorScript('vendor/park-menu/menu.js');
     }
