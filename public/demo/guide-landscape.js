@@ -332,7 +332,7 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
   const transferMarkers = [];
   function drawNavigation() {
     if (!ready || stopped || !navigationState) return;
-    const {visitor,route,focus,padding,ends} = navigationState;
+    const {visitor,route,focus,padding,ends,stopLinks} = navigationState;
     const features = [];
     const coordinates = ll => [ll.lng,ll.lat];
     const pin = (point,isVisitor) => ({type:'Feature',properties:{visitor:isVisitor},
@@ -344,9 +344,10 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
     map.getSource('navigation').setData(collection(features));
     for (const marker of transferMarkers.splice(0)) marker.remove();
     for (const [index, point] of ends.entries()) {
-      const element = document.createElement('span');
+      const element = stopLinks[index] || document.createElement('span');
       element.className = 'map-transfer-pin';
-      element.textContent = ['А','Б'][index];
+      if (stopLinks[index]) element.setAttribute('role','link');
+      else element.textContent = ['А','Б'][index];
       transferMarkers.push(new gl.Marker({element}).setLngLat(coordinates(point)).addTo(map));
     }
     if (!focus || (!visitor && !ends.length)) return;
@@ -359,9 +360,9 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
       map.fitBounds(bounds,{padding:padding(),maxZoom:18.5,pitch:0,bearing:0,duration:0});
     } else map.jumpTo({center:coordinates(visitor),zoom:Math.max(17,map.getZoom()),padding:padding()});
   }
-  function setNavigation(visitor,route,focus,padding,ends = []) {
+  function setNavigation(visitor,route,focus,padding,ends = [], stopLinks = []) {
     const pendingFocus = !ready && visitor === navigationState?.visitor && navigationState?.focus;
-    navigationState = {visitor,route,focus:focus || pendingFocus,padding,ends};
+    navigationState = {visitor,route,focus:focus || pendingFocus,padding,ends,stopLinks};
     drawNavigation();
   }
   function keepMarkerVisible(point, padding) {

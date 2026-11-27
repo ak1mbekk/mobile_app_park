@@ -1,5 +1,6 @@
 import { raster, validBoundaries } from './map-boundary-geometry.js';
 import { validGuestPaths } from './map-guest-geometry.js';
+import { parkShuttleStops } from './park-transfer.js';
 
 export const terrainUrl = 'assets/park-landscape.geojson';
 const alignmentKey = 'park-map-alignment';
@@ -38,7 +39,8 @@ async function readBundledAlignment() {
 export function mapPlaces(snapshot) {
   const guide = window.parkGuide;
   const places = snapshot ? snapshot.places : [...guide.places, ...guide.geoFacilities];
-  return places.filter(place => !place.name.startsWith('Вольер №'));
+  return [...places.filter(place => !place.name.startsWith('Вольер №') &&
+    !parkShuttleStops.some(stop => stop.zone === place.zone && stop.id === place.id)), ...parkShuttleStops];
 }
 
 export async function loadMapData(snapshot) {

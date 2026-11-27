@@ -1,7 +1,8 @@
 import { loadMapData, loadMapTerrain, mapPlaces, terrainUrl } from './map-data.js';
 import { contains, width, height } from './map-boundary-geometry.js';
 import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from './map-guest-geometry.js';
-import { parkTransfer } from './park-transfer.js';
+import { parkShuttleStops, parkTransfer } from './park-transfer.js';
+import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
 
 (() => {
   const guide = window.parkGuide;
@@ -19,11 +20,9 @@ import { parkTransfer } from './park-transfer.js';
   const status = host.querySelector('.map-status');
   const locateButton = host.querySelector('.map-locate');
   const legend = host.querySelector('.guest-path-key');
-  const transferPanel = host.querySelector('.map-transfer-panel');
-  const transferMode = new URLSearchParams(location.search).get('transport');
-  const transfer = Object.hasOwn(parkTransfer, transferMode) ? parkTransfer[transferMode] : null;
+  const transferView = createTransferPanel(host);
+  const transferPanel = transferView.panel;
   const terrainReference = {centerX:9601312.071205,centerY:5472047.323384,scale:0.59315515,angle:0.805739};
-  if (transfer) transferPanel.querySelector('h2').textContent = transfer.title;
   const filterHint = document.createElement('p');
   filterHint.className = 'map-filter-hint';
   filterHint.setAttribute('role', 'status');
@@ -33,7 +32,8 @@ import { parkTransfer } from './park-transfer.js';
   const zoneButtons = host.querySelectorAll('[data-zone]');
   const serviceNames = {
     cafe: 'Кафе', rest: 'Места отдыха', feed: 'Корм для животных', wc: 'Туалеты',
-    wash: 'Где вымыть руки', parking: 'Парковка', entrance: 'Вход', ticket: 'Касса', exit: 'Выход', gift: 'Сувениры'
+    wash: 'Где вымыть руки', parking: 'Парковка', entrance: 'Вход', ticket: 'Касса', exit: 'Выход', gift: 'Сувениры',
+    bus: 'Остановка автобуса'
   };
   const serviceKeyByName = new Map(Object.entries(serviceNames).map(([key,name]) => [name,key]));
   const serviceSearchTerms = {
@@ -44,7 +44,7 @@ import { parkTransfer } from './park-transfer.js';
     'Места отдыха':'место отдыха беседки скамейки лавочки отдых'
   };
   const views = new Map();
-  const state = { zone: 1, id: '', kind: 'all', service: '' };
+  const state = { zone: 1, id: '', kind: 'all', service: '', transfer: '' };
   let landscape, flatOnly = false;
   const query = host.querySelector('#animal-map-query');
   const queryField = query.closest('label');
@@ -159,8 +159,7 @@ import { parkTransfer } from './park-transfer.js';
       const name = document.createElement('strong');
       name.textContent = label;
       const zone = document.createElement('small');
-      const location = p.searchLocation ?? guide.locationLabel(p);
-      zone.textContent = guide.zones[p.zone].name + (animalsOnly ? ' · ' + location : '');
+      zone.textContent = guide.zones[p.zone].name;
       if (animalsOnly && photo) {
         const image = new Image();
         image.alt = '';
@@ -213,6 +212,7 @@ import { parkTransfer } from './park-transfer.js';
     (!state.service || serviceKeys(point).includes(serviceNames[state.service]));
   const visible = point => {
     if (!directoryMatches(point)) return false;
+    if (state.transfer === 'bus' && point.approach) return false;
     if (state.kind === 'animals' || state.service || (point.id === state.id && point.zone === state.zone)) return true;
     return point.service
       ? serviceKeys(point).some(service => !hiddenCategories.has(serviceKeyByName.get(service)))
@@ -246,17 +246,19 @@ import { parkTransfer } from './park-transfer.js';
     let rememberedZone;
     try { rememberedZone = localStorage.getItem('park-map-zone'); } catch {}
     const zoneNumber = (zone || rememberedZone) === '2' ? 2 : 1;
+    const base = {zone:zoneNumber, id:'', kind:'all', service:'', transfer:''};
+    if (parts[0] === 'directions') return {...base,transfer:parts[1] === 'car' ? 'car' : 'bus'};
     const id = visitorPlaces.find(place => place.zone === zoneNumber && place.legacyId === requestedId)?.id ?? requestedId;
     if (guide.legacyCafeIds[zoneNumber]?.includes(id)) {
       history.replaceState(history.state, '', '#map/' + zoneNumber + '/service/cafe');
-      return { zone: zoneNumber, id: '', kind: 'service', service: 'cafe' };
+      return {...base,kind:'service',service:'cafe'};
     }
     if (id && !visitorPlaces.some(place=>place.zone===zoneNumber && place.id===id)) {
       const suffix = kind === 'all' ? '' : '/' + kind + (service ? '/' + service : '');
       history.replaceState(history.state,'','#map/'+zoneNumber+suffix);
-      return {zone:zoneNumber,id:'',kind,service};
+      return {...base,kind,service};
     }
-    return { zone: zoneNumber, id, kind, service };
+    return {...base,id,kind,service};
   }
 
   function navigate(next) {
@@ -288,7 +290,7 @@ import { parkTransfer } from './park-transfer.js';
     searchOpen = open;
     hitChooser?.dismiss();
     updateSheets();
-    if (transfer && calibration !== undefined) updateDirections();
+    if (state.transfer && calibration !== undefined) updateDirections();
     if (open) search.querySelector('h2').focus({ preventScroll: true });
     else if (returnFocus) searchToggle.focus({ preventScroll: true });
   }
@@ -326,6 +328,7 @@ import { parkTransfer } from './park-transfer.js';
   }
 
   function position(point) {
+    if (point.approach) return terrainPosition(point.geo);
     if (calibration) return projection.position(calibration, point.zone, point);
     const pixel = projection.planPixel(point.zone, point);
     return pixel ? L.latLng(-pixel[1], pixel[0]) : null;
@@ -380,7 +383,7 @@ import { parkTransfer } from './park-transfer.js';
   }
 
   let navigation, visitorLocation, navigationLayer;
-  let transferFramed = false;
+  let transferFramed = '';
   const placeKey = point => point && point.zone + '/' + point.id;
   const planPoint = ([x,y]) => projection.crs.pointToLatLng(projection.toWorld(calibration,x,y),16);
   const rasterPoint = point => {
@@ -415,15 +418,16 @@ import { parkTransfer } from './park-transfer.js';
     result.toggleAttribute('data-navigating',Boolean(active && navigation.route));
     locateButton.setAttribute('aria-busy',String(Boolean(navigation && !navigation.place && navigation.watch != null)));
     updateStatus();
-    const showingTransfer = transfer && !navigation && search.hidden && result.hidden;
-    transferPanel.hidden = !showingTransfer;
-    legend.hidden = Boolean(showingTransfer);
-    const ends = showingTransfer ? transfer.points.map(terrainPosition) : [];
-    const route = showingTransfer ? transfer.line?.map(terrainPosition) : navigation?.route;
-    focus ||= Boolean(showingTransfer && !transferFramed);
-    transferFramed = Boolean(showingTransfer);
+    const mode = !navigation && search.hidden && result.hidden ? state.transfer : '';
+    const transfer = parkTransfer[mode];
+    transferView.update(state.zone,mode);
+    const ends = transfer ? transfer.points.map(terrainPosition) : [];
+    const stopLinks = mode === 'bus' ? parkShuttleStops.map(shuttleStopLink) : [];
+    const route = transfer ? transfer.line?.map(terrainPosition) : navigation?.route;
+    focus ||= Boolean(transfer && transferFramed !== mode);
+    transferFramed = mode;
     if (landscape) {
-      landscape.setNavigation(visitorLocation,route,focus,cameraPadding,ends);
+      landscape.setNavigation(visitorLocation,route,focus,cameraPadding,ends,stopLinks);
     } else if (map && navigationLayer) {
       navigationLayer.clearLayers();
       const style = {pane:'visitor-navigation',interactive:false,lineJoin:'round',lineCap:'round'};
@@ -432,8 +436,10 @@ import { parkTransfer } from './park-transfer.js';
         L.polyline(route,{...style,color:'#215fce',weight:5}).addTo(navigationLayer);
       }
       for (const [index, point] of ends.entries()) {
-        const icon = L.divIcon({className:'map-transfer-pin',html:['А','Б'][index],iconSize:[28,28],iconAnchor:[14,14]});
-        L.marker(point,{icon,pane:'visitor-services',interactive:false,keyboard:false}).addTo(navigationLayer);
+        const link = stopLinks[index];
+        const icon = L.divIcon({className:'map-transfer-pin',html:link || ['А','Б'][index],
+          iconSize:[28,28],iconAnchor:[14,14]});
+        L.marker(point,{icon,pane:'visitor-services',interactive:Boolean(link),keyboard:false}).addTo(navigationLayer);
       }
       if (!ends.length && route?.length) L.circleMarker(route.at(-1),{...style,radius:5,weight:2,color:'#fff',fillColor:'#215fce',fillOpacity:1}).addTo(navigationLayer);
       if (visitorLocation) L.circleMarker(visitorLocation,{...style,radius:7,weight:3,color:'#fff',fillColor:'#2871e2',fillOpacity:1}).addTo(navigationLayer);
@@ -476,14 +482,18 @@ import { parkTransfer } from './park-transfer.js';
     if (!calibration) return fail('Географическая карта ещё не загрузилась.');
     const mapArea = L.latLngBounds([[0,0],[width,0],[width,height],[0,height]].map(planPoint)).pad(0.35);
     const metresPerPixel = planPoint([0,0]).distanceTo(planPoint([1,0]));
-    const edges = place ? guestNetwork(guestData,place.zone) : [];
+    const approach = place?.approach;
+    const tail = approach && [approach.join,...[...approach.via,place.geo].map(geo => rasterPoint(terrainPosition(geo)))];
+    const edges = place ? guestNetwork(guestData,place.zone,tail) : [];
     let finish;
     if (place) {
       const key = placeKey(place);
       const saved = calibration.approaches?.[key];
       const target = saved ? L.latLng(saved) : position(place);
       finish = target && guestApproach(edges,{point:rasterPoint(target), enclosure:boundaryData?.enclosures[key], saved},metresPerPixel);
-      if (!finish) return fail('Рядом с этим местом пока нет нанесённого гостевого прохода.');
+      if (!finish || (approach && finish.distance * metresPerPixel > 1)) {
+        return fail('Рядом с этим местом пока нет нанесённого гостевого прохода.');
+      }
     }
     try {
       request.watch = navigator.geolocation.watchPosition(({coords}) => {
@@ -504,7 +514,8 @@ import { parkTransfer } from './park-transfer.js';
         const walk = guestDirections(edges,rasterPoint(current),finish,metresPerPixel);
         const focus = Boolean(walk.points && !request.route);
         request.route = walk.points?.map(planPoint);
-        request.message = walkingMessage[walk.status](walk.metres);
+        request.message = approach && walk.status === 'walking' ? 'Пешком ' + walk.metres + ' м'
+          : walkingMessage[walk.status](walk.metres);
         updateDirections(focus);
       }, error => {
         if (navigation !== request) return;
@@ -1038,8 +1049,8 @@ import { parkTransfer } from './park-transfer.js';
     if (!dataReady) return;
     if (!document.getElementById('map').classList.contains('current')) return;
     const next = parseRoute();
-    if (state.zone !== next.zone || (navigation?.place && navigation.place.id !== next.id)) endNavigation();
-    if (next.id && (next.id !== state.id || next.zone !== state.zone) && searchOpen) setSearch(false);
+    if (state.zone !== next.zone || (navigation && (next.transfer || (navigation.place && navigation.place.id !== next.id)))) endNavigation();
+    if (searchOpen && (next.transfer || (next.id && (next.id !== state.id || next.zone !== state.zone)))) setSearch(false);
     Object.assign(state, next);
     searchAnimals();
     try { localStorage.setItem('park-map-zone', String(state.zone)); } catch {}
@@ -1142,6 +1153,11 @@ import { parkTransfer } from './park-transfer.js';
   const cardLayout = new ResizeObserver(keepSelectedMarkerVisible);
   cardLayout.observe(result);
   cardLayout.observe(toolbar);
+  new ResizeObserver(() => {
+    if (transferPanel.hidden) return;
+    transferFramed = '';
+    updateDirections();
+  }).observe(transferPanel);
 
   document.addEventListener('conceptscreen', event => {
     if (event.detail === 'map') {
@@ -1188,6 +1204,10 @@ import { parkTransfer } from './park-transfer.js';
     if (choosing) hitChooser.dismiss();
     else if (searchOpen) closeSearch();
     else if (!result.hidden) closePlace();
+    else if (!transferPanel.hidden) {
+      navigate({});
+      transferView.focusTrigger();
+    }
     else return;
     event.stopPropagation();
   });

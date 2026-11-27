@@ -34,6 +34,14 @@
   window.addEventListener('popstate', announceMap);
   window.addEventListener('hashchange', announceMap);
   if (!location.hash.startsWith('#map/')) history.replaceState(history.state, '', '#map/1');
+  const entry = new URL(location.href);
+  const transport = entry.searchParams.get('transport');
+  if (transport === 'bus' || transport === 'car') {
+    entry.searchParams.delete('transport');
+    const zone = entry.hash.split('/')[1] === '2' ? 2 : 1;
+    entry.hash = '#map/' + zone + '/directions' + (transport === 'car' ? '/car' : '');
+    history.replaceState(history.state, '', entry);
+  }
   mapScreen.classList.add('current');
   function applyCatalogue(entries) {
     const species = new Map(entries.map(entry => [entry.slug, entry]));

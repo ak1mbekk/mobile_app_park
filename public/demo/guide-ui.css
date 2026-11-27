@@ -138,8 +138,8 @@ body.in-guide, body.in-guide:has(.visitor-screen.current) {
 .in-guide :focus-visible, .park-app :focus-visible { outline:3px solid var(--z-focus); outline-offset:2px; }
 .slide-tabs > :focus-visible { outline:2px solid currentColor; outline-offset:-4px; }
 @media (prefers-reduced-motion:no-preference) {
+  .in-guide > main, #map.current { overflow-x:clip; }
   :root[data-tab-entering] {
-    overflow-x:clip;
     --tab-entry-offset:clamp(28px, 12vw, 68px);
     --tab-entry-timing:240ms cubic-bezier(.2,.75,.25,1) both;
   }
@@ -204,7 +204,7 @@ body.in-guide .visitor-screen .p-content h1.p-title,#animals #catalog-title {
 #species .p-primary,.visitor-screen .visitor-info .p-primary {
   background:var(--z-lime); color:var(--z-on-lime); border:0; border-radius:12px; font-weight:600;
 }
-#visitor summary,.arrival-zones h2,#tours .p-facts dd { font-family:var(--z-font); font-weight:600; letter-spacing:-.02em; }
+#visitor summary,#tours .p-facts dd { font-family:var(--z-font); font-weight:600; letter-spacing:-.02em; }
 #visitor details[open] { background:var(--z-cloud); border:0; border-radius:14px; padding-inline:16px; }
 #map,.park-app { --paper:var(--z-cloud); --paper-strong:var(--z-panel); --ink:var(--z-ink); --muted:var(--z-muted); --fern:#365428; --fern-soft:var(--z-zone-one); --coral:#416522; --line:var(--z-line); }
 .dark :is(#map,.park-app) { --fern:var(--z-link); --coral:var(--z-link); --shadow:0 3px 14px #0006; }

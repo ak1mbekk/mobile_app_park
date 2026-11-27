@@ -110,7 +110,7 @@
     const placeNote=document.getElementById('species-location');
     const guide = window.parkGuide;
     placeNote.textContent = singlePlace
-      ? `${guide.zones[singlePlace.zone].name} · ${singlePlace.searchLocation ?? guide.locationLabel(singlePlace)}`
+      ? guide.zones[singlePlace.zone].name
       : locations.length ? 'Места на карте парка' : '';
     placeNote.hidden=!locations.length;
     const group=document.getElementById('other-enclosures');
@@ -121,7 +121,9 @@
       const list=document.createElement('div');list.id='other-enclosures';
       for(const p of locations){
         const link=document.createElement('button');link.className='p-link';link.type='button';
-        link.textContent=window.parkGuide.zones[p.zone].name+' · '+window.parkGuide.locationLabel(p)+' →';
+        const zone = guide.zones[p.zone].name;
+        const landmark = p.name !== entry.name && !/^Вольер\s*№/i.test(p.name) ? ' · ' + p.name : '';
+        link.textContent=zone+landmark+' →';
         link.dataset.go='map/'+p.zone+'/'+p.id;list.append(link);
       }
       mapLink.parentElement.after(list);
@@ -146,13 +148,6 @@
       photo.onerror = () => photo.remove();
       photo.src=entry.thumbnail;
       button.append(photo);
-    }
-    const enclosures=window.parkGuide.places.filter(p=>!p.detail && p.species?.includes(entry.slug));
-    const place=enclosures.length===1?enclosures[0]:null;
-    if(place && /^\d/.test(place.badge || '')){
-      const tag=document.createElement('span');tag.className='enclosure-tag';
-      tag.innerHTML='<svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg>';
-      tag.append('№ '+place.badge);tag.setAttribute('aria-label','Вольер № '+place.badge);button.append(tag);
     }
     const copy=document.createElement('span');copy.className='catalog-card-copy';
     const group=document.createElement('small'), name=document.createElement('b');

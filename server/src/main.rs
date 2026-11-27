@@ -48,6 +48,7 @@ const RELEASE_FILES: &[&str] = &[
     "map-boundary-geometry.js",
     "map-guest-geometry.js",
     "park-transfer.js",
+    "map-transfer-panel.js",
     "map-projection.js",
     "park-home.css",
     "park-home.js",

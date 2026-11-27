@@ -21,39 +21,19 @@ export function SlideTabs({ navigation }: { navigation: HTMLElement }) {
         previous.position.opacity === next.opacity ? previous : { position: next, sliding });
     }
 
-    function selectLink(event: MouseEvent) {
-      if (reducedMotion || event.defaultPrevented || event.button !== 0 ||
-          event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-      const link = (event.target as Element).closest<HTMLAnchorElement>("a[href]");
-      if (link?.parentElement !== navigation || link.target || link.hasAttribute("download")) return;
-      const current = window.location;
-      const target = new URL(link.href);
-      if (target.origin !== current.origin) return;
-      const tabs = Array.from(navigation.querySelectorAll(':scope > :is(a,button)'));
-      const from = tabs.findIndex(tab => tab.getAttribute("aria-current") === "page");
-      const to = tabs.indexOf(link);
-      if (from < 0 || from === to) return;
-      const changesDocument = target.pathname !== current.pathname || target.search !== current.search;
-      document.dispatchEvent(new CustomEvent("guidetabactivate", {
-        detail: {href:target.href, from, to, changesDocument},
-      }));
-    }
-
     const selection = new MutationObserver(() => update(true));
     const dimensions = new ResizeObserver(() => update(false));
     selection.observe(navigation, { subtree: true, attributeFilter: ["aria-current"] });
     dimensions.observe(navigation);
-    navigation.addEventListener("click", selectLink);
     navigation.classList.add("slide-tabs-ready");
     update(false);
 
     return () => {
       selection.disconnect();
       dimensions.disconnect();
-      navigation.removeEventListener("click", selectLink);
       navigation.classList.remove("slide-tabs-ready");
     };
-  }, [navigation, reducedMotion]);
+  }, [navigation]);
 
   return <motion.div
     className="slide-tabs-cursor"

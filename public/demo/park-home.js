@@ -1,33 +1,4 @@
 (() => {
-  const schedule = document.getElementById('shuttle-schedule');
-  const departures = schedule.querySelector('.shuttle-departures');
-  const scheduleStatus = schedule.querySelector('.shuttle-status');
-
-  schedule.addEventListener('toggle', async () => {
-    if (!schedule.open || departures.childElementCount) return;
-    try {
-      const {shuttleDepartures} = await import('./park-transfer.js');
-      const rows = shuttleDepartures.map(({stop,times}) => {
-        const row = document.createElement('div');
-        const name = document.createElement('dt');
-        name.textContent = stop;
-        const values = document.createElement('dd');
-        values.append(...times.map(value => {
-          const time = document.createElement('time');
-          time.dateTime = value;
-          time.textContent = value;
-          return time;
-        }));
-        row.append(name,values);
-        return row;
-      });
-      departures.replaceChildren(...rows);
-      scheduleStatus.hidden = true;
-    } catch {
-      scheduleStatus.textContent = 'Расписание недоступно. Уточните отправление у кассы.';
-    }
-  });
-
   document.getElementById('home-search').addEventListener('submit', event => {
     event.preventDefault();
     const query = event.currentTarget.elements.q.value.trim();
@@ -70,6 +41,10 @@
     }
     if (route === 'map') {
       window.parkGuideHistory.replaceDocument('map.html' + location.search + location.hash);
+      return;
+    }
+    if (route === 'directions') {
+      window.parkGuideHistory.replaceDocument('map.html#map/1/directions');
       return;
     }
     const active = window.showGuideScreen(route);

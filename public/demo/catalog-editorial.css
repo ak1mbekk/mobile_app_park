@@ -36,8 +36,6 @@
 #animals .catalog-card-note { order:2;font-size:12px;line-height:1.45;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
 #animals .catalog-card-latin { order:2;font-size:11px;line-height:1.4;color:var(--muted);font-style:italic;overflow-wrap:anywhere; }
 #animals .catalog-card-more { display:none; }
-#animals .animalcard .enclosure-tag { top:8px;right:8px;padding:4px 7px;min-height:24px;border:0;border-radius:6px;font-size:11px;background:rgb(var(--zk-card) / .96);box-shadow:none; }
-#animals .animalcard .enclosure-tag .p-icon { width:13px;height:13px; }
 #animals .animalcard.catalog-feature { grid-column:1/-1;display:block;aspect-ratio:1.35;border:0;border-radius:15px; }
 #animals .catalog-feature>img { width:100%;height:100%;aspect-ratio:auto;object-position:center; }
 #animals .catalog-feature .catalog-card-copy { position:absolute;inset:auto 0 0;padding:46px 60px 20px 20px;gap:5px;background:linear-gradient(transparent, rgb(0 0 0 / .78)); }

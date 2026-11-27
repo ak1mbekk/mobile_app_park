@@ -160,19 +160,26 @@ async function offlineRoutes(browser) {
 
 async function checkParkTransfer(browser, offline) {
   const context = await browser.newContext({viewport:{width:390,height:844},
-    serviceWorkers:offline ? 'allow' : 'block'});
+    serviceWorkers:offline ? 'allow' : 'block',permissions:['geolocation']});
   try {
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     if (!offline) await page.route('**/guide-landscape.js', route => route.fulfill({contentType:'application/javascript',body:''}));
-    await page.goto(new URL('index.html#directions',url).href);
+    await page.goto(new URL('index.html#park',url).href);
+    const external = [];
+    page.on('request',request => { if (new URL(request.url()).origin !== new URL(url).origin) external.push(request.url()); });
     if (offline) {
       await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
       await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
       await context.setOffline(true);
     }
-    await page.getByText('Автобус ходит в обе стороны.',{exact:false}).waitFor();
+    await page.getByRole('link',{name:'Как добраться'}).click();
+    await page.waitForURL('**/map.html#map/1/directions');
+    await page.getByRole('heading',{name:'Как добраться'}).waitFor();
+    const documentStart = await page.evaluate(() => performance.timeOrigin);
+    await page.waitForFunction(() => document.querySelectorAll('.map-transfer-pin').length === 2);
+    await page.locator('[data-transfer-info="bus"]').waitFor();
     await page.getByText('Расписание автобуса',{exact:true}).click();
     await page.locator('#shuttle-schedule time[datetime="16:45"]').waitFor();
     const times = await page.locator('#shuttle-schedule dd').evaluateAll(lists =>
@@ -183,18 +190,42 @@ async function checkParkTransfer(browser, offline) {
       ['09:15','10:15','11:15','13:15','14:15','15:15','16:15'],
       ['09:30','10:30','11:30','13:30','14:30','15:30','16:45'],
     ]);
-    await page.getByRole('link',{name:'Остановки на карте'}).click();
-    await page.getByRole('heading',{name:'Остановки автобуса'}).waitFor();
-    await page.waitForFunction(() => document.querySelectorAll('.map-transfer-pin').length === 2);
-    await page.goBack();
-    await page.getByRole('link',{name:'Маршрут на машине'}).click();
-    await page.getByRole('heading',{name:'На машине между парковками'}).waitFor();
+    assert.deepEqual(await page.locator('.shuttle-park-stop dt a').allTextContents(),['Казачны мір','Лясныя таямніцы']);
+    for (const [zone,name,pixel] of [
+      [1,'Остановка «Казачны мір»',[234,1389]],
+      [2,'Остановка «Лясныя таямніцы»',[1056,2178]],
+    ]) {
+      await context.setGeolocation(await coordinates(page,pixel));
+      await page.getByRole('link',{name,exact:true}).click();
+      await page.waitForURL('**/map.html#map/'+zone+'/park-shuttle-stop');
+      await page.getByRole('heading',{name,exact:true}).waitFor();
+      await page.getByRole('button',{name:'Проложить маршрут'}).click();
+      await page.getByRole('button',{name:'Завершить маршрут'}).waitFor();
+      await page.waitForFunction(() => document.querySelector('.map-walk-status')?.textContent.startsWith('Пешком'));
+      await page.goBack();
+      await page.locator('[data-transfer-info="bus"]').waitFor();
+    }
+    await page.getByRole('link',{name:'На машине'}).click();
+    await page.waitForURL('**/map.html#map/1/directions/car');
+    const distance = page.locator('.map-route-distance');
+    await distance.waitFor();
+    assert.match(await distance.textContent(),/^\d+,\d\sкм$/);
+    assert.equal(await page.evaluate(() => performance.timeOrigin),documentStart);
     await page.waitForFunction(() => [...document.querySelectorAll('.map-transfer-pin')].map(pin => pin.textContent).join('') === 'АБ');
     if (!offline) {
       await page.locator('.leaflet-visitor-navigation-pane path[stroke="#215fce"]').waitFor();
     }
-    await page.getByRole('link',{name:'Закрыть маршрут между локациями'}).click();
+    await page.goBack();
+    await page.locator('[data-transfer-info="bus"]').waitFor();
+    await page.getByRole('link',{name:'Закрыть «Как добраться»'}).click();
+    await page.getByRole('link',{name:'Как добраться'}).waitFor();
     assert.equal(await page.locator('.map-transfer-panel:visible').count(),0);
+    assert.deepEqual(external,[]);
+    await page.goto(new URL('map.html?transport=car#map/2',url).href);
+    await page.waitForURL('**/map.html#map/2/directions/car');
+    await distance.waitFor();
+    await page.goto(new URL('index.html#directions',url).href);
+    await page.waitForURL('**/map.html#map/1/directions');
     assert.deepEqual(errors,[]);
     console.log(offline ? 'Transfer information, stops and car route available offline' : 'Transfer information, stops and car route passed in 2D');
   } finally {

@@ -101,8 +101,6 @@ html.dark #visitor-theme .sun-icon {display:block}
 .animalcard img {border:1px solid var(--line);border-radius:12px;aspect-ratio:1.05}
 .animalcard small {color:var(--green);font-size:12px;font-weight:600;margin:9px 3px 2px;line-height:1.4}
 .animalcard b {color:var(--ink);font-size:17px;line-height:1.2;letter-spacing:-.02em;margin:0 3px 7px}
-.animalcard .enclosure-tag {position:absolute;top:14px;right:14px;display:flex;align-items:center;gap:3px;padding:3px 7px;font-size:12px;font-weight:500;border:1px solid var(--line);border-radius:999px;background:rgb(var(--zk-card) / .95);box-shadow:var(--zk-shadow-control)}
-.enclosure-tag svg {width:13px;height:13px;color:var(--green)}
 .tabs,#profileDialog {background:var(--surface);border-color:var(--line)}
 .tabs button {color:var(--muted);border-radius:999px}
 .tabs button.sel {background:rgb(var(--zk-leaf) / .14);color:var(--green)}

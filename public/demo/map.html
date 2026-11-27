@@ -77,24 +77,51 @@
           <svg class="p-icon" aria-hidden="true"><use href="#icon-locate"/></svg>
         </button>
 
-        <details class="guest-path-key">
-          <summary><svg aria-hidden="true"><use href="#icon-route"/></svg>Маршруты для гостей</summary>
-          <a href="index.html#directions">Между локациями →</a>
-          <a data-all-walks hidden href="?view=3d#map/1">Показать все дорожки зоны</a>
-          <p data-plan hidden><i aria-hidden="true"></i>По схеме парка от 12.11.2025</p>
-          <p data-open hidden><i aria-hidden="true"></i>Доступно посетителям</p>
-          <p data-missing hidden>Для этой зоны маршрут пока не нанесён.</p>
-          <p>Ограды нанесены по планам парка. У части вольеров показаны только различимые участки.</p>
-        </details>
-
-        <aside class="map-transfer-panel" hidden aria-labelledby="map-transfer-title">
-          <div>
-            <h2 id="map-transfer-title"></h2>
-            <p>А · Казачны мір<br>Б · Лясныя таямніцы</p>
-          </div>
-          <a href="map.html#map/1" aria-label="Закрыть маршрут между локациями">
-            <svg class="p-icon" aria-hidden="true"><use href="#icon-close"/></svg>
+        <div class="map-bottom-actions">
+          <a class="map-arrival-toggle" href="#map/1/directions" aria-controls="map-transfer-panel" aria-expanded="false">
+            <svg class="p-icon" aria-hidden="true"><use href="#icon-place"/></svg>Как добраться
           </a>
+          <details class="guest-path-key">
+            <summary><svg aria-hidden="true"><use href="#icon-route"/></svg>Маршруты для гостей</summary>
+            <a data-all-walks hidden href="?view=3d#map/1">Показать все дорожки зоны</a>
+            <p data-plan hidden><i aria-hidden="true"></i>По схеме парка от 12.11.2025</p>
+            <p data-open hidden><i aria-hidden="true"></i>Доступно посетителям</p>
+            <p data-missing hidden>Для этой зоны маршрут пока не нанесён.</p>
+            <p>Ограды нанесены по планам парка. У части вольеров показаны только различимые участки.</p>
+          </details>
+        </div>
+
+        <aside id="map-transfer-panel" class="map-transfer-panel" hidden aria-labelledby="map-transfer-title">
+          <header>
+            <h2 id="map-transfer-title" tabindex="-1">Как добраться</h2>
+            <a class="map-transfer-close" href="#map/1" aria-label="Закрыть «Как добраться»">
+              <svg class="p-icon" aria-hidden="true"><use href="#icon-close"/></svg>
+            </a>
+          </header>
+          <div class="map-transfer-body">
+            <address>Деревня Глинище, Малаховецкий с/с, 31<br>Барановичский район</address>
+            <nav class="map-transfer-modes" aria-label="Между локациями">
+              <a data-transfer-mode="bus" href="#map/1/directions">Автобус</a>
+              <a data-transfer-mode="car" href="#map/1/directions/car">На машине</a>
+            </nav>
+            <div data-transfer-info="bus">
+              <ul class="map-shuttle-stops" aria-label="Остановки в парке">
+                <li><a data-pin="А" href="#map/1/park-shuttle-stop"><strong>Казачны мір</strong><small>Остановка у касс</small></a></li>
+                <li><a data-pin="Б" href="#map/2/park-shuttle-stop"><strong>Лясныя таямніцы</strong><small>Остановка у касс</small></a></li>
+              </ul>
+              <details class="shuttle-schedule" id="shuttle-schedule">
+                <summary>Расписание автобуса</summary>
+                <dl class="shuttle-departures" aria-label="Время отправления по остановкам"></dl>
+              </details>
+            </div>
+            <div data-transfer-info="car" hidden>
+              <dl class="map-transfer-points">
+                <div data-pin="А"><dt>Откуда</dt><dd>Парковка «Казачны мір»</dd></div>
+                <div data-pin="Б"><dt>Куда</dt><dd>Гостевая парковка «Лясныя таямніцы»</dd></div>
+              </dl>
+              <p class="map-route-distance" aria-label="Длина маршрута"></p>
+            </div>
+          </div>
         </aside>
 
         <p class="map-status" role="status">Загружаем карту…</p>

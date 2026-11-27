@@ -1,6 +1,6 @@
 importScripts('audio-stops.js');
 
-const cacheName = 'animal-park-map:zoo-guide51';
+const cacheName = 'animal-park-map:zoo-guide54';
 const guideCachePrefix = 'animal-park-map:zoo-guide';
 const base = new URL(self.registration.scope);
 const shell = [
@@ -18,7 +18,7 @@ const shell = [
   'vendor/leaflet/leaflet.js','vendor/maplibre/maplibre-gl.css','vendor/maplibre/maplibre-gl.js',
   'vendor/ibm-plex-sans/IBMPlexSans.ttf','assets/park-landscape.geojson',
   'assets/park-favicon.png','assets/park-touch-icon.png','map-alignment.json','map-boundaries.json',
-  'map-boundary-geometry.js','map-guest-paths.json','map-guest-geometry.js','park-transfer.js'
+  'map-boundary-geometry.js','map-guest-paths.json','map-guest-geometry.js','park-transfer.js','map-transfer-panel.js'
 ];
 
 const isRecord = value => value && typeof value === 'object' && !Array.isArray(value);

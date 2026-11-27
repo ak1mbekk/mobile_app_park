@@ -33,14 +33,18 @@ export function guestPathsForZone(data, zone) {
   return (data?.paths ?? []).filter(path => path.zone === zone && ['open', 'mapped'].includes(path.status));
 }
 
-export function guestNetwork(data, zone) {
+export function guestNetwork(data, zone, approach) {
   const nodes = new Map(), edges = [];
   const vertex = xy => {
     const key = xy.join(',');
     if (!nodes.has(key)) nodes.set(key, {xy, links:[]});
     return nodes.get(key);
   };
-  for (const path of guestPathsForZone(data, zone)) {
+  const paths = guestPathsForZone(data, zone);
+  if (approach && paths.some(path => path.points.some(point => distance(point,approach[0]) === 0))) {
+    paths.push({points:approach});
+  }
+  for (const path of paths) {
     for (let i = 1; i < path.points.length; i++) {
       const a = vertex(path.points[i - 1]), b = vertex(path.points[i]);
       const length = distance(a.xy, b.xy);

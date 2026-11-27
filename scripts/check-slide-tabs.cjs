@@ -82,6 +82,11 @@ async function checkFirstScreen(browser) {
         reducedMotion:reduced ? 'reduce' : 'no-preference',serviceWorkers:'block'});
       try {
         await page.addInitScript(() => {
+          const save = Storage.prototype.setItem;
+          Storage.prototype.setItem = function(key,value) {
+            if (key === 'park-tab-entry') throw new DOMException('Storage disabled for navigation handoff','SecurityError');
+            return save.call(this,key,value);
+          };
           document.addEventListener('animationstart', event => {
             const indicator = event.animationName === 'guide-tab-cross-cursor';
             if (!indicator && event.animationName !== 'guide-tab-enter') return;
@@ -98,20 +103,25 @@ async function checkFirstScreen(browser) {
             sample();
           });
         });
+        const tabs = [
+          ['Главная','index.html#park'],
+          ['Животные','index.html#animals'],
+          ['Карта','map.html#map/1'],
+          ['Профиль','index.html#profile']
+        ];
+        for (const [from, source] of tabs) {
+          for (const [to, destination] of tabs) {
+            if (from === to) continue;
+            await page.goto(new URL(source,base).href);
+            await activeTab(page,from);
+            await checkSlide(page,to,'**/'+destination,reduced);
+          }
+        }
         await page.goto(new URL('index.html#park',base).href);
         await activeTab(page,'Главная');
-        await checkSlide(page,'Животные','**/index.html#animals',reduced);
-        await checkSlide(page,'Главная','**/index.html#park',reduced);
-        await checkSlide(page,'Профиль','**/index.html#profile',reduced);
         await checkSlide(page,'Карта','**/map.html#map/1',reduced);
-        await checkSlide(page,'Профиль','**/index.html#profile',reduced);
         await page.goBack();
-        await activeTab(page,'Карта');
-        await page.goBack();
-        await activeTab(page,'Профиль');
-        await page.goto(new URL('index.html#park',base).href);
         await activeTab(page,'Главная');
-        await checkSlide(page,'Карта','**/map.html#map/1',reduced);
         console.log(reduced ? 'Reduced motion and Back passed' : 'Slide transitions and Back passed');
       } finally {
         await page.close();
