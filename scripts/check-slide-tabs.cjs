@@ -16,6 +16,7 @@ async function activeTab(page, name) {
 
 async function checkSlide(page, name, destination, reduced = false) {
   const target = page.locator('.slide-tabs > a').filter({hasText:name});
+  assert.equal(await target.evaluate(link => getComputedStyle(link).webkitTapHighlightColor),'rgba(0, 0, 0, 0)');
   await target.evaluate(link => {
     const nav = link.parentElement;
     const cursor = nav.querySelector('.slide-tabs-cursor');
@@ -43,10 +44,24 @@ async function checkSlide(page, name, destination, reduced = false) {
   assert.equal(await page.evaluate(() => sessionStorage.getItem('checked-tab-motion')),reduced ? null : 'sliding');
 }
 
+async function checkFirstScreen(browser) {
+  const page = await browser.newPage({serviceWorkers:'block'});
+  try {
+    // The first paint must use the requested screen before the rest of the app starts.
+    await page.route('**/park-home.js',route => route.fulfill({contentType:'application/javascript',body:''}));
+    await page.goto(new URL('index.html#profile',base).href);
+    assert.equal(await page.locator('main > .screen.current').getAttribute('id'),'profile');
+    await activeTab(page,'Профиль');
+  } finally {
+    await page.close();
+  }
+}
+
 (async () => {
   const browser = await chromium.launch({executablePath:process.env.BROWSER_EXE,
     args:['--no-proxy-server']});
   try {
+    await checkFirstScreen(browser);
     for (const reduced of [false,true]) {
       const page = await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,
         reducedMotion:reduced ? 'reduce' : 'no-preference',serviceWorkers:'block'});

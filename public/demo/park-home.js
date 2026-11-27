@@ -1,5 +1,4 @@
 (() => {
-  const screens = [...document.querySelectorAll('main > .screen')];
   document.getElementById('home-search').addEventListener('submit', event => {
     event.preventDefault();
     const query = event.currentTarget.elements.q.value.trim();
@@ -44,16 +43,7 @@
       window.parkGuideHistory.replaceDocument('map.html' + location.search + location.hash);
       return;
     }
-    const active = screens.find(screen => screen.id === route) || screens[0];
-    for (const screen of screens) screen.classList.toggle('current', screen === active);
-    const sectionRoute = ({species:'animals', animal:'animals', audio:'park', directions:'profile', tours:'profile', feed:'profile', visitor:'profile'})[active.id] || active.id;
-    const dock = document.querySelector('.z-dock');
-    const previous = dock.querySelector('[aria-current="page"]');
-    const next = Array.from(dock.querySelectorAll('a')).find(link => link.hash === '#' + sectionRoute);
-    if (next !== previous) {
-      previous?.removeAttribute('aria-current');
-      next?.setAttribute('aria-current','page');
-    }
+    const active = window.showGuideScreen(route);
     const view = ['species','audio'].includes(active.id) ? location.hash : active.id;
     const changed = view !== lastView;
     lastView = view;
