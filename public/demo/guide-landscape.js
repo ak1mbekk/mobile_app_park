@@ -1,6 +1,6 @@
 // Geometries from OpenStreetMap. Building extrusion follows MapLibre's 3D buildings example.
 // Animal locations are projected separately from the park's calibrated visitor plan.
-window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
+window.createParkLandscape = function (surface, select, fallback, terrainUrl, showSurface) {
   const gl = window.maplibregl;
   const collection = features => ({ type: 'FeatureCollection', features });
   const source = (data, attribution) => ({ type: 'geojson', data, attribution });
@@ -92,6 +92,7 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
   let nightPalette = isNight();
   const map = new gl.Map({
     container: surface, center: [26.014,53.096], zoom: 16.5, pitch: 50, bearing: -12,
+    pixelRatio: Math.min(window.devicePixelRatio, 2),
     localFontFamily: 'Arial', minZoom: 14, maxZoom: 20, maxPitch: 68,
     locale: {
       'NavigationControl.ZoomIn': 'Увеличить масштаб',
@@ -217,38 +218,60 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
     };
     img.src = photo;
   }
-  function update(payload) {
-    latest = payload;
-    if (!ready || stopped) return;
-    const {items, selected, zone, position} = payload;
-    map.getSource('guestPaths').setData(collection(payload.paths.map(path => ({
-      type:'Feature',properties:{status:path.status,focused:payload.walk?.segments.includes(path.id) ?? false},geometry:{type:'LineString',
-        coordinates:path.line.map(ll=>[ll.lng,ll.lat])}
-    }))));
-    const walk = payload.walk;
-    const ends = walk ? [walk.line[0],walk.line[walk.line.length-1]] : [];
-    map.getSource('walkEnds').setData(collection(ends.map(ll=>({type:'Feature',properties:{},
-      geometry:{type:'Point',coordinates:[ll.lng,ll.lat]}}))));
-    if (payload.alignment !== lastAlignment) {
-      lastAlignment = payload.alignment;
-      cameraKey = null;
-    }
-    const points = [], areas = [], bounds = new gl.LngLatBounds();
+  let mountedGeometry, projectedAreas, projectedBuildings, pathSources;
+
+  function mountGeometry(geometry, alignment) {
+    if (geometry === mountedGeometry) return;
+    mountedGeometry = geometry;
     const fence = {rails:[], edges:new Set(), posts:new Set()};
-    const ids = new Set(items.map(item => item.id));
-    for (const contour of payload.contours) {
-      const ring = contour.ring.map(p => [p.lng,p.lat]);
-      const properties = contour.attached && ids.has(contour.id)
-        ? {id:contour.id, chosen:contour.id === selected} : {chosen:false};
-      areas.push({type:'Feature',properties,geometry:{type:'Polygon',coordinates:[[...ring,ring[0]]]}});
-      addFence(ring, fence);
-    }
-    const sections = (payload.fenceSections || []).map(line => {
+    projectedAreas = geometry.contours.map(({id,attached,ring}) => {
+      const coordinates = ring.map(p => [p.lng,p.lat]);
+      addFence(coordinates,fence);
+      return {id,attached,polygon:{type:'Polygon',coordinates:[[...coordinates,coordinates[0]]]}};
+    });
+    const sections = geometry.fenceSections.map(line => {
       const coordinates = line.map(p => [p.lng,p.lat]);
       addFence(coordinates,fence,false);
       return {type:'Feature',properties:{},geometry:{type:'LineString',coordinates}};
     });
     map.getSource('fenceSections').setData(collection(sections));
+    map.getSource('rails').setData(collection(fence.rails));
+    const projection = window.parkProjection;
+    projectedBuildings = window.parkGuide.surveyBuildings.map(({zone, place, ring, base = 0, height = 3}) => {
+      const coordinates = ring.map(([x,y]) => {
+        const ll = projection.crs.pointToLatLng(projection.toWorld(alignment,x,y),16);
+        return [ll.lng,ll.lat];
+      });
+      return {zone,place,base,height,polygon:{type:'Polygon',coordinates:[[...coordinates,coordinates[0]]]}};
+    });
+  }
+
+  function updatePathSources(geometry, walk) {
+    if (geometry === pathSources?.geometry && walk?.id === pathSources.walkId) return;
+    pathSources = {geometry,walkId:walk?.id};
+    map.getSource('guestPaths').setData(collection(geometry.paths.map(path => ({
+      type:'Feature',properties:{status:path.status,focused:walk?.segments.includes(path.id) ?? false},geometry:{type:'LineString',
+        coordinates:path.line.map(ll=>[ll.lng,ll.lat])}
+    }))));
+    const ends = walk ? [walk.line[0],walk.line[walk.line.length-1]] : [];
+    map.getSource('walkEnds').setData(collection(ends.map(ll=>({type:'Feature',properties:{},
+      geometry:{type:'Point',coordinates:[ll.lng,ll.lat]}}))));
+  }
+
+  function update(payload) {
+    latest = payload;
+    if (!ready || stopped) return;
+    const {items, selected, zone, position, geometry, walk, alignment} = payload;
+    mountGeometry(geometry,alignment);
+    updatePathSources(geometry,walk);
+    if (payload.alignment !== lastAlignment) {
+      lastAlignment = payload.alignment;
+      cameraKey = null;
+    }
+    const points = [], bounds = new gl.LngLatBounds();
+    const ids = new Set(items.map(item => item.id));
+    const areas = projectedAreas.map(({id,attached,polygon}) => ({type:'Feature',geometry:polygon,
+      properties:attached && ids.has(id) ? {id,chosen:id === selected} : {chosen:false}}));
     let target, preferredBearing;
     for (const item of items) {
       const ll = position(item);
@@ -269,19 +292,13 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
     }
     map.getSource('points').setData(collection(points));
     map.getSource('areas').setData(collection(areas));
-    map.getSource('rails').setData(collection(fence.rails));
-    const buildings = window.parkGuide.surveyBuildings.map(({zone:buildingZone, place, ring, base = 0, height = 3}) => {
-      const projection = window.parkProjection;
-      const coords = ring.map(([x,y]) => {
-        const ll = projection.crs.pointToLatLng(projection.toWorld(payload.alignment,x,y),16);
-        return [ll.lng,ll.lat];
-      });
+    const buildings = projectedBuildings.map(({zone:buildingZone,place,base,height,polygon}) => {
       const properties = {chosen:false,base,height};
-      if (place && buildingZone === zone && items.some(item => item.id === place)) {
+      if (place && buildingZone === zone && ids.has(place)) {
         properties.id = place;
         properties.chosen = selected === place;
       }
-      return {type:'Feature',properties,geometry:{type:'Polygon',coordinates:[[...coords,coords[0]]]}};
+      return {type:'Feature',properties,geometry:polygon};
     });
     map.getSource('pavilions').setData(collection(buildings));
     const category = payload.filter.startsWith('service/') && payload.filter !== 'service/';
@@ -310,9 +327,9 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
         const center = bounds.getCenter();
         const view = map.cameraForBounds(bounds,{padding:{top:76,bottom:40,left:24,right:24},maxZoom:17.8});
         const portrait = surface.clientHeight > surface.clientWidth * 1.35;
-        if (payload.paths.length && payload.filter === 'all/') {
+        if (geometry.paths.length && payload.filter === 'all/') {
           const network = new gl.LngLatBounds();
-          for (const path of payload.paths) for (const ll of path.line) network.extend([ll.lng,ll.lat]);
+          for (const path of geometry.paths) for (const ll of path.line) network.extend([ll.lng,ll.lat]);
           map.fitBounds(network,{padding:{top:80,bottom:60,left:30,right:30},maxZoom:17.8,
             pitch:portrait ? 25 : 33,bearing:0,duration:0});
         } else {
@@ -347,8 +364,8 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
     for (const marker of transferMarkers.splice(0)) marker.remove();
     for (const [index, point] of ends.entries()) {
       const element = badges[index];
-      const start = element.dataset.marker === 'start';
-      const marker = new gl.Marker({element, anchor:start ? 'center' : 'bottom', offset:start ? [0,0] : [0,4]});
+      const start = element.dataset.marker === 'start' && element.tagName !== 'A';
+      const marker = new gl.Marker({element, anchor:start ? 'center' : 'bottom', offset:start ? [0,0] : [0,6]});
       transferMarkers.push(marker.setLngLat(coordinates(point)).addTo(map));
     }
     if (!focus || (!visitor && !ends.length)) return;
@@ -377,7 +394,14 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
         y >= padding.top + margin && y <= surface.clientHeight - padding.bottom - margin) return;
     map.jumpTo({center, padding});
   }
-  map.on('load', () => {ready=true; applyPalette(); if(latest) update(latest); drawNavigation();});
+  map.once('style.load', () => {
+    ready = true;
+    applyPalette();
+    if (latest) update(latest);
+    drawNavigation();
+    // Prepare the visitor layers while the base geometry is still loading.
+    map.once('idle', showSurface);
+  });
   map.on('click', event => {
     if (!ready) return;
     const p = event.point;

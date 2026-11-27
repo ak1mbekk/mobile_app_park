@@ -86,7 +86,9 @@ body.in-guide, body.in-guide:has(.visitor-screen.current) {
 .z-gallery strong { position:relative; z-index:1; padding:12px 13px; font:600 clamp(17px,2vw,25px)/1.07 var(--z-font); color:white; }
 .z-visit { display:grid; }
 .z-visit a { display:flex; align-items:center; gap:12px; min-height:53px; border-bottom:1px solid var(--z-line); font-weight:550; }
-.z-visit a svg:last-child { margin-left:auto; width:17px; }
+.z-visit .guide-row-arrow,.profile-row .guide-row-arrow { width:17px; height:22px; stroke-width:1.8; }
+.z-visit .guide-row-arrow { margin-inline-start:auto; }
+.profile-row .guide-row-arrow { justify-self:end; }
 .z-locality { grid-area:locality; color:var(--z-muted); font:400 13px/1.4 var(--z-font); }
 .z-dock,.app-rail {
   position:fixed;

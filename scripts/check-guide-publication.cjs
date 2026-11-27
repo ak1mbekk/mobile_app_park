@@ -119,6 +119,24 @@ async function waitForHealth(base, child) {
     second.animals[0].name = 'Каракал из обновления';
     second.places[0].name = 'Вольер из обновления';
     second.feedings.daily[0].name = 'Кормление из обновления';
+
+    const reopened = await context.newPage();
+    let finishRequest;
+    const pausedResponse = new Promise(resolve => { finishRequest = resolve; });
+    await reopened.route('**/guide-publication.json', async route => {
+      await pausedResponse;
+      await route.fulfill({json:second});
+    });
+    try {
+      await reopened.goto(base + '/demo/map.html#map/1/40.2');
+      await reopened.locator('.place-info').getByRole('heading',{name:'Вольер из выгрузки',exact:true}).waitFor({timeout:2500});
+      finishRequest();
+      await reopened.locator('.place-info').getByRole('heading',{name:'Вольер из обновления',exact:true}).waitFor();
+    } finally {
+      finishRequest();
+      await reopened.close();
+    }
+
     let refreshes = 0;
     let fail = false;
     await context.route('**/guide-publication.json', route => {

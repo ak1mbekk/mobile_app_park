@@ -1,19 +1,22 @@
 import { parkTransfer, shuttleDepartures } from './park-transfer.js';
 
-export function routeMarker(kind, stop) {
-  const marker = document.createElement(stop ? 'a' : 'span');
+const placeRoute = place => '#map/' + place.zone + '/' + place.id;
+
+export function routeMarker(kind, place) {
+  const marker = document.createElement(place ? 'a' : 'span');
   marker.className = 'map-route-marker';
   marker.dataset.marker = kind;
-  if (stop) {
-    marker.href = '#map/' + stop.zone + '/' + stop.id;
+  const glyph = place && kind !== 'bus' ? 'parking' : kind;
+  if (place) {
+    marker.href = placeRoute(place);
     marker.setAttribute('role','link');
-    marker.setAttribute('aria-label',stop.name);
+    marker.setAttribute('aria-label',place.name);
   } else marker.setAttribute('aria-hidden','true');
-  marker.innerHTML = '<svg viewBox="0 0 32 36" aria-hidden="true"><use href="#route-' + kind + '"/></svg>';
-  if (stop) {
+  marker.innerHTML = '<svg viewBox="0 0 32 36" aria-hidden="true"><use href="#route-' + glyph + '"/></svg>';
+  if (place) {
     const label = document.createElement('span');
-    label.className = 'map-bus-marker-label';
-    label.textContent = stop.name.replace(/^Остановка «|»$/g,'');
+    label.className = 'map-route-marker-label';
+    label.textContent = place.name.match(/«([^»]+)»/)?.[1] || place.name;
     marker.append(label);
   }
   return marker;
@@ -29,9 +32,7 @@ export function createTransferPanel(host) {
   const schedule = panel.querySelector('#shuttle-schedule');
   const targetLink = panel.querySelector('.map-transfer-target');
   const departures = schedule.querySelector('.shuttle-departures');
-  const parkingLabels = {1:'Парковка «Казачны мір»',2:'Гостевая парковка «Лясныя таямніцы»'};
-  const start = panel.querySelector('[data-marker="start"] dd');
-  const finish = panel.querySelector('[data-marker="finish"] dd');
+  const parkingLinks = panel.querySelectorAll('.map-transfer-points a');
   const distance = panel.querySelector('.map-route-distance');
   const kilometres = new Intl.NumberFormat('ru',{style:'unit',unit:'kilometer',maximumFractionDigits:1});
 
@@ -76,9 +77,12 @@ export function createTransferPanel(host) {
     }
     for (const section of sections) section.hidden = section.dataset.transferInfo !== mode;
     if (mode === 'car') {
-      start.textContent = parkingLabels[zone];
-      finish.textContent = parkingLabels[3 - zone];
-      distance.textContent = kilometres.format(parkTransfer(mode,zone).kilometres);
+      const drive = parkTransfer(mode,zone);
+      for (const [index, parking] of drive.places.entries()) {
+        parkingLinks[index].href = placeRoute(parking);
+        parkingLinks[index].querySelector('strong').textContent = parking.name;
+      }
+      distance.textContent = kilometres.format(drive.kilometres);
     }
     targetLink.hidden = !target;
     if (target) {

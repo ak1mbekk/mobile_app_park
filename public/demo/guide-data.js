@@ -9,7 +9,16 @@
   const sourceKey = 'park-guide-publication-source';
   const cacheKey = new URL('guide-publication.json', location.href);
   const changes = new EventTarget();
+  const preferSaved = document.currentScript?.hasAttribute('data-prefer-saved');
   let current, version, pending;
+
+  function source() {
+    try { return localStorage.getItem(sourceKey); } catch { return null; }
+  }
+
+  function rememberSource(value) {
+    try { localStorage.setItem(sourceKey, value); } catch {}
+  }
 
   async function readSnapshot(response) {
     try {
@@ -22,24 +31,27 @@
     } catch { return null; }
   }
 
+  const publicationCache = () => globalThis.caches?.open('animal-park-map:publication-v1').catch(() => null);
+
+  async function savedPublication(cache) {
+    const saved = await cache?.match(cacheKey).catch(() => null);
+    return saved ? readSnapshot(saved) : null;
+  }
+
   async function publication() {
     if (location.protocol === 'file:') return {data:null};
-    const cache = await globalThis.caches?.open('animal-park-map:publication-v1').catch(() => null);
+    const cache = await publicationCache();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3500);
     const response = await fetch(cacheKey, {cache:'no-cache', signal:controller.signal})
       .catch(() => null).finally(() => clearTimeout(timer));
     if (response?.status === 404) {
       await cache?.delete(cacheKey).catch(() => {});
-      try { localStorage.removeItem(sourceKey); } catch {}
+      rememberSource('bundled');
       return {data:null};
     }
     const json = response?.headers.get('content-type')?.includes('application/json');
-    let knownPublication = Boolean(json);
-    try {
-      if (json) localStorage.setItem(sourceKey, 'zookeeper');
-      knownPublication ||= localStorage.getItem(sourceKey) === 'zookeeper';
-    } catch {}
+    if (json) rememberSource('zookeeper');
     if (response?.ok && json) {
       const next = await readSnapshot(response.clone());
       if (next) {
@@ -49,25 +61,37 @@
     }
     // Keep the newest snapshot already accepted by this document on a network failure.
     if (current) return {data:current,version};
-    const saved = await cache?.match(cacheKey).catch(() => null);
-    return (saved && await readSnapshot(saved)) || {data:knownPublication ? false : null};
+    return await savedPublication(cache) || {data:json || source() === 'zookeeper' ? false : null};
+  }
+
+  function accept(next) {
+    if ((next.data && current && next.version === version) || next.data === current) return current;
+    const started = current !== undefined;
+    current = next.data;
+    version = next.version;
+    if (started) changes.dispatchEvent(new CustomEvent('publication',{detail:current}));
+    return current;
   }
 
   function refresh() {
     if (pending) return pending;
-    pending = publication().then(next => {
-      if (next.data && current && next.version === version) return current;
-      if (next.data === current) return current;
-      const started = current !== undefined;
-      current = next.data;
-      version = next.version;
-      if (started) changes.dispatchEvent(new CustomEvent('publication',{detail:current}));
-      return current;
-    }).finally(() => { pending = null; });
+    pending = publication().then(accept).finally(() => { pending = null; });
     return pending;
   }
 
-  const ready = refresh();
+  async function start() {
+    const saved = await savedPublication(await publicationCache());
+    if (current !== undefined) return current;
+    if (pending) return pending;
+    // A cold start still verifies the source before showing the park's data.
+    const initial = saved || (source() === 'bundled' ? {data:null} : null);
+    if (!initial) return refresh();
+    accept(initial);
+    refresh();
+    return current;
+  }
+
+  const ready = preferSaved && location.protocol !== 'file:' ? start() : refresh();
   async function load(file, options) {
     if (current === undefined) await ready;
     if (current === false) throw new Error('Данные парка временно недоступны');
@@ -88,7 +112,7 @@
   };
 
   function refreshWhenVisible() {
-    if (!document.hidden && navigator.onLine && location.protocol !== 'file:') refresh();
+    if (!document.hidden && navigator.onLine && location.protocol !== 'file:' && current !== undefined) refresh();
   }
   document.addEventListener('visibilitychange', refreshWhenVisible);
   window.addEventListener('online', refreshWhenVisible);

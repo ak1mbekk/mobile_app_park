@@ -1,8 +1,14 @@
 // The road in the park plan (12 Nov 2025), matched to OSM ways
 // 1076075884, 852337476, 472401877, 413693338, 248990835 and 1076075895.
 // Coordinates are [longitude, latitude]. The second parking aisle is one-way.
+export const parkGuestParkings = [
+  // Guest lots 973529982 and 1076075896. The separate bus lot is 1076075897.
+  {zone:1, id:'guest-parking', name:'Парковка «Казачны мір»', geo:[26.01080835,53.0947079], service:'Парковка', detail:'Гостевая парковка напротив кассы.'},
+  {zone:2, id:'guest-parking', name:'Гостевая парковка «Лясныя таямніцы»', geo:[26.0213607,53.0932146], service:'Парковка'},
+];
+const [kazachnyParking, forestParking] = parkGuestParkings.map(point => point.geo);
 const road = [
-  [26.0108915,53.094786], [26.0110836,53.0948966], [26.0111388,53.0949412],
+  kazachnyParking, [26.0108915,53.094786], [26.0110836,53.0948966], [26.0111388,53.0949412],
   [26.0113292,53.0945814], [26.0116089,53.0940527], [26.0117208,53.0938411],
   [26.0124198,53.0925191], [26.0125978,53.0921024], [26.0132674,53.0904603],
   [26.0134797,53.0899397], [26.0136868,53.0899774], [26.0157378,53.0904135],
@@ -10,7 +16,6 @@ const road = [
   [26.0178389,53.0909082], [26.0202793,53.0924434], [26.0205614,53.0926209],
   [26.0207674,53.0928334], [26.020896,53.092966], [26.0210897,53.0932051],
 ];
-const forestParking = [26.0213607,53.0932146];
 const aisleExit = [26.0221272,53.0944858];
 
 const radians = degrees => degrees * Math.PI / 180;
@@ -51,10 +56,10 @@ export const parkShuttleStops = [
 ];
 
 const carRoutes = {
-  1:drivingRoute([...road,forestParking]),
-  2:drivingRoute([forestParking,[26.022352,53.094303],aisleExit,...[...road].reverse()]),
+  1:{...drivingRoute([...road,forestParking]), places:parkGuestParkings},
+  2:{...drivingRoute([forestParking,[26.022352,53.094303],aisleExit,...[...road].reverse()]), places:[...parkGuestParkings].reverse()},
 };
-const busOverview = {points:parkShuttleStops.map(stop => stop.geo)};
+const busOverview = {points:parkShuttleStops.map(stop => stop.geo), places:parkShuttleStops};
 
 export function parkTransfer(mode, zone) {
   return mode === 'car' ? carRoutes[zone] : mode === 'bus' ? busOverview : null;

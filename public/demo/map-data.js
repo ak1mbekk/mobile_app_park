@@ -1,15 +1,15 @@
 import { raster, validBoundaries } from './map-boundary-geometry.js';
 import { validGuestPaths } from './map-guest-geometry.js';
-import { parkShuttleStops } from './park-transfer.js';
+import { parkGuestParkings, parkShuttleStops } from './park-transfer.js';
 
 export const terrainUrl = 'assets/park-landscape.geojson';
 const alignmentKey = 'park-map-alignment';
 
-async function readBundledData(file, validate) {
+async function readBundledData(file, validate, cache) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 3500);
   try {
-    const value = await window.parkGuideData.load(file, {cache:'no-store', signal:controller.signal});
+    const value = await window.parkGuideData.load(file, {cache, signal:controller.signal});
     return validate(value) ? value : null;
   } catch {
     return null;
@@ -23,8 +23,8 @@ function validAlignment(value) {
     [value.scale, value.angle, value.centerX, value.centerY].every(Number.isFinite);
 }
 
-async function readBundledAlignment() {
-  const value = await readBundledData('map-alignment.json', validAlignment);
+async function readBundledAlignment(cache) {
+  const value = await readBundledData('map-alignment.json', validAlignment, cache);
   if (value) {
     try { localStorage.setItem(alignmentKey, JSON.stringify(value)); } catch {}
     return value;
@@ -39,11 +39,12 @@ async function readBundledAlignment() {
 export function mapPlaces(snapshot) {
   const guide = window.parkGuide;
   const places = snapshot ? snapshot.places : [...guide.places, ...guide.geoFacilities];
+  const transferPlaces = [...parkGuestParkings, ...parkShuttleStops];
   return [...places.filter(place => !place.name.startsWith('Вольер №') &&
-    !parkShuttleStops.some(stop => stop.zone === place.zone && stop.id === place.id)), ...parkShuttleStops];
+    !transferPlaces.some(point => point.zone === place.zone && point.id === place.id)), ...transferPlaces];
 }
 
-export async function loadMapData(snapshot) {
+export async function loadMapData(snapshot, {preferSaved = false} = {}) {
   if (snapshot) {
     return {
       alignment: validAlignment(snapshot.mapAlignment) ? snapshot.mapAlignment : null,
@@ -51,10 +52,11 @@ export async function loadMapData(snapshot) {
       paths: validGuestPaths(snapshot.visitorPaths) ? snapshot.visitorPaths : null,
     };
   }
+  const cache = preferSaved ? 'force-cache' : 'no-store';
   const [alignment, boundaries, paths] = await Promise.all([
-    readBundledAlignment(),
-    readBundledData('map-boundaries.json', validBoundaries),
-    readBundledData('map-guest-paths.json', validGuestPaths),
+    readBundledAlignment(cache),
+    readBundledData('map-boundaries.json', validBoundaries, cache),
+    readBundledData('map-guest-paths.json', validGuestPaths, cache),
   ]);
   return {alignment, boundaries, paths};
 }

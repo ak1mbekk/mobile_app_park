@@ -17,7 +17,7 @@
 <link rel="manifest" href="guide.webmanifest">
 <link rel="stylesheet" href="base.css"><link rel="stylesheet" href="visitor.css">
 <link rel="stylesheet" href="vendor/park-menu/menu.css"><link rel="stylesheet" href="guide-shell.css"><link rel="stylesheet" href="catalog-editorial.css">
-<link rel="stylesheet" href="park-home.css?v=atlas2">
+<link rel="stylesheet" href="park-home.css?v=profile3">
 <link rel="stylesheet" href="guide-ui.css">
 <link rel="stylesheet" href="feedings.css">
 </head><body class="in-guide">
@@ -42,7 +42,7 @@
   <a href="#audio"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="3" y="12" width="5" height="8" rx="2"/><rect x="16" y="12" width="5" height="8" rx="2"/></svg>Аудиогид</a>
   <a class="z-ticket" href="https://animal-park.by/tickets/stranicza-biletov.html?clear_date=1"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-ticket"/></svg>Купить билеты</a>
 </nav>
-<nav class="z-visit" aria-label="Информация для посетителей"><a href="#tours"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-tour"/></svg><span>Экскурсии</span><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a><a href="map.html#map/1/directions" data-map-zone><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-pin"/></svg><span>Как добраться</span><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a><a href="#visitor"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-info"/></svg><span>Для посетителей</span><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a></nav>
+<nav class="z-visit" aria-label="Информация для посетителей"><a href="#tours"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-tour"/></svg><span>Экскурсии</span><svg class="guide-row-arrow" aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a><a href="map.html#map/1/directions" data-map-zone><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-pin"/></svg><span>Как добраться</span><svg class="guide-row-arrow" aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a><a href="#visitor"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-info"/></svg><span>Для посетителей</span><svg class="guide-row-arrow" aria-hidden="true" viewBox="0 0 24 24"><use href="#z-arrow"/></svg></a></nav>
 </div>
 <section class="z-residents"><header><h2>Наши животные</h2></header><nav class="z-groups" aria-label="Группы животных"><a href="#animals/Млекопитающие"><i><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-mammal"/></svg></i>Млекопитающие</a><a href="#animals/Птицы"><i><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-bird"/></svg></i>Птицы</a><a href="#animals"><i><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#z-all"/></svg></i>Все</a></nav>
 <div class="z-gallery"><a href="#species/filin"><img src="assets/species/filin.webp" alt="" loading="lazy" decoding="async"><strong>Филин</strong></a><a href="#species/lama"><img src="assets/species/lama.webp" alt="" loading="lazy" decoding="async"><strong>Лама</strong></a><a href="#animal"><img src="assets/capybara.webp" alt="" loading="lazy" decoding="async"><strong>Капибара</strong></a><a href="#species/enot-poloskun"><img src="assets/raccoon.webp" alt="" loading="lazy" decoding="async"><strong>Енот-полоскун</strong></a></div></section>
@@ -195,32 +195,44 @@
       <symbol id="profile-person" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.25"/><path d="M5 20v-1.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V20Z"/></symbol>
       <symbol id="profile-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Zm3 5h6m-6 4h6m-6 4h3"/></symbol>
       <symbol id="profile-exit" viewBox="0 0 24 24"><path d="M12 5H5v14h7m-1-7h9m-3-3 3 3-3 3"/></symbol>
-      <symbol id="profile-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+      <symbol id="profile-lock" viewBox="0 0 24 24"><rect x="6" y="10" width="12" height="10" rx="2"/><path d="M9 10V7a3 3 0 1 1 6 0v3m-3 4v2"/></symbol>
     </svg>
 <section id="profile" class="screen visitor-screen" aria-labelledby="profile-title">
   <div class="p-content profile-content">
-    <header class="profile-heading"><button class="p-back" type="button" data-guide-back="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button><h1 id="profile-title" class="p-title">Профиль</h1></header>
-    <div class="profile-identity">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-person"/></svg>
-      <div><strong>Гость парка</strong><small>Аккаунт не подключён</small></div>
+    <header class="profile-heading">
+      <h1 id="profile-title" class="p-title">Профиль</h1>
+      <p class="profile-status"><strong>Гостевой режим</strong><span>Вход в аккаунт пока недоступен.</span></p>
+    </header>
+    <div class="profile-menu">
+      <ul class="profile-list" aria-label="Доступно после входа">
+        <li><div class="profile-row" aria-disabled="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#z-ticket"/></svg>
+          <span>Билеты</span>
+          <svg class="profile-lock" viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-lock"/></svg>
+        </div></li>
+        <li><div class="profile-row" aria-disabled="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-receipt"/></svg>
+          <span>История покупок</span>
+          <svg class="profile-lock" viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-lock"/></svg>
+        </div></li>
+      </ul>
+      <ul class="profile-list" aria-label="Информация о парке">
+        <li><a class="profile-row" href="#tours">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#z-tour"/></svg>
+          <span>Экскурсии</span>
+          <svg class="guide-row-arrow" viewBox="0 0 24 24" aria-hidden="true"><use href="#z-arrow"/></svg>
+        </a></li>
+        <li><a class="profile-row" href="#visitor">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#z-info"/></svg>
+          <span>О сервисе<small>Правила, контакты и офлайн-доступ</small></span>
+          <svg class="guide-row-arrow" viewBox="0 0 24 24" aria-hidden="true"><use href="#z-arrow"/></svg>
+        </a></li>
+      </ul>
+      <div class="profile-row profile-logout" aria-disabled="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-exit"/></svg>
+        <span>Выйти</span>
+      </div>
     </div>
-    <ul class="profile-list">
-      <li><a class="profile-row" href="https://animal-park.by/tickets/stranicza-biletov.html?clear_date=1">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#z-ticket"/></svg><span>Билеты</span><svg class="profile-arrow" aria-hidden="true"><use href="#profile-chevron"/></svg>
-      </a></li>
-      <li><a class="profile-row" href="#tours">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#z-tour"/></svg><span>Экскурсии</span><svg class="profile-arrow" aria-hidden="true"><use href="#profile-chevron"/></svg>
-      </a></li>
-      <li><div class="profile-row" aria-disabled="true">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-receipt"/></svg><span>История покупок<small>Доступна с аккаунтом</small></span>
-      </div></li>
-      <li><a class="profile-row" href="#visitor">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#z-info"/></svg><span>О сервисе<small>Правила, контакты и офлайн-доступ</small></span><svg class="profile-arrow" aria-hidden="true"><use href="#profile-chevron"/></svg>
-      </a></li>
-      <li><div class="profile-row" aria-disabled="true">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#profile-exit"/></svg><span>Выйти</span>
-      </div></li>
-    </ul>
   </div>
 </section>
 <section id="visitor" class="screen visitor-screen" aria-labelledby="visit-title"><div class="p-content visitor-info">

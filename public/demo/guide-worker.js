@@ -1,6 +1,6 @@
 importScripts('audio-stops.js');
 
-const cacheName = 'animal-park-map:zoo-guide56';
+const cacheName = 'animal-park-map:zoo-guide64';
 const guideCachePrefix = 'animal-park-map:zoo-guide';
 const base = new URL(self.registration.scope);
 const shell = [
@@ -171,6 +171,10 @@ self.addEventListener('fetch', event => {
   if (!isPage && !shell.includes(path) && !isAnimalPhoto) return;
 
   const saved = savedCopy(request, path);
+  if (validate && request.cache === 'force-cache') {
+    event.respondWith(saved.then(async copy => copy ?? await requestOnline(request, validate, 8000) ?? Response.error()));
+    return;
+  }
   // Keep the pages and their styles from the same installed release. Park data refreshes separately.
   if (isPage || (!validate && !path.endsWith('.html') && shell.includes(path))) {
     event.respondWith(saved.then(async copy => copy ?? await requestOnline(request, undefined, 8000) ?? Response.error()));

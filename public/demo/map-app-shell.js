@@ -1,8 +1,10 @@
 (() => {
   const mapScreen = document.getElementById('map');
   const search = document.getElementById('map-search');
+  let announcedUrl;
 
   function announceMap() {
+    announcedUrl = location.href;
     mapScreen.classList.add('current');
     document.dispatchEvent(new CustomEvent('conceptscreen', {detail:'map'}));
   }
@@ -31,8 +33,11 @@
     window.conceptReplace(`map/${activeZone()}`);
   });
 
-  window.addEventListener('popstate', announceMap);
-  window.addEventListener('hashchange', announceMap);
+  function onHistoryChange() {
+    if (location.href !== announcedUrl) announceMap();
+  }
+  window.addEventListener('popstate', onHistoryChange);
+  window.addEventListener('hashchange', onHistoryChange);
   if (!location.hash.startsWith('#map/')) history.replaceState(history.state, '', '#map/1');
   const entry = new URL(location.href);
   const transport = entry.searchParams.get('transport');
@@ -42,6 +47,7 @@
     entry.hash = '#map/' + zone + '/directions' + (transport === 'car' ? '/car' : '');
     history.replaceState(history.state, '', entry);
   }
+  announcedUrl = location.href;
   mapScreen.classList.add('current');
   function applyCatalogue(entries) {
     const species = new Map(entries.map(entry => [entry.slug, entry]));

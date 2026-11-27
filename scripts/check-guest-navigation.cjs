@@ -33,8 +33,14 @@ async function graphChecks() {
   const {parkTransfer} = await import('../public/demo/park-transfer.js');
   const outbound = parkTransfer('car',1);
   const inbound = parkTransfer('car',2);
+  const shuttle = parkTransfer('bus',1);
   assert.deepEqual(inbound.points,[...outbound.points].reverse());
   assert.deepEqual(inbound.line.slice(1,3),[[26.022352,53.094303],[26.0221272,53.0944858]]);
+  for (const trip of [outbound,inbound]) {
+    assert.deepEqual(trip.points,trip.places.map(place => place.geo));
+    assert(trip.places.every(place => place.service === 'Парковка'));
+    assert(trip.points.every(point => shuttle.points.every(stop => stop.join() !== point.join())));
+  }
 }
 
 async function coordinates(page, pixel) {
@@ -218,6 +224,18 @@ async function checkParkTransfer(browser, offline) {
     assert.match(await distance.textContent(),/^\d+,\d\sкм$/);
     assert.equal(await page.evaluate(() => performance.timeOrigin),documentStart);
     await page.waitForFunction(() => [...document.querySelectorAll('.map-route-marker')].map(pin => pin.dataset.marker).join('/') === 'start/finish');
+    const finishParking = page.locator('.map-route-marker[data-marker="finish"]');
+    assert.equal(await finishParking.locator('use').getAttribute('href'),'#route-parking');
+    for (const control of [finishParking,page.locator('.map-transfer-points [data-marker="finish"] a')]) {
+      await control.waitFor();
+      const {width,height} = await control.boundingBox();
+      assert(width >= 48 && height >= 48,'Parking control should have a 48 px touch target');
+    }
+    await finishParking.click();
+    await page.waitForURL('**/map.html#map/2/guest-parking');
+    await page.getByRole('heading',{name:'Гостевая парковка «Лясныя таямніцы»'}).waitFor();
+    await page.goBack();
+    await distance.waitFor();
     if (!offline) {
       await page.locator('.leaflet-visitor-navigation-pane path[stroke="#215fce"]').waitFor();
     }
@@ -230,6 +248,7 @@ async function checkParkTransfer(browser, offline) {
     await page.goto(new URL('map.html?transport=car#map/2',url).href);
     await page.waitForURL('**/map.html#map/2/directions/car');
     await distance.waitFor();
+    assert.equal(await page.locator('.map-transfer-points [data-marker="finish"] a').getAttribute('href'),'#map/1/guest-parking');
     await page.goto(new URL('index.html#directions',url).href);
     await page.waitForURL('**/map.html#map/1/directions');
     assert.deepEqual(errors,[]);
@@ -301,7 +320,7 @@ async function checkWalkToTransfer(browser, {zone, exit, from, arrival, target, 
     await page.getByRole('link',{name:'На машине',exact:true}).click();
     await page.waitForURL('**/map.html#map/'+zone+'/directions/car/to/'+target);
     const park = zone === 1 ? 'Казачны мір' : 'Лясныя таямніцы';
-    assert.match(await page.locator('.map-transfer-points [data-marker="start"] dd').innerText(),new RegExp(park));
+    assert.match(await page.locator('.map-transfer-points [data-marker="start"] strong').innerText(),new RegExp(park));
     await continuation.click();
     await page.waitForURL('**/map.html'+destination);
     await page.getByRole('button',{name:'Проложить маршрут'}).waitFor();

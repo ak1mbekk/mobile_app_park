@@ -7,6 +7,8 @@
   <script src="guide-theme.js"></script>
   <script src="guide-history.js"></script>
   <script src="guide-tab-motion.js"></script>
+  <script defer src="guide-data.js" data-prefer-saved></script>
+  <script defer src="vendor/slide-tabs/tabs.js"></script>
   <title>Карта Парка животных</title>
   <link rel="icon" type="image/png" href="assets/park-favicon.png">
   <link rel="apple-touch-icon" href="assets/park-touch-icon.png">
@@ -44,6 +46,10 @@
       <path d="M3 11a8 8 0 0 1 8-8h10a8 8 0 0 1 8 8v11a8 8 0 0 1-8 8h-2l-3 4-3-4h-2a8 8 0 0 1-8-8Z" fill="#235ac1" stroke="white" stroke-width="2"/>
       <path d="M9 13a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v9H9ZM9 17h14m-11 5v3m8-3v3" fill="none" stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M12 19.5h.1m7.9 0h.1" stroke="white" stroke-width="1.65" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="route-parking" viewBox="0 0 32 36">
+      <path d="M3 11a8 8 0 0 1 8-8h10a8 8 0 0 1 8 8v11a8 8 0 0 1-8 8h-2l-3 4-3-4h-2a8 8 0 0 1-8-8Z" fill="#235ac1" stroke="white" stroke-width="2"/>
+      <path d="M12.5 24V10h5a4.5 4.5 0 0 1 0 9h-5" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
     <symbol id="audio-play-icon" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7z" fill="currentColor" stroke="none"/></symbol>
     <symbol id="audio-pause-icon" viewBox="0 0 24 24"><rect x="7" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
@@ -85,7 +91,7 @@
           </button>
         </header>
 
-        <div class="park-surface" role="region" aria-label="Интерактивная карта территории"></div>
+        <div class="park-surface" role="region" aria-label="Интерактивная карта территории" aria-busy="true"></div>
         <button class="map-locate" type="button" aria-label="Моё местоположение" title="Моё местоположение" hidden>
           <svg class="p-icon" aria-hidden="true"><use href="#icon-locate"/></svg>
         </button>
@@ -128,10 +134,10 @@
               </details>
             </div>
             <div data-transfer-info="car" hidden>
-              <dl class="map-transfer-points">
-                <div data-marker="start"><dt>Откуда</dt><dd>Парковка «Казачны мір»</dd></div>
-                <div data-marker="finish"><dt>Куда</dt><dd>Гостевая парковка «Лясныя таямніцы»</dd></div>
-              </dl>
+              <ul class="map-transfer-points">
+                <li data-marker="start"><a><span>Откуда</span><strong></strong></a></li>
+                <li data-marker="finish"><a><span>Куда</span><strong></strong></a></li>
+              </ul>
               <p class="map-route-distance" aria-label="Длина маршрута"></p>
             </div>
             <a class="map-transfer-target" hidden></a>
@@ -171,17 +177,15 @@
 
   </div>
 
-  <script src="vendor/leaflet/leaflet.js"></script>
-  <script src="places.js?v=places2"></script>
-  <script src="guide-data.js"></script>
-  <script src="map-projection.js"></script>
-  <script src="vendor/maplibre/maplibre-gl.js"></script>
-  <script src="guide-landscape.js"></script>
-  <script src="map-app-shell.js"></script>
-  <script src="audio-stops.js"></script>
-  <script src="audio-guide.js"></script>
+  <script defer src="vendor/leaflet/leaflet.js"></script>
+  <script defer src="places.js?v=places2"></script>
+  <script defer src="map-projection.js"></script>
+  <script defer src="vendor/maplibre/maplibre-gl.js"></script>
+  <script defer src="guide-landscape.js"></script>
+  <script defer src="map-app-shell.js"></script>
+  <script defer src="audio-stops.js"></script>
+  <script defer src="audio-guide.js"></script>
   <script type="module" src="park-map.js"></script>
-  <script src="guide-offline.js"></script>
-  <script defer src="vendor/slide-tabs/tabs.js"></script>
+  <script defer src="guide-offline.js"></script>
 </body>
 </html>
