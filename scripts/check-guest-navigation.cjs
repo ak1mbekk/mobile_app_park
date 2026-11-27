@@ -30,6 +30,11 @@ async function graphChecks() {
   assert.equal(guestDirections(edges,[2,1],finish,1).metres,25);
   assert.equal(guestDirections(edges,[140,140],finish,1).status,'outside-network');
   assert.equal(guestDirections(edges,[45,1],finish,1).status,'disconnected');
+  const {parkTransfer} = await import('../public/demo/park-transfer.js');
+  const outbound = parkTransfer('car',1);
+  const inbound = parkTransfer('car',2);
+  assert.deepEqual(inbound.points,[...outbound.points].reverse());
+  assert.deepEqual(inbound.line.slice(1,3),[[26.022352,53.094303],[26.0221272,53.0944858]]);
 }
 
 async function coordinates(page, pixel) {
@@ -74,7 +79,8 @@ async function run(browser, {flat, zone, id, pixels, width}) {
       await page.locator('.leaflet-visitor-navigation-pane path[fill="#2871e2"]').waitFor();
     } else {
       const readNavigation = () => page.evaluate(() => navigationTestMap.getStyle().sources.navigation.data.features);
-      await page.waitForFunction(() => window.navigationTestMap?.getStyle()?.sources.navigation.data.features.length === 3);
+      await page.waitForFunction(() => window.navigationTestMap?.getStyle()?.sources.navigation.data.features.length === 2);
+      await page.locator('.map-route-marker[data-marker="finish"]').waitFor();
       const features = await readNavigation();
       const {guestNetwork,nearestGuestPoint} = await import('../public/demo/map-guest-geometry.js');
       const routePixels = await page.evaluate(async line => {
@@ -178,7 +184,7 @@ async function checkParkTransfer(browser, offline) {
     await page.waitForURL('**/map.html#map/1/directions');
     await page.getByRole('heading',{name:'Как добраться'}).waitFor();
     const documentStart = await page.evaluate(() => performance.timeOrigin);
-    await page.waitForFunction(() => document.querySelectorAll('.map-transfer-pin').length === 2);
+    await page.waitForFunction(() => document.querySelectorAll('.map-route-marker[data-marker="bus"]').length === 2);
     await page.locator('[data-transfer-info="bus"]').waitFor();
     await page.getByText('Расписание автобуса',{exact:true}).click();
     await page.locator('#shuttle-schedule time[datetime="16:45"]').waitFor();
@@ -211,7 +217,7 @@ async function checkParkTransfer(browser, offline) {
     await distance.waitFor();
     assert.match(await distance.textContent(),/^\d+,\d\sкм$/);
     assert.equal(await page.evaluate(() => performance.timeOrigin),documentStart);
-    await page.waitForFunction(() => [...document.querySelectorAll('.map-transfer-pin')].map(pin => pin.textContent).join('') === 'АБ');
+    await page.waitForFunction(() => [...document.querySelectorAll('.map-route-marker')].map(pin => pin.dataset.marker).join('/') === 'start/finish');
     if (!offline) {
       await page.locator('.leaflet-visitor-navigation-pane path[stroke="#215fce"]').waitFor();
     }
@@ -233,6 +239,78 @@ async function checkParkTransfer(browser, offline) {
   }
 }
 
+async function checkWalkBetweenPlaces(browser, {zone, destination, origin, offline}) {
+  const context = await browser.newContext({viewport:{width:390,height:844}});
+  try {
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => {
+      window.requestedLocation = false;
+      navigator.geolocation.watchPosition = () => { window.requestedLocation = true; };
+    });
+    await page.goto(url+'#map/'+zone+'/'+destination);
+    if (offline) {
+      await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+      await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+      await context.setOffline(true);
+      await page.reload();
+    }
+    await page.getByRole('button',{name:/Откуда Моё местоположение/}).click();
+    const picker = page.locator('#map-search');
+    await picker.getByRole('heading',{name:'Откуда',exact:true}).waitFor();
+    await picker.getByRole('searchbox').fill(origin);
+    await picker.getByRole('button',{name:origin,exact:true}).click();
+    await page.getByRole('button',{name:'Завершить маршрут'}).waitFor();
+    assert.match(await page.locator('.map-walk-status').innerText(),/^Пешком \d+ м$/);
+    await page.locator('.map-route-marker[data-marker="start"]').waitFor();
+    await page.locator('.map-route-marker[data-marker="finish"]').waitFor();
+    assert.equal(await page.evaluate(() => window.requestedLocation),false);
+    assert.deepEqual(errors,[]);
+    console.log('Walk from named place',zone,origin,'without GPS',offline ? 'and offline' : '');
+  } finally {
+    await context.close();
+  }
+}
+
+async function checkWalkToTransfer(browser, {zone, exit, from, arrival, target, animal, offline}) {
+  const context = await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation']});
+  try {
+    const page = await context.newPage();
+    const destination = '#map/' + (3 - zone) + '/' + target;
+    await page.goto(url+destination);
+    const outsideExit = await coordinates(page,arrival);
+    await context.setGeolocation(await coordinates(page,from));
+    if (offline) {
+      await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+      await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+      await context.setOffline(true);
+      await page.reload();
+    }
+    await page.getByRole('button',{name:'Проложить маршрут'}).click();
+    await page.waitForURL('**/map.html#map/'+zone+'/'+exit);
+    await page.getByText(/^До выхода · \d+ м$/).waitFor();
+    const onward = page.getByRole('link',{name:'Автобус или машина'});
+    assert.equal(await onward.isVisible(),false);
+    await context.setGeolocation(outsideExit);
+    await page.getByText('Вы у выхода.',{exact:true}).waitFor();
+    await onward.click();
+    await page.waitForURL('**/map.html#map/'+zone+'/directions/to/'+target);
+    const continuation = page.getByRole('link',{name:'После приезда · '+animal});
+    await continuation.waitFor();
+    await page.getByRole('link',{name:'На машине',exact:true}).click();
+    await page.waitForURL('**/map.html#map/'+zone+'/directions/car/to/'+target);
+    const park = zone === 1 ? 'Казачны мір' : 'Лясныя таямніцы';
+    assert.match(await page.locator('.map-transfer-points [data-marker="start"] dd').innerText(),new RegExp(park));
+    await continuation.click();
+    await page.waitForURL('**/map.html'+destination);
+    await page.getByRole('button',{name:'Проложить маршрут'}).waitFor();
+    console.log('Walk to the exit and transfer from zone',zone,offline ? 'offline' : 'online');
+  } finally {
+    await context.close();
+  }
+}
+
 (async () => {
   await graphChecks();
   const browser = await chromium.launch({executablePath:process.env.BROWSER_EXE,
@@ -245,6 +323,10 @@ async function checkParkTransfer(browser, offline) {
     await offlineRoutes(browser);
     await checkParkTransfer(browser,false);
     await checkParkTransfer(browser,true);
+    await checkWalkBetweenPlaces(browser,{zone:1,destination:'36',origin:'Альпака',offline:false});
+    await checkWalkBetweenPlaces(browser,{zone:2,destination:'6',origin:'Голубой баран',offline:true});
+    await checkWalkToTransfer(browser,{zone:1,exit:'exit',from:[382.801,1100.838],arrival:[221.976,1386.684],target:'6',animal:'Альпака',offline:false});
+    await checkWalkToTransfer(browser,{zone:2,exit:'entrance',from:[1056,2178],arrival:[940.415,1746.495],target:'36',animal:'Капибара',offline:true});
   } finally {
     await browser.close();
   }

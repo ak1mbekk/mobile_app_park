@@ -1,6 +1,6 @@
 importScripts('audio-stops.js');
 
-const cacheName = 'animal-park-map:zoo-guide54';
+const cacheName = 'animal-park-map:zoo-guide56';
 const guideCachePrefix = 'animal-park-map:zoo-guide';
 const base = new URL(self.registration.scope);
 const shell = [

@@ -14,8 +14,8 @@
     {zone:1,id:'entrance',name:'Вход в парк',raster:[312.819,1368.881],gateAxis:[.246,.969],gateBearing:55,
       service:'Вход',symbol:'gate',keywords:['ворота','проверка билетов'],
       detail:'У ворот проверяют билеты. За ними начинается прогулка по кругу. Выход — у сувениров.'},
-    {zone:2,id:'entrance',name:'Вход в Лясныя таямніцы',x:254,y:187,raster:[940.415,1746.495],
-      gateAxis:[.926,-.378],gateBearing:0,service:'Вход',symbol:'gate',keywords:['ворота'],
+    {zone:2,id:'entrance',name:'Вход и выход · Лясныя таямніцы',x:254,y:187,raster:[940.415,1746.495],
+      gateAxis:[.926,-.378],gateBearing:0,service:'Вход',services:['Вход','Выход'],symbol:'gate',keywords:['ворота'],
       detail:'За воротами начинается гостевая дорожка к прудам.'}
   ];
   const places = [

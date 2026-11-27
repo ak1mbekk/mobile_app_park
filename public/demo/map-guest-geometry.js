@@ -125,6 +125,10 @@ export function guestApproach(edges, {point, enclosure, saved}, metresPerPixel) 
 export function guestDirections(edges, position, finish, metresPerPixel) {
   const start = nearestGuestPoint(edges, position);
   if (!start || start.distance * metresPerPixel > 45) return {status:'outside-network'};
+  return routeBetweenGuestPoints(start, finish, metresPerPixel);
+}
+
+export function routeBetweenGuestPoints(start, finish, metresPerPixel) {
   const walk = shortestGuestWalk(start, finish);
   if (!walk) return {status:'disconnected'};
   const metres = Math.round(walk.length * metresPerPixel);

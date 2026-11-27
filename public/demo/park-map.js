@@ -1,8 +1,8 @@
 import { loadMapData, loadMapTerrain, mapPlaces, terrainUrl } from './map-data.js';
 import { contains, width, height } from './map-boundary-geometry.js';
-import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from './map-guest-geometry.js';
-import { parkShuttleStops, parkTransfer } from './park-transfer.js';
-import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
+import { guestApproach, guestDirections, guestNetwork, guestPathsForZone, routeBetweenGuestPoints } from './map-guest-geometry.js';
+import { parkExitIds, parkShuttleStops, parkTransfer } from './park-transfer.js';
+import { createTransferPanel, routeMarker } from './map-transfer-panel.js';
 
 (() => {
   const guide = window.parkGuide;
@@ -44,7 +44,7 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
     'Места отдыха':'место отдыха беседки скамейки лавочки отдых'
   };
   const views = new Map();
-  const state = { zone: 1, id: '', kind: 'all', service: '', transfer: '' };
+  const state = { zone: 1, id: '', kind: 'all', service: '', transfer: '', transferTarget: null };
   let landscape, flatOnly = false;
   const query = host.querySelector('#animal-map-query');
   const queryField = query.closest('label');
@@ -76,6 +76,7 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
   }
 
   function openDirectory(kind, service = '') {
+    if (originSearch) setSearch(false);
     query.value = '';
     const category = serviceNames[service];
     const candidates = category ? visitorPlaces.filter(p => serviceKeys(p).includes(category)) : [];
@@ -106,6 +107,11 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
   }
 
   function searchAnimals() {
+    if (originSearch) {
+      renderOriginMatches();
+      return;
+    }
+    search.removeAttribute('data-origin-picker');
     const filters = isFilterView();
     search.toggleAttribute('data-filter-panel', filters);
     filterRows.hidden = !filters;
@@ -200,6 +206,7 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
   let refreshing;
   let mapReady = false, drawing = false, terrainFailed = false;
   let searchOpen = false, choosing = false, placeTrigger;
+  let originSearch, routeOrigin;
   let framing = 'zone';
   const markers = new Map();
   const cafeGroups = new Map();
@@ -212,7 +219,7 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
     (!state.service || serviceKeys(point).includes(serviceNames[state.service]));
   const visible = point => {
     if (!directoryMatches(point)) return false;
-    if (state.transfer === 'bus' && point.approach) return false;
+    if (state.transfer) return false;
     if (state.kind === 'animals' || state.service || (point.id === state.id && point.zone === state.zone)) return true;
     return point.service
       ? serviceKeys(point).some(service => !hiddenCategories.has(serviceKeyByName.get(service)))
@@ -246,8 +253,13 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
     let rememberedZone;
     try { rememberedZone = localStorage.getItem('park-map-zone'); } catch {}
     const zoneNumber = (zone || rememberedZone) === '2' ? 2 : 1;
-    const base = {zone:zoneNumber, id:'', kind:'all', service:'', transfer:''};
-    if (parts[0] === 'directions') return {...base,transfer:parts[1] === 'car' ? 'car' : 'bus'};
+    const base = {zone:zoneNumber, id:'', kind:'all', service:'', transfer:'', transferTarget:null};
+    if (parts[0] === 'directions') {
+      const car = parts[1] === 'car';
+      const [target, id] = parts.slice(car ? 2 : 1);
+      const transferTarget = target === 'to' && visitorPlaces.find(place => place.zone !== zoneNumber && place.id === id);
+      return {...base,transfer:car ? 'car' : 'bus',transferTarget:transferTarget || null};
+    }
     const id = visitorPlaces.find(place => place.zone === zoneNumber && place.legacyId === requestedId)?.id ?? requestedId;
     if (guide.legacyCafeIds[zoneNumber]?.includes(id)) {
       history.replaceState(history.state, '', '#map/' + zoneNumber + '/service/cafe');
@@ -287,6 +299,11 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
   }
 
   function setSearch(open, returnFocus = false) {
+    if (!open && originSearch) {
+      query.value = originSearch.query;
+      originSearch = null;
+      searchAnimals();
+    }
     searchOpen = open;
     hitChooser?.dismiss();
     updateSheets();
@@ -296,6 +313,11 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
   }
 
   function closeSearch() {
+    if (originSearch) {
+      setSearch(false);
+      card.querySelector('.map-walk-origin')?.focus({preventScroll:true});
+      return;
+    }
     if (!isFilterView()) return setSearch(false,true);
     setSearch(false);
     navigate({kind:'all', service:''});
@@ -303,9 +325,61 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
   }
 
   function openPlace(id, source = 'map') {
+    if (originSearch) {
+      const origin = local().find(point => point.id === id && point.id !== state.id);
+      if (origin && position(origin)) pickRouteOrigin(origin);
+      return;
+    }
     placeTrigger = { zone: state.zone, id, source };
     navigate({ id });
     card.querySelector('h2')?.focus({ preventScroll: true });
+  }
+
+  function openOriginPicker() {
+    originSearch = {query:query.value};
+    query.value = '';
+    renderOriginMatches();
+    setSearch(true);
+    matchesPanel.scrollTop = 0;
+  }
+
+  function pickRouteOrigin(origin) {
+    const destination = navigation?.destination;
+    routeOrigin = origin;
+    setSearch(false);
+    findVisitor(selectedPlace(), origin, destination);
+    card.querySelector('.map-walk-origin')?.focus({preventScroll:true});
+  }
+
+  function renderOriginMatches() {
+    search.removeAttribute('data-filter-panel');
+    search.setAttribute('data-origin-picker','');
+    search.querySelector('h2').textContent = 'Откуда';
+    closeSearchButton.setAttribute('aria-label','Закрыть выбор начала маршрута');
+    queryField.hidden = false;
+    filterRows.hidden = true;
+    categoryBack.hidden = true;
+    matchesPanel.hidden = false;
+    matchesPanel.classList.remove('category-grid','animal-atlas');
+    query.placeholder = 'Найти животное или место';
+    query.setAttribute('aria-label',query.placeholder);
+    const words = normalize(query.value.trim()).split(/\s+/).filter(Boolean);
+    const available = local().filter(point => point.id !== state.id && position(point) &&
+      words.every(word => normalize([point.name,...animalResults(point).map(animal => animal.name)].join(' ')).includes(word)));
+    const buttons = available.sort((a,b) => a.name.localeCompare(b.name,'ru')).map(point => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      const name = document.createElement('strong');
+      name.textContent = point.name;
+      button.append(name);
+      button.onclick = () => pickRouteOrigin(point);
+      return button;
+    });
+    if (!words.length) {
+      buttons.unshift(categoryButton('Моё местоположение','M12 2v3m0 14v3M2 12h3m14 0h3 M19 12a7 7 0 1 1-14 0 7 7 0 1 1 14 0',() => pickRouteOrigin(null)));
+    }
+    if (buttons.length) matchesPanel.replaceChildren(...buttons);
+    else matchesPanel.textContent = 'Совпадений нет';
   }
 
   function closePlace() {
@@ -374,7 +448,7 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
     const locating = search.hidden && !navigation?.place && navigation?.message;
     status.toggleAttribute('data-locate',Boolean(locating));
     if (locating) messages.push(navigation.message);
-    else if (search.hidden && !filterHint.hidden) messages.push(filterHint.textContent);
+    else if (search.hidden && !state.transfer && !filterHint.hidden) messages.push(filterHint.textContent);
     else if (terrainFailed) messages.push('Подложка карты не загрузилась. Места доступны в списке.');
     else if (!calibration) messages.push('Открыта локальная карта. Географические точки сейчас недоступны.');
     else if (!navigator.onLine) messages.push('Открыта локальная карта парка.');
@@ -395,7 +469,7 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
     'outside-network': () => 'Вы вне сети гостевых дорожек этой зоны.',
     disconnected: () => 'Между этими дорожками нет соединения.',
     nearby: () => 'Вы рядом с местом.',
-    walking: metres => 'Пешком ' + metres + ' м · до дорожки у места',
+    walking: metres => 'Пешком ' + metres + ' м',
   };
 
   function terrainPosition([lng,lat]) {
@@ -409,26 +483,37 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
     const active = navigation?.place && placeKey(navigation.place) === placeKey(selectedPlace());
     const action = card.querySelector('.map-walk-button');
     const detail = card.querySelector('.map-walk-status');
+    const originLabel = card.querySelector('.map-walk-origin strong');
+    const onward = card.querySelector('.map-walk-onward');
+    if (originLabel) originLabel.textContent = routeOrigin?.name || 'Моё местоположение';
     if (action) {
       action.querySelector('span').textContent = active && navigation.route ? 'Завершить маршрут' :
         active && navigation.watch != null ? 'Отменить поиск' : 'Проложить маршрут';
       detail.textContent = active ? navigation.message : '';
       detail.hidden = !detail.textContent;
     }
+    if (onward) {
+      onward.hidden = !(active && navigation.destination && navigation.arrived);
+      if (!onward.hidden) onward.href = '#map/' + state.zone + '/directions/to/' + navigation.destination.id;
+    }
     result.toggleAttribute('data-navigating',Boolean(active && navigation.route));
     locateButton.setAttribute('aria-busy',String(Boolean(navigation && !navigation.place && navigation.watch != null)));
     updateStatus();
     const mode = !navigation && search.hidden && result.hidden ? state.transfer : '';
-    const transfer = parkTransfer[mode];
-    transferView.update(state.zone,mode);
-    const ends = transfer ? transfer.points.map(terrainPosition) : [];
-    const stopLinks = mode === 'bus' ? parkShuttleStops.map(shuttleStopLink) : [];
+    const transfer = parkTransfer(mode,state.zone);
+    transferView.update(state.zone,mode,state.transferTarget);
     const route = transfer ? transfer.line?.map(terrainPosition) : navigation?.route;
+    const ends = transfer ? transfer.points.map(terrainPosition)
+      : route?.length && !navigation.arrived ? (navigation.origin ? [route[0],route.at(-1)] : [route.at(-1)]) : [];
+    const badges = ends.map((_,index) => mode === 'bus' ? routeMarker('bus',parkShuttleStops[index])
+      : routeMarker(ends.length === 2 && index === 0 ? 'start' : 'finish'));
     focus ||= Boolean(transfer && transferFramed !== mode);
     transferFramed = mode;
     if (landscape) {
-      landscape.setNavigation(visitorLocation,route,focus,cameraPadding,ends,stopLinks);
+      landscape.setNavigation(visitorLocation,route,focus,cameraPadding,{ends,badges,overview:Boolean(transfer)});
     } else if (map && navigationLayer) {
+      const minZoom = calibration ? (transfer ? 13 : 14) : -4;
+      if (map.getMinZoom() !== minZoom) map.setMinZoom(minZoom);
       navigationLayer.clearLayers();
       const style = {pane:'visitor-navigation',interactive:false,lineJoin:'round',lineCap:'round'};
       if (route?.length > 1) {
@@ -436,10 +521,10 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
         L.polyline(route,{...style,color:'#215fce',weight:5}).addTo(navigationLayer);
       }
       for (const [index, point] of ends.entries()) {
-        const link = stopLinks[index];
-        const icon = L.divIcon({className:'map-transfer-pin',html:link || ['А','Б'][index],
-          iconSize:[28,28],iconAnchor:[14,14]});
-        L.marker(point,{icon,pane:'visitor-services',interactive:Boolean(link),keyboard:false}).addTo(navigationLayer);
+        const badge = badges[index];
+        const icon = L.divIcon({className:'route-marker-host',html:badge,
+          iconSize:[44,44],iconAnchor:[22,badge.dataset.marker === 'start' ? 22 : 40]});
+        L.marker(point,{icon,pane:'visitor-services',interactive:badge.tagName === 'A',keyboard:false}).addTo(navigationLayer);
       }
       if (!ends.length && route?.length) L.circleMarker(route.at(-1),{...style,radius:5,weight:2,color:'#fff',fillColor:'#215fce',fillOpacity:1}).addTo(navigationLayer);
       if (visitorLocation) L.circleMarker(visitorLocation,{...style,radius:7,weight:3,color:'#fff',fillColor:'#2871e2',fillOpacity:1}).addTo(navigationLayer);
@@ -468,33 +553,54 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
     updateDirections();
   }
 
-  function findVisitor(place) {
+  function walkingNetwork(place, origin, metresPerPixel) {
+    const shuttle = place.approach ? place : origin?.approach ? origin : null;
+    const tail = shuttle && [shuttle.approach.join,
+      ...[...shuttle.approach.via,shuttle.geo].map(geo => rasterPoint(terrainPosition(geo)))];
+    const edges = guestNetwork(guestData,place.zone,tail);
+    const access = point => {
+      const key = placeKey(point);
+      const saved = calibration.approaches?.[key];
+      const target = saved ? L.latLng(saved) : position(point);
+      if (!target) return null;
+      const join = guestApproach(edges,{point:rasterPoint(target), enclosure:boundaryData?.enclosures[key], saved},metresPerPixel);
+      return join && (!point.approach || join.distance * metresPerPixel <= 1) ? join : null;
+    };
+    return {edges, finish:access(place), start:origin && access(origin)};
+  }
+
+  function findVisitor(place, origin = null, destination = null) {
     endNavigation();
-    const request = {place, message:'Определяем ваше местоположение…', watch:null};
+    const request = {place, origin, destination, message:'Определяем ваше местоположение…', watch:null};
     navigation = request;
     const fail = message => {
       releaseLocation(request);
       request.message = message;
       updateDirections();
     };
+    if (!calibration) return fail('Географическая карта ещё не загрузилась.');
+    const metresPerPixel = planPoint([0,0]).distanceTo(planPoint([1,0]));
+    let network = place ? walkingNetwork(place,origin,metresPerPixel) : {};
+    if (place && !network.finish) return fail('К месту назначения пока нет дорожки на карте.');
+    const setWalk = (walk, current) => {
+      request.route = walk.points?.map(planPoint);
+      const distanceToExit = request.destination && current && current.distanceTo(planPoint(network.finish.xy));
+      request.arrived = walk.status === 'nearby' && (!current || !request.destination || distanceToExit <= 15);
+      request.message = !request.destination ? walkingMessage[walk.status](walk.metres)
+        : request.arrived ? 'Вы у выхода.'
+        : walk.points ? 'До выхода · ' + Math.max(walk.metres,Math.round(distanceToExit || 0)) + ' м'
+        : walkingMessage[walk.status](walk.metres);
+    };
+    if (origin) {
+      if (!network.start) return fail('К начальной точке пока нет дорожки на карте.');
+      const walk = routeBetweenGuestPoints(network.start,network.finish,metresPerPixel);
+      setWalk(walk);
+      updateDirections(Boolean(walk.points));
+      return;
+    }
     if (!window.isSecureContext) return fail('Для геолокации откройте сайт по HTTPS.');
     if (!navigator.geolocation) return fail('Геолокация недоступна в этом браузере.');
-    if (!calibration) return fail('Географическая карта ещё не загрузилась.');
     const mapArea = L.latLngBounds([[0,0],[width,0],[width,height],[0,height]].map(planPoint)).pad(0.35);
-    const metresPerPixel = planPoint([0,0]).distanceTo(planPoint([1,0]));
-    const approach = place?.approach;
-    const tail = approach && [approach.join,...[...approach.via,place.geo].map(geo => rasterPoint(terrainPosition(geo)))];
-    const edges = place ? guestNetwork(guestData,place.zone,tail) : [];
-    let finish;
-    if (place) {
-      const key = placeKey(place);
-      const saved = calibration.approaches?.[key];
-      const target = saved ? L.latLng(saved) : position(place);
-      finish = target && guestApproach(edges,{point:rasterPoint(target), enclosure:boundaryData?.enclosures[key], saved},metresPerPixel);
-      if (!finish || (approach && finish.distance * metresPerPixel > 1)) {
-        return fail('Рядом с этим местом пока нет нанесённого гостевого прохода.');
-      }
-    }
     try {
       request.watch = navigator.geolocation.watchPosition(({coords}) => {
         if (navigation !== request) return;
@@ -511,18 +617,34 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
           updateDirections(Boolean(visitorLocation));
           return;
         }
-        const walk = guestDirections(edges,rasterPoint(current),finish,metresPerPixel);
+        const pixel = rasterPoint(current);
+        let walk = guestDirections(network.edges,pixel,network.finish,metresPerPixel);
+        if (walk.status === 'outside-network' && !request.destination) {
+          const exit = visitorPlaces.find(point => point.zone !== place.zone && point.id === parkExitIds[point.zone]);
+          const exitNetwork = exit && walkingNetwork(exit,null,metresPerPixel);
+          const exitWalk = exitNetwork?.finish && guestDirections(exitNetwork.edges,pixel,exitNetwork.finish,metresPerPixel);
+          if (exitWalk?.points) {
+            request.destination = place;
+            request.place = exit;
+            network = exitNetwork;
+            walk = exitWalk;
+            navigate({zone:exit.zone,id:exit.id,kind:'all',service:''});
+          }
+        }
         const focus = Boolean(walk.points && !request.route);
-        request.route = walk.points?.map(planPoint);
-        request.message = approach && walk.status === 'walking' ? 'Пешком ' + walk.metres + ' м'
-          : walkingMessage[walk.status](walk.metres);
+        setWalk(walk,current);
         updateDirections(focus);
       }, error => {
         if (navigation !== request) return;
-        request.route = null;
-        visitorLocation = null;
-        fail(error.code === 1 ? 'Разрешите доступ к местоположению в настройках браузера.' :
-          'Не удалось определить местоположение. Проверьте GPS и попробуйте снова.');
+        if (error.code === 1) {
+          request.route = null;
+          request.arrived = false;
+          visitorLocation = null;
+          fail('Разрешите доступ к местоположению в настройках браузера.');
+        } else {
+          request.message = 'Ожидаем сигнал GPS…';
+          updateDirections();
+        }
       }, {enableHighAccuracy:true,timeout:12000,maximumAge:0});
       updateDirections();
     } catch {
@@ -569,7 +691,7 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
     const detail = document.createElement('p');
     const zone = guide.zones[point.zone].name;
     const location = guide.locationLabel(point);
-    detail.textContent = point.detail || (location === point.name ? zone : zone + ' · ' + location);
+    detail.textContent = point.detail || (hasAnimals(point) || location === point.name ? zone : zone + ' · ' + location);
     const header = document.createElement('div');
     header.className = 'map-place-heading';
     const words = document.createElement('div');
@@ -605,13 +727,22 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
       action.innerHTML = '<svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-route"/></svg><span>Проложить маршрут</span>';
       action.onclick = () => {
         if (placeKey(navigation?.place) === placeKey(point) && (navigation.watch != null || navigation.route)) endNavigation();
-        else findVisitor(point);
+        else findVisitor(point, routeOrigin);
       };
+      const origin = document.createElement('button');
+      origin.className = 'map-walk-origin';
+      origin.type = 'button';
+      origin.innerHTML = '<span>Откуда</span><strong></strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+      origin.onclick = openOriginPicker;
       const message = document.createElement('p');
       message.className = 'map-walk-status';
       message.setAttribute('role','status');
       message.hidden = true;
-      actions.append(action,message);
+      const onward = document.createElement('a');
+      onward.className = 'map-walk-onward';
+      onward.textContent = 'Автобус или машина';
+      onward.hidden = true;
+      actions.append(action,origin,message,onward);
     }
     if (!hasPosition && listenHost.hidden) actions.remove();
     if (narration.hasChildNodes()) card.append(narration);
@@ -717,6 +848,12 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
       const panel = overlay.getBoundingClientRect();
       if (panel.width < box.width*.56 && panel.left < box.left+40) pad.left = panel.right-box.left+20;
       else pad.bottom = Math.max(pad.bottom, box.bottom-panel.top+12);
+    }
+    if (state.transfer === 'bus') {
+      pad.left = Math.max(84,pad.left);
+      pad.right = Math.max(84,pad.right);
+      pad.top += 52;
+      pad.bottom += 18;
     }
     pad.bottom = Math.min(pad.bottom,Math.max(0,box.height-pad.top-62));
     return pad;
@@ -1049,8 +1186,10 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
     if (!dataReady) return;
     if (!document.getElementById('map').classList.contains('current')) return;
     const next = parseRoute();
-    if (state.zone !== next.zone || (navigation && (next.transfer || (navigation.place && navigation.place.id !== next.id)))) endNavigation();
-    if (searchOpen && (next.transfer || (next.id && (next.id !== state.id || next.zone !== state.zone)))) setSearch(false);
+    const destinationChanged = state.zone !== next.zone || state.id !== next.id;
+    if (destinationChanged) routeOrigin = null;
+    if (navigation?.place ? placeKey(navigation.place) !== next.zone + '/' + next.id : state.zone !== next.zone) endNavigation();
+    if (searchOpen && (next.transfer || (destinationChanged && (next.id || originSearch)))) setSearch(false);
     Object.assign(state, next);
     searchAnimals();
     try { localStorage.setItem('park-map-zone', String(state.zone)); } catch {}
@@ -1088,7 +1227,7 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
         filterHint.textContent = 'В этой зоне таких мест нет.';
         status.hidden = true;
         renderCard(selectedPlace());
-        landscape.update({cameraPadding,items,paths,contours:zoneContours(),fenceSections:zoneFenceSections(),walk:focusedWalk(paths),selected:next.id,zone:next.zone,position,alignment:calibration,filter:next.kind+'/'+next.service});
+        landscape.update({cameraPadding,items,paths,contours:zoneContours(),fenceSections:zoneFenceSections(),walk:focusedWalk(paths),selected:next.id,zone:next.zone,position,alignment:calibration,filter:next.kind+'/'+next.service,overview:Boolean(next.transfer)});
         updateDirections();
         return;
       }
@@ -1119,6 +1258,7 @@ import { createTransferPanel, shuttleStopLink } from './map-transfer-panel.js';
       if (navigation) endNavigation();
       if (publicationChanged) {
         visitorPlaces = mapPlaces(source);
+        if (routeOrigin) routeOrigin = visitorPlaces.find(point => placeKey(point) === placeKey(routeOrigin)) || null;
       }
       guestData = paths;
       if (initial || publicationChanged || alignmentChanged) calibration = next;

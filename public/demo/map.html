@@ -32,6 +32,19 @@
     <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
     <symbol id="icon-back" viewBox="0 0 24 24"><path d="m13 6-6 6 6 6M7 12h13"/></symbol>
     <symbol id="icon-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h3c4 0 2-8 6-10"/></symbol>
+    <symbol id="route-start" viewBox="0 0 32 36">
+      <circle cx="16" cy="18" r="10" fill="var(--z-panel)" stroke="white" stroke-width="4"/>
+      <circle cx="16" cy="18" r="8" fill="none" stroke="#235ac1" stroke-width="3"/>
+    </symbol>
+    <symbol id="route-finish" viewBox="0 0 32 36">
+      <path d="M16 34C14 32 3 22 3 15C3 7.8 8.8 2 16 2s13 5.8 13 13c0 7-11 17-13 19Z" fill="#235ac1" stroke="white" stroke-width="2.5"/>
+      <circle cx="16" cy="15" r="4.2" fill="white"/>
+    </symbol>
+    <symbol id="route-bus" viewBox="0 0 32 36">
+      <path d="M3 11a8 8 0 0 1 8-8h10a8 8 0 0 1 8 8v11a8 8 0 0 1-8 8h-2l-3 4-3-4h-2a8 8 0 0 1-8-8Z" fill="#235ac1" stroke="white" stroke-width="2"/>
+      <path d="M9 13a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v9H9ZM9 17h14m-11 5v3m8-3v3" fill="none" stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 19.5h.1m7.9 0h.1" stroke="white" stroke-width="1.65" stroke-linecap="round"/>
+    </symbol>
     <symbol id="audio-play-icon" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7z" fill="currentColor" stroke="none"/></symbol>
     <symbol id="audio-pause-icon" viewBox="0 0 24 24"><rect x="7" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
     <symbol id="icon-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></symbol>
@@ -106,8 +119,8 @@
             </nav>
             <div data-transfer-info="bus">
               <ul class="map-shuttle-stops" aria-label="Остановки в парке">
-                <li><a data-pin="А" href="#map/1/park-shuttle-stop"><strong>Казачны мір</strong><small>Остановка у касс</small></a></li>
-                <li><a data-pin="Б" href="#map/2/park-shuttle-stop"><strong>Лясныя таямніцы</strong><small>Остановка у касс</small></a></li>
+                <li><a href="#map/1/park-shuttle-stop"><svg viewBox="0 0 32 36" aria-hidden="true"><use href="#route-bus"/></svg><strong>Казачны мір</strong><small>Остановка у касс</small></a></li>
+                <li><a href="#map/2/park-shuttle-stop"><svg viewBox="0 0 32 36" aria-hidden="true"><use href="#route-bus"/></svg><strong>Лясныя таямніцы</strong><small>Остановка у касс</small></a></li>
               </ul>
               <details class="shuttle-schedule" id="shuttle-schedule">
                 <summary>Расписание автобуса</summary>
@@ -116,11 +129,12 @@
             </div>
             <div data-transfer-info="car" hidden>
               <dl class="map-transfer-points">
-                <div data-pin="А"><dt>Откуда</dt><dd>Парковка «Казачны мір»</dd></div>
-                <div data-pin="Б"><dt>Куда</dt><dd>Гостевая парковка «Лясныя таямніцы»</dd></div>
+                <div data-marker="start"><dt>Откуда</dt><dd>Парковка «Казачны мір»</dd></div>
+                <div data-marker="finish"><dt>Куда</dt><dd>Гостевая парковка «Лясныя таямніцы»</dd></div>
               </dl>
               <p class="map-route-distance" aria-label="Длина маршрута"></p>
             </div>
+            <a class="map-transfer-target" hidden></a>
           </div>
         </aside>
 

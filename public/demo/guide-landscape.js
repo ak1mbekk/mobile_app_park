@@ -287,7 +287,7 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
     const category = payload.filter.startsWith('service/') && payload.filter !== 'service/';
     if (map.getLayoutProperty('locations','icon-allow-overlap') !== category)
       map.setLayoutProperty('locations','icon-allow-overlap',category);
-    const key = [zone,selected,payload.filter,payload.walk?.id].join('/');
+    const key = [zone,selected,payload.filter,payload.walk?.id,payload.overview].join('/');
     const frame = () => {
       const padding = payload.cameraPadding();
       if (target) map.jumpTo({
@@ -325,14 +325,16 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
     if (cameraKey !== key) {
       cameraKey = key;
       map.resize();
-      frame();
+      if (!payload.overview) frame();
     }
   }
   let navigationState;
   const transferMarkers = [];
   function drawNavigation() {
     if (!ready || stopped || !navigationState) return;
-    const {visitor,route,focus,padding,ends,stopLinks} = navigationState;
+    const {visitor,route,focus,padding,ends,badges,overview} = navigationState;
+    const minZoom = overview ? 13 : 14;
+    if (map.getMinZoom() !== minZoom) map.setMinZoom(minZoom);
     const features = [];
     const coordinates = ll => [ll.lng,ll.lat];
     const pin = (point,isVisitor) => ({type:'Feature',properties:{visitor:isVisitor},
@@ -344,11 +346,10 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
     map.getSource('navigation').setData(collection(features));
     for (const marker of transferMarkers.splice(0)) marker.remove();
     for (const [index, point] of ends.entries()) {
-      const element = stopLinks[index] || document.createElement('span');
-      element.className = 'map-transfer-pin';
-      if (stopLinks[index]) element.setAttribute('role','link');
-      else element.textContent = ['А','Б'][index];
-      transferMarkers.push(new gl.Marker({element}).setLngLat(coordinates(point)).addTo(map));
+      const element = badges[index];
+      const start = element.dataset.marker === 'start';
+      const marker = new gl.Marker({element, anchor:start ? 'center' : 'bottom', offset:start ? [0,0] : [0,4]});
+      transferMarkers.push(marker.setLngLat(coordinates(point)).addTo(map));
     }
     if (!focus || (!visitor && !ends.length)) return;
     navigationState.focus = false;
@@ -356,13 +357,15 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
       const bounds = new gl.LngLatBounds();
       for (const point of [...ends,...(route || [])]) bounds.extend(coordinates(point));
       if (visitor) bounds.extend(coordinates(visitor));
+      const insets = padding();
       map.setPadding({top:0,bottom:0,left:0,right:0});
-      map.fitBounds(bounds,{padding:padding(),maxZoom:18.5,pitch:0,bearing:0,duration:0});
+      const view = map.cameraForBounds(bounds,{padding:insets,maxZoom:18.5,bearing:0});
+      if (view) map.jumpTo({center:bounds.getCenter(),zoom:view.zoom,pitch:0,bearing:0,padding:insets});
     } else map.jumpTo({center:coordinates(visitor),zoom:Math.max(17,map.getZoom()),padding:padding()});
   }
-  function setNavigation(visitor,route,focus,padding,ends = [], stopLinks = []) {
+  function setNavigation(visitor,route,focus,padding,{ends = [], badges = [], overview = false} = {}) {
     const pendingFocus = !ready && visitor === navigationState?.visitor && navigationState?.focus;
-    navigationState = {visitor,route,focus:focus || pendingFocus,padding,ends,stopLinks};
+    navigationState = {visitor,route,focus:focus || pendingFocus,padding,ends,badges,overview};
     drawNavigation();
   }
   function keepMarkerVisible(point, padding) {

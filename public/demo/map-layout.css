@@ -66,6 +66,7 @@
 }
 .map-transfer-body { min-height:0; overflow:auto; overscroll-behavior:contain; display:grid; gap:10px; }
 .map-transfer-panel h2 { margin:0; font:650 18px/1.2 var(--z-font); }
+#map .map-transfer-panel h2:focus { outline:none; }
 .map-transfer-panel :is(p,address) { margin:0; color:var(--muted); font:500 13px/1.45 var(--z-font); }
 .map-transfer-close { color:inherit; min-width:44px; min-height:44px; display:grid; place-items:center; }
 .map-transfer-modes { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
@@ -80,10 +81,16 @@
   display:grid; grid-template-columns:26px 1fr; gap:1px 9px; padding-block:7px;
   border-bottom:1px solid var(--line);
 }
-:is(.map-transfer-points div,.map-shuttle-stops a)::before {
-  content:attr(data-pin); grid-row:1 / 3; align-self:center;
-  display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:#215fce;
-  color:white; font:650 12px/1 var(--z-font);
+.map-shuttle-stops svg {
+  grid-row:1 / 3; align-self:center; width:26px; height:29px;
+}
+.map-transfer-points div::before {
+  content:""; box-sizing:border-box; grid-row:1 / 3; justify-self:center; align-self:center;
+  width:14px; height:14px; border:3px solid #235ac1; border-radius:50%;
+}
+.map-transfer-points div[data-marker="finish"]::before {
+  width:16px; height:16px; background:#235ac1; border-color:var(--z-panel);
+  border-radius:55% 55% 55% 0; transform:rotate(-45deg);
 }
 .map-transfer-points dt,.map-shuttle-stops strong { font:600 13px/1.25 var(--z-font); }
 .map-shuttle-stops a { color:var(--z-link); min-height:44px; text-decoration:none; }
@@ -106,14 +113,15 @@
   display:grid; grid-template-columns:repeat(auto-fit,minmax(34px,1fr)); column-gap:4px;
   margin:4px 0 0; color:var(--muted); font:500 13px/1.4 var(--z-font); font-variant-numeric:tabular-nums;
 }
-#map .map-transfer-pin {
-  display:grid; place-items:center; width:28px; height:28px;
-  border:2px solid white; border-radius:50%; background:#215fce; color:white;
-  font:650 15px/1 var(--z-font); pointer-events:none;
+#map .route-marker-host { background:none; border:0; }
+#map .map-route-marker { display:grid; place-items:center; width:44px; height:44px; pointer-events:none; }
+#map a.map-route-marker { pointer-events:auto; text-decoration:none; }
+#map .map-route-marker svg { width:32px; height:36px; filter:drop-shadow(0 2px 2px rgb(0 0 0 / .23)); }
+#map .map-bus-marker-label {
+  position:absolute; top:42px; left:50%; transform:translateX(-50%);
+  padding:3px 7px; border:1px solid var(--z-line); border-radius:6px; background:var(--z-panel);
+  color:var(--z-ink); font:650 12px/1.25 var(--z-font); white-space:nowrap;
 }
-#map .map-transfer-pin a, #map a.map-transfer-pin { color:white; pointer-events:auto; text-decoration:none; }
-#map .map-transfer-pin a { display:grid; place-items:center; width:100%; height:100%; }
-#map :is(.map-transfer-pin a,a.map-transfer-pin)::after { content:""; position:absolute; inset:-8px; }
 #map :is(.map-locate,.maplibregl-ctrl-bottom-right,.leaflet-bottom.leaflet-right) { right:var(--map-right-edge); }
 #map :is(.maplibregl-ctrl-bottom-right,.leaflet-bottom.leaflet-right) :is(.maplibregl-ctrl-group,.leaflet-control-zoom) { margin:0; }
 #map .map-status { top:calc(var(--map-toolbar-bottom) + env(safe-area-inset-top)); left:var(--map-left-edge); right:auto; max-width:calc(100% - var(--map-left-edge) - var(--map-right-edge)); }
@@ -160,6 +168,18 @@
 #map .map-result .place-info small { margin:0; color:var(--muted); font-size:13px; }
 #map .map-result .resident-profile { min-height:44px; margin:0; }
 #map .map-result .guide-card-actions button { font-size:14px; }
+#map .map-result .map-walk-origin {
+  flex-basis:100%; justify-content:flex-start; border-radius:9px; padding-inline:11px; gap:9px;
+  color:var(--z-ink); text-align:left;
+}
+.map-walk-origin > span { color:var(--muted); font-weight:500; }
+.map-walk-origin > strong { flex:1; min-width:0; }
+.map-walk-origin svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; }
+#map :is(.map-walk-onward,.map-transfer-target):not([hidden]) {
+  display:grid; place-items:center; flex-basis:100%; min-height:44px; padding:8px 12px;
+  border-radius:9px; background:var(--z-lime); color:var(--z-on-lime);
+  text-align:center; text-decoration:none; font:650 14px/1.25 var(--z-font);
+}
 @media(max-width:720px) {
   #map {
     --map-inset:12px;

@@ -1,7 +1,7 @@
 // The road in the park plan (12 Nov 2025), matched to OSM ways
 // 1076075884, 852337476, 472401877, 413693338, 248990835 and 1076075895.
 // Coordinates are [longitude, latitude]. The second parking aisle is one-way.
-const drive = [
+const road = [
   [26.0108915,53.094786], [26.0110836,53.0948966], [26.0111388,53.0949412],
   [26.0113292,53.0945814], [26.0116089,53.0940527], [26.0117208,53.0938411],
   [26.0124198,53.0925191], [26.0125978,53.0921024], [26.0132674,53.0904603],
@@ -9,16 +9,23 @@ const drive = [
   [26.016074,53.090477], [26.0169943,53.090651], [26.0174136,53.0907314],
   [26.0178389,53.0909082], [26.0202793,53.0924434], [26.0205614,53.0926209],
   [26.0207674,53.0928334], [26.020896,53.092966], [26.0210897,53.0932051],
-  [26.0213607,53.0932146],
 ];
+const forestParking = [26.0213607,53.0932146];
+const aisleExit = [26.0221272,53.0944858];
 
 const radians = degrees => degrees * Math.PI / 180;
 // Equirectangular distance is sufficient for the short segments of this route.
-const driveKilometres = drive.slice(1).reduce((total, [lng,lat], index) => {
-  const [previousLng,previousLat] = drive[index];
-  const longitude = radians(lng - previousLng) * Math.cos(radians((lat + previousLat) / 2));
-  return total + 6371 * Math.hypot(longitude,radians(lat - previousLat));
-}, 0);
+function drivingRoute(line) {
+  const kilometres = line.slice(1).reduce((total, [lng,lat], index) => {
+    const [previousLng,previousLat] = line[index];
+    const longitude = radians(lng - previousLng) * Math.cos(radians((lat + previousLat) / 2));
+    return total + 6371 * Math.hypot(longitude,radians(lat - previousLat));
+  }, 0);
+  return {line, points:[line[0],line.at(-1)], kilometres};
+}
+
+// The forest zone uses the same gate in both directions.
+export const parkExitIds = {1:'exit', 2:'entrance'};
 
 export const parkShuttleStops = [
   {
@@ -43,10 +50,15 @@ export const parkShuttleStops = [
   },
 ];
 
-export const parkTransfer = {
-  car: {line:drive, points:[drive[0],drive.at(-1)], kilometres:driveKilometres},
-  bus: {points:parkShuttleStops.map(stop => stop.geo)},
+const carRoutes = {
+  1:drivingRoute([...road,forestParking]),
+  2:drivingRoute([forestParking,[26.022352,53.094303],aisleExit,...[...road].reverse()]),
 };
+const busOverview = {points:parkShuttleStops.map(stop => stop.geo)};
+
+export function parkTransfer(mode, zone) {
+  return mode === 'car' ? carRoutes[zone] : mode === 'bus' ? busOverview : null;
+}
 
 // Departure times transcribed from the park's shuttle timetable.
 export const shuttleDepartures = [
