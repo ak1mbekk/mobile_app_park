@@ -109,7 +109,7 @@ export default function PullToRefresh({
     if (!clothPath || !wrinklesPath || !monkeyArm || !dragArea) return;
 
     let cancelled = false;
-    function renderLoop() {
+    const renderLoop = () => {
       if (cancelled) return;
       const s = state.current;
       let speed = 0.15;
@@ -152,7 +152,7 @@ export default function PullToRefresh({
       monkeyArm.style.transform = `translateX(-50%) translateY(${cur.pawY}px)`;
 
       requestAnimationFrame(renderLoop);
-    }
+    };
     requestAnimationFrame(renderLoop);
     return () => { cancelled = true; };
   }, []);

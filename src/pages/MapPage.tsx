@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet';
@@ -60,7 +60,6 @@ export default function MapPage() {
     addEnclosure,
     removeEnclosure,
     updateEnclosureLabel,
-    clearAll,
   } = useMapAnnotations();
   const {
     effectiveGeoBounds,
@@ -70,7 +69,6 @@ export default function MapPage() {
 
   const [layerMode, setLayerMode] = useState<'plan' | 'map'>('map');
   const [drawMode, setDrawMode] = useState<'enclosure' | null>(null);
-  const [moveMarkersMode, setMoveMarkersMode] = useState(false);
   const [draftPolygonPoints, setDraftPolygonPoints] = useState<{ x: number; y: number }[]>([]);
   const [labelModal, setLabelModal] = useState<{ points: { x: number; y: number }[] } | null>(null);
   const [labelInputValue, setLabelInputValue] = useState('');
@@ -103,7 +101,6 @@ export default function MapPage() {
   const navAbortRef = useRef(false);
   const navTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [routeLabel, setRouteLabel] = useState<string | null>(null);
-  const [routeMarkersCount, setRouteMarkersCount] = useState(0);
 
   const handleNavigateToMarker = useCallback(
     async (marker: MapMarker, destLat?: number, destLng?: number) => {
@@ -165,7 +162,6 @@ export default function MapPage() {
           setNavigationTarget({ marker, lat: lat!, lng: lng! });
           setNavigationActive(true);
           setRouteLabel(null);
-          setRouteMarkersCount(0);
         },
         (err) => {
           if (navTimeoutRef.current) {
@@ -201,7 +197,6 @@ export default function MapPage() {
     setRouteInfo(null);
     setUserLocation(null);
     setRouteLabel(null);
-    setRouteMarkersCount(0);
   }, []);
 
   const handleStopNavigation = useCallback(() => {
@@ -218,7 +213,6 @@ export default function MapPage() {
     setNavError(null);
     setNavLoading(false);
     setRouteLabel(null);
-    setRouteMarkersCount(0);
   }, []);
 
   useEffect(() => {
@@ -233,21 +227,12 @@ export default function MapPage() {
 
   const handleMapPick = useCallback(
     (point: { x: number; y: number }) => {
-      if (!moveMarkersMode && drawMode === 'enclosure' && !labelModal) {
+      if (drawMode === 'enclosure' && !labelModal) {
         setDraftPolygonPoints((prev) => [...prev, point]);
       }
     },
-    [moveMarkersMode, drawMode, labelModal]
+    [drawMode, labelModal]
   );
-
-  const finishEnclosure = useCallback(() => {
-    if (draftPolygonPoints.length < 3) {
-      alert('Добавьте минимум 3 точки на карте, кликая по ней.');
-      return;
-    }
-    setLabelModal({ points: [...draftPolygonPoints] });
-    setLabelInputValue('');
-  }, [draftPolygonPoints]);
 
   const submitEnclosureLabel = useCallback(() => {
     if (!labelModal) return;
@@ -265,13 +250,6 @@ export default function MapPage() {
     setDraftPolygonPoints([]);
     setDrawMode(null);
   }, [labelModal, addEnclosure]);
-
-  const cancelDraw = useCallback(() => {
-    setLabelModal(null);
-    setEditingEnclosure(null);
-    setDraftPolygonPoints([]);
-    setDrawMode(null);
-  }, []);
 
   const handleEnclosureEdit = useCallback(
     (enc: { id: string; points: { x: number; y: number }[]; label: string }) => {
@@ -386,7 +364,6 @@ export default function MapPage() {
             lng: last.lng,
           });
           setRouteLabel(route.label);
-          setRouteMarkersCount(waypoints.length);
           setNavigationActive(true);
         },
         (err) => {
@@ -504,12 +481,10 @@ export default function MapPage() {
                 height={mapHeight}
                 fullBleed
                 enablePicker={
-                  !moveMarkersMode &&
                   drawMode === 'enclosure' &&
                   !labelModal &&
                   layerMode === 'plan'
                 }
-                moveMarkersMode={moveMarkersMode}
                 onPick={handleMapPick}
                 enclosures={annotations.enclosures}
                 draftPolygonPoints={labelModal ? [] : draftPolygonPoints}
@@ -525,7 +500,6 @@ export default function MapPage() {
                     ? handleNavigateToMarker
                     : undefined
                 }
-                imageOverlayOpacity={layerMode === 'map' ? 1 : 0.5}
               />
               </div>
             </motion.div>

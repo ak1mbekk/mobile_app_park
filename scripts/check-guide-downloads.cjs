@@ -35,7 +35,7 @@ async function testResume(browser) {
     const page = await context.newPage();
     await page.goto(audioPage + '/2/7');
     await page.waitForFunction(() => window.audioRequests.includes('llama'), null, waiting);
-    assert.deepEqual(await page.evaluate(() => window.audioRequests), ['alpaca','llama']);
+    assert.deepEqual(await page.evaluate(() => window.audioRequests), ['watusi','alpaca','llama']);
     assert(await page.locator('.guide-sync-status[data-state="saving"]').isVisible());
     await context.setOffline(true);
     await page.getByText('Нет интернета. Доступны сохранённые данные',{exact:true}).waitFor(waiting);
@@ -47,7 +47,7 @@ async function testResume(browser) {
     await context.setOffline(false);
     await page.locator('.audio-save[data-state="saved"]').waitFor(waiting);
     assert.deepEqual(await page.evaluate(() => window.audioRequests),
-      ['alpaca','llama','llama','camel-donkey','lamancha-boer','capybara','caracal']);
+      ['watusi','alpaca','llama','llama','camel-donkey','lamancha-boer','capybara','caracal']);
     assert(!await page.locator('.guide-sync-status').isVisible());
 
     await context.setOffline(true);
@@ -78,7 +78,7 @@ async function testWeakConnection(browser) {
     });
     await page.locator('.audio-save[data-state="saved"]').waitFor(waiting);
     assert.deepEqual(await page.evaluate(() => window.audioRequests),
-      ['lamancha-boer','camel-donkey','alpaca','llama','capybara','caracal']);
+      ['watusi','lamancha-boer','camel-donkey','alpaca','llama','capybara','caracal']);
 
     await page.reload();
     await page.locator('.audio-save[data-state="saved"]').waitFor(waiting);
@@ -95,12 +95,12 @@ async function testTransferTimeout(browser) {
       Object.defineProperty(navigator, 'connection', {value:undefined});
       const schedule = window.setTimeout.bind(window);
       window.setTimeout = (callback, delay, ...args) => schedule(callback, delay === 12000 ? 80 : delay, ...args);
-      window.addEventListener('load', () => { window.holdRecording = 'lamancha-boer'; });
+      window.addEventListener('load', () => { window.holdRecording = 'watusi'; });
     });
     const page = await context.newPage();
     await page.goto(audioPage);
     await page.getByText('Слабая связь.', {exact:true}).waitFor(waiting);
-    assert.deepEqual(await page.evaluate(() => window.audioRequests), ['lamancha-boer']);
+    assert.deepEqual(await page.evaluate(() => window.audioRequests), ['watusi']);
     assert.equal(await page.locator('.audio-save[data-state="saved"]').count(), 0);
   } finally { await context.close(); }
 }
@@ -127,7 +127,8 @@ async function testCaracalPlayback(browser) {
     }
     async function openCaracalOnMap() {
       await page.goto(base + 'map.html#map/1');
-      await page.locator('[data-shell="animals"]:visible').click();
+      await page.locator('.map-search-toggle').click();
+      await page.locator('#animal-map-matches').getByRole('button',{name:'Животные',exact:true}).click();
       await page.locator('#animal-map-query').fill('Каракал');
       await page.locator('#animal-map-matches').getByRole('button',{name:/Каракал/}).click();
       const card = page.locator('.place-info:visible');

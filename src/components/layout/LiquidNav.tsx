@@ -1,4 +1,4 @@
-import React, { useRef, useLayoutEffect, useState } from 'react';
+import { useRef, useLayoutEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -106,7 +106,7 @@ export default function LiquidNav({compact=false}: {compact?: boolean}) {
             ref={navListRef}
             className="relative flex items-end pb-6 w-full h-full list-none m-0 p-0 z-10"
           >
-            {NAV_ITEMS.map(({ path, icon: Icon, label }, index) => {
+            {NAV_ITEMS.map(({ path, icon: Icon, label }) => {
               const active = isActive(path, location.pathname);
               return (
                 <li

@@ -12,6 +12,7 @@
     "dev": "vite --port 5173 --strictPort",
     "serve:guide": "cargo run --locked --manifest-path server/Cargo.toml",
     "serve:guide:preview": "vite --config vite.visitor.config.js",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
     "build": "vite build",
     "preview": "vite preview",
     "cap:sync": "npm run build && npx cap sync",

@@ -107,20 +107,6 @@ function saveToStorage(anchors: MapAnchor[]) {
   }
 }
 
-function normalizeAnchor(a: unknown): MapAnchor | null {
-  if (!a || typeof a !== 'object') return null;
-  const obj = a as { image?: { x?: number; y?: number }; geo?: { lat?: number; lng?: number } };
-  const img = obj.image ?? obj;
-  const geo = obj.geo ?? obj;
-  const imgObj = img as { x?: number; y?: number };
-  const geoObj = geo as { lat?: number; lng?: number };
-  const x = Number(imgObj?.x ?? 0);
-  const y = Number(imgObj?.y ?? 0);
-  const lat = Number(geoObj?.lat ?? 0);
-  const lng = Number(geoObj?.lng ?? 0);
-  return { image: { x, y }, geo: { lat, lng } };
-}
-
 export function anchorsToGeoBounds(
   anchors: MapAnchor[]
 ): [[number, number], [number, number]] | null {

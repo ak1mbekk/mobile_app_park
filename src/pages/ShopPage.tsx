@@ -1,4 +1,3 @@
-import React from 'react';
 import PageLayout from '../components/layout/PageLayout';
 import EmptyState from '../components/ui/EmptyState';
 import { ShoppingBagIcon } from '../components/icons';

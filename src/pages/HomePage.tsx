@@ -1,7 +1,6 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import PageLayout from '../components/layout/PageLayout';
-import { CalendarIcon, MapPinIcon, PawIcon, ChevronDownIcon } from '../components/icons';
+import { MapPinIcon, PawIcon, ChevronDownIcon } from '../components/icons';
 
 const EVENTS = [
   { id: '1', date: '25 фев', title: 'Экскурсия по зоопарку', time: '10:00' },
