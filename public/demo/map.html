@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#ffffff">
   <script src="guide-theme.js"></script>
   <script src="guide-history.js"></script>
+  <script src="guide-tab-motion.js"></script>
   <title>Карта Парка животных</title>
   <link rel="icon" type="image/png" href="assets/park-favicon.png">
   <link rel="apple-touch-icon" href="assets/park-touch-icon.png">
@@ -78,12 +79,23 @@
 
         <details class="guest-path-key">
           <summary><svg aria-hidden="true"><use href="#icon-route"/></svg>Маршруты для гостей</summary>
+          <a href="index.html#directions">Между локациями →</a>
           <a data-all-walks hidden href="?view=3d#map/1">Показать все дорожки зоны</a>
           <p data-plan hidden><i aria-hidden="true"></i>По схеме парка от 12.11.2025</p>
           <p data-open hidden><i aria-hidden="true"></i>Доступно посетителям</p>
           <p data-missing hidden>Для этой зоны маршрут пока не нанесён.</p>
           <p>Ограды нанесены по планам парка. У части вольеров показаны только различимые участки.</p>
         </details>
+
+        <aside class="map-transfer-panel" hidden aria-labelledby="map-transfer-title">
+          <div>
+            <h2 id="map-transfer-title"></h2>
+            <p>А · Казачны мір<br>Б · Лясныя таямніцы</p>
+          </div>
+          <a href="map.html#map/1" aria-label="Закрыть маршрут между локациями">
+            <svg class="p-icon" aria-hidden="true"><use href="#icon-close"/></svg>
+          </a>
+        </aside>
 
         <p class="map-status" role="status">Загружаем карту…</p>
 

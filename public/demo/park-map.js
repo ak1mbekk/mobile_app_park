@@ -1,6 +1,7 @@
 import { loadMapData, loadMapTerrain, mapPlaces, terrainUrl } from './map-data.js';
 import { contains, width, height } from './map-boundary-geometry.js';
 import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from './map-guest-geometry.js';
+import { parkTransfer } from './park-transfer.js';
 
 (() => {
   const guide = window.parkGuide;
@@ -17,6 +18,12 @@ import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from 
   const listButton = summary.querySelector('.category-list');
   const status = host.querySelector('.map-status');
   const locateButton = host.querySelector('.map-locate');
+  const legend = host.querySelector('.guest-path-key');
+  const transferPanel = host.querySelector('.map-transfer-panel');
+  const transferMode = new URLSearchParams(location.search).get('transport');
+  const transfer = Object.hasOwn(parkTransfer, transferMode) ? parkTransfer[transferMode] : null;
+  const terrainReference = {centerX:9601312.071205,centerY:5472047.323384,scale:0.59315515,angle:0.805739};
+  if (transfer) transferPanel.querySelector('h2').textContent = transfer.title;
   const filterHint = document.createElement('p');
   filterHint.className = 'map-filter-hint';
   filterHint.setAttribute('role', 'status');
@@ -281,6 +288,7 @@ import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from 
     searchOpen = open;
     hitChooser?.dismiss();
     updateSheets();
+    if (transfer && calibration !== undefined) updateDirections();
     if (open) search.querySelector('h2').focus({ preventScroll: true });
     else if (returnFocus) searchToggle.focus({ preventScroll: true });
   }
@@ -372,6 +380,7 @@ import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from 
   }
 
   let navigation, visitorLocation, navigationLayer;
+  let transferFramed = false;
   const placeKey = point => point && point.zone + '/' + point.id;
   const planPoint = ([x,y]) => projection.crs.pointToLatLng(projection.toWorld(calibration,x,y),16);
   const rasterPoint = point => {
@@ -386,6 +395,13 @@ import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from 
     walking: metres => 'Пешком ' + metres + ' м · до дорожки у места',
   };
 
+  function terrainPosition([lng,lat]) {
+    const coordinate = L.latLng(lat,lng);
+    if (calibration) return coordinate;
+    const pixel = projection.toRaster(terrainReference,coordinate);
+    return L.latLng(-pixel.y,pixel.x);
+  }
+
   function updateDirections(focus = false) {
     const active = navigation?.place && placeKey(navigation.place) === placeKey(selectedPlace());
     const action = card.querySelector('.map-walk-button');
@@ -399,9 +415,15 @@ import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from 
     result.toggleAttribute('data-navigating',Boolean(active && navigation.route));
     locateButton.setAttribute('aria-busy',String(Boolean(navigation && !navigation.place && navigation.watch != null)));
     updateStatus();
-    const route = navigation?.route;
+    const showingTransfer = transfer && !navigation && search.hidden && result.hidden;
+    transferPanel.hidden = !showingTransfer;
+    legend.hidden = Boolean(showingTransfer);
+    const ends = showingTransfer ? transfer.points.map(terrainPosition) : [];
+    const route = showingTransfer ? transfer.line?.map(terrainPosition) : navigation?.route;
+    focus ||= Boolean(showingTransfer && !transferFramed);
+    transferFramed = Boolean(showingTransfer);
     if (landscape) {
-      landscape.setNavigation(visitorLocation,route,focus,cameraPadding);
+      landscape.setNavigation(visitorLocation,route,focus,cameraPadding,ends);
     } else if (map && navigationLayer) {
       navigationLayer.clearLayers();
       const style = {pane:'visitor-navigation',interactive:false,lineJoin:'round',lineCap:'round'};
@@ -409,13 +431,19 @@ import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from 
         L.polyline(route,{...style,color:'#fff',weight:8}).addTo(navigationLayer);
         L.polyline(route,{...style,color:'#215fce',weight:5}).addTo(navigationLayer);
       }
-      if (route?.length) L.circleMarker(route.at(-1),{...style,radius:5,weight:2,color:'#fff',fillColor:'#215fce',fillOpacity:1}).addTo(navigationLayer);
+      for (const [index, point] of ends.entries()) {
+        const icon = L.divIcon({className:'map-transfer-pin',html:['А','Б'][index],iconSize:[28,28],iconAnchor:[14,14]});
+        L.marker(point,{icon,pane:'visitor-services',interactive:false,keyboard:false}).addTo(navigationLayer);
+      }
+      if (!ends.length && route?.length) L.circleMarker(route.at(-1),{...style,radius:5,weight:2,color:'#fff',fillColor:'#215fce',fillOpacity:1}).addTo(navigationLayer);
       if (visitorLocation) L.circleMarker(visitorLocation,{...style,radius:7,weight:3,color:'#fff',fillColor:'#2871e2',fillOpacity:1}).addTo(navigationLayer);
-      if (focus && visitorLocation) {
-        if (route?.length) {
+      if (focus && (visitorLocation || ends.length)) {
+        if (route?.length || ends.length) {
           const pad = cameraPadding();
-          map.fitBounds(L.latLngBounds([visitorLocation,...route]),{paddingTopLeft:[pad.left,pad.top],
-            paddingBottomRight:[pad.right,pad.bottom],maxZoom:18.5,animate:false});
+          const points = [...ends,...(route || [])];
+          if (visitorLocation) points.push(visitorLocation);
+          map.fitBounds(L.latLngBounds(points),{paddingTopLeft:[pad.left,pad.top],
+            paddingBottomRight:[pad.right,pad.bottom],maxZoom:calibration ? 18.5 : 2,animate:false});
         } else framePlace(visitorLocation, Math.max(map.getZoom(),17));
       }
     }
@@ -497,11 +525,7 @@ import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from 
       building:'#c99e75',road:'#fff2d8',walk:'#fff6df',fence:'#8e947a'};
     // Reference transform for the bundled terrain in plan coordinates.
     // It displays the background when geographic alignment is unavailable.
-    const terrainReference = {centerX:9601312.071205,centerY:5472047.323384,scale:0.59315515,angle:0.805739};
-    const coordsToLatLng = calibration ? undefined : ([lng,lat]) => {
-      const point = projection.toRaster(terrainReference, L.latLng(lat,lng));
-      return L.latLng(-point.y,point.x);
-    };
+    const coordsToLatLng = calibration ? undefined : terrainPosition;
     try {
       const data = await loadMapTerrain();
       if (map !== mounted) return;
@@ -677,7 +701,7 @@ import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from 
     const head = toolbar.getBoundingClientRect();
     const dock = document.querySelector('.app-rail').getBoundingClientRect();
     const pad = {top: Math.max(16, head.bottom-box.top+10), bottom: Math.max(24,box.bottom-dock.top+10), left:22, right:22};
-    const overlay = !result.hidden ? result : !summary.hidden ? summary : null;
+    const overlay = [result, summary, transferPanel].find(panel => !panel.hidden);
     if (overlay) {
       const panel = overlay.getBoundingClientRect();
       if (panel.width < box.width*.56 && panel.left < box.left+40) pad.left = panel.right-box.left+20;
@@ -1028,7 +1052,6 @@ import { guestApproach, guestDirections, guestNetwork, guestPathsForZone } from 
       return;
     }
     const paths = guestPaths();
-    const legend = host.querySelector('.guest-path-key');
     legend.querySelector('[data-all-walks]').hidden = !focusedWalk(paths);
     legend.querySelector('[data-plan]').hidden = !paths.some(p => p.status === 'mapped');
     legend.querySelector('[data-all-walks]').href = '?view=3d#map/'+state.zone;

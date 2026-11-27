@@ -114,6 +114,22 @@ html:not(.dark) body.in-guide { --zk-cta:#254f3c; --zk-stone:84 98 86; }
 .tour-links { display:flex; flex-wrap:wrap; gap:4px 20px; }
 #tours .tour-booking p { margin-bottom:10px; }
 .arrival-address { margin:0 0 22px; color:var(--ink); }
+.arrival-transfer { margin-block:24px 32px; }
+.arrival-transfer h2 { margin:0 0 8px; font:600 24px/1.2 var(--z-font); }
+.arrival-transfer-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr)); gap:0 24px; }
+.arrival-transfer-option { border-top:1px solid var(--z-line); padding-block:16px; }
+.arrival-transfer-option h3 { margin:0; font:600 18px/1.3 var(--z-font); }
+.arrival-transfer-option p { margin:8px 0; color:var(--z-muted); }
+.arrival-transfer-option .p-primary { margin-top:6px; }
+.shuttle-schedule { margin-top:8px; }
+.shuttle-schedule summary { cursor:pointer; min-height:44px; align-content:center; font-weight:600; }
+.shuttle-departures { margin:0; }
+.shuttle-departures div { padding-block:10px; border-top:1px solid var(--z-line); }
+.shuttle-departures dt { font-weight:600; }
+.shuttle-departures dd {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(39px,1fr)); column-gap:6px;
+  margin:4px 0 0; color:var(--z-muted); font-size:14px; font-variant-numeric:tabular-nums;
+}
 .arrival-zones { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr)); gap:16px 32px; margin:20px 0; }
 .arrival-zones section { border-top:1px solid var(--line); padding:18px 0 0; }
 .arrival-zones h2 { font:normal 28px/1.12 var(--atlas-title); margin:0 0 14px; }

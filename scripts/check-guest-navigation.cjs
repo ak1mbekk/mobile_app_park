@@ -158,6 +158,50 @@ async function offlineRoutes(browser) {
   }
 }
 
+async function checkParkTransfer(browser, offline) {
+  const context = await browser.newContext({viewport:{width:390,height:844},
+    serviceWorkers:offline ? 'allow' : 'block'});
+  try {
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    if (!offline) await page.route('**/guide-landscape.js', route => route.fulfill({contentType:'application/javascript',body:''}));
+    await page.goto(new URL('index.html#directions',url).href);
+    if (offline) {
+      await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+      await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+      await context.setOffline(true);
+    }
+    await page.getByText('Автобус ходит в обе стороны.',{exact:false}).waitFor();
+    await page.getByText('Расписание автобуса',{exact:true}).click();
+    await page.locator('#shuttle-schedule time[datetime="16:45"]').waitFor();
+    const times = await page.locator('#shuttle-schedule dd').evaluateAll(lists =>
+      lists.map(list => [...list.querySelectorAll('time')].map(time => time.dateTime)));
+    assert.deepEqual(times,[
+      ['09:00','10:00','11:00','13:00','14:00','15:00','16:00'],
+      ['09:05','10:05','11:05','13:05','14:05','15:05','16:05'],
+      ['09:15','10:15','11:15','13:15','14:15','15:15','16:15'],
+      ['09:30','10:30','11:30','13:30','14:30','15:30','16:45'],
+    ]);
+    await page.getByRole('link',{name:'Остановки на карте'}).click();
+    await page.getByRole('heading',{name:'Остановки автобуса'}).waitFor();
+    await page.waitForFunction(() => document.querySelectorAll('.map-transfer-pin').length === 2);
+    await page.goBack();
+    await page.getByRole('link',{name:'Маршрут на машине'}).click();
+    await page.getByRole('heading',{name:'На машине между парковками'}).waitFor();
+    await page.waitForFunction(() => [...document.querySelectorAll('.map-transfer-pin')].map(pin => pin.textContent).join('') === 'АБ');
+    if (!offline) {
+      await page.locator('.leaflet-visitor-navigation-pane path[stroke="#215fce"]').waitFor();
+    }
+    await page.getByRole('link',{name:'Закрыть маршрут между локациями'}).click();
+    assert.equal(await page.locator('.map-transfer-panel:visible').count(),0);
+    assert.deepEqual(errors,[]);
+    console.log(offline ? 'Transfer information, stops and car route available offline' : 'Transfer information, stops and car route passed in 2D');
+  } finally {
+    await context.close();
+  }
+}
+
 (async () => {
   await graphChecks();
   const browser = await chromium.launch({executablePath:process.env.BROWSER_EXE,
@@ -168,6 +212,8 @@ async function offlineRoutes(browser) {
     await run(browser,{flat:true,zone:2,id:'6',pixels:[[1056,2178],[1033,2171]],width:390});
     await deniedLocation(browser);
     await offlineRoutes(browser);
+    await checkParkTransfer(browser,false);
+    await checkParkTransfer(browser,true);
   } finally {
     await browser.close();
   }

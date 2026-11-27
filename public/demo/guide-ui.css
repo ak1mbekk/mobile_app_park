@@ -99,10 +99,12 @@ body.in-guide, body.in-guide:has(.visitor-screen.current) {
 .app-rail { z-index:920; }
 .slide-tabs {
   --tabs-selected-bg:#344343;
+  --tabs-start:max(4px,env(safe-area-inset-left));
+  --tabs-end:max(4px,env(safe-area-inset-right));
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
   isolation:isolate;
-  padding:4px max(4px,env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));
+  padding:4px var(--tabs-end) calc(4px + env(safe-area-inset-bottom)) var(--tabs-start);
   background:var(--z-chrome);
   color:#eff4ee;
 }
@@ -130,12 +132,41 @@ body.in-guide, body.in-guide:has(.visitor-screen.current) {
   -webkit-tap-highlight-color:transparent;
   font:600 clamp(11px, 3vw, 12px)/1.1 var(--z-font);
 }
-.slide-tabs:not([data-slide-pending]) > [aria-current="page"],
-.slide-tabs > [data-slide-target] { color:var(--z-lime); }
+.slide-tabs > [aria-current="page"] { color:var(--z-lime); }
 .slide-tabs:not(.slide-tabs-ready) > [aria-current="page"] { background:var(--tabs-selected-bg); }
 .slide-tabs svg { flex:none; width:var(--z-control-icon); height:var(--z-control-icon); }
 .in-guide :focus-visible, .park-app :focus-visible { outline:3px solid var(--z-focus); outline-offset:2px; }
 .slide-tabs > :focus-visible { outline:2px solid currentColor; outline-offset:-4px; }
+@media (prefers-reduced-motion:no-preference) {
+  :root[data-tab-entering] {
+    overflow-x:clip;
+    --tab-entry-offset:clamp(28px, 12vw, 68px);
+    --tab-entry-timing:240ms cubic-bezier(.2,.75,.25,1) both;
+  }
+  :root[data-tab-direction="back"] { --tab-entry-offset:clamp(-68px, -12vw, -28px); }
+  :root[data-tab-entering="park"] #park.current,
+  :root[data-tab-entering="animals"] #animals.current,
+  :root[data-tab-entering="profile"] #profile.current,
+  :root[data-tab-entering="map"] #map.current > .map-mount {
+    animation:guide-tab-enter var(--tab-entry-timing);
+  }
+  :root[data-tab-crossing] .slide-tabs > [aria-current="page"] { background:transparent; }
+  :root[data-tab-crossing] .slide-tabs-cursor { visibility:hidden; }
+  :root[data-tab-crossing] .slide-tabs-motion::after {
+    content:""; position:absolute; top:4px; left:var(--tabs-start); height:52px;
+    width:calc((100% - var(--tabs-start) - var(--tabs-end)) / 4); border-radius:6px;
+    background:var(--tabs-selected-bg);
+    animation:guide-tab-cross-cursor var(--tab-entry-timing);
+  }
+  @keyframes guide-tab-enter {
+    from { transform:translateX(var(--tab-entry-offset)); }
+    to { transform:translateX(0); }
+  }
+  @keyframes guide-tab-cross-cursor {
+    from { transform:translateX(calc(100% * var(--tab-from))); }
+    to { transform:translateX(calc(100% * var(--tab-to))); }
+  }
+}
 ::selection { background:var(--z-lime); color:var(--z-on-lime); }
 @media(min-width:760px) {
   .in-guide .guide-bar { min-height:72px; }

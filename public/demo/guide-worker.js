@@ -1,6 +1,6 @@
 importScripts('audio-stops.js');
 
-const cacheName = 'animal-park-map:zoo-guide50';
+const cacheName = 'animal-park-map:zoo-guide51';
 const guideCachePrefix = 'animal-park-map:zoo-guide';
 const base = new URL(self.registration.scope);
 const shell = [
@@ -8,7 +8,7 @@ const shell = [
   'assets/species/alpaka.webp','assets/species/oslyi.webp','assets/species/burskaya-koza.webp',
   'assets/species/bactrian-camel.jpg','assets/species/lamancha-goat.jpg',
   'assets/species/evropeyskaya-lan.webp','assets/species/vatusi.webp','assets/lemur.webp','assets/tamarin.webp',
-  'map.html','guide-ui.css','assets/caracal.webp','assets/species/filin.webp','assets/species/lama.webp','base.css','park-home.css','park-home.js','guide-history.js','park-schedule.js','feeding-model.js','catalog.js','feedings.js','feedings.css',
+  'map.html','guide-ui.css','assets/caracal.webp','assets/species/filin.webp','assets/species/lama.webp','base.css','park-home.css','park-home.js','guide-history.js','guide-tab-motion.js','park-schedule.js','feeding-model.js','catalog.js','feedings.js','feedings.css',
   'feeding-programme.json','catalogue.json','vendor/park-menu/menu.css','guide-shell.css','catalog-editorial.css',
   'assets/species/kinkazhu.webp','assets/species/belyij-aist.webp','assets/species/indijskij-dikobraz.webp',
   'assets/species/nosuxa.webp','assets/species/surikatyi.webp',
@@ -18,7 +18,7 @@ const shell = [
   'vendor/leaflet/leaflet.js','vendor/maplibre/maplibre-gl.css','vendor/maplibre/maplibre-gl.js',
   'vendor/ibm-plex-sans/IBMPlexSans.ttf','assets/park-landscape.geojson',
   'assets/park-favicon.png','assets/park-touch-icon.png','map-alignment.json','map-boundaries.json',
-  'map-boundary-geometry.js','map-guest-paths.json','map-guest-geometry.js'
+  'map-boundary-geometry.js','map-guest-paths.json','map-guest-geometry.js','park-transfer.js'
 ];
 
 const isRecord = value => value && typeof value === 'object' && !Array.isArray(value);

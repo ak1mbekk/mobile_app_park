@@ -5,6 +5,7 @@
 <meta name="theme-color" content="#ffffff">
 <script src="guide-theme.js"></script>
 <script src="guide-history.js"></script>
+<script src="guide-tab-motion.js"></script>
 <script>
   if (/^#map(?:\/|$)/.test(location.hash) || new URLSearchParams(location.search).get('layout') === 'map') {
     window.parkGuideHistory.replaceDocument('map.html' + location.search + (location.hash || '#map/1'));
@@ -278,6 +279,26 @@
   <button class="p-back" type="button" data-guide-back="park" aria-label="Назад"><svg class="p-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#aki-arrow"/></svg></button>
   <h1 class="p-title">Как добраться</h1>
   <address class="arrival-address">Деревня Глинище, Малаховецкий с/с, 31<br>Барановичский район</address>
+  <section class="arrival-transfer" aria-labelledby="transfer-title">
+    <h2 id="transfer-title">Между локациями</h2>
+    <div class="arrival-transfer-options">
+      <section class="arrival-transfer-option">
+        <h3>Автобус парка</h3>
+        <p>Автобус ходит в обе стороны. В каждой зоне он останавливается рядом с парковкой, напротив касс.</p>
+        <a class="p-link" href="map.html?transport=bus#map/1">Остановки на карте →</a>
+        <details class="shuttle-schedule" id="shuttle-schedule">
+          <summary>Расписание автобуса</summary>
+          <p class="shuttle-status" role="status">Загружаем расписание…</p>
+          <dl class="shuttle-departures" aria-label="Время отправления по остановкам"></dl>
+        </details>
+      </section>
+      <section class="arrival-transfer-option">
+        <h3>На машине</h3>
+        <p>От парковки напротив «Казачны мір» до гостевой парковки «Лясныя таямніцы».</p>
+        <a class="p-primary" href="map.html?transport=car#map/1">Маршрут на машине →</a>
+      </section>
+    </div>
+  </section>
   <div class="arrival-zones">
     <section><h2>Казачны мір</h2><a class="p-primary" href="https://yandex.by/maps/org/park_zhivotnykh/11025733579/" rel="noopener noreferrer" target="_blank">Открыть в Яндекс Картах ↗</a><a class="p-link" href="map.html#map/1">Дорожки и вольеры →</a></section>
     <section><h2>Лясныя таямніцы</h2><a class="p-primary" href="https://yandex.by/maps/org/lesnyye_tayny/55770037829/" rel="noopener noreferrer" target="_blank">Открыть в Яндекс Картах ↗</a><a class="p-link" href="map.html#map/2">Дорожки и вольеры →</a></section>

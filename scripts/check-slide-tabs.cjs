@@ -17,7 +17,7 @@ async function activeTab(page, name) {
 async function checkSlide(page, name, destination, reduced = false) {
   const target = page.locator('.slide-tabs > a').filter({hasText:name});
   assert.equal(await target.evaluate(link => getComputedStyle(link).webkitTapHighlightColor),'rgba(0, 0, 0, 0)');
-  await target.evaluate(link => {
+  const crossesDocuments = await target.evaluate(link => {
     const nav = link.parentElement;
     const cursor = nav.querySelector('.slide-tabs-cursor');
     const selected = nav.querySelector('[aria-current="page"]');
@@ -25,6 +25,9 @@ async function checkSlide(page, name, destination, reduced = false) {
     const from = cursor.getBoundingClientRect().left;
     const to = link.getBoundingClientRect().left;
     sessionStorage.removeItem('checked-tab-motion');
+    sessionStorage.removeItem('checked-screen-motion');
+    const destination = new URL(link.href);
+    if (destination.pathname !== location.pathname || destination.search !== location.search) return true;
     link.addEventListener('click', () => requestAnimationFrame(firstFrame => {
       function sample(now) {
         const x = cursor.getBoundingClientRect().left;
@@ -37,11 +40,23 @@ async function checkSlide(page, name, destination, reduced = false) {
       }
       sample(firstFrame);
     }),{once:true});
+    return false;
   });
   await target.tap();
   await page.waitForURL(destination);
   await activeTab(page,name);
-  assert.equal(await page.evaluate(() => sessionStorage.getItem('checked-tab-motion')),reduced ? null : 'sliding');
+  if (!reduced) {
+    await page.waitForFunction(() => sessionStorage.getItem('checked-screen-motion') !== null);
+    const points = JSON.parse(await page.evaluate(() => sessionStorage.getItem('checked-screen-motion')));
+    assert(points.length > 1 && Math.abs(points[0]) > Math.abs(points.at(-1)), 'The screen must move across rendered frames');
+    if (crossesDocuments) {
+      await page.waitForFunction(() => sessionStorage.getItem('checked-tab-motion') !== null);
+    }
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('checked-tab-motion')),'sliding');
+  } else {
+    assert.equal(await page.locator('html').getAttribute('data-tab-entering'),null);
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('checked-tab-motion')),null);
+  }
 }
 
 async function checkFirstScreen(browser) {
@@ -66,8 +81,27 @@ async function checkFirstScreen(browser) {
       const page = await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,
         reducedMotion:reduced ? 'reduce' : 'no-preference',serviceWorkers:'block'});
       try {
+        await page.addInitScript(() => {
+          document.addEventListener('animationstart', event => {
+            const indicator = event.animationName === 'guide-tab-cross-cursor';
+            if (!indicator && event.animationName !== 'guide-tab-enter') return;
+            const frames = [];
+            function sample() {
+              const transform = getComputedStyle(event.target,indicator ? '::after' : null).transform;
+              const x = new DOMMatrixReadOnly(transform).m41;
+              if (x) frames.push(x);
+              if (frames.length >= 2 && Math.abs(frames[0] - x) > 1) {
+                const key = indicator ? 'checked-tab-motion' : 'checked-screen-motion';
+                sessionStorage.setItem(key,indicator ? 'sliding' : JSON.stringify(frames));
+              } else if (x) requestAnimationFrame(sample);
+            }
+            sample();
+          });
+        });
         await page.goto(new URL('index.html#park',base).href);
         await activeTab(page,'Главная');
+        await checkSlide(page,'Животные','**/index.html#animals',reduced);
+        await checkSlide(page,'Главная','**/index.html#park',reduced);
         await checkSlide(page,'Профиль','**/index.html#profile',reduced);
         await checkSlide(page,'Карта','**/map.html#map/1',reduced);
         await checkSlide(page,'Профиль','**/index.html#profile',reduced);
@@ -75,6 +109,9 @@ async function checkFirstScreen(browser) {
         await activeTab(page,'Карта');
         await page.goBack();
         await activeTab(page,'Профиль');
+        await page.goto(new URL('index.html#park',base).href);
+        await activeTab(page,'Главная');
+        await checkSlide(page,'Карта','**/map.html#map/1',reduced);
         console.log(reduced ? 'Reduced motion and Back passed' : 'Slide transitions and Back passed');
       } finally {
         await page.close();

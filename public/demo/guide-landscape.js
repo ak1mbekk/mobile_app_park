@@ -329,30 +329,39 @@ window.createParkLandscape = function (surface, select, fallback, terrainUrl) {
     }
   }
   let navigationState;
+  const transferMarkers = [];
   function drawNavigation() {
     if (!ready || stopped || !navigationState) return;
-    const {visitor,route,focus,padding} = navigationState;
+    const {visitor,route,focus,padding,ends} = navigationState;
     const features = [];
     const coordinates = ll => [ll.lng,ll.lat];
     const pin = (point,isVisitor) => ({type:'Feature',properties:{visitor:isVisitor},
       geometry:{type:'Point',coordinates:coordinates(point)}});
     if (route?.length > 1) features.push({type:'Feature',properties:{},
       geometry:{type:'LineString',coordinates:route.map(coordinates)}});
-    if (route?.length) features.push(pin(route.at(-1),false));
+    if (!ends.length && route?.length) features.push(pin(route.at(-1),false));
     if (visitor) features.push(pin(visitor,true));
     map.getSource('navigation').setData(collection(features));
-    if (!focus || !visitor) return;
+    for (const marker of transferMarkers.splice(0)) marker.remove();
+    for (const [index, point] of ends.entries()) {
+      const element = document.createElement('span');
+      element.className = 'map-transfer-pin';
+      element.textContent = ['А','Б'][index];
+      transferMarkers.push(new gl.Marker({element}).setLngLat(coordinates(point)).addTo(map));
+    }
+    if (!focus || (!visitor && !ends.length)) return;
     navigationState.focus = false;
-    if (route?.length > 1) {
+    if (route?.length > 1 || ends.length) {
       const bounds = new gl.LngLatBounds();
-      for (const point of [visitor,...route]) bounds.extend(coordinates(point));
+      for (const point of [...ends,...(route || [])]) bounds.extend(coordinates(point));
+      if (visitor) bounds.extend(coordinates(visitor));
       map.setPadding({top:0,bottom:0,left:0,right:0});
       map.fitBounds(bounds,{padding:padding(),maxZoom:18.5,pitch:0,bearing:0,duration:0});
     } else map.jumpTo({center:coordinates(visitor),zoom:Math.max(17,map.getZoom()),padding:padding()});
   }
-  function setNavigation(visitor,route,focus,padding) {
+  function setNavigation(visitor,route,focus,padding,ends = []) {
     const pendingFocus = !ready && visitor === navigationState?.visitor && navigationState?.focus;
-    navigationState = {visitor,route,focus:focus || pendingFocus,padding};
+    navigationState = {visitor,route,focus:focus || pendingFocus,padding,ends};
     drawNavigation();
   }
   function keepMarkerVisible(point, padding) {
