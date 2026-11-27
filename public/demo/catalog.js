@@ -192,23 +192,38 @@
     cardsReady = true;
     restoreFocus();
   }
+  function applyCatalogue(data) {
+    bySlug.clear();
+    for (const entry of data) bySlug.set(entry.slug, entry);
+    cardsReady = false;
+    document.getElementById('catalog-source-error').hidden = Boolean(data.length);
+    if (!data.length) {
+      grid.replaceChildren();
+      indexCards();
+    }
+    if (section.classList.contains('current')) showCatalogCards();
+    if (document.getElementById('species').classList.contains('current')) detail();
+    document.dispatchEvent(new Event('parkcatalogready'));
+  }
   async function loadCatalog() {
     try {
-      const data = await window.parkGuideData.load('catalogue.json');
+      const published = window.parkGuideData;
+      const loaded = await published.load('catalogue.json');
+      const data = published.current === false ? [] : published.current?.animals ?? loaded;
       if (!Array.isArray(data) || !data.length) throw Error('Empty catalogue');
-      for (const entry of data) bySlug.set(entry.slug, entry);
-      document.dispatchEvent(new Event('parkcatalogready'));
+      applyCatalogue(data);
     } catch {
-      if (await window.parkGuideData.ready === false) {
-        grid.replaceChildren();
-        indexCards();
-        document.getElementById('catalog-source-error').hidden = false;
-      }
+      if (window.parkGuideData.current === false) applyCatalogue([]);
+      else if (document.getElementById('species').classList.contains('current')) detail();
       catalogRequest = null;
     }
-    if (section.classList.contains('current')) {showCatalogCards();restoreFocus();}
-    if (document.getElementById('species').classList.contains('current')) detail();
+    if (section.classList.contains('current')) restoreFocus();
   }
+  window.parkGuideData.subscribe(source => {
+    if (source) applyCatalogue(source.animals);
+    else if (source === false) applyCatalogue([]);
+    else catalogRequest = loadCatalog();
+  });
   document.addEventListener('conceptscreen', event => {
     const screen = event.detail;
     if (!['animals','species','map','feed'].includes(screen)) return;

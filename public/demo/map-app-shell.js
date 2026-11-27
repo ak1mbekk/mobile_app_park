@@ -35,12 +35,20 @@
   window.addEventListener('hashchange', announceMap);
   if (!location.hash.startsWith('#map/')) history.replaceState(history.state, '', '#map/1');
   mapScreen.classList.add('current');
-  window.parkGuideData.load('catalogue.json')
-    .then(entries => {
-      const species = new Map(entries.map(entry => [entry.slug, entry]));
-      window.parkGuide.speciesPhoto = slug => species.get(slug)?.thumbnail;
-      window.parkGuide.speciesName = slug => species.get(slug)?.name;
-      document.dispatchEvent(new Event('parkcatalogready'));
-    })
-    .catch(() => { /* Place names and the built-in markers also work offline. */ });
+  function applyCatalogue(entries) {
+    const species = new Map(entries.map(entry => [entry.slug, entry]));
+    window.parkGuide.speciesPhoto = slug => species.get(slug)?.thumbnail;
+    window.parkGuide.speciesName = slug => species.get(slug)?.name;
+    document.dispatchEvent(new Event('parkcatalogready'));
+  }
+  function loadCatalogue() {
+    window.parkGuideData.load('catalogue.json').then(applyCatalogue)
+      .catch(() => { /* Place names and the built-in markers also work offline. */ });
+  }
+  loadCatalogue();
+  window.parkGuideData.subscribe(source => {
+    if (source) applyCatalogue(source.animals);
+    else if (source === false) applyCatalogue([]);
+    else loadCatalogue();
+  });
 })();

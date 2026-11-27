@@ -231,10 +231,12 @@
   if (!directory) return;
   const {zones} = window.parkGuide;
   let stops = [];
-  window.parkGuideData.ready.then(source => {
-    if (source !== false) stops = window.parkGuide.places.filter(point => !point.detail && stories[keyForPlace(point)]);
+  function syncDirectory(source) {
+    stops = source === false ? [] : window.parkGuide.places.filter(point => !point.detail && stories[keyForPlace(point)]);
     if (document.getElementById('audio').classList.contains('current')) renderDirectory();
-  });
+  }
+  window.parkGuideData.ready.then(syncDirectory);
+  window.parkGuideData.subscribe(syncDirectory);
   const stopPath = point => point.zone + '/' + point.id;
   const search = document.getElementById('audio-search');
   const clear = document.getElementById('audio-search-clear');

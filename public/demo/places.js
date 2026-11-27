@@ -322,5 +322,11 @@
   function locationLabel(place) {
     return /^\d+(?:\.\d+)?(?:[-–]\d+(?:\.\d+)?)?$/.test(place.id) ? 'Вольер № ' + place.id : place.name;
   }
-  window.parkGuide={serviceGlyphs,locationLabel,zones,markerFace,speciesPortrait,bindMarkerHitChooser,legacyCafeIds,surveyBuildings,places:[...places,...numberedEnclosures,...cafes].sort(byZoneAndNumber),geoFacilities};
+  const localPlaces=[...places,...numberedEnclosures,...cafes].sort(byZoneAndNumber);
+  const noFacilities=[];
+  window.parkGuide={
+    serviceGlyphs,locationLabel,zones,markerFace,speciesPortrait,bindMarkerHitChooser,legacyCafeIds,surveyBuildings,
+    get places(){return window.parkGuideData?.current?.places ?? localPlaces;},
+    get geoFacilities(){return window.parkGuideData?.live ? noFacilities : geoFacilities;}
+  };
 })();

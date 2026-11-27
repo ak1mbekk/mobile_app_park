@@ -7,6 +7,24 @@
     show();
   });
   let lastView;
+  const featured = [...document.querySelectorAll('.z-cover, .z-gallery a')].map(link => {
+    const image = link.querySelector('img');
+    const title = link.querySelector('h2,strong');
+    return {link, image, title, href:link.getAttribute('href'), src:image.getAttribute('src'),
+      name:title.textContent, slug:link.hash === '#animal' ? 'kapibara' : link.hash.slice('#species/'.length)};
+  });
+  function applyPublication(source) {
+    const animals = new Map((source?.animals || []).map(animal => [animal.slug, animal]));
+    for (const entry of featured) {
+      const animal = animals.get(entry.slug);
+      entry.link.hidden = source !== null && !animal?.thumbnail;
+      if (entry.link.hidden) continue;
+      entry.link.href = animal ? '#species/' + encodeURIComponent(animal.slug) : entry.href;
+      entry.image.src = animal?.thumbnail ?? entry.src;
+      entry.title.textContent = animal?.name ?? entry.name;
+    }
+    if (source && location.hash === '#animal') show();
+  }
   function syncMapLinks() {
     let zone;
     try { zone = localStorage.getItem('park-map-zone'); } catch {}
@@ -67,8 +85,7 @@
   window.addEventListener('hashchange', show);
   window.addEventListener('pageshow', syncMapLinks);
   syncMapLinks();
-  window.parkGuideData.ready.then(() => {
-    if (location.hash === '#animal' && window.parkGuideData.live) show();
-  });
+  window.parkGuideData.ready.then(applyPublication);
+  window.parkGuideData.subscribe(applyPublication);
   show();
 })();

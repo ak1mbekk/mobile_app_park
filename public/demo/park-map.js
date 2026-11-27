@@ -200,10 +200,10 @@
     }
   }
 
-  async function readGuestPaths() {
+  async function readGuestPaths(source) {
     try {
       const [schema,data] = await Promise.all([import('./map-guest-geometry.js'),
-        fetchMapData('map-guest-paths.json')]);
+        source ? source.visitorPaths : fetchMapData('map-guest-paths.json')]);
       guestGeometry = schema;
       return schema.validGuestPaths(data) ? data : null;
     } catch { return null; }
@@ -1045,7 +1045,8 @@
       [value.scale, value.angle, value.centerX, value.centerY].every(Number.isFinite);
   }
 
-  async function readAlignment() {
+  async function readAlignment(source) {
+    if (source) return validAlignment(source.mapAlignment) ? source.mapAlignment : null;
     const key = 'park-map-alignment';
     try {
       const value = await fetchMapData('map-alignment.json');
@@ -1061,11 +1062,11 @@
     }
   }
 
-  async function readBoundaries() {
+  async function readBoundaries(source) {
     try {
       const [geometry, value] = await Promise.all([
         import('./map-boundary-geometry.js'),
-        fetchMapData('map-boundaries.json')
+        source ? source.enclosures : fetchMapData('map-boundaries.json')
       ]);
       contains=geometry.contains;
       return geometry.validBoundaries(value) ? value : null;
@@ -1088,7 +1089,9 @@
     if (calibration === undefined) {
       if (!loading) {
         loading = true;
-        Promise.all([readAlignment(), readBoundaries(), readGuestPaths()]).then(([value, boundaries, paths]) => {
+        const source = window.parkGuideData.current;
+        Promise.all([readAlignment(source), readBoundaries(source), readGuestPaths(source)]).then(([value, boundaries, paths]) => {
+          if (source !== window.parkGuideData.current) return;
           calibration = value;
           boundaryData = boundaries;
           guestData = paths;
@@ -1135,21 +1138,30 @@
     updateDirections();
   }
 
-  function refreshAlignment() {
-    if (refreshing || (!map && !landscape) || !document.getElementById('map').classList.contains('current')) return;
-    refreshing = Promise.all([readAlignment(), readBoundaries(), readGuestPaths()]).then(([next, boundaries, paths]) => {
+  function refreshAlignment(publicationChanged = false) {
+    const source = window.parkGuideData.current;
+    if (!publicationChanged && (source !== null || (!map && !landscape))) return;
+    if (refreshing) {
+      if (publicationChanged) refreshing.then(() => refreshAlignment(true));
+      return;
+    }
+    refreshing = Promise.all([readAlignment(source), readBoundaries(source), readGuestPaths(source)]).then(([next, boundaries, paths]) => {
+      if (source !== window.parkGuideData.current) return;
       const recovered = next && !calibration;
       const alignmentChanged = next && (recovered || ['revision', 'centerX', 'centerY', 'scale', 'angle']
         .some(key => next[key] !== calibration[key]));
       const boundariesChanged = boundaries && boundaries.revision !== boundaryData?.revision;
       const pathsChanged = (paths?.revision ?? null) !== (guestData?.revision ?? null);
-      if (!alignmentChanged && !boundariesChanged && !pathsChanged) return;
+      if (!publicationChanged && !alignmentChanged && !boundariesChanged && !pathsChanged) return;
       if (navigation) endNavigation();
+      if (publicationChanged) {
+        visitorPlaces = publishedPlaces(source);
+      }
       guestData = paths;
-      if (alignmentChanged) calibration = next;
-      if (boundariesChanged) boundaryData = boundaries;
-      if (recovered) {
-        hitChooser.destroy();
+      if (publicationChanged || alignmentChanged) calibration = next;
+      if (publicationChanged || boundariesChanged) boundaryData = boundaries;
+      if (recovered && map) {
+        hitChooser?.destroy();
         map.remove();
         map = null;
         mapReady = false;
@@ -1189,7 +1201,7 @@
   document.addEventListener('parkcatalogready', () => {
     if (document.getElementById('map').classList.contains('current')) show();
   });
-  window.addEventListener('focus', refreshAlignment);
+  window.addEventListener('focus', () => refreshAlignment());
   window.addEventListener('pagehide', endNavigation);
   window.addEventListener('online', () => {
     if (map) updateStatus();
@@ -1227,17 +1239,26 @@
     else return;
     event.stopPropagation();
   });
-  window.parkGuideData.ready.then(source => {
+  function publishedPlaces(source) {
+    const places = source ? source.places : [...guide.places, ...guide.geoFacilities];
+    return places.filter(p => !p.name.startsWith('Вольер №'));
+  }
+  function startMap(source) {
     if (source === false) {
       status.textContent = 'Данные карты временно недоступны.';
       status.hidden = false;
       return;
     }
-    visitorPlaces = [...guide.places, ...guide.geoFacilities].filter(p => !p.name.startsWith('Вольер №'));
+    visitorPlaces = publishedPlaces(source);
     dataReady = true;
     searchToggle.disabled = false;
     filterToggle.disabled = false;
     show();
     if (!state.id && !state.service && state.kind !== 'all') setSearch(true);
+  }
+  window.parkGuideData.ready.then(startMap);
+  window.parkGuideData.subscribe(source => {
+    if (!dataReady) startMap(source);
+    else if (source !== false) refreshAlignment(true);
   });
 })();

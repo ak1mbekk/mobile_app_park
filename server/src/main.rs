@@ -39,6 +39,7 @@ const RELEASE_FILES: &[&str] = &[
     "catalog-editorial.css",
     "catalog.js",
     "feedings.js",
+    "feeding-model.js",
     "feedings.css",
     "guide-shell.css",
     "map-app.css",

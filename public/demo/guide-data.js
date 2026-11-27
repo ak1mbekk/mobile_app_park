@@ -6,48 +6,33 @@
     'map-guest-paths.json':'visitorPaths',
     'feeding-programme.json':'feedings',
   };
-
-  let live = false;
   const sourceKey = 'park-guide-publication-source';
-  async function readSnapshot(response) {
-    const data = await response.json().catch(() => null);
-    return data && Array.isArray(data.animals) && data.animals.length &&
-      Array.isArray(data.places) && data.places.length &&
-      ['mapAlignment','enclosures','visitorPaths','feedings'].every(field => data[field]) ? data : null;
-  }
+  const cacheKey = new URL('guide-publication.json', location.href);
+  const changes = new EventTarget();
+  let current, version, pending;
 
-  function useSnapshot(data) {
-    live = true;
-    window.parkGuide.places = data.places;
-    window.parkGuide.geoFacilities = [];
-    const animals = new Map(data.animals.map(animal => [animal.slug, animal]));
-    for (const link of document.querySelectorAll('.z-cover, .z-gallery a')) {
-      const slug = link.hash === '#animal' ? 'kapibara' : link.hash.slice('#species/'.length);
-      const animal = animals.get(slug);
-      if (!animal?.thumbnail) {
-        link.hidden = true;
-        continue;
-      }
-      link.href = '#species/' + encodeURIComponent(slug);
-      link.querySelector('img').src = animal.thumbnail;
-      link.querySelector('h2,strong').textContent = animal.name;
-    }
-    return data;
+  async function readSnapshot(response) {
+    try {
+      const text = await response.text();
+      const data = JSON.parse(text);
+      if (!Array.isArray(data?.animals) || !data.animals.length ||
+          !Array.isArray(data.places) || !data.places.length ||
+          !['mapAlignment','enclosures','visitorPaths','feedings'].every(field => data[field])) return null;
+      return {data, version:response.headers.get('etag') || text};
+    } catch { return null; }
   }
 
   async function publication() {
-    if (location.protocol === 'file:') return null;
+    if (location.protocol === 'file:') return {data:null};
     const cache = await globalThis.caches?.open('animal-park-map:publication-v1').catch(() => null);
-    const path = new URL('guide-publication.json', location.href);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3500);
-    const response = await fetch('guide-publication.json', {
-      cache:'no-cache', signal:controller.signal,
-    }).catch(() => null).finally(() => clearTimeout(timer));
+    const response = await fetch(cacheKey, {cache:'no-cache', signal:controller.signal})
+      .catch(() => null).finally(() => clearTimeout(timer));
     if (response?.status === 404) {
-      await cache?.delete(path).catch(() => {});
+      await cache?.delete(cacheKey).catch(() => {});
       try { localStorage.removeItem(sourceKey); } catch {}
-      return null;
+      return {data:null};
     }
     const json = response?.headers.get('content-type')?.includes('application/json');
     let knownPublication = Boolean(json);
@@ -56,28 +41,57 @@
       knownPublication ||= localStorage.getItem(sourceKey) === 'zookeeper';
     } catch {}
     if (response?.ok && json) {
-      const data = await readSnapshot(response.clone());
-      if (data) {
-        await cache?.put(path, response).catch(() => {});
-        return useSnapshot(data);
+      const next = await readSnapshot(response.clone());
+      if (next) {
+        if (next.version !== version) await cache?.put(cacheKey, response).catch(() => {});
+        return next;
       }
     }
-    const saved = await cache?.match(path).catch(() => null);
-    const latest = saved && await readSnapshot(saved);
-    if (latest) return useSnapshot(latest);
-    if (!knownPublication) return null;
-    for (const link of document.querySelectorAll('.z-cover, .z-gallery a')) link.hidden = true;
-    return false;
+    // Keep the newest snapshot already accepted by this document on a network failure.
+    if (current) return {data:current,version};
+    const saved = await cache?.match(cacheKey).catch(() => null);
+    return (saved && await readSnapshot(saved)) || {data:knownPublication ? false : null};
   }
 
-  const ready = publication();
+  function refresh() {
+    if (pending) return pending;
+    pending = publication().then(next => {
+      if (next.data && current && next.version === version) return current;
+      if (next.data === current) return current;
+      const started = current !== undefined;
+      current = next.data;
+      version = next.version;
+      if (started) changes.dispatchEvent(new CustomEvent('publication',{detail:current}));
+      return current;
+    }).finally(() => { pending = null; });
+    return pending;
+  }
+
+  const ready = refresh();
   async function load(file, options) {
-    const source = await ready;
-    if (source === false) throw new Error('Данные парка временно недоступны');
-    if (source && Object.hasOwn(fields, file)) return source[fields[file]];
+    if (current === undefined) await ready;
+    if (current === false) throw new Error('Данные парка временно недоступны');
+    if (current && Object.hasOwn(fields, file)) return current[fields[file]];
     const response = await fetch(file, options);
     if (!response.ok) throw new Error('Не удалось загрузить данные парка');
     return response.json();
   }
-  window.parkGuideData = {ready, load, get live() { return live; }};
+  function subscribe(listener) {
+    const handle = event => listener(event.detail);
+    changes.addEventListener('publication', handle);
+    return () => changes.removeEventListener('publication', handle);
+  }
+  window.parkGuideData = {
+    ready, load, refresh, subscribe,
+    get current() { return current; },
+    get live() { return Boolean(current); },
+  };
+
+  function refreshWhenVisible() {
+    if (!document.hidden && navigator.onLine && location.protocol !== 'file:') refresh();
+  }
+  document.addEventListener('visibilitychange', refreshWhenVisible);
+  window.addEventListener('online', refreshWhenVisible);
+  window.addEventListener('pageshow', event => { if (event.persisted) refreshWhenVisible(); });
+  setInterval(() => { if (current !== null) refreshWhenVisible(); }, 60000);
 })();

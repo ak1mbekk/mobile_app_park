@@ -83,13 +83,21 @@ fn keep_fields(value: &mut Value, fields: &[&str]) {
     }
 }
 
-fn public_feedings(rows: &mut Value) {
+fn public_feedings(rows: &mut Value, slugs: &HashSet<&str>) {
     if let Some(rows) = rows.as_array_mut() {
         for row in rows {
             keep_fields(row, &["id", "zone", "place", "start", "end", "name", "status", "species"]);
-            if let Some(species) = row.get_mut("species") {
-                if !species.as_array().is_some_and(|entries| entries.iter().all(Value::is_string)) {
-                    *species = Value::Array(Vec::new());
+            if let Some(object) = row.as_object_mut() {
+                let species = object.get("species").and_then(|value| {
+                    value.as_str().filter(|slug| slugs.contains(slug)).or_else(|| {
+                        value.as_array()?.iter().filter_map(Value::as_str)
+                            .find(|slug| slugs.contains(slug))
+                    })
+                }).map(str::to_owned);
+                if let Some(slug) = species {
+                    object.insert("species".to_owned(), Value::String(slug));
+                } else {
+                    object.remove("species");
                 }
             }
         }
@@ -121,9 +129,9 @@ fn project(body: &[u8]) -> io::Result<Vec<u8>> {
         for path in paths { keep_fields(path, &["id", "zone", "name", "status", "points"]); }
     }
     keep_fields(&mut publication.feedings, &["verifiedOn", "daily", "byDate"]);
-    if let Some(daily) = publication.feedings.get_mut("daily") { public_feedings(daily); }
+    if let Some(daily) = publication.feedings.get_mut("daily") { public_feedings(daily, &slugs); }
     if let Some(dates) = publication.feedings.get_mut("byDate").and_then(Value::as_object_mut) {
-        for rows in dates.values_mut() { public_feedings(rows); }
+        for rows in dates.values_mut() { public_feedings(rows, &slugs); }
     }
     for (name, value) in [
         ("map-alignment.json", &publication.map_alignment),

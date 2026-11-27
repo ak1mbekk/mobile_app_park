@@ -1,6 +1,8 @@
+import {calendarReminder, feedingSpecies, monthView, shiftDay, shiftMonth, todayInPark} from './feeding-model.js';
+import {parkSchedule as schedule} from './park-schedule.js';
+
 (() => {
   const guide=window.parkGuide;
-  const schedule=window.parkSchedule;
   const list=document.getElementById('feeding-list'),actions=document.getElementById('feeding-actions');
   const dateButton=document.getElementById('visit-date'),hint=document.getElementById('calendar-hint');
   const remind=document.getElementById('add-reminder');
@@ -20,16 +22,16 @@
   const calendarDays=calendar.querySelector('.feeding-calendar-days');
   const previousMonth=calendar.querySelector('.calendar-prev');
   const nextMonth=calendar.querySelector('.calendar-next');
-  const lastDay='9999-12-31';
-  // Older schedules used the name of the exhibit and did not specify a photo.
-  const groupPhotos={
-    '1/53/exotic':'kinkazhu',
-    '1/lake49/storks':'belyij-aist'
+  const timingLabels={
+    active:'Сейчас по программе',next:'Ближайшее кормление',first:'Первое кормление дня',scheduled:'По программе',
+  };
+  const notices={
+    empty:'Нет опубликованных событий.',
+    missing:'Выбранного кормления нет в программе на эту дату.',
+    finished:'На сегодня по программе больше нет кормлений.',
   };
   let selected, renderedToday, month;
   const parseDay=day=>new Date(day+'T00:00:00Z');
-  const isoDay=value=>value.toISOString().slice(0,10);
-  const monthStart=(value,offset=0)=>new Date(Date.UTC(value.getUTCFullYear(),value.getUTCMonth()+offset,1));
   function eventRoute(id){return 'feed/'+id+'/'+schedule.visitDate();}
   function renderDateLabel(day){
     dateButton.dataset.date=day;
@@ -42,37 +44,29 @@
     window.conceptReplace(eventRoute('all'));
   }
   function drawMonth(focusDay){
-    month=monthStart(parseDay(focusDay));
-    const today=schedule.today();
-    const visitDay=schedule.visitDate();
-    previousMonth.disabled=isoDay(month).slice(0,7)===today.slice(0,7);
-    nextMonth.disabled=isoDay(month).slice(0,7)===lastDay.slice(0,7);
-    calendarMonth.textContent=monthLabel.format(month);
-    const firstDayOffset=(month.getUTCDay()+6)%7;
-    const year=month.getUTCFullYear(), monthIndex=month.getUTCMonth();
-    const length=new Date(Date.UTC(year,monthIndex+1,0)).getUTCDate();
+    const view=monthView(focusDay,schedule.today(),schedule.visitDate());
+    month=view.value;
+    previousMonth.disabled=view.atFirstMonth;
+    nextMonth.disabled=view.atLastMonth;
+    calendarMonth.textContent=monthLabel.format(parseDay(month));
     calendarDays.replaceChildren();
-    for(let number=1;number<=length;number++){
-      const value=new Date(Date.UTC(year,monthIndex,number));
-      const day=isoDay(value);
+    for(const {day,number,disabled,focused,selected,today} of view.days){
       const button=document.createElement('button');
       button.type='button';
       button.dataset.day=day;
       button.textContent=number;
-      button.disabled=day<today;
-      button.tabIndex=day===focusDay?0:-1;
-      button.setAttribute('aria-label',longDate.format(value));
-      button.setAttribute('aria-pressed',String(day===visitDay));
-      if(day===today)button.setAttribute('aria-current','date');
-      if(number===1)button.style.gridColumnStart=firstDayOffset+1;
+      button.disabled=disabled;
+      button.tabIndex=focused?0:-1;
+      button.setAttribute('aria-label',longDate.format(parseDay(day)));
+      button.setAttribute('aria-pressed',String(selected));
+      if(today)button.setAttribute('aria-current','date');
+      if(number===1)button.style.gridColumnStart=view.firstColumn;
       button.addEventListener('click',()=>chooseDate(day));
       calendarDays.append(button);
     }
   }
   function moveMonth(offset,control){
-    const today=schedule.today();
-    const firstDay=isoDay(monthStart(month,offset));
-    drawMonth(firstDay<today?today:firstDay);
+    drawMonth(shiftMonth(month,offset,schedule.today()));
     if(control.disabled)calendarDays.querySelector('[tabindex="0"]').focus();
   }
   dateButton.addEventListener('click',()=>{
@@ -94,11 +88,7 @@
     const offset={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[event.key];
     if(!offset || !event.target.dataset.day)return;
     event.preventDefault();
-    const value=parseDay(event.target.dataset.day);
-    value.setUTCDate(value.getUTCDate()+offset);
-    const today=schedule.today();
-    const day=value.getUTCFullYear()>9999?lastDay:isoDay(value);
-    const targetDay=day<today?today:day;
+    const targetDay=shiftDay(event.target.dataset.day,offset,schedule.today());
     if(targetDay.slice(0,7)!==event.target.dataset.day.slice(0,7))drawMonth(targetDay);
     calendarDays.querySelector('[tabindex="0"]').tabIndex=-1;
     const target=calendarDays.querySelector('[data-day="'+targetDay+'"]');
@@ -106,7 +96,7 @@
     target.focus();
   });
   function photoFor(event,eager=false){
-    const slug=event.species || groupPhotos[event.zone+'/'+event.place+'/'+event.id];
+    const slug=feedingSpecies(event);
     const photo=document.createElement('img');
     photo.alt='';
     photo.loading=eager?'eager':'lazy';
@@ -142,34 +132,26 @@
     feature.dataset.event=event.id;
     cover.replaceChildren(photoFor(event,true));
     featuredTitle.textContent=event.name;
-    featuredStatus.textContent=event.status==='cancelled'?'Кормление отменено':timing+' · '+hoursFor(event);
+    featuredStatus.textContent=event.status==='cancelled'?'Кормление отменено':timingLabels[timing]+' · '+hoursFor(event);
     featuredPlace.textContent=[guide.zones[event.zone]?.name,placeText(event)].filter(Boolean).join(' · ');
     actions.querySelector('[data-go]').dataset.go='map/'+event.zone+'/'+event.place;
   }
   function render(eventId){
-    renderedToday=schedule.today();
+    const now=new Date();
+    renderedToday=todayInPark(now);
     const day=schedule.visitDate();
     renderDateLabel(day);
-    const events=schedule.forDay(day);
-    const {events:upcoming,active}=schedule.nextFor(day);
-    const explicit=eventId && eventId!=='all' && eventId!=='none';
-    const next=upcoming[0];
-    selected=explicit?events.find(event=>event.id===eventId):next || events.findLast(event=>event.status!=='cancelled') || events[0];
-    const today=day===renderedToday;
-    const timing=selected && next && upcoming.includes(selected)
-      ? (active?'Сейчас по программе':today?'Ближайшее кормление':'Первое кормление дня')
-      : 'По программе';
+    const {featured, timing, notice, remaining}=schedule.view(day,eventId,now);
+    selected=featured;
     renderFeature(selected,timing);
     const edition=schedule.edition;
     document.getElementById('schedule-edition').textContent=edition?'Снимок программы от '+edition.split('-').reverse().join('.')+'.':'';
     retry.hidden=schedule.state!=='error';
     status.textContent=schedule.state==='error'?(edition?'Не удалось обновить. Показана сохранённая программа.':'Не удалось загрузить программу кормлений.'):
       schedule.state==='loading'&&!edition?'Загружаем программу…':'';
-    if(edition && !events.length)status.textContent+=' Нет опубликованных событий.';
-    else if(edition && explicit && !selected)status.textContent+=' Выбранного кормления нет в программе на эту дату.';
-    else if(edition && today && !explicit && !next && events.some(event=>event.status!=='cancelled'))status.textContent+=' На сегодня по программе больше нет кормлений.';
-    const remaining=events.filter(event=>event!==selected);
+    if(edition && notice)status.textContent+=' '+notices[notice];
     agenda.hidden=!remaining.length;
+    const focusedEvent=list.contains(document.activeElement)?document.activeElement.dataset.event:null;
     list.replaceChildren();
     for(const event of remaining){
       const row=document.createElement('div');row.className='feeding-row';
@@ -197,6 +179,7 @@
         feature.scrollIntoView({block:'start'});
       };
       list.append(row);
+      if(event.id===focusedEvent)select.focus({preventScroll:true});
     }
     syncPhotos();
   }
@@ -205,21 +188,15 @@
   remind.onclick=()=>{
     if(!selected||selected.status==='cancelled')return;
     const day=dateButton.dataset.date;
-    const stamp=t=>new Date(t).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
-    const eventTime=t=>stamp(day+'T'+t+':00+03:00');
-    const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Animal Park//Visitor//RU','BEGIN:VEVENT',
-      'UID:'+selected.id+'-'+day+'@animal-park.by','DTSTAMP:'+stamp(Date.now()),'DTSTART:'+eventTime(selected.start)];
-    if(selected.end)lines.push('DTEND:'+eventTime(selected.end));
-    const escape=text=>text.replace(/\\/g,'\\\\').replace(/\r\n|\r|\n/g,'\\n').replace(/([,;])/g,'\\$1');
-    lines.push('SUMMARY:Кормление · '+escape(selected.name),'LOCATION:'+escape(guide.zones[selected.zone].name+' · '+placeText(selected)),
-      'BEGIN:VALARM','TRIGGER:-PT30M','ACTION:DISPLAY','DESCRIPTION:Кормление через 30 минут','END:VALARM','END:VEVENT','END:VCALENDAR');
-    const url=URL.createObjectURL(new Blob([lines.join('\r\n')+'\r\n'],{type:'text/calendar;charset=utf-8'}));
+    const location=guide.zones[selected.zone].name+' · '+placeText(selected);
+    const reminder=calendarReminder(selected,day,location,new Date());
+    const url=URL.createObjectURL(new Blob([reminder],{type:'text/calendar;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=selected.id+'-'+day+'.ics';
     document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
     hint.textContent='Откройте файл в календаре телефона и сохраните событие.';
   };
-  document.addEventListener('conceptscreen',e=>{
-    if(e.detail!=='feed'){
+  function showScreen(screen){
+    if(screen!=='feed'){
       if(calendar.open)calendar.close();
       return;
     }
@@ -229,14 +206,20 @@
       window.conceptReplace(eventRoute('all'));
       return;
     }
-    if(schedule.state==='idle')schedule.load();
+    if(schedule.state==='idle')schedule.load({refresh:false});
     refreshView();
-  });
+  }
+  document.addEventListener('conceptscreen',event=>showScreen(event.detail));
   document.addEventListener('parkcatalogready',syncPhotos);
-  document.addEventListener('parkprogrammechange',()=>{if(document.getElementById('feed').classList.contains('current'))refreshView();});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden && document.getElementById('feed').classList.contains('current'))schedule.load();});
+  schedule.subscribe(()=>{if(document.getElementById('feed').classList.contains('current'))refreshView();});
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden && window.parkGuideData.current===null && document.getElementById('feed').classList.contains('current')){
+      schedule.load({refresh:false});
+    }
+  });
   setInterval(()=>{
     if(document.hidden || !document.getElementById('feed').classList.contains('current'))return;
     if(renderedToday!==schedule.today() || !document.getElementById('feed').contains(document.activeElement))refreshView();
   },60000);
+  showScreen(document.querySelector('main > .screen.current')?.id);
 })();
